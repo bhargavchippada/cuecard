@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -925,6 +926,157 @@ class TestHomeDir:
         assert result == Path.home()
 
 
+# ---------------------------------------------------------------------------
+# eval command
+# ---------------------------------------------------------------------------
+
+
+class TestEval:
+    def test_eval_success(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        fixture_file = tmp_path / "fixtures.json"
+        fixture_file.write_text("[]")
+
+        mock_model = MagicMock()
+        fake_fixtures = [{"query": "test", "expected": ["rule1"]}]
+        fake_summary = MagicMock()
+
+        with (
+            patch(
+                "cuecard.eval.load_fixtures",
+                return_value=fake_fixtures,
+            ) as mock_load,
+            patch("fastembed.TextEmbedding", return_value=mock_model),
+            patch(
+                "cuecard.eval.run_eval",
+                return_value=fake_summary,
+            ) as mock_run,
+            patch(
+                "cuecard.eval.format_eval_report",
+                return_value="Report OK",
+            ) as mock_fmt,
+        ):
+            result = runner.invoke(app, ["eval", str(fixture_file)])
+
+        assert result.exit_code == 0
+        assert "Report OK" in result.output
+        mock_load.assert_called_once_with(str(fixture_file))
+        mock_run.assert_called_once()
+        mock_fmt.assert_called_once_with(fake_summary)
+
+    def test_eval_custom_model_and_corpus(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        fixture_file = tmp_path / "fixtures.json"
+        fixture_file.write_text("[]")
+        corpus = tmp_path / "corpora"
+        corpus.mkdir()
+
+        mock_model = MagicMock()
+        fake_summary = MagicMock()
+
+        with (
+            patch("cuecard.eval.load_fixtures", return_value=[]),
+            patch("fastembed.TextEmbedding", return_value=mock_model) as mock_te,
+            patch("cuecard.eval.run_eval", return_value=fake_summary) as mock_run,
+            patch("cuecard.eval.format_eval_report", return_value="OK"),
+        ):
+            result = runner.invoke(app, [
+                "eval", str(fixture_file),
+                "--model", "custom/model",
+                "--corpus-dir", str(corpus),
+                "--top-k", "10",
+                "--threshold", "0.1",
+                "--dedup-threshold", "0.9",
+            ])
+
+        assert result.exit_code == 0
+        mock_te.assert_called_once_with(model_name="custom/model")
+        call_kwargs = mock_run.call_args
+        assert call_kwargs[0][1] == str(corpus)
+        assert call_kwargs[0][2] == "custom/model"
+        assert call_kwargs[1]["top_k"] == 10
+        assert call_kwargs[1]["threshold"] == 0.1
+        assert call_kwargs[1]["dedup_threshold"] == 0.9
+
+    def test_eval_default_corpus_dir_is_fixture_parent(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        sub = tmp_path / "eval_data"
+        sub.mkdir()
+        fixture_file = sub / "fixtures.json"
+        fixture_file.write_text("[]")
+
+        mock_model = MagicMock()
+        fake_summary = MagicMock()
+
+        with (
+            patch("cuecard.eval.load_fixtures", return_value=[]),
+            patch("fastembed.TextEmbedding", return_value=mock_model),
+            patch("cuecard.eval.run_eval", return_value=fake_summary) as mock_run,
+            patch("cuecard.eval.format_eval_report", return_value="OK"),
+        ):
+            result = runner.invoke(app, ["eval", str(fixture_file)])
+
+        assert result.exit_code == 0
+        assert mock_run.call_args[0][1] == str(sub)
+
+    def test_eval_fixture_load_error(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        fixture_file = tmp_path / "bad.json"
+        fixture_file.write_text("not json")
+
+        with patch(
+            "cuecard.eval.load_fixtures",
+            side_effect=ValueError("Invalid JSON"),
+        ):
+            result = runner.invoke(app, ["eval", str(fixture_file)])
+
+        assert result.exit_code == 1
+        assert "Failed to load fixtures" in result.output
+
+    def test_eval_model_load_error(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        fixture_file = tmp_path / "fixtures.json"
+        fixture_file.write_text("[]")
+
+        with (
+            patch("cuecard.eval.load_fixtures", return_value=[]),
+            patch(
+                "fastembed.TextEmbedding",
+                side_effect=RuntimeError("Model not found"),
+            ),
+        ):
+            result = runner.invoke(app, ["eval", str(fixture_file)])
+
+        assert result.exit_code == 1
+        assert "Failed to load model" in result.output
+
+    def test_eval_run_error(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        fixture_file = tmp_path / "fixtures.json"
+        fixture_file.write_text("[]")
+
+        mock_model = MagicMock()
+
+        with (
+            patch("cuecard.eval.load_fixtures", return_value=[]),
+            patch("fastembed.TextEmbedding", return_value=mock_model),
+            patch(
+                "cuecard.eval.run_eval",
+                side_effect=RuntimeError("Eval crashed"),
+            ),
+        ):
+            result = runner.invoke(app, ["eval", str(fixture_file)])
+
+        assert result.exit_code == 1
+        assert "Eval failed" in result.output
+
+
 class TestLoadConfigOrExit:
     def test_config_error_exits(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
@@ -940,3 +1092,720 @@ class TestLoadConfigOrExit:
         result = runner.invoke(app, ["parse"])
         assert result.exit_code == 1
         assert "Config error" in result.output
+
+
+# ---------------------------------------------------------------------------
+# install command
+# ---------------------------------------------------------------------------
+
+
+class TestInstall:
+    def test_install_unknown_target(self) -> None:
+        result = runner.invoke(app, ["install", "vscode"])
+        assert result.exit_code == 1
+        assert "Unknown target" in result.output
+
+    def test_install_claude_code_fresh(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir()
+        result = runner.invoke(app, ["install", "claude-code"])
+        assert result.exit_code == 0
+        assert "Installed" in result.output
+        settings = json.loads((claude_dir / "settings.json").read_text())
+        hooks = settings["hooks"]["PreToolUse"]
+        assert any("cuecard" in h.get("command", "") for h in hooks)
+
+    def test_install_already_installed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir()
+        settings = {
+            "hooks": {
+                "PreToolUse": [
+                    {"type": "command", "command": "uv run python -m cuecard.adapters.claude_code"},
+                ],
+            },
+        }
+        (claude_dir / "settings.json").write_text(json.dumps(settings))
+        result = runner.invoke(app, ["install", "claude-code"])
+        assert result.exit_code == 0
+        assert "already installed" in result.output
+
+    def test_install_existing_settings_no_hooks(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir()
+        (claude_dir / "settings.json").write_text(json.dumps({"other": "data"}))
+        result = runner.invoke(app, ["install", "claude-code"])
+        assert result.exit_code == 0
+        assert "Installed" in result.output
+
+    def test_install_hooks_not_dict(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir()
+        (claude_dir / "settings.json").write_text(json.dumps({"hooks": "invalid"}))
+        result = runner.invoke(app, ["install", "claude-code"])
+        assert result.exit_code == 0
+        assert "Installed" in result.output
+
+    def test_install_pretool_not_list(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir()
+        (claude_dir / "settings.json").write_text(
+            json.dumps({"hooks": {"PreToolUse": "invalid"}}),
+        )
+        result = runner.invoke(app, ["install", "claude-code"])
+        assert result.exit_code == 0
+        assert "Installed" in result.output
+
+
+# ---------------------------------------------------------------------------
+# uninstall command
+# ---------------------------------------------------------------------------
+
+
+class TestUninstall:
+    def test_uninstall_unknown_target(self) -> None:
+        result = runner.invoke(app, ["uninstall", "vscode"])
+        assert result.exit_code == 1
+        assert "Unknown target" in result.output
+
+    def test_uninstall_not_installed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        result = runner.invoke(app, ["uninstall", "claude-code"])
+        assert result.exit_code == 0
+        assert "not found" in result.output
+
+    def test_uninstall_removes_hook(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir()
+        settings = {
+            "hooks": {
+                "PreToolUse": [
+                    {"type": "command", "command": "uv run python -m cuecard.adapters.claude_code"},
+                ],
+            },
+        }
+        (claude_dir / "settings.json").write_text(json.dumps(settings))
+        result = runner.invoke(app, ["uninstall", "claude-code"])
+        assert result.exit_code == 0
+        assert "Uninstalled" in result.output
+        updated = json.loads((claude_dir / "settings.json").read_text())
+        assert "hooks" not in updated
+
+    def test_uninstall_preserves_other_hooks(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir()
+        settings = {
+            "hooks": {
+                "PreToolUse": [
+                    {"type": "command", "command": "other-tool"},
+                    {"type": "command", "command": "uv run python -m cuecard.adapters.claude_code"},
+                ],
+            },
+        }
+        (claude_dir / "settings.json").write_text(json.dumps(settings))
+        result = runner.invoke(app, ["uninstall", "claude-code"])
+        assert result.exit_code == 0
+        updated = json.loads((claude_dir / "settings.json").read_text())
+        assert len(updated["hooks"]["PreToolUse"]) == 1
+        assert "other-tool" in updated["hooks"]["PreToolUse"][0]["command"]
+
+
+# ---------------------------------------------------------------------------
+# status command
+# ---------------------------------------------------------------------------
+
+
+class TestStatus:
+    def test_status_hook_installed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir(exist_ok=True)
+        settings = {
+            "hooks": {
+                "PreToolUse": [
+                    {"type": "command", "command": "uv run python -m cuecard.adapters.claude_code"},
+                ],
+            },
+        }
+        (claude_dir / "settings.json").write_text(json.dumps(settings))
+
+        idx = _make_sample_index()
+        with patch("cuecard.indexer.load_index", return_value=idx):
+            result = runner.invoke(app, ["status"])
+
+        assert result.exit_code == 0
+        assert "hook installed" in result.output
+        assert "rules" in result.output.lower()
+
+    def test_status_hook_not_installed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        idx = _make_sample_index()
+        with patch("cuecard.indexer.load_index", return_value=idx):
+            result = runner.invoke(app, ["status"])
+
+        assert result.exit_code == 0
+        assert "not installed" in result.output
+
+    def test_status_no_index(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        with patch("cuecard.indexer.load_index", return_value=None):
+            result = runner.invoke(app, ["status"])
+
+        assert result.exit_code == 0
+        assert "No valid index" in result.output
+
+    def test_status_with_log_file(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        log_path = tmp_path / ".cuecard" / "log.jsonl"
+        log_path.write_text('{"event":"test"}\n')
+
+        with patch("cuecard.indexer.load_index", return_value=None):
+            result = runner.invoke(app, ["status"])
+
+        assert result.exit_code == 0
+        assert "Log:" in result.output
+
+
+# ---------------------------------------------------------------------------
+# log command
+# ---------------------------------------------------------------------------
+
+
+class TestLogCmd:
+    def test_log_no_entries(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        result = runner.invoke(app, ["log"])
+        assert result.exit_code == 0
+        assert "No log entries" in result.output
+
+    def test_log_recent_entries(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        entries = [
+            {
+                "timestamp": "2024-01-01T12:00:00",
+                "event": "PreToolUse",
+                "tool_name": "Bash",
+                "injected_count": 3,
+                "latency_ms": 12.5,
+            },
+        ]
+        with patch("cuecard.logger.read_log", return_value=entries):
+            result = runner.invoke(app, ["log"])
+
+        assert result.exit_code == 0
+        assert "PreToolUse" in result.output
+        assert "Bash" in result.output
+
+    def test_log_stats(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        entries = [
+            {
+                "timestamp": "2024-01-01T12:00:00",
+                "event": "PreToolUse",
+                "tool_name": "Bash",
+                "injected_count": 3,
+                "latency_ms": 12.5,
+            },
+        ]
+        stats = {
+            "total_events": 1,
+            "avg_injected": 3,
+            "coverage": 1.0,
+            "latency_p50": 12,
+            "latency_p95": 12,
+            "latency_p99": 12,
+            "top_rules": [("Never commit secrets", 5)],
+        }
+        with (
+            patch("cuecard.logger.read_log", return_value=entries),
+            patch("cuecard.logger.compute_stats", return_value=stats),
+        ):
+            result = runner.invoke(app, ["log", "--stats"])
+
+        assert result.exit_code == 0
+        assert "Log Statistics" in result.output
+        assert "Top Rules" in result.output
+
+    def test_log_stats_no_top_rules(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        entries = [{"timestamp": "2024-01-01T12:00:00"}]
+        stats = {
+            "total_events": 1,
+            "avg_injected": 0,
+            "coverage": 0.0,
+            "latency_p50": 0,
+            "latency_p95": 0,
+            "latency_p99": 0,
+            "top_rules": [],
+        }
+        with (
+            patch("cuecard.logger.read_log", return_value=entries),
+            patch("cuecard.logger.compute_stats", return_value=stats),
+        ):
+            result = runner.invoke(app, ["log", "--stats"])
+
+        assert result.exit_code == 0
+        assert "Log Statistics" in result.output
+
+    def test_log_custom_limit(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        with patch("cuecard.logger.read_log", return_value=[]) as mock_read:
+            result = runner.invoke(app, ["log", "--limit", "5"])
+        assert result.exit_code == 0
+        mock_read.assert_called_once()
+        assert mock_read.call_args[1]["limit"] == 5
+
+
+# ---------------------------------------------------------------------------
+# adapter __main__ guard
+# ---------------------------------------------------------------------------
+
+
+class TestAdapterMainGuard:
+    def test_main_guard(self) -> None:
+        import subprocess
+        result = subprocess.run(
+            ["uv", "run", "python", "-m", "cuecard.adapters.claude_code"],
+            input='{"tool_name":"Bash","tool_input":"ls"}',
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        output = json.loads(result.stdout)
+        assert output["tool_name"] == "Bash"
+
+
+class TestInstall:
+    def test_install_creates_hook(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir()
+
+        result = runner.invoke(app, ["install", "claude-code"])
+        assert result.exit_code == 0
+        assert "Installed" in result.output
+
+        import json
+
+        settings = json.loads(
+            (claude_dir / "settings.json").read_text(),
+        )
+        hooks = settings["hooks"]["PreToolUse"]
+        assert len(hooks) == 1
+        assert "cuecard" in hooks[0]["command"]
+
+    def test_install_already_installed(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir()
+
+        # Install once
+        runner.invoke(app, ["install", "claude-code"])
+        # Install again
+        result = runner.invoke(app, ["install", "claude-code"])
+        assert result.exit_code == 0
+        assert "already installed" in result.output
+
+    def test_install_unknown_target(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        result = runner.invoke(app, ["install", "vscode"])
+        assert result.exit_code == 1
+        assert "Unknown target" in result.output
+
+    def test_install_no_existing_settings(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        # No .claude dir at all
+        result = runner.invoke(app, ["install", "claude-code"])
+        assert result.exit_code == 0
+        assert "Installed" in result.output
+
+    def test_install_preserves_existing_settings(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        import json
+
+        _patch_home(monkeypatch, tmp_path)
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir()
+        (claude_dir / "settings.json").write_text(
+            json.dumps({"other_key": "value"}),
+        )
+
+        result = runner.invoke(app, ["install", "claude-code"])
+        assert result.exit_code == 0
+
+        settings = json.loads(
+            (claude_dir / "settings.json").read_text(),
+        )
+        assert settings["other_key"] == "value"
+        assert "PreToolUse" in settings["hooks"]
+
+
+class TestUninstall:
+    def test_uninstall_removes_hook(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir()
+
+        # Install first
+        runner.invoke(app, ["install", "claude-code"])
+        # Then uninstall
+        result = runner.invoke(app, ["uninstall", "claude-code"])
+        assert result.exit_code == 0
+        assert "Uninstalled" in result.output
+
+        import json
+
+        settings = json.loads(
+            (claude_dir / "settings.json").read_text(),
+        )
+        assert "hooks" not in settings
+
+    def test_uninstall_not_installed(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        result = runner.invoke(app, ["uninstall", "claude-code"])
+        assert result.exit_code == 0
+        assert "not found" in result.output
+
+    def test_uninstall_unknown_target(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        result = runner.invoke(app, ["uninstall", "vscode"])
+        assert result.exit_code == 1
+        assert "Unknown target" in result.output
+
+    def test_uninstall_preserves_other_hooks(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        import json
+
+        _patch_home(monkeypatch, tmp_path)
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir()
+
+        # Install cuecard + add another hook
+        runner.invoke(app, ["install", "claude-code"])
+        settings = json.loads(
+            (claude_dir / "settings.json").read_text(),
+        )
+        settings["hooks"]["PreToolUse"].append(
+            {"type": "command", "command": "other-tool"},
+        )
+        (claude_dir / "settings.json").write_text(
+            json.dumps(settings),
+        )
+
+        result = runner.invoke(app, ["uninstall", "claude-code"])
+        assert result.exit_code == 0
+
+        updated = json.loads(
+            (claude_dir / "settings.json").read_text(),
+        )
+        hooks = updated["hooks"]["PreToolUse"]
+        assert len(hooks) == 1
+        assert hooks[0]["command"] == "other-tool"
+
+
+class TestStatus:
+    def test_status_no_hook_no_index(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        cuecard_dir = tmp_path / ".cuecard"
+        cuecard_dir.mkdir()
+        _make_config_toml(cuecard_dir)
+        _make_rules_file(cuecard_dir)
+        monkeypatch.chdir(tmp_path)
+
+        result = runner.invoke(app, ["status"])
+        assert result.exit_code == 0
+        assert "not installed" in result.output
+        assert "No valid index" in result.output
+
+    def test_status_with_hook_and_index(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        cuecard_dir = tmp_path / ".cuecard"
+        cuecard_dir.mkdir()
+        _make_config_toml(cuecard_dir)
+        _make_rules_file(cuecard_dir)
+        monkeypatch.chdir(tmp_path)
+
+        # Install hook
+        runner.invoke(app, ["install", "claude-code"])
+
+        # Create index
+        idx = _make_sample_index()
+        with patch(
+            "cuecard.indexer.load_index", return_value=idx,
+        ):
+            result = runner.invoke(app, ["status"])
+        assert result.exit_code == 0
+        assert "hook installed" in result.output
+
+    def test_status_with_log(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        cuecard_dir = tmp_path / ".cuecard"
+        cuecard_dir.mkdir()
+        _make_config_toml(cuecard_dir)
+        _make_rules_file(cuecard_dir)
+        monkeypatch.chdir(tmp_path)
+
+        # Create a log file
+        (cuecard_dir / "log.jsonl").write_text(
+            '{"event": "test"}\n',
+        )
+
+        result = runner.invoke(app, ["status"])
+        assert result.exit_code == 0
+        assert "Log:" in result.output
+
+
+class TestLogCmd:
+    def test_log_no_entries(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        result = runner.invoke(app, ["log"])
+        assert result.exit_code == 0
+        assert "No log entries" in result.output
+
+    def test_log_shows_entries(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        cuecard_dir = tmp_path / ".cuecard"
+        cuecard_dir.mkdir()
+        import json
+
+        entries = [
+            {
+                "timestamp": "2026-04-01T12:00:00",
+                "event": "PreToolUse",
+                "tool_name": "Bash",
+                "injected_count": 2,
+                "latency_ms": 42,
+            },
+        ]
+        (cuecard_dir / "log.jsonl").write_text(
+            "\n".join(json.dumps(e) for e in entries) + "\n",
+        )
+
+        result = runner.invoke(app, ["log"])
+        assert result.exit_code == 0
+        assert "PreToolUse:Bash" in result.output
+
+    def test_log_stats(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        cuecard_dir = tmp_path / ".cuecard"
+        cuecard_dir.mkdir()
+        import json
+
+        entries = [
+            {
+                "latency_ms": 42.0,
+                "results": [
+                    {"text": "Rule A", "score": 0.9},
+                ],
+            },
+            {
+                "latency_ms": 100.0,
+                "results": [],
+            },
+        ]
+        (cuecard_dir / "log.jsonl").write_text(
+            "\n".join(json.dumps(e) for e in entries) + "\n",
+        )
+
+        result = runner.invoke(app, ["log", "--stats"])
+        assert result.exit_code == 0
+        assert "Total events" in result.output
+        assert "Latency p50" in result.output
+
+    def test_log_stats_with_top_rules(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        cuecard_dir = tmp_path / ".cuecard"
+        cuecard_dir.mkdir()
+        import json
+
+        entries = [
+            {
+                "latency_ms": 10.0,
+                "results": [
+                    {"text": "Popular rule", "score": 0.9},
+                ],
+            },
+        ]
+        (cuecard_dir / "log.jsonl").write_text(
+            "\n".join(json.dumps(e) for e in entries) + "\n",
+        )
+
+        result = runner.invoke(app, ["log", "--stats"])
+        assert result.exit_code == 0
+        assert "Top Rules" in result.output
+        assert "Popular rule" in result.output
+
+    def test_log_limit(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        cuecard_dir = tmp_path / ".cuecard"
+        cuecard_dir.mkdir()
+        import json
+
+        entries = [
+            {
+                "timestamp": f"2026-04-01T{i:02d}:00:00",
+                "event": "PreToolUse",
+                "tool_name": "Bash",
+                "injected_count": 0,
+                "latency_ms": 1,
+            }
+            for i in range(10)
+        ]
+        (cuecard_dir / "log.jsonl").write_text(
+            "\n".join(json.dumps(e) for e in entries) + "\n",
+        )
+
+        result = runner.invoke(app, ["log", "--limit", "3"])
+        assert result.exit_code == 0
+
+
+# --- helpers coverage ---
+
+
+class TestClaudeSettingsHelpers:
+    def test_load_missing(self, tmp_path: Path) -> None:
+        from cuecard.cli import _load_claude_settings
+
+        path = tmp_path / "nonexistent.json"
+        assert _load_claude_settings(path) == {}
+
+    def test_has_hook_bad_hooks_type(self) -> None:
+        from cuecard.cli import _has_cuecard_hook
+
+        assert _has_cuecard_hook({"hooks": "not_a_dict"}) is False
+
+    def test_has_hook_bad_pretool_type(self) -> None:
+        from cuecard.cli import _has_cuecard_hook
+
+        settings: dict[str, object] = {
+            "hooks": {"PreToolUse": "not_a_list"},
+        }
+        assert _has_cuecard_hook(settings) is False
+
+    def test_claude_settings_path(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        from cuecard.cli import _claude_settings_path
+
+        _patch_home(monkeypatch, tmp_path)
+        p = _claude_settings_path()
+        assert p == tmp_path / ".claude" / "settings.json"
