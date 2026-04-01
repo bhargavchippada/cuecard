@@ -312,24 +312,6 @@ class TestModeFromConfig:
             )
         assert result.mode == "rerank"
 
-    def test_mode_from_config_with_retrieval(
-        self,
-        sample_index: Index,
-        fake_results: list[RankedResult],
-    ) -> None:
-        cfg = _ConfigWithRetrieval(retrieval=_FakeRetrieval(mode="rerank"))
-        with (
-            patch("cuecard.retriever.retrieve", return_value=fake_results),
-            patch(
-                "cuecard.reranker.rerank",
-                side_effect=RuntimeError("stub"),
-            ),
-        ):
-            result = run_pipeline(
-                "test query", sample_index, cfg, mode=None,  # type: ignore[arg-type]
-            )
-        assert result.mode == "rerank"
-
     def test_mode_default_without_retrieval(
         self,
         sample_index: Index,

@@ -308,9 +308,14 @@ def run_eval(
         corpus_dir: Directory containing corpus files.
         model_name: Embedding model identifier.
         model: Embedding model instance (fastembed-compatible).
-        top_k: Number of results to retrieve per query.
-        threshold: Minimum cosine similarity threshold.
-        dedup_threshold: Near-duplicate dedup threshold.
+        top_k: Number of results to retrieve per query (embedding mode only).
+        threshold: Minimum cosine similarity threshold (embedding mode only).
+        dedup_threshold: Near-duplicate dedup threshold (embedding mode only).
+        mode: Pipeline mode. When not None or "embedding", uses run_pipeline()
+            which applies its own recall-widening parameters (top_k=20,
+            threshold=0.10) for the embedding stage, ignoring the top_k and
+            threshold args above. This is intentional: re-ranking stages
+            need a wider candidate pool to be effective.
 
     Returns:
         EvalSummary with per-fixture and aggregate metrics.

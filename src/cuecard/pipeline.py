@@ -82,8 +82,6 @@ def _resolve_mode(mode: str | None, config: ResolvedConfig) -> str:
         effective = mode
     elif hasattr(config, "pipeline") and hasattr(config.pipeline, "mode"):
         effective = config.pipeline.mode
-    elif hasattr(config, "retrieval") and hasattr(config.retrieval, "mode"):
-        effective = config.retrieval.mode
     else:
         effective = "embedding"
 
