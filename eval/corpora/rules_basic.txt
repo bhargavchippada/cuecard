@@ -1,0 +1,32 @@
+# Basic coding rules for evaluation
+
+Never commit secrets (API keys, tokens, passwords) to git
+Use uv for all Python package operations, never pip
+Send Enter after every tmux send-keys command
+Always validate user input at system boundaries
+Run quality checks before every commit
+Use frozen dataclasses for immutable data
+100% test coverage on all new code
+No console.log or print debug statements in production code
+Use parameterized queries to prevent SQL injection
+Sanitize all HTML output to prevent XSS
+Enable CSRF protection on all forms
+Set file permissions to 0o600 for sensitive files
+Use environment variables for configuration, not hardcoded values
+Run ruff and mypy before committing Python code
+Write tests before implementation (TDD red-green-refactor)
+Never use eval() or exec() in production code
+Always handle errors explicitly, never silently swallow exceptions
+Use type hints on all function signatures
+Keep functions under 50 lines, files under 400 lines
+Extract magic numbers into named constants
+Prefer immutable data structures over mutable ones
+Use asyncio for I/O-bound operations, not threads
+Always close file handles and database connections
+Rotate any secrets that may have been exposed
+Review all dependencies for known vulnerabilities before adding
+Never force-push to main or master branch
+Use conventional commit format (feat:, fix:, refactor:, etc.)
+Always create a new branch for feature work
+Add .gitignore entries for generated files and build artifacts
+Document all public API functions with docstrings

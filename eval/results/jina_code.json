@@ -1,0 +1,462 @@
+{
+  "model": "jinaai/jina-embeddings-v2-base-code",
+  "corpus": "eval/corpora/rules_basic.txt",
+  "top_k": 5,
+  "threshold": 0.35,
+  "n_rules": 30,
+  "n_fixtures": 20,
+  "avg_precision": 0.455,
+  "avg_recall": 0.825,
+  "avg_mrr": 0.7417,
+  "avg_anti_precision": 0.0,
+  "latency_p50_ms": 13.35,
+  "latency_p95_ms": 18.62,
+  "latency_p99_ms": 19.58,
+  "model_load_time_s": 46.13,
+  "embed_time_s": 0.15,
+  "details": [
+    {
+      "id": "git-commit-secrets",
+      "status": "PASS",
+      "precision": 0.2,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "anti": 0,
+      "latency_ms": 13.438224792480469,
+      "retrieved": [
+        [
+          "Never commit secrets (API keys, tokens, passwords) to git",
+          0.674
+        ],
+        [
+          "Use conventional commit format (feat:, fix:, refactor:, etc.)",
+          0.61
+        ],
+        [
+          "Run quality checks before every commit",
+          0.515
+        ],
+        [
+          "Run ruff and mypy before committing Python code",
+          0.494
+        ],
+        [
+          "Never force-push to main or master branch",
+          0.463
+        ]
+      ]
+    },
+    {
+      "id": "git-commit-quality",
+      "status": "PASS",
+      "precision": 0.4,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "anti": 0,
+      "latency_ms": 13.421297073364258,
+      "retrieved": [
+        [
+          "Use conventional commit format (feat:, fix:, refactor:, etc.)",
+          0.677
+        ],
+        [
+          "Always create a new branch for feature work",
+          0.589
+        ],
+        [
+          "Run ruff and mypy before committing Python code",
+          0.518
+        ],
+        [
+          "Run quality checks before every commit",
+          0.501
+        ],
+        [
+          "Never commit secrets (API keys, tokens, passwords) to git",
+          0.498
+        ]
+      ]
+    },
+    {
+      "id": "tmux-sendkeys",
+      "status": "PASS",
+      "precision": 1.0,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "anti": 0,
+      "latency_ms": 12.545585632324219,
+      "retrieved": [
+        [
+          "Send Enter after every tmux send-keys command",
+          0.822
+        ]
+      ]
+    },
+    {
+      "id": "pip-install",
+      "status": "PASS",
+      "precision": 1.0,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "anti": 0,
+      "latency_ms": 12.84933090209961,
+      "retrieved": [
+        [
+          "Use uv for all Python package operations, never pip",
+          0.466
+        ]
+      ]
+    },
+    {
+      "id": "write-env-file",
+      "status": "PASS",
+      "precision": 0.6666666666666666,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "anti": 0,
+      "latency_ms": 13.275146484375,
+      "retrieved": [
+        [
+          "Use environment variables for configuration, not hardcoded values",
+          0.54
+        ],
+        [
+          "Never commit secrets (API keys, tokens, passwords) to git",
+          0.509
+        ],
+        [
+          "Set file permissions to 0o600 for sensitive files",
+          0.365
+        ]
+      ]
+    },
+    {
+      "id": "edit-python-file",
+      "status": "MISS",
+      "precision": 0.0,
+      "recall": 0.0,
+      "mrr": 0.0,
+      "anti": 0,
+      "latency_ms": 15.077829360961914,
+      "retrieved": [
+        [
+          "Document all public API functions with docstrings",
+          0.388
+        ],
+        [
+          "Run ruff and mypy before committing Python code",
+          0.381
+        ]
+      ]
+    },
+    {
+      "id": "bash-eval",
+      "status": "PASS",
+      "precision": 0.5,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "anti": 0,
+      "latency_ms": 12.218475341796875,
+      "retrieved": [
+        [
+          "Never use eval() or exec() in production code",
+          0.583
+        ],
+        [
+          "Always validate user input at system boundaries",
+          0.4
+        ]
+      ]
+    },
+    {
+      "id": "sql-query",
+      "status": "PASS",
+      "precision": 1.0,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "anti": 0,
+      "latency_ms": 15.14744758605957,
+      "retrieved": [
+        [
+          "Use parameterized queries to prevent SQL injection",
+          0.544
+        ]
+      ]
+    },
+    {
+      "id": "git-push-force",
+      "status": "PASS",
+      "precision": 0.2,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "anti": 0,
+      "latency_ms": 11.196374893188477,
+      "retrieved": [
+        [
+          "Never force-push to main or master branch",
+          0.815
+        ],
+        [
+          "Never commit secrets (API keys, tokens, passwords) to git",
+          0.555
+        ],
+        [
+          "Always create a new branch for feature work",
+          0.498
+        ],
+        [
+          "Run quality checks before every commit",
+          0.469
+        ],
+        [
+          "Run ruff and mypy before committing Python code",
+          0.432
+        ]
+      ]
+    },
+    {
+      "id": "run-tests",
+      "status": "PASS",
+      "precision": 0.4,
+      "recall": 1.0,
+      "mrr": 0.5,
+      "anti": 0,
+      "latency_ms": 10.979175567626953,
+      "retrieved": [
+        [
+          "Use uv for all Python package operations, never pip",
+          0.563
+        ],
+        [
+          "100% test coverage on all new code",
+          0.513
+        ],
+        [
+          "Write tests before implementation (TDD red-green-refactor)",
+          0.466
+        ],
+        [
+          "Run ruff and mypy before committing Python code",
+          0.413
+        ],
+        [
+          "Run quality checks before every commit",
+          0.362
+        ]
+      ]
+    },
+    {
+      "id": "write-html",
+      "status": "MISS",
+      "precision": 0.0,
+      "recall": 0.0,
+      "mrr": 0.0,
+      "anti": 0,
+      "latency_ms": 15.541315078735352,
+      "retrieved": []
+    },
+    {
+      "id": "chmod-file",
+      "status": "PASS",
+      "precision": 1.0,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "anti": 0,
+      "latency_ms": 9.580850601196289,
+      "retrieved": [
+        [
+          "Set file permissions to 0o600 for sensitive files",
+          0.692
+        ]
+      ]
+    },
+    {
+      "id": "print-debug",
+      "status": "PASS",
+      "precision": 0.5,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "anti": 0,
+      "latency_ms": 18.5549259185791,
+      "retrieved": [
+        [
+          "No console.log or print debug statements in production code",
+          0.563
+        ],
+        [
+          "Document all public API functions with docstrings",
+          0.394
+        ]
+      ]
+    },
+    {
+      "id": "new-branch",
+      "status": "PASS",
+      "precision": 0.25,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "anti": 0,
+      "latency_ms": 10.244131088256836,
+      "retrieved": [
+        [
+          "Always create a new branch for feature work",
+          0.641
+        ],
+        [
+          "Never commit secrets (API keys, tokens, passwords) to git",
+          0.506
+        ],
+        [
+          "Never force-push to main or master branch",
+          0.484
+        ],
+        [
+          "Use conventional commit format (feat:, fix:, refactor:, etc.)",
+          0.444
+        ]
+      ]
+    },
+    {
+      "id": "ruff-check",
+      "status": "PASS",
+      "precision": 0.2,
+      "recall": 1.0,
+      "mrr": 0.5,
+      "anti": 0,
+      "latency_ms": 9.326457977294922,
+      "retrieved": [
+        [
+          "Use uv for all Python package operations, never pip",
+          0.621
+        ],
+        [
+          "Run ruff and mypy before committing Python code",
+          0.597
+        ],
+        [
+          "100% test coverage on all new code",
+          0.433
+        ],
+        [
+          "Write tests before implementation (TDD red-green-refactor)",
+          0.406
+        ],
+        [
+          "Run quality checks before every commit",
+          0.403
+        ]
+      ]
+    },
+    {
+      "id": "npm-audit",
+      "status": "PASS",
+      "precision": 0.25,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "anti": 0,
+      "latency_ms": 9.588956832885742,
+      "retrieved": [
+        [
+          "Review all dependencies for known vulnerabilities before adding",
+          0.467
+        ],
+        [
+          "Run quality checks before every commit",
+          0.395
+        ],
+        [
+          "Use uv for all Python package operations, never pip",
+          0.394
+        ],
+        [
+          "Use conventional commit format (feat:, fix:, refactor:, etc.)",
+          0.371
+        ]
+      ]
+    },
+    {
+      "id": "dataclass-creation",
+      "status": "PASS",
+      "precision": 1.0,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "anti": 0,
+      "latency_ms": 14.206409454345703,
+      "retrieved": [
+        [
+          "Use frozen dataclasses for immutable data",
+          0.367
+        ]
+      ]
+    },
+    {
+      "id": "try-except-pass",
+      "status": "PASS",
+      "precision": 0.3333333333333333,
+      "recall": 1.0,
+      "mrr": 0.3333333333333333,
+      "anti": 0,
+      "latency_ms": 19.821882247924805,
+      "retrieved": [
+        [
+          "Use conventional commit format (feat:, fix:, refactor:, etc.)",
+          0.417
+        ],
+        [
+          "Never use eval() or exec() in production code",
+          0.401
+        ],
+        [
+          "Always handle errors explicitly, never silently swallow exceptions",
+          0.352
+        ]
+      ]
+    },
+    {
+      "id": "magic-number",
+      "status": "MISS",
+      "precision": 0.0,
+      "recall": 0.0,
+      "mrr": 0.0,
+      "anti": 0,
+      "latency_ms": 14.572858810424805,
+      "retrieved": [
+        [
+          "Use environment variables for configuration, not hardcoded values",
+          0.453
+        ]
+      ]
+    },
+    {
+      "id": "long-function",
+      "status": "PASS",
+      "precision": 0.2,
+      "recall": 0.5,
+      "mrr": 0.5,
+      "anti": 0,
+      "latency_ms": 16.62755012512207,
+      "retrieved": [
+        [
+          "Never use eval() or exec() in production code",
+          0.421
+        ],
+        [
+          "Keep functions under 50 lines, files under 400 lines",
+          0.407
+        ],
+        [
+          "Run ruff and mypy before committing Python code",
+          0.403
+        ],
+        [
+          "Document all public API functions with docstrings",
+          0.401
+        ],
+        [
+          "100% test coverage on all new code",
+          0.39
+        ]
+      ]
+    }
+  ]
+}
