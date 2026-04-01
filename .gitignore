@@ -38,3 +38,12 @@ htmlcov/
 *.npy
 *.pkl
 index/
+
+# fastembed model cache
+local_cache/
+
+# Eval results
+eval/results/
+
+# Ruff
+.ruff_cache/
