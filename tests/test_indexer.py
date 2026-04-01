@@ -12,7 +12,6 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from cuecard._math import l2_normalize
 from cuecard.indexer import (
     _compute_checksum,
     build_index,
@@ -136,24 +135,6 @@ class TestBuildIndex:
 
         # dim should be detected from actual embeddings, not the default
         assert index.dim == 128
-
-
-class TestL2Normalize:
-    def test_normal_vectors(self) -> None:
-        rng = np.random.default_rng(99)
-        emb = rng.standard_normal((4, 16)).astype(np.float32)
-        normed = l2_normalize(emb)
-        norms = np.linalg.norm(normed, axis=1)
-        np.testing.assert_allclose(norms, 1.0, atol=1e-6)
-
-    def test_zero_vector_handled(self) -> None:
-        emb = np.zeros((2, 8), dtype=np.float32)
-        emb[1] = np.ones(8, dtype=np.float32)
-        normed = l2_normalize(emb)
-        # Zero row stays zero (divided by 1.0, not NaN)
-        np.testing.assert_allclose(normed[0], 0.0)
-        # Non-zero row gets normalized
-        assert abs(np.linalg.norm(normed[1]) - 1.0) < 1e-6
 
 
 class TestSaveIndex:

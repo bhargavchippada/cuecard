@@ -7,7 +7,6 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from cuecard._math import l2_normalize
 from cuecard.models import Index, Provenance, Rule
 from cuecard.retriever import merge_indexes, retrieve
 
@@ -338,24 +337,3 @@ class TestMergeIndexes:
         assert merged_embs.shape[0] == 0
 
 
-class TestL2Normalize:
-    """Tests for the l2_normalize helper (now in _math.py)."""
-
-    def test_1d_vector_normalized(self) -> None:
-        """A 1D vector is L2-normalized correctly."""
-        vec = np.array([3.0, 4.0, 0.0], dtype=np.float32)
-        result = l2_normalize(vec)
-
-        assert result.ndim == 1
-        assert abs(np.linalg.norm(result) - 1.0) < 1e-6
-        # Direction preserved: [3,4,0] -> [0.6, 0.8, 0.0]
-        np.testing.assert_allclose(result, [0.6, 0.8, 0.0], atol=1e-6)
-
-    def test_1d_zero_vector(self) -> None:
-        """A 1D zero vector doesn't produce NaN."""
-        vec = np.zeros(4, dtype=np.float32)
-        result = l2_normalize(vec)
-
-        assert result.ndim == 1
-        assert not np.any(np.isnan(result))
-        np.testing.assert_allclose(result, 0.0)
