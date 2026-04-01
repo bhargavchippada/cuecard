@@ -665,19 +665,37 @@ Codex and Gemini CLI adapters follow the same pattern — read their hook format
         "query": "Bash: git commit -m 'fix auth bug'",
         "corpus": "rules_basic.txt",
         "should_match": ["Never commit secrets (API keys, tokens, passwords) to git"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "medium"
     }
 ]
 ```
 
+Difficulty tiers: `easy` (keyword overlap), `medium` (semantic gap), `hard` (deep reasoning), `negative` (no rules should match).
+
 ### 12.2 Evaluation Metrics
 
-- **Precision@k**: of the k rules returned, how many are in `should_match`?
+**Recall metrics** (did we find the right rules?):
 - **Recall@k**: of the `should_match` rules, how many are in the top k?
 - **MRR** (Mean Reciprocal Rank): is the most relevant rule ranked first?
 - **nDCG@k**: relevance-weighted ranking quality
+
+**Precision metrics** (are we injecting irrelevant rules?):
+- **Precision@k**: of the k rules returned, how many are in `should_match`?
 - **Anti-precision**: rules in `should_not_match` that appeared (should be 0)
-- **Latency**: p50/p95/p99 retrieval time at corpus sizes 50, 200, 500
+- **Noise ratio**: `irrelevant_count / retrieved_count` — what fraction of injected rules are noise?
+
+**Context efficiency metrics** (what's the cost of false positives?):
+- **Retrieved count**: how many rules actually returned (may be < top_k due to threshold filtering)
+- **Context waste ratio**: `chars_of_irrelevant_rules / total_chars_retrieved` — 0.0 = perfect, 1.0 = all waste
+- **Negative silence rate**: for negative fixtures (empty `should_match`), fraction where we correctly returned 0 results. Target: 100%.
+
+**Operational metrics**:
+- **Latency**: p50/p95/p99 retrieval time
+
+**Per-difficulty breakdown**: all metrics reported per difficulty tier (easy/medium/hard/negative) to identify where the pipeline struggles. Negative fixtures are the precision stress test — any non-zero retrieval is a context waste.
+
+**Design rationale**: High recall with low precision is worse than moderate recall with high precision. An irrelevant rule injected into agent context is not neutral — it competes for attention with the relevant rules, can confuse the agent, and wastes context tokens. The goal is 90%+ recall AND low noise ratio (< 0.3).
 
 ### 12.3 Model Comparison
 

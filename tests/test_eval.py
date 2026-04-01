@@ -11,11 +11,14 @@ from cuecard.eval import (
     EvalSummary,
     Fixture,
     FixtureResult,
+    TierSummary,
     anti_precision,
+    context_waste_ratio,
     format_eval_report,
     load_fixtures,
     mrr,
     ndcg_at_k,
+    noise_ratio,
     precision_at_k,
     recall_at_k,
     run_eval,
@@ -39,6 +42,7 @@ def _valid_fixture_data() -> list[dict[str, object]]:
             "corpus": "rules.txt",
             "should_match": ["Never commit secrets"],
             "should_not_match": ["Send Enter after tmux"],
+            "difficulty": "medium",
         },
     ]
 
@@ -62,6 +66,27 @@ class TestLoadFixtures:
         assert result[0].corpus == "rules.txt"
         assert result[0].should_match == ("Never commit secrets",)
         assert result[0].should_not_match == ("Send Enter after tmux",)
+        assert result[0].difficulty == "medium"
+
+    def test_difficulty_defaults_to_unknown(
+        self, tmp_path: object,
+    ) -> None:
+        data = _valid_fixture_data()
+        del data[0]["difficulty"]
+        p = str(tmp_path / "no_diff.json")  # type: ignore[operator]
+        _write_fixtures(p, data)
+        result = load_fixtures(p)
+        assert result[0].difficulty == "unknown"
+
+    def test_difficulty_invalid_type_raises(
+        self, tmp_path: object,
+    ) -> None:
+        data = _valid_fixture_data()
+        data[0]["difficulty"] = 42
+        p = str(tmp_path / "bad_diff.json")  # type: ignore[operator]
+        _write_fixtures(p, data)
+        with pytest.raises(ValueError, match="difficulty must be a string"):
+            load_fixtures(p)
 
     def test_missing_fields_raises(self, tmp_path: object) -> None:
         p = str(tmp_path / "bad.json")  # type: ignore[operator]
@@ -242,6 +267,54 @@ class TestAntiPrecision:
 
 
 # ---------------------------------------------------------------------------
+# TestNoiseRatio
+# ---------------------------------------------------------------------------
+
+
+class TestNoiseRatio:
+    def test_all_relevant(self) -> None:
+        assert noise_ratio(["a", "b"], {"a", "b"}) == 0.0
+
+    def test_all_irrelevant(self) -> None:
+        assert noise_ratio(["x", "y"], {"a"}) == 1.0
+
+    def test_mixed(self) -> None:
+        assert noise_ratio(["a", "x", "b"], {"a", "b"}) == pytest.approx(1 / 3)
+
+    def test_empty_retrieved(self) -> None:
+        assert noise_ratio([], {"a"}) == 0.0
+
+    def test_empty_relevant(self) -> None:
+        assert noise_ratio(["x", "y"], set()) == 1.0
+
+
+# ---------------------------------------------------------------------------
+# TestContextWasteRatio
+# ---------------------------------------------------------------------------
+
+
+class TestContextWasteRatio:
+    def test_all_relevant(self) -> None:
+        assert context_waste_ratio(["abc", "de"], {"abc", "de"}) == 0.0
+
+    def test_all_irrelevant(self) -> None:
+        assert context_waste_ratio(["abc", "de"], set()) == 1.0
+
+    def test_mixed_char_weighted(self) -> None:
+        # "short" (5 chars) relevant, "a very long irrelevant rule" (27 chars) not
+        retrieved = ["short", "a very long irrelevant rule"]
+        relevant = {"short"}
+        ratio = context_waste_ratio(retrieved, relevant)
+        assert ratio == pytest.approx(27 / 32)
+
+    def test_empty_retrieved(self) -> None:
+        assert context_waste_ratio([], {"a"}) == 0.0
+
+    def test_empty_strings(self) -> None:
+        assert context_waste_ratio(["", ""], {"a"}) == 0.0
+
+
+# ---------------------------------------------------------------------------
 # Mock model for run_eval
 # ---------------------------------------------------------------------------
 
@@ -294,6 +367,7 @@ class TestRunEval:
                 corpus="rules.txt",
                 should_match=("Never commit secrets",),
                 should_not_match=("Send Enter after tmux",),
+                difficulty="medium",
             ),
         ]
         return corpus_dir, fixtures
@@ -317,14 +391,18 @@ class TestRunEval:
         fr = summary.per_fixture[0]
         assert fr.fixture_id == "test-1"
         assert fr.query == "how to commit safely"
+        assert fr.difficulty == "medium"
         assert len(fr.retrieved) > 0
         assert fr.latency_ms >= 0.0
+        assert fr.retrieved_count > 0
         # Metrics are computable (not NaN)
         assert fr.precision_at_k >= 0.0
         assert fr.recall_at_k >= 0.0
         assert fr.mrr >= 0.0
         assert fr.ndcg_at_k >= 0.0
         assert fr.anti_precision >= 0.0
+        assert 0.0 <= fr.noise_ratio <= 1.0
+        assert 0.0 <= fr.context_waste_ratio <= 1.0
 
     def test_all_metrics_computed(self, tmp_path: object) -> None:
         corpus_dir, fixtures = self._setup_corpus(tmp_path)
@@ -339,6 +417,10 @@ class TestRunEval:
         assert summary.mean_mrr >= 0.0
         assert summary.mean_ndcg >= 0.0
         assert summary.mean_anti_precision >= 0.0
+        assert 0.0 <= summary.mean_noise_ratio <= 1.0
+        assert 0.0 <= summary.mean_context_waste_ratio <= 1.0
+        assert summary.mean_retrieved_count >= 0.0
+        assert len(summary.per_tier) > 0
         assert summary.latency_p50_ms >= 0.0
         assert summary.latency_p95_ms >= 0.0
         assert summary.latency_p99_ms >= 0.0
@@ -388,10 +470,17 @@ class TestRunEval:
             Fixture(
                 id="f1", query="q1", corpus="rules.txt",
                 should_match=("Rule A",), should_not_match=(),
+                difficulty="easy",
             ),
             Fixture(
                 id="f2", query="q2", corpus="rules.txt",
                 should_match=("Rule B",), should_not_match=(),
+                difficulty="hard",
+            ),
+            Fixture(
+                id="f3", query="q3", corpus="rules.txt",
+                should_match=(), should_not_match=(),
+                difficulty="custom_tier",
             ),
         ]
         model = MockModel()
@@ -399,8 +488,16 @@ class TestRunEval:
             fixtures, corpus_dir, "test-model", model=model, threshold=0.0,
         )
 
-        assert summary.fixture_count == 2
-        assert len(summary.per_fixture) == 2
+        assert summary.fixture_count == 3
+        assert len(summary.per_fixture) == 3
+        # Per-tier: easy, hard, and custom_tier (unknown)
+        tiers = {t.tier: t for t in summary.per_tier}
+        assert "easy" in tiers
+        assert "hard" in tiers
+        assert "custom_tier" in tiers
+        assert tiers["easy"].count == 1
+        assert tiers["hard"].count == 1
+        assert tiers["custom_tier"].count == 1
 
 
 # ---------------------------------------------------------------------------
@@ -416,12 +513,16 @@ class TestFormatEvalReport:
             FixtureResult(
                 fixture_id=f"fixture-{i}",
                 query=f"query {i}",
+                difficulty="medium",
                 retrieved=("rule-a",),
                 precision_at_k=0.8,
                 recall_at_k=0.6,
                 mrr=1.0,
                 ndcg_at_k=0.9,
                 anti_precision=0.0,
+                noise_ratio=0.2,
+                context_waste_ratio=0.15,
+                retrieved_count=1,
                 latency_ms=1.5,
             )
             for i in range(fixture_count)
@@ -433,10 +534,27 @@ class TestFormatEvalReport:
             mean_mrr=1.0,
             mean_ndcg=0.9,
             mean_anti_precision=0.0,
+            mean_noise_ratio=0.2,
+            mean_context_waste_ratio=0.15,
+            negative_silence_rate=1.0,
+            mean_retrieved_count=1.0,
             latency_p50_ms=1.5,
             latency_p95_ms=2.0,
             latency_p99_ms=2.5,
             per_fixture=per_fixture,
+            per_tier=(
+                TierSummary(
+                    tier="medium",
+                    count=fixture_count,
+                    mean_precision=0.8,
+                    mean_recall=0.6,
+                    mean_mrr=1.0,
+                    mean_noise_ratio=0.2,
+                    mean_context_waste_ratio=0.15,
+                    silence_rate=0.0,
+                    mean_retrieved_count=1.0,
+                ),
+            ),
         )
 
     def test_produces_readable_output(self) -> None:
@@ -460,24 +578,33 @@ class TestFormatEvalReport:
             mean_mrr=0.0,
             mean_ndcg=0.0,
             mean_anti_precision=0.0,
+            mean_noise_ratio=0.0,
+            mean_context_waste_ratio=0.0,
+            negative_silence_rate=0.0,
+            mean_retrieved_count=0.0,
             latency_p50_ms=0.0,
             latency_p95_ms=0.0,
             latency_p99_ms=0.0,
             per_fixture=(),
+            per_tier=(),
         )
         report = format_eval_report(summary)
 
         assert "Evaluation Report" in report
-        assert "Fixtures:          0" in report
+        assert "Fixtures:" in report
 
     def test_contains_all_metric_labels(self) -> None:
         summary = self._make_summary()
         report = format_eval_report(summary)
 
         for label in [
-            "P@k", "R@k", "MRR", "nDCG@k", "AntiP", "Latency(ms)",
+            "P@k", "R@k", "MRR", "nDCG", "Noise", "Waste",
+            "AntiP", "#Ret", "Lat(ms)",
             "Mean Precision@k", "Mean Recall@k", "Mean MRR",
             "Mean nDCG@k", "Mean Anti-P",
+            "Mean Noise Ratio", "Mean Context Waste",
+            "Neg Silence Rate", "Mean Retrieved Count",
             "Latency p50", "Latency p95", "Latency p99",
+            "Per-Tier Breakdown",
         ]:
             assert label in report, f"Missing label: {label}"
