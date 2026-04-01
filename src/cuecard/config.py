@@ -340,20 +340,45 @@ def load_config(
         msg = f"Invalid pipeline mode {pipeline_mode!r}"
         raise ConfigError(msg)
 
+    pipeline_local_endpoint = project_flat.get(
+        "pipeline_local_endpoint",
+        global_flat.get("pipeline_local_endpoint", "http://localhost:8081/v1"),
+    )
+    pipeline_haiku_model = project_flat.get(
+        "pipeline_haiku_model",
+        global_flat.get("pipeline_haiku_model", "claude-haiku-4-5"),
+    )
+    pipeline_thinking = project_flat.get(
+        "pipeline_thinking",
+        global_flat.get("pipeline_thinking", False),
+    )
+
+    # Validate endpoint at config load time (H1 fix)
+    if pipeline_mode in ("rerank-llm-local",):
+        from cuecard.llm_reranker import validate_endpoint
+        validate_endpoint(pipeline_local_endpoint)
+
+    # Validate haiku model at config load time (M2 fix)
+    if pipeline_mode in ("rerank-llm-haiku",):
+        from cuecard.llm_reranker import _ALLOWED_HAIKU_MODELS
+        if pipeline_haiku_model not in _ALLOWED_HAIKU_MODELS:
+            msg = (
+                f"Haiku model {pipeline_haiku_model!r} not in allowlist. "
+                f"Allowed: {sorted(_ALLOWED_HAIKU_MODELS)}"
+            )
+            raise ConfigError(msg)
+
+    # Validate thinking is bool (M3 fix)
+    if not isinstance(pipeline_thinking, bool):
+        got = type(pipeline_thinking).__name__
+        msg = f"pipeline.llm.thinking must be a boolean, got {got}"
+        raise ConfigError(msg)
+
     pipeline_config = PipelineConfig(
         mode=pipeline_mode,
-        local_endpoint=project_flat.get(
-            "pipeline_local_endpoint",
-            global_flat.get("pipeline_local_endpoint", "http://localhost:8081/v1"),
-        ),
-        haiku_model=project_flat.get(
-            "pipeline_haiku_model",
-            global_flat.get("pipeline_haiku_model", "claude-haiku-4-5"),
-        ),
-        thinking=project_flat.get(
-            "pipeline_thinking",
-            global_flat.get("pipeline_thinking", False),
-        ),
+        local_endpoint=pipeline_local_endpoint,
+        haiku_model=pipeline_haiku_model,
+        thinking=pipeline_thinking,
     )
 
     return ResolvedConfig(

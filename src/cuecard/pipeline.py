@@ -88,7 +88,8 @@ def _resolve_mode(mode: str | None, config: ResolvedConfig) -> str:
         effective = "embedding"
 
     if effective not in VALID_MODES:
-        msg = f"Invalid pipeline mode {effective!r}. Valid: {sorted(VALID_MODES)}"
+        capped = effective[:50] if isinstance(effective, str) else str(effective)[:50]
+        msg = f"Invalid pipeline mode {capped!r}. Valid: {sorted(VALID_MODES)}"
         raise ValueError(msg)
 
     return effective
@@ -191,8 +192,13 @@ def _run_llm_stage(
     try:
         from cuecard import llm_reranker
 
+        llm_kwargs: dict[str, object] = {"backend": backend}
+        if hasattr(config, "pipeline"):
+            llm_kwargs["endpoint"] = config.pipeline.local_endpoint
+            llm_kwargs["haiku_model"] = config.pipeline.haiku_model
+            llm_kwargs["thinking"] = config.pipeline.thinking
         results = llm_reranker.rerank_llm(
-            candidates, query, backend=backend,
+            candidates, query, **llm_kwargs,  # type: ignore[arg-type]
         )
         latency_ms = (time.monotonic() - t0) * 1000.0
         return results, StageTrace(

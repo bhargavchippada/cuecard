@@ -334,6 +334,14 @@ def retrieve(
     # Determine effective mode: explicit flag > config > default
     effective_mode = mode if mode else cfg.pipeline.mode
 
+    from cuecard.pipeline import VALID_MODES
+    if effective_mode not in VALID_MODES:
+        err_console.print(
+            f"[red]Invalid mode {effective_mode!r}. "
+            f"Valid: {sorted(VALID_MODES)}[/red]",
+        )
+        raise typer.Exit(1)
+
     if effective_mode != "embedding":
         from cuecard.pipeline import run_pipeline
 

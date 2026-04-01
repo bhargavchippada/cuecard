@@ -519,6 +519,27 @@ class TestRetrieve:
         assert result.exit_code == 0
         mock_pipe.assert_called_once()
 
+    def test_retrieve_invalid_mode_exits(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        idx = _make_sample_index()
+        mock_model = MagicMock()
+
+        with (
+            patch("cuecard.indexer.load_index", return_value=idx),
+            patch("fastembed.TextEmbedding", return_value=mock_model),
+        ):
+            result = runner.invoke(
+                app, ["retrieve", "test", "--mode", "invalid-mode"],
+            )
+
+        assert result.exit_code == 1
+        assert "Invalid mode" in result.output
+
     def test_retrieve_with_config_pipeline_mode(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:

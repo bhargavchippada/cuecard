@@ -463,6 +463,32 @@ class TestPipelineConfig:
         with pytest.raises(ConfigError, match="Invalid pipeline mode"):
             load_config(project_dir=project, home_dir=home)
 
+    def test_haiku_model_invalid_raises(self, tmp_path: Path) -> None:
+        home = tmp_path / "home"
+        home.mkdir()
+        project = tmp_path / "project"
+        project.mkdir()
+        (project / "cuecard.toml").write_text(
+            '[pipeline]\n'
+            'mode = "rerank-llm-haiku"\n\n'
+            '[pipeline.llm]\n'
+            'haiku_model = "gpt-4o"\n'
+        )
+        with pytest.raises(ConfigError, match="not in allowlist"):
+            load_config(project_dir=project, home_dir=home)
+
+    def test_thinking_non_bool_raises(self, tmp_path: Path) -> None:
+        home = tmp_path / "home"
+        home.mkdir()
+        project = tmp_path / "project"
+        project.mkdir()
+        (project / "cuecard.toml").write_text(
+            '[pipeline]\nmode = "embedding"\n\n'
+            '[pipeline.llm]\nthinking = "yes"\n'
+        )
+        with pytest.raises(ConfigError, match="must be a boolean"):
+            load_config(project_dir=project, home_dir=home)
+
     def test_pipeline_extract_flat(self) -> None:
         raw = {
             "pipeline": {
