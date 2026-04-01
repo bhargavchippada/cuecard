@@ -53,6 +53,10 @@ cuecard/
 │   ├── test_freshness.py
 │   ├── test_retriever.py
 │   ├── test_formatter.py
+│   ├── test_pipeline.py
+│   ├── test_reranker.py
+│   ├── test_llm_reranker.py
+│   ├── test_eval.py
 │   └── test_cli.py
 ├── pyproject.toml
 └── LICENSE
@@ -152,10 +156,11 @@ Merge: scalars = project wins, sources = union, model = project wins (must match
 
 ## Implementation Status
 
-- **Phase 1:** Core pipeline — COMPLETE (400 tests, 100% coverage)
+- **Phase 1:** Core pipeline — COMPLETE
 - **Phase 2:** Adapter + logging — COMPLETE
 - **Phase 3:** Eval framework + notebook — COMPLETE
-- **Multi-stage:** Pipeline orchestrator — COMPLETE. Reranker + LLM reranker — IN PROGRESS
+- **Multi-stage:** Pipeline orchestrator + reranker + LLM reranker — COMPLETE (494 tests, 100% coverage)
+- **Eval metrics:** Precision/context efficiency metrics — COMPLETE (noise ratio, context waste, per-tier breakdown, negative silence rate)
 - **Phase 4:** Publish — pending
 - **Phase 4:** Publish (PyPI, GitHub, CI)
 
