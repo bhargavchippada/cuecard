@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -15,6 +16,23 @@ if TYPE_CHECKING:
     from fastembed import TextEmbedding
 
 logger = logging.getLogger(__name__)
+
+# --- Query normalization ---
+
+_TOOL_PREFIX_RE = re.compile(
+    r"^(Bash|Read|Write|Edit|Glob|Grep|NotebookEdit|WebSearch"
+    r"|WebFetch|Agent|AskUserQuestion):\s*",
+)
+
+
+def normalize_query(query: str) -> str:
+    """Normalize a tool-call query for better semantic matching.
+
+    Strips the tool name prefix (e.g. "Bash: ") so the embedding
+    focuses on the action semantics rather than the tool type.
+    Preserves the original text after the prefix.
+    """
+    return _TOOL_PREFIX_RE.sub("", query)
 
 
 def retrieve(
@@ -47,6 +65,9 @@ def retrieve(
     """
     if index.size == 0:
         return []
+
+    # Normalize: strip tool prefix for better semantic matching
+    query = normalize_query(query)
 
     if len(query) > max_query_length:
         logger.warning(

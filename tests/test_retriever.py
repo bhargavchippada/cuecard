@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from cuecard.models import Index, Provenance, Rule
-from cuecard.retriever import merge_indexes, retrieve
+from cuecard.retriever import merge_indexes, normalize_query, retrieve
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -337,3 +337,47 @@ class TestMergeIndexes:
         assert merged_embs.shape[0] == 0
 
 
+
+
+# ---------------------------------------------------------------------------
+# TestNormalizeQuery
+# ---------------------------------------------------------------------------
+
+
+class TestNormalizeQuery:
+    def test_strips_bash_prefix(self) -> None:
+        assert normalize_query("Bash: git commit -m 'fix'") == "git commit -m 'fix'"
+
+    def test_strips_read_prefix(self) -> None:
+        query = 'Read: {"file_path": "src/main.py"}'
+        assert normalize_query(query) == '{"file_path": "src/main.py"}'
+
+    def test_strips_edit_prefix(self) -> None:
+        assert normalize_query("Edit: src/auth.py") == "src/auth.py"
+
+    def test_strips_write_prefix(self) -> None:
+        assert normalize_query("Write: /tmp/out.txt") == "/tmp/out.txt"
+
+    def test_preserves_non_tool_query(self) -> None:
+        assert normalize_query("how to commit safely") == "how to commit safely"
+
+    def test_preserves_bash_in_middle(self) -> None:
+        assert normalize_query("run Bash: ls") == "run Bash: ls"
+
+    def test_empty_string(self) -> None:
+        assert normalize_query("") == ""
+
+    def test_tool_prefix_only(self) -> None:
+        assert normalize_query("Bash: ") == ""
+
+    def test_case_sensitive(self) -> None:
+        assert normalize_query("bash: ls") == "bash: ls"
+
+    def test_all_tool_types(self) -> None:
+        for tool in [
+            "Bash", "Read", "Write", "Edit", "Glob", "Grep",
+            "NotebookEdit", "WebSearch", "WebFetch", "Agent",
+            "AskUserQuestion",
+        ]:
+            result = normalize_query(f"{tool}: some action")
+            assert result == "some action", f"Failed for {tool}"
