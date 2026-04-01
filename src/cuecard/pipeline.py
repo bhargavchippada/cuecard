@@ -114,7 +114,7 @@ def _run_embedding_stage(
     else:
         retrieval = getattr(config, "retrieval", None)
         top_k = getattr(retrieval, "recall_top_k", 20) if retrieval else 20
-        threshold = getattr(retrieval, "recall_threshold", 0.10) if retrieval else 0.10
+        threshold = getattr(retrieval, "recall_threshold", 0.20) if retrieval else 0.20
 
     input_count = index.size
     t0 = time.monotonic()

@@ -532,7 +532,7 @@ class TestRecallParams:
 
         call_kwargs = mock_ret.call_args
         assert call_kwargs.kwargs["top_k"] == 20
-        assert call_kwargs.kwargs["threshold"] == 0.10
+        assert call_kwargs.kwargs["threshold"] == 0.20
 
 
 class TestModeOverride:
