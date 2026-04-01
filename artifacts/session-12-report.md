@@ -131,6 +131,35 @@ Expanded from 90 → 226 fixtures:
 - **79 negative**: queries where no rules should match
 - Sources: 90 existing + 50 edge cases + 30 negatives + 56 mined from real delulu sessions
 
+## Quality Iteration Findings
+
+### Approaches Tried and Results
+
+| Approach | Result | Verdict |
+|----------|--------|---------|
+| Query normalization (strip tool prefix) | -6.9% hard recall | **Reverted** — jina-code benefits from tool prefix |
+| Cross-encoder (MiniLM) | -5.7% recall, -11% precision | **Regression** — trained on web search, not code |
+| LLM reranker (Qwen3.5-35B) | +21% recall, but +22% noise | **Promising** — needs prompt improvement |
+| Adaptive score gap filter | No improvement over threshold | **Not worth complexity** |
+| Score ratio filter | Marginal noise reduction | **Not worth complexity** |
+
+### Fundamental Insight
+
+The embedding model (jina-code) has a **hard quality ceiling** for this task:
+- Easy queries: ~91% recall (keyword overlap → embeddings work well)
+- Medium queries: ~58% recall (semantic gap → embeddings struggle)
+- Hard queries: ~29% recall (indirect reasoning → embeddings can't do this)
+- Noise: ~61% at any threshold that preserves recall
+
+**No amount of post-retrieval filtering can fix this.** The problem is that relevant and irrelevant rules score too similarly in the embedding space. The score distributions overlap heavily (match median=0.350, non-match max=0.703).
+
+### Path Forward
+
+1. **LLM reranker is the quality lever** — it can understand semantics that embeddings miss
+2. **Prompt engineering** for the LLM to also FILTER (not just select) — return empty when nothing matches
+3. **Embedding-only mode is production-ready for easy queries** — 91% recall is good
+4. **Consider the fixture expectations** — some "should_match" may be unreasonable for any IR system
+
 ## What's Next
 
 1. **Run re-ranker benchmarks** — evaluate cross-encoder + LLM modes on 226 fixtures to measure noise reduction
