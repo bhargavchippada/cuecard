@@ -1,0 +1,13 @@
+{
+  "embedding_model": "jinaai/jina-embeddings-v2-base-code",
+  "reranker_model": "Xenova/ms-marco-MiniLM-L-6-v2",
+  "n_fixtures": 68,
+  "embedding_recall": 0.6789,
+  "reranked_recall": 0.6985,
+  "embedding_precision": 0.3355,
+  "reranked_precision": 0.1625,
+  "embedding_mrr": 0.5544,
+  "reranked_mrr": 0.4471,
+  "rerank_latency_p50": 37.48,
+  "rerank_latency_p95": 182.46
+}
