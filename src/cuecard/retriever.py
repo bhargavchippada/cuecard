@@ -66,9 +66,6 @@ def retrieve(
     if index.size == 0:
         return []
 
-    # Normalize: strip tool prefix for better semantic matching
-    query = normalize_query(query)
-
     if len(query) > max_query_length:
         logger.warning(
             "Query truncated from %d to %d characters",
