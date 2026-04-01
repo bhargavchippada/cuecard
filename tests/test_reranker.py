@@ -245,3 +245,35 @@ class TestLoadModel:
             model_name="Xenova/ms-marco-MiniLM-L-6-v2",
         )
         assert result == mock_cls.return_value
+
+
+class TestRerankRawFloatScores:
+    """Test reranker with raw float scores (as returned by real fastembed)."""
+
+    def test_raw_float_scores(self) -> None:
+        """fastembed TextCrossEncoder returns raw floats, not objects."""
+        candidates = _make_candidates(3)
+        model = MagicMock()
+        # Real fastembed returns list of floats in document order
+        model.rerank.return_value = [-5.0, -2.0, -8.0]
+
+        result = rerank(candidates, "test query", model=model, top_k=2)
+
+        assert len(result) == 2
+        # Sorted by score desc: index 1 (-2.0) > index 0 (-5.0)
+        assert result[0].rule.text == "Rule number 1"
+        assert result[1].rule.text == "Rule number 0"
+
+    def test_generic_fallback_scores(self) -> None:
+        """Non-float, non-object values are cast to float."""
+        candidates = _make_candidates(2)
+        model = MagicMock()
+        # Simulate unexpected type that's still float-castable
+        import numpy as np
+
+        model.rerank.return_value = [np.float32(-1.0), np.float32(-3.0)]
+
+        result = rerank(candidates, "test query", model=model, top_k=2)
+
+        assert len(result) == 2
+        assert result[0].rule.text == "Rule number 0"

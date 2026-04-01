@@ -63,20 +63,23 @@ def rerank(
 
     documents = [c.rule.text for c in candidates]
 
-    # fastembed rerank() returns list of (index, score) tuples
-    raw_results = list(encoder.rerank(
+    # fastembed rerank() returns scores in document order (list of floats)
+    raw_scores = list(encoder.rerank(
         query=query,
         documents=documents,
         top_k=len(candidates),
     ))
 
-    # Pair scores with original candidates and sort descending
+    # Pair each score with its index, sort descending
     scored: list[tuple[int, float]] = []
-    for result in raw_results:
-        # fastembed returns objects with .index and .score attributes
-        idx: int = result.index if hasattr(result, "index") else result[0]  # type: ignore[index]
-        score: float = result.score if hasattr(result, "score") else result[1]  # type: ignore[index]
-        scored.append((idx, score))
+    for i, raw in enumerate(raw_scores):
+        # fastembed may return floats or objects with .score/.index
+        if isinstance(raw, (int, float)):
+            scored.append((i, float(raw)))
+        elif hasattr(raw, "index") and hasattr(raw, "score"):
+            scored.append((int(raw.index), float(raw.score)))
+        else:
+            scored.append((i, float(raw)))
 
     scored.sort(key=lambda x: x[1], reverse=True)
 
