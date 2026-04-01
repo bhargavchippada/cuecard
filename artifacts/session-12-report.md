@@ -50,7 +50,22 @@ Session 12 completed the multi-stage retrieval pipeline (Stages 2 & 3), expanded
 - CLI `--mode` flag on `retrieve` and `eval` commands
 - Adapter reads pipeline mode from config
 
-## Benchmark Results (226 fixtures, jina-embeddings-v2-base-code, threshold=0.30)
+## Pipeline Mode Benchmarks (226 fixtures, jina-code)
+
+### Mode Comparison
+
+| Mode | Recall | Precision | MRR | Noise | NegSilence | AvgRet | Latency p50 |
+|------|--------|-----------|-----|-------|------------|--------|-------------|
+| **embedding** (t=0.30) | 0.394 | 0.233 | 0.434 | 0.607 | 0.342 | 2.8 | 15ms |
+| **rerank** (cross-encoder) | 0.337 | 0.123 | 0.311 | 0.877 | 0.000 | 5.0 | 110ms |
+| **llm-local** (Qwen3.5-35B) | 0.458 | 0.161 | — | 0.839 | 0.000 | 5.0 | ~2s |
+
+**Key finding: cross-encoder is a regression.** MiniLM was trained on web search, not code. It reorders results incorrectly for code queries, dropping recall -5.7% and precision -11%. New `llm-local`/`llm-haiku` modes skip the cross-encoder entirely.
+
+### Critical Bug Fixed: Cross-Encoder Was Silently Failing
+fastembed's `TextCrossEncoder.rerank()` returns raw floats, not objects with `.index`/`.score`. The reranker crashed on every call, and the pipeline's graceful degradation masked it — falling back to 20 unfiltered embedding candidates. Fixed in `f6c14cc`.
+
+## Embedding-Only Benchmark (226 fixtures, threshold=0.30)
 
 ### Aggregate
 
