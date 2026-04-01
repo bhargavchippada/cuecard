@@ -7,7 +7,6 @@ import json
 import os
 import stat
 from pathlib import Path
-from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -21,9 +20,6 @@ from cuecard.indexer import (
     save_index,
 )
 from cuecard.models import Index, Provenance, Rule, SourceMeta
-
-if TYPE_CHECKING:
-    pass
 
 
 def _make_mock_model(dim: int = 384, n_rules: int = 5) -> MagicMock:
@@ -124,7 +120,8 @@ class TestBuildIndex:
         model = MagicMock()
         # Return a bare 1D array — list() iterates over elements, producing
         # np.array([scalar, scalar, ...]) which is 1D, triggering the reshape.
-        flat_embedding = np.random.default_rng(42).standard_normal(384).astype(np.float32)
+        rng = np.random.default_rng(42)
+        flat_embedding = rng.standard_normal(384).astype(np.float32)
         model.passage_embed.return_value = flat_embedding
         index = build_index(rules, {}, "test-model", model=model)
 

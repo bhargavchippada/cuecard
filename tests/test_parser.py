@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from cuecard.parser import parse_rules
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestParseTxtHappyPath:
@@ -59,7 +62,9 @@ class TestParseTxtSkipping:
 
 
 class TestRuleTruncation:
-    def test_long_rule_truncated(self, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    def test_long_rule_truncated(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture,
+    ) -> None:
         f = tmp_path / "rules.txt"
         long_text = "x" * 600
         f.write_text(long_text + "\n")
@@ -72,7 +77,9 @@ class TestRuleTruncation:
         assert rules[0].text == "x" * 500
         assert "exceeds 500 chars" in caplog.text
 
-    def test_exactly_500_not_truncated(self, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    def test_exactly_500_not_truncated(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture,
+    ) -> None:
         f = tmp_path / "rules.txt"
         text = "y" * 500
         f.write_text(text + "\n")
@@ -104,7 +111,10 @@ class TestUnsupportedFormats:
         f = tmp_path / "rules.md"
         f.write_text("# Heading\n")
 
-        with pytest.raises(NotImplementedError, match="Markdown parsing not yet implemented"):
+        with pytest.raises(
+            NotImplementedError,
+            match="Markdown parsing not yet implemented",
+        ):
             parse_rules((str(f),))
 
     def test_unsupported_suffix_raises_value_error(self, tmp_path: Path) -> None:

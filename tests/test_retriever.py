@@ -7,10 +7,9 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from cuecard.models import Index, Provenance, RankedResult, Rule, SourceMeta
 from cuecard._math import l2_normalize
+from cuecard.models import Index, Provenance, Rule
 from cuecard.retriever import merge_indexes, retrieve
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -128,7 +127,6 @@ class TestRetrieve:
 
     def test_semantic_dedup_removes_near_duplicates(self) -> None:
         """Near-duplicate embeddings are collapsed to the higher-scored one."""
-        dim = 8
         base = _l2(np.array([[1.0, 0, 0, 0, 0, 0, 0, 0]], dtype=np.float32))
         # second embedding almost identical to first (cosine > 0.99)
         near_dup = _l2(base + np.array([[0, 0.01, 0, 0, 0, 0, 0, 0]], dtype=np.float32))
@@ -152,7 +150,6 @@ class TestRetrieve:
 
     def test_query_vector_isl2_normalized(self) -> None:
         """Even an unnormalized query vector produces correct cosine scores."""
-        dim = 4
         emb = _l2(np.array([[1, 0, 0, 0]], dtype=np.float32))
         rules = (_rule("only rule"),)
         idx = _make_index(emb, rules)
@@ -292,7 +289,6 @@ class TestMergeIndexes:
 
     def test_model_name_mismatch_raises(self) -> None:
         """ValueError on mismatched model names."""
-        dim = 4
         emb = _l2(np.array([[1, 0, 0, 0]], dtype=np.float32))
         rules = (_rule("r"),)
         idx1 = _make_index(emb, rules, model_name="model-a")
@@ -315,7 +311,6 @@ class TestMergeIndexes:
 
     def test_single_index_passthrough(self) -> None:
         """A single index passes through unchanged."""
-        dim = 4
         emb = _l2(np.array([[1, 0, 0, 0], [0, 1, 0, 0]], dtype=np.float32))
         rules = (_rule("r1"), _rule("r2", 2))
         idx = _make_index(emb, rules)

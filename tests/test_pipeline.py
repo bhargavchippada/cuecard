@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import sys
-import types
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
@@ -130,13 +129,22 @@ class TestRerankModeGraceful:
         config: ResolvedConfig,
         fake_results: list[RankedResult],
     ) -> None:
+        import cuecard
+
+        real_mod = getattr(cuecard, "reranker", None)
         with (
             patch("cuecard.retriever.retrieve", return_value=fake_results),
             patch.dict(sys.modules, {"cuecard.reranker": None}),
         ):
-            result = run_pipeline(
-                "test query", sample_index, config, mode="rerank",
-            )
+            if hasattr(cuecard, "reranker"):
+                delattr(cuecard, "reranker")
+            try:
+                result = run_pipeline(
+                    "test query", sample_index, config, mode="rerank",
+                )
+            finally:
+                if real_mod is not None:
+                    cuecard.reranker = real_mod  # type: ignore[attr-defined]
 
         assert result.mode == "rerank"
         assert result.results == fake_results
@@ -157,6 +165,12 @@ class TestLLMModeGraceful:
         config: ResolvedConfig,
         fake_results: list[RankedResult],
     ) -> None:
+        import cuecard
+
+        saved = {
+            "reranker": getattr(cuecard, "reranker", None),
+            "llm_reranker": getattr(cuecard, "llm_reranker", None),
+        }
         with (
             patch("cuecard.retriever.retrieve", return_value=fake_results),
             patch.dict(
@@ -164,9 +178,18 @@ class TestLLMModeGraceful:
                 {"cuecard.reranker": None, "cuecard.llm_reranker": None},
             ),
         ):
-            result = run_pipeline(
-                "test query", sample_index, config, mode="rerank-llm-local",
-            )
+            for attr in ("reranker", "llm_reranker"):
+                if hasattr(cuecard, attr):
+                    delattr(cuecard, attr)
+            try:
+                result = run_pipeline(
+                    "test query", sample_index, config,
+                    mode="rerank-llm-local",
+                )
+            finally:
+                for attr, mod in saved.items():
+                    if mod is not None:
+                        setattr(cuecard, attr, mod)
 
         assert result.mode == "rerank-llm-local"
         assert result.results == fake_results
@@ -181,6 +204,12 @@ class TestLLMModeGraceful:
         config: ResolvedConfig,
         fake_results: list[RankedResult],
     ) -> None:
+        import cuecard
+
+        saved = {
+            "reranker": getattr(cuecard, "reranker", None),
+            "llm_reranker": getattr(cuecard, "llm_reranker", None),
+        }
         with (
             patch("cuecard.retriever.retrieve", return_value=fake_results),
             patch.dict(
@@ -188,9 +217,18 @@ class TestLLMModeGraceful:
                 {"cuecard.reranker": None, "cuecard.llm_reranker": None},
             ),
         ):
-            result = run_pipeline(
-                "test query", sample_index, config, mode="rerank-llm-haiku",
-            )
+            for attr in ("reranker", "llm_reranker"):
+                if hasattr(cuecard, attr):
+                    delattr(cuecard, attr)
+            try:
+                result = run_pipeline(
+                    "test query", sample_index, config,
+                    mode="rerank-llm-haiku",
+                )
+            finally:
+                for attr, mod in saved.items():
+                    if mod is not None:
+                        setattr(cuecard, attr, mod)
 
         assert result.mode == "rerank-llm-haiku"
         assert len(result.stages) == 3
@@ -246,7 +284,10 @@ class TestModeFromConfig:
         cfg = _ConfigWithRetrieval(retrieval=_FakeRetrieval(mode="rerank"))
         with (
             patch("cuecard.retriever.retrieve", return_value=fake_results),
-            patch.dict(sys.modules, {"cuecard.reranker": None}),
+            patch(
+                "cuecard.reranker.rerank",
+                side_effect=RuntimeError("stub"),
+            ),
         ):
             result = run_pipeline(
                 "test query", sample_index, cfg, mode=None,  # type: ignore[arg-type]
@@ -309,12 +350,11 @@ class TestMockReranker:
         fake_results: list[RankedResult],
     ) -> None:
         reranked = fake_results[:2]
-        mock_reranker = types.ModuleType("cuecard.reranker")
-        mock_reranker.rerank = MagicMock(return_value=reranked)  # type: ignore[attr-defined]
+        mock_rerank = MagicMock(return_value=reranked)
 
         with (
             patch("cuecard.retriever.retrieve", return_value=fake_results),
-            patch.dict(sys.modules, {"cuecard.reranker": mock_reranker}),
+            patch("cuecard.reranker.rerank", mock_rerank),
         ):
             result = run_pipeline(
                 "test query", sample_index, config, mode="rerank",
@@ -325,7 +365,7 @@ class TestMockReranker:
         assert result.stages[1].stage == "rerank"
         assert result.stages[1].error is None
         assert result.stages[1].output_count == 2
-        mock_reranker.rerank.assert_called_once()  # type: ignore[attr-defined]
+        mock_rerank.assert_called_once()
 
     def test_rerank_stage_exception(
         self,
@@ -333,14 +373,13 @@ class TestMockReranker:
         config: ResolvedConfig,
         fake_results: list[RankedResult],
     ) -> None:
-        mock_reranker = types.ModuleType("cuecard.reranker")
-        mock_reranker.rerank = MagicMock(  # type: ignore[attr-defined]
+        mock_rerank = MagicMock(
             side_effect=RuntimeError("model failed"),
         )
 
         with (
             patch("cuecard.retriever.retrieve", return_value=fake_results),
-            patch.dict(sys.modules, {"cuecard.reranker": mock_reranker}),
+            patch("cuecard.reranker.rerank", mock_rerank),
         ):
             result = run_pipeline(
                 "test query", sample_index, config, mode="rerank",
@@ -360,17 +399,13 @@ class TestMockLLMReranker:
         fake_results: list[RankedResult],
     ) -> None:
         llm_reranked = fake_results[:1]
-        mock_reranker = types.ModuleType("cuecard.reranker")
-        mock_reranker.rerank = MagicMock(return_value=fake_results[:2])  # type: ignore[attr-defined]
-        mock_llm = types.ModuleType("cuecard.llm_reranker")
-        mock_llm.rerank_llm = MagicMock(return_value=llm_reranked)  # type: ignore[attr-defined]
+        mock_rerank = MagicMock(return_value=fake_results[:2])
+        mock_llm_rerank = MagicMock(return_value=llm_reranked)
 
         with (
             patch("cuecard.retriever.retrieve", return_value=fake_results),
-            patch.dict(
-                sys.modules,
-                {"cuecard.reranker": mock_reranker, "cuecard.llm_reranker": mock_llm},
-            ),
+            patch("cuecard.reranker.rerank", mock_rerank),
+            patch("cuecard.llm_reranker.rerank_llm", mock_llm_rerank),
         ):
             result = run_pipeline(
                 "test query", sample_index, config, mode="rerank-llm-local",
@@ -380,9 +415,9 @@ class TestMockLLMReranker:
         assert len(result.stages) == 3
         assert result.stages[2].stage == "llm"
         assert result.stages[2].error is None
-        mock_llm.rerank_llm.assert_called_once()  # type: ignore[attr-defined]
+        mock_llm_rerank.assert_called_once()
         # Verify backend passed correctly
-        call_kwargs = mock_llm.rerank_llm.call_args  # type: ignore[attr-defined]
+        call_kwargs = mock_llm_rerank.call_args
         assert call_kwargs.kwargs["backend"] == "local"
 
     def test_llm_stage_exception(
@@ -391,19 +426,15 @@ class TestMockLLMReranker:
         config: ResolvedConfig,
         fake_results: list[RankedResult],
     ) -> None:
-        mock_reranker = types.ModuleType("cuecard.reranker")
-        mock_reranker.rerank = MagicMock(return_value=fake_results)  # type: ignore[attr-defined]
-        mock_llm = types.ModuleType("cuecard.llm_reranker")
-        mock_llm.rerank_llm = MagicMock(  # type: ignore[attr-defined]
+        mock_rerank = MagicMock(return_value=fake_results)
+        mock_llm_rerank = MagicMock(
             side_effect=TimeoutError("LLM timeout"),
         )
 
         with (
             patch("cuecard.retriever.retrieve", return_value=fake_results),
-            patch.dict(
-                sys.modules,
-                {"cuecard.reranker": mock_reranker, "cuecard.llm_reranker": mock_llm},
-            ),
+            patch("cuecard.reranker.rerank", mock_rerank),
+            patch("cuecard.llm_reranker.rerank_llm", mock_llm_rerank),
         ):
             result = run_pipeline(
                 "test query", sample_index, config, mode="rerank-llm-haiku",
@@ -428,7 +459,10 @@ class TestRecallParams:
         )
         with (
             patch("cuecard.retriever.retrieve", return_value=fake_results) as mock_ret,
-            patch.dict(sys.modules, {"cuecard.reranker": None}),
+            patch(
+                "cuecard.reranker.rerank",
+                side_effect=RuntimeError("stub"),
+            ),
         ):
             run_pipeline(
                 "test query", sample_index, cfg, mode="rerank",  # type: ignore[arg-type]
@@ -446,7 +480,10 @@ class TestRecallParams:
     ) -> None:
         with (
             patch("cuecard.retriever.retrieve", return_value=fake_results) as mock_ret,
-            patch.dict(sys.modules, {"cuecard.reranker": None}),
+            patch(
+                "cuecard.reranker.rerank",
+                side_effect=RuntimeError("stub"),
+            ),
         ):
             run_pipeline(
                 "test query", sample_index, config, mode="rerank",

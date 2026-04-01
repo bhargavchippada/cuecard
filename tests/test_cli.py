@@ -29,7 +29,9 @@ runner = CliRunner()
 # ---------------------------------------------------------------------------
 
 
-def _make_config_toml(cuecard_dir: Path, *, model: str = "BAAI/bge-small-en-v1.5") -> Path:
+def _make_config_toml(
+    cuecard_dir: Path, *, model: str = "BAAI/bge-small-en-v1.5",
+) -> Path:
     config_path = cuecard_dir / "config.toml"
     config_path.write_text(
         "[sources]\n"
@@ -458,7 +460,10 @@ class TestRetrieve:
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch("cuecard.retriever.retrieve", return_value=[]) as mock_ret,
         ):
-            result = runner.invoke(app, ["retrieve", "test", "--top-k", "3", "--threshold", "0.5"])
+            result = runner.invoke(
+                app,
+                ["retrieve", "test", "--top-k", "3", "--threshold", "0.5"],
+            )
 
         assert result.exit_code == 0
         call_kwargs = mock_ret.call_args[1]
@@ -859,7 +864,10 @@ class TestEmbed:
 
         idx = _make_sample_index()
         index_dir = tmp_path / ".cuecard" / "index"
-        np.savez_compressed(str(index_dir / "embeddings.npz"), embeddings=idx.embeddings)
+        np.savez_compressed(
+            str(index_dir / "embeddings.npz"),
+            embeddings=idx.embeddings,
+        )
 
         with patch("cuecard.indexer.load_index", return_value=idx):
             result = runner.invoke(app, ["embed"])
@@ -1127,7 +1135,10 @@ class TestInstall:
         settings = {
             "hooks": {
                 "PreToolUse": [
-                    {"type": "command", "command": "uv run python -m cuecard.adapters.claude_code"},
+                    {
+                        "type": "command",
+                        "command": "uv run python -m cuecard.adapters.claude_code",
+                    },
                 ],
             },
         }
@@ -1200,7 +1211,10 @@ class TestUninstall:
         settings = {
             "hooks": {
                 "PreToolUse": [
-                    {"type": "command", "command": "uv run python -m cuecard.adapters.claude_code"},
+                    {
+                        "type": "command",
+                        "command": "uv run python -m cuecard.adapters.claude_code",
+                    },
                 ],
             },
         }
@@ -1221,7 +1235,10 @@ class TestUninstall:
             "hooks": {
                 "PreToolUse": [
                     {"type": "command", "command": "other-tool"},
-                    {"type": "command", "command": "uv run python -m cuecard.adapters.claude_code"},
+                    {
+                        "type": "command",
+                        "command": "uv run python -m cuecard.adapters.claude_code",
+                    },
                 ],
             },
         }
@@ -1250,7 +1267,10 @@ class TestStatus:
         settings = {
             "hooks": {
                 "PreToolUse": [
-                    {"type": "command", "command": "uv run python -m cuecard.adapters.claude_code"},
+                    {
+                        "type": "command",
+                        "command": "uv run python -m cuecard.adapters.claude_code",
+                    },
                 ],
             },
         }
@@ -1426,7 +1446,7 @@ class TestAdapterMainGuard:
         assert output["tool_name"] == "Bash"
 
 
-class TestInstall:
+class TestInstallClaudeCode:
     def test_install_creates_hook(
         self,
         tmp_path: Path,
@@ -1510,7 +1530,7 @@ class TestInstall:
         assert "PreToolUse" in settings["hooks"]
 
 
-class TestUninstall:
+class TestUninstallClaudeCode:
     def test_uninstall_removes_hook(
         self,
         tmp_path: Path,
@@ -1588,7 +1608,7 @@ class TestUninstall:
         assert hooks[0]["command"] == "other-tool"
 
 
-class TestStatus:
+class TestStatusDetailed:
     def test_status_no_hook_no_index(
         self,
         tmp_path: Path,
@@ -1652,7 +1672,7 @@ class TestStatus:
         assert "Log:" in result.output
 
 
-class TestLogCmd:
+class TestLogCmdDetailed:
     def test_log_no_entries(
         self,
         tmp_path: Path,

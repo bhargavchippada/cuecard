@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -18,6 +18,9 @@ from cuecard.config import (
 )
 from cuecard.models import ResolvedConfig
 from cuecard.security import ConfigError
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestValidateField:
@@ -296,7 +299,9 @@ class TestLoadConfig:
         config = load_config(home_dir=home)
         assert len(config.source_paths) == 2
 
-    def test_glob_zero_matches_warning(self, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    def test_glob_zero_matches_warning(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture,
+    ) -> None:
         home = tmp_path / "home"
         cuecard_dir = home / ".cuecard"
         cuecard_dir.mkdir(parents=True)
