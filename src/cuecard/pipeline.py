@@ -21,6 +21,8 @@ VALID_MODES = frozenset({
     "rerank",
     "rerank-llm-local",
     "rerank-llm-haiku",
+    "llm-local",
+    "llm-haiku",
 })
 
 
@@ -49,6 +51,8 @@ def run_pipeline(
       - "rerank": Stage 1 + Stage 2 (cross-encoder)
       - "rerank-llm-local": Stage 1 + Stage 2 + Stage 3 (local LLM)
       - "rerank-llm-haiku": Stage 1 + Stage 2 + Stage 3 (Haiku)
+      - "llm-local": Stage 1 + Stage 3 (skip cross-encoder, local LLM)
+      - "llm-haiku": Stage 1 + Stage 3 (skip cross-encoder, Haiku)
 
     Each stage failure degrades gracefully to previous stage results.
     """
@@ -62,12 +66,12 @@ def run_pipeline(
     )
     stages.append(trace)
 
-    # Stage 2: if mode in ("rerank", "rerank-llm-local", "rerank-llm-haiku")
-    if effective_mode != "embedding":
+    # Stage 2: cross-encoder (only for "rerank" and "rerank-llm-*" modes)
+    if effective_mode.startswith("rerank"):
         results, trace = _run_rerank_stage(results, query, config)
         stages.append(trace)
 
-    # Stage 3: if mode includes "llm"
+    # Stage 3: LLM (for any mode containing "llm")
     if "llm" in effective_mode:
         backend = "local" if "local" in effective_mode else "haiku"
         results, trace = _run_llm_stage(results, query, config, backend)
