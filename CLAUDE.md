@@ -12,7 +12,8 @@ cuecard/
 ├── README.md               # Public-facing readme
 ├── .gitignore
 ├── artifacts/              # Design docs
-│   └── prd-v1.md           # PRD v1.2 (2 review rounds converged)
+│   ├── prd-v1.md           # PRD v1.2 — core pipeline (converged)
+│   └── multi-stage-retrieval-prd.md  # Multi-stage PRD v1.1 (converged)
 ├── src/cuecard/            # Core library (agent-agnostic)
 │   ├── __init__.py         # Public API: load_or_build, retrieve, format_rules
 │   ├── models.py           # Frozen dataclasses (Rule, Provenance, Index, etc.)
@@ -23,10 +24,14 @@ cuecard/
 │   ├── freshness.py        # mtime + hash checking, full rebuild on change
 │   ├── retriever.py        # query_embed → dot product → top-k → dedup
 │   ├── formatter.py        # Format results for injection
-│   ├── logger.py           # Structured logging with secrets scrubbing (Phase 2)
-│   ├── cli.py              # Typer CLI entrypoint
+│   ├── pipeline.py         # Multi-stage pipeline orchestrator
+│   ├── reranker.py         # Cross-encoder re-ranking (Stage 2, opt-in)
+│   ├── llm_reranker.py     # LLM re-ranking (Stage 3, opt-in)
+│   ├── eval.py             # Evaluation framework (precision, recall, MRR, nDCG)
+│   ├── logger.py           # Structured JSONL logging with secrets scrubbing
+│   ├── cli.py              # Typer CLI (setup, config, retrieve, rules, eval, etc.)
 │   ├── py.typed            # PEP 561 marker
-│   └── adapters/           # Agent-specific wrappers (Phase 2)
+│   └── adapters/           # Agent-specific wrappers
 │       ├── __init__.py
 │       └── claude_code.py  # Claude Code PreToolUse hook
 ├── tools/
@@ -91,7 +96,9 @@ uv run mypy src/                               # Type check
 
 ### Architecture
 - Core library is agent-agnostic — no Claude Code imports in core modules
-- Adapters are thin wrappers (~15 lines) in `src/cuecard/adapters/`
+- Adapters are thin wrappers in `src/cuecard/adapters/`
+- Multi-stage pipeline: embedding → cross-encoder (opt-in) → LLM (opt-in)
+- pipeline.py orchestrates all stages, CLI/adapter delegate to it
 - Every pipeline step independently callable via CLI
 - Provenance on every data object — trace back to source file + line
 
@@ -120,10 +127,20 @@ See `artifacts/prd-v1.md` Section 17 (Decisions) for the full table (27 decision
 
 Critical ones:
 - D1: Semantic embeddings from day one (not keyword-based)
-- D6: Top-k=5, threshold=0.35 (not 0.15 — that's a no-op)
+- D6: Top-k=5, threshold=0.30 (was 0.35 — that dropped 34% of relevant rules)
 - D7a: Asymmetric encoding (query_embed vs passage_embed)
 - D10: Full rebuild on change (no incremental splice corruption)
 - S1: Path validation with allowlist (prevents traversal)
+
+## Model Recommendations (from benchmarks)
+
+| Stage | Model | Why |
+|-------|-------|-----|
+| Embedding | jina-embeddings-v2-base-code | Best recall (82.5%), code-specific |
+| Cross-encoder (opt-in) | Xenova/ms-marco-MiniLM-L-6-v2 | 13ms, but regressions on code |
+| LLM (lightweight) | Qwen3-Reranker-0.6B via llama-server | MTEB-Code 73.42, promptable, 370MB |
+| LLM (full) | Qwen3.5-35B-A3B via llama-server | Best quality, MoE, free |
+| LLM (API) | Haiku via claude-agent-sdk | Fast, Max subscription |
 
 ## Config
 
@@ -133,11 +150,13 @@ Two locations, layered:
 
 Merge: scalars = project wins, sources = union, model = project wins (must match dim).
 
-## Implementation Phases
+## Implementation Status
 
-- **Phase 1:** Core pipeline (models, config, security, parser, indexer, freshness, retriever, formatter, CLI)
-- **Phase 2:** Adapter + logging + model comparison + install/uninstall commands
-- **Phase 3:** Evaluation framework + notebook
+- **Phase 1:** Core pipeline — COMPLETE (400 tests, 100% coverage)
+- **Phase 2:** Adapter + logging — COMPLETE
+- **Phase 3:** Eval framework + notebook — COMPLETE
+- **Multi-stage:** Pipeline orchestrator — COMPLETE. Reranker + LLM reranker — IN PROGRESS
+- **Phase 4:** Publish — pending
 - **Phase 4:** Publish (PyPI, GitHub, CI)
 
 ## When in Doubt
