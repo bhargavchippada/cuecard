@@ -56,6 +56,22 @@ class TestValidateEndpoint:
         with pytest.raises(ConfigError, match="localhost"):
             validate_endpoint("http://10.0.0.1:8081/v1")
 
+    def test_userinfo_bypass_raises(self) -> None:
+        with pytest.raises(ConfigError, match="userinfo"):
+            validate_endpoint("http://evil.com@localhost:8081/v1")
+
+    def test_file_scheme_raises(self) -> None:
+        with pytest.raises(ConfigError, match="http/https"):
+            validate_endpoint("file:///etc/passwd")
+
+    def test_ftp_scheme_raises(self) -> None:
+        with pytest.raises(ConfigError, match="http/https"):
+            validate_endpoint("ftp://localhost/data")
+
+    def test_password_in_url_raises(self) -> None:
+        with pytest.raises(ConfigError, match="userinfo"):
+            validate_endpoint("http://user:pass@localhost:8081/v1")
+
 
 class TestBuildPrompt:
     def test_system_prompt_contains_nonce(self) -> None:
@@ -97,6 +113,16 @@ class TestBuildPrompt:
         assert len(parts) >= 2
         content_after_tag = parts[1].split(f"</rule_data_{nonce}>")[0]
         assert nonce not in content_after_tag
+
+    def test_nonce_stripped_from_query(self) -> None:
+        """If the query contains the nonce string, it must be removed."""
+        nonce = "deadbeef1234"
+        candidates = _make_candidates(1)
+        _, user = _build_prompt(
+            candidates, f"Bash: echo {nonce}", nonce,
+        )
+        action_line = user.split("ACTION: ")[1]
+        assert nonce not in action_line
 
     def test_query_secrets_scrubbed(self) -> None:
         candidates = _make_candidates(1)
@@ -422,6 +448,22 @@ class TestRerankLLM:
         candidates = _make_candidates(1)
         with pytest.raises(ValueError, match="Invalid backend"):
             rerank_llm(candidates, "test", backend="openai")
+
+    def test_haiku_model_allowlist_rejects_opus(self) -> None:
+        candidates = _make_candidates(1)
+        with pytest.raises(ValueError, match="not in allowlist"):
+            rerank_llm(
+                candidates, "test",
+                backend="haiku", haiku_model="claude-opus-4-5",
+            )
+
+    def test_haiku_model_allowlist_rejects_arbitrary(self) -> None:
+        candidates = _make_candidates(1)
+        with pytest.raises(ValueError, match="not in allowlist"):
+            rerank_llm(
+                candidates, "test",
+                backend="haiku", haiku_model="gpt-4o",
+            )
 
     def test_secrets_scrubbed_from_query(self) -> None:
         candidates = _make_candidates(1)

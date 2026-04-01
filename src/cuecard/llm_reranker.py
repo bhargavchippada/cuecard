@@ -19,6 +19,10 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _ALLOWED_LLM_HOSTS: frozenset[str] = frozenset({"localhost", "127.0.0.1", "::1"})
+_ALLOWED_HAIKU_MODELS: frozenset[str] = frozenset({
+    "claude-haiku-4-5",
+    "claude-haiku-4-5-20251001",
+})
 _MAX_TOKENS = 64
 _TIMEOUT = 30.0
 _NUMBER_LIST_PATTERN = re.compile(r"^\s*\[?\s*(\d+\s*[,\s]\s*)*\d+\s*\]?\s*$")
@@ -58,6 +62,12 @@ def validate_endpoint(endpoint: str) -> None:
     from urllib.parse import urlparse
 
     parsed = urlparse(endpoint)
+    if parsed.scheme not in ("http", "https"):
+        msg = f"llm.local_endpoint must use http/https, got {parsed.scheme!r}"
+        raise ConfigError(msg)
+    if parsed.username or parsed.password:
+        msg = "llm.local_endpoint must not contain userinfo (@ in URL)"
+        raise ConfigError(msg)
     if parsed.hostname not in _ALLOWED_LLM_HOSTS:
         msg = f"llm.local_endpoint must be localhost, got {parsed.hostname!r}"
         raise ConfigError(msg)
@@ -84,6 +94,13 @@ def rerank_llm(
 
     if backend not in ("local", "haiku"):
         msg = f"Invalid backend: {backend!r}, expected 'local' or 'haiku'"
+        raise ValueError(msg)
+
+    if backend == "haiku" and haiku_model not in _ALLOWED_HAIKU_MODELS:
+        msg = (
+            f"Model {haiku_model!r} not in allowlist. "
+            f"Allowed: {sorted(_ALLOWED_HAIKU_MODELS)}"
+        )
         raise ValueError(msg)
 
     fallback = candidates[:top_k]
@@ -124,7 +141,7 @@ def _build_prompt(
     """Build system and user prompts for LLM re-ranking."""
     system_prompt = _SYSTEM_PROMPT_TEMPLATE.format(nonce=nonce)
 
-    scrubbed_query = scrub_secrets(query)
+    scrubbed_query = scrub_secrets(query).replace(nonce, "")
 
     rule_lines: list[str] = []
     for i, candidate in enumerate(candidates, 1):
@@ -158,7 +175,7 @@ def _call_local(
         "temperature": 0.0,
     }
     response = httpx.post(
-        f"{endpoint}/chat/completions",
+        f"{endpoint.rstrip('/')}/chat/completions",
         json=body,
         timeout=_TIMEOUT,
     )
