@@ -1182,6 +1182,31 @@ class TestInstall:
         assert result.exit_code == 0
         assert "Installed" in result.output
 
+    def test_install_no_existing_settings(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        result = runner.invoke(app, ["install", "claude-code"])
+        assert result.exit_code == 0
+        assert "Installed" in result.output
+
+    def test_install_preserves_existing_settings(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir()
+        (claude_dir / "settings.json").write_text(
+            json.dumps({"other_key": "value"}),
+        )
+        result = runner.invoke(app, ["install", "claude-code"])
+        assert result.exit_code == 0
+        settings = json.loads(
+            (claude_dir / "settings.json").read_text(),
+        )
+        assert settings["other_key"] == "value"
+        assert "PreToolUse" in settings["hooks"]
+
 
 # ---------------------------------------------------------------------------
 # uninstall command
@@ -1446,168 +1471,6 @@ class TestAdapterMainGuard:
         assert output["tool_name"] == "Bash"
 
 
-class TestInstallClaudeCode:
-    def test_install_creates_hook(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        _patch_home(monkeypatch, tmp_path)
-        claude_dir = tmp_path / ".claude"
-        claude_dir.mkdir()
-
-        result = runner.invoke(app, ["install", "claude-code"])
-        assert result.exit_code == 0
-        assert "Installed" in result.output
-
-        import json
-
-        settings = json.loads(
-            (claude_dir / "settings.json").read_text(),
-        )
-        hooks = settings["hooks"]["PreToolUse"]
-        assert len(hooks) == 1
-        assert "cuecard" in hooks[0]["command"]
-
-    def test_install_already_installed(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        _patch_home(monkeypatch, tmp_path)
-        claude_dir = tmp_path / ".claude"
-        claude_dir.mkdir()
-
-        # Install once
-        runner.invoke(app, ["install", "claude-code"])
-        # Install again
-        result = runner.invoke(app, ["install", "claude-code"])
-        assert result.exit_code == 0
-        assert "already installed" in result.output
-
-    def test_install_unknown_target(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        _patch_home(monkeypatch, tmp_path)
-        result = runner.invoke(app, ["install", "vscode"])
-        assert result.exit_code == 1
-        assert "Unknown target" in result.output
-
-    def test_install_no_existing_settings(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        _patch_home(monkeypatch, tmp_path)
-        # No .claude dir at all
-        result = runner.invoke(app, ["install", "claude-code"])
-        assert result.exit_code == 0
-        assert "Installed" in result.output
-
-    def test_install_preserves_existing_settings(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        import json
-
-        _patch_home(monkeypatch, tmp_path)
-        claude_dir = tmp_path / ".claude"
-        claude_dir.mkdir()
-        (claude_dir / "settings.json").write_text(
-            json.dumps({"other_key": "value"}),
-        )
-
-        result = runner.invoke(app, ["install", "claude-code"])
-        assert result.exit_code == 0
-
-        settings = json.loads(
-            (claude_dir / "settings.json").read_text(),
-        )
-        assert settings["other_key"] == "value"
-        assert "PreToolUse" in settings["hooks"]
-
-
-class TestUninstallClaudeCode:
-    def test_uninstall_removes_hook(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        _patch_home(monkeypatch, tmp_path)
-        claude_dir = tmp_path / ".claude"
-        claude_dir.mkdir()
-
-        # Install first
-        runner.invoke(app, ["install", "claude-code"])
-        # Then uninstall
-        result = runner.invoke(app, ["uninstall", "claude-code"])
-        assert result.exit_code == 0
-        assert "Uninstalled" in result.output
-
-        import json
-
-        settings = json.loads(
-            (claude_dir / "settings.json").read_text(),
-        )
-        assert "hooks" not in settings
-
-    def test_uninstall_not_installed(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        _patch_home(monkeypatch, tmp_path)
-        result = runner.invoke(app, ["uninstall", "claude-code"])
-        assert result.exit_code == 0
-        assert "not found" in result.output
-
-    def test_uninstall_unknown_target(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        _patch_home(monkeypatch, tmp_path)
-        result = runner.invoke(app, ["uninstall", "vscode"])
-        assert result.exit_code == 1
-        assert "Unknown target" in result.output
-
-    def test_uninstall_preserves_other_hooks(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        import json
-
-        _patch_home(monkeypatch, tmp_path)
-        claude_dir = tmp_path / ".claude"
-        claude_dir.mkdir()
-
-        # Install cuecard + add another hook
-        runner.invoke(app, ["install", "claude-code"])
-        settings = json.loads(
-            (claude_dir / "settings.json").read_text(),
-        )
-        settings["hooks"]["PreToolUse"].append(
-            {"type": "command", "command": "other-tool"},
-        )
-        (claude_dir / "settings.json").write_text(
-            json.dumps(settings),
-        )
-
-        result = runner.invoke(app, ["uninstall", "claude-code"])
-        assert result.exit_code == 0
-
-        updated = json.loads(
-            (claude_dir / "settings.json").read_text(),
-        )
-        hooks = updated["hooks"]["PreToolUse"]
-        assert len(hooks) == 1
-        assert hooks[0]["command"] == "other-tool"
-
-
 class TestStatusDetailed:
     def test_status_no_hook_no_index(
         self,
@@ -1673,16 +1536,6 @@ class TestStatusDetailed:
 
 
 class TestLogCmdDetailed:
-    def test_log_no_entries(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        _patch_home(monkeypatch, tmp_path)
-        result = runner.invoke(app, ["log"])
-        assert result.exit_code == 0
-        assert "No log entries" in result.output
-
     def test_log_shows_entries(
         self,
         tmp_path: Path,
@@ -1710,7 +1563,7 @@ class TestLogCmdDetailed:
         assert result.exit_code == 0
         assert "PreToolUse:Bash" in result.output
 
-    def test_log_stats(
+    def test_log_stats_from_file(
         self,
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
