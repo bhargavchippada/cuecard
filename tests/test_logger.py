@@ -8,8 +8,10 @@ from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 from cuecard.logger import (
+    _TAIL_CHUNK,
     _build_entry,
     _default_log_dir,
+    _tail_lines,
     compute_stats,
     log_retrieval,
     read_log,
@@ -270,6 +272,99 @@ class TestRotateLog:
         log_path = tmp_path / "nonexistent.jsonl"
         rotate_log(log_path, max_size_mb=1)
 
+    def test_race_file_removed_after_lock(self, tmp_path: Path) -> None:
+        """Another process rotated (removed) the file before we got the lock."""
+        log_path = tmp_path / "log.jsonl"
+        # Create a big file so the pre-lock size check passes
+        log_path.write_text("x" * (2 * 1024 * 1024))
+        rotated_1 = tmp_path / "log.jsonl.1"
+
+        import fcntl as _fcntl
+
+        orig_flock = _fcntl.flock
+
+        def _flock_side_effect(fd: int, op: int) -> None:
+            # On LOCK_EX, remove the log file to simulate race
+            if op == _fcntl.LOCK_EX and log_path.exists():
+                log_path.unlink()
+            orig_flock(fd, op)
+
+        with patch("cuecard.logger.fcntl.flock", side_effect=_flock_side_effect):
+            rotate_log(log_path, max_size_mb=1)
+
+        # File was removed by "another process" — no rotation happened
+        assert not rotated_1.exists()
+
+    def test_race_file_shrunk_after_lock(self, tmp_path: Path) -> None:
+        """Another process already rotated — file is now small."""
+        log_path = tmp_path / "log.jsonl"
+        log_path.write_text("x" * (2 * 1024 * 1024))
+
+        import fcntl as _fcntl
+
+        orig_flock = _fcntl.flock
+
+        def _flock_side_effect(fd: int, op: int) -> None:
+            if op == _fcntl.LOCK_EX:
+                # Simulate another process rotating: replace big file with small
+                log_path.write_text("tiny\n")
+            orig_flock(fd, op)
+
+        with patch("cuecard.logger.fcntl.flock", side_effect=_flock_side_effect):
+            rotate_log(log_path, max_size_mb=1)
+
+        # File is still there (small), not rotated
+        assert log_path.exists()
+        assert not (tmp_path / "log.jsonl.1").exists()
+
+
+class TestTailLines:
+    def test_empty_file(self, tmp_path: Path) -> None:
+        p = tmp_path / "empty.jsonl"
+        p.write_bytes(b"")
+        assert _tail_lines(p, 10) == []
+
+    def test_small_file(self, tmp_path: Path) -> None:
+        p = tmp_path / "small.jsonl"
+        p.write_text("line1\nline2\nline3\n")
+        result = _tail_lines(p, 2)
+        assert result == ["line2", "line3"]
+
+    def test_small_file_all_lines(self, tmp_path: Path) -> None:
+        p = tmp_path / "small.jsonl"
+        p.write_text("a\nb\nc\n")
+        result = _tail_lines(p, 100)
+        assert result == ["a", "b", "c"]
+
+    def test_large_file_tail(self, tmp_path: Path) -> None:
+        """File larger than _TAIL_CHUNK exercises seek-backward path."""
+        p = tmp_path / "large.jsonl"
+        line_count = (_TAIL_CHUNK // 50) + 100
+        lines = [json.dumps({"i": i}) for i in range(line_count)]
+        p.write_text("\n".join(lines) + "\n")
+        result = _tail_lines(p, 5)
+        assert len(result) == 5
+
+    def test_large_file_preserves_order(self, tmp_path: Path) -> None:
+        p = tmp_path / "large.jsonl"
+        line_count = (_TAIL_CHUNK // 20) + 50
+        lines = [f"line-{i}" for i in range(line_count)]
+        p.write_text("\n".join(lines) + "\n")
+        result = _tail_lines(p, 3)
+        assert len(result) == 3
+        assert result[-1] == f"line-{line_count - 1}"
+        assert result[-2] == f"line-{line_count - 2}"
+        assert result[-3] == f"line-{line_count - 3}"
+
+    def test_multi_chunk_spanning(self, tmp_path: Path) -> None:
+        """File spanning >2 chunks to exercise the while loop fully."""
+        p = tmp_path / "huge.jsonl"
+        line_count = (_TAIL_CHUNK * 3) // 20
+        lines = [f"row-{i}" for i in range(line_count)]
+        p.write_text("\n".join(lines) + "\n")
+        result = _tail_lines(p, 10)
+        assert len(result) == 10
+
 
 class TestReadLog:
     def test_empty_dir(self, tmp_path: Path) -> None:
@@ -311,6 +406,17 @@ class TestReadLog:
     def test_default_log_dir(self) -> None:
         d = _default_log_dir()
         assert d.name == ".cuecard"
+
+    def test_large_file_uses_tail(self, tmp_path: Path) -> None:
+        """Verify read_log works on files larger than _TAIL_CHUNK."""
+        log_path = tmp_path / "log.jsonl"
+        line_count = (_TAIL_CHUNK // 20) + 100
+        lines = [json.dumps({"i": i}) for i in range(line_count)]
+        log_path.write_text("\n".join(lines) + "\n")
+        entries = read_log(log_dir=tmp_path, limit=10)
+        assert len(entries) == 10
+        # Should be the last 10 entries
+        assert entries[-1]["i"] == line_count - 1
 
 
 class TestComputeStats:
@@ -355,9 +461,9 @@ class TestComputeStats:
             for i in range(100)
         ]
         s = compute_stats(entries)
-        assert s["latency_p50"] == 49.0
-        assert s["latency_p95"] == 94.0
-        assert s["latency_p99"] == 98.0
+        assert s["latency_p50"] == 49.5
+        assert s["latency_p95"] == 94.05
+        assert s["latency_p99"] == 98.01
 
     def test_handles_missing_fields(self) -> None:
         entries: list[dict[str, object]] = [

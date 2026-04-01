@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fcntl
 import json
 import logging
 import os
@@ -142,6 +143,9 @@ def rotate_log(log_path: Path, max_size_mb: int) -> None:
     Rename to log.jsonl.1, start fresh.
     Keep at most 2 rotated files (log.jsonl.1, log.jsonl.2).
     If log.jsonl.1 exists, move it to .2 first (drop .2 if exists).
+
+    Uses fcntl.flock to prevent concurrent writers from losing entries
+    during the rename gap.
     """
     if not log_path.exists():
         return
@@ -150,20 +154,86 @@ def rotate_log(log_path: Path, max_size_mb: int) -> None:
     if size_mb <= max_size_mb:
         return
 
-    rotated_1 = log_path.parent / f"{log_path.name}.1"
-    rotated_2 = log_path.parent / f"{log_path.name}.2"
+    lock_path = log_path.parent / ".log.lock"
+    lock_flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+    lock_fd = os.open(str(lock_path), lock_flags, 0o600)
+    with os.fdopen(lock_fd, "w") as lock_file:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        try:
+            # Re-check after acquiring lock — another process may have
+            # already rotated.
+            if not log_path.exists():
+                return
+            size_mb = log_path.stat().st_size / (1024 * 1024)
+            if size_mb <= max_size_mb:
+                return
 
-    # Shift existing rotated files
-    if rotated_1.exists():
-        os.replace(str(rotated_1), str(rotated_2))
+            rotated_1 = log_path.parent / f"{log_path.name}.1"
+            rotated_2 = log_path.parent / f"{log_path.name}.2"
 
-    os.replace(str(log_path), str(rotated_1))
+            # Shift existing rotated files
+            if rotated_1.exists():
+                os.replace(str(rotated_1), str(rotated_2))
+
+            os.replace(str(log_path), str(rotated_1))
+        finally:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
-def read_log(log_dir: Path | None = None, limit: int = 20) -> list[dict[str, object]]:
+_TAIL_CHUNK = 8192
+
+
+def _tail_lines(path: Path, limit: int) -> list[str]:
+    """Read the last *limit* non-empty lines from *path*.
+
+    Uses a seek-backward approach for large files so the entire file
+    is never loaded into memory.
+    """
+    size = path.stat().st_size
+    if size == 0:
+        return []
+
+    with open(path, "rb") as fh:
+        if size <= _TAIL_CHUNK:
+            all_lines = fh.read().decode(errors="replace").split("\n")
+        else:
+            # Seek backwards in chunks, collecting lines
+            all_lines_parts: list[str] = []
+            remaining = size
+            leftover = b""
+
+            while remaining > 0 and len(all_lines_parts) < limit + 1:
+                chunk_size = min(_TAIL_CHUNK, remaining)
+                remaining -= chunk_size
+                fh.seek(remaining)
+                chunk = fh.read(chunk_size) + leftover
+                parts = chunk.split(b"\n")
+                leftover = parts[0]
+                all_lines_parts = [
+                    p.decode(errors="replace") for p in parts[1:]
+                ] + all_lines_parts
+
+            if leftover:
+                all_lines_parts = [
+                    leftover.decode(errors="replace"),
+                ] + all_lines_parts
+
+            all_lines = all_lines_parts
+
+    # Filter out empty strings (blank lines / trailing newline)
+    non_empty = [ln for ln in all_lines if ln.strip()]
+    return non_empty[-limit:]
+
+
+def read_log(
+    log_dir: Path | None = None,
+    limit: int = 100,
+) -> list[dict[str, object]]:
     """Read recent log entries from log.jsonl.
 
-    Returns up to *limit* most recent entries (last lines of file).
+    Returns up to *limit* most recent entries.  Uses a tail-like
+    approach that seeks from the end of the file, avoiding loading the
+    entire file into memory.
     """
     log_dir = log_dir if log_dir is not None else _default_log_dir()
     log_path = log_dir / _LOG_FILENAME
@@ -171,16 +241,12 @@ def read_log(log_dir: Path | None = None, limit: int = 20) -> list[dict[str, obj
     if not log_path.exists():
         return []
 
-    lines = log_path.read_text().splitlines()
-    recent = lines[-limit:] if len(lines) > limit else lines
+    recent = _tail_lines(log_path, limit)
 
     entries: list[dict[str, object]] = []
     for line in recent:
-        stripped = line.strip()
-        if not stripped:
-            continue
         try:
-            entries.append(json.loads(stripped))
+            entries.append(json.loads(line))
         except json.JSONDecodeError:
             logger.warning("Skipping malformed log line")
     return entries
@@ -234,8 +300,11 @@ def compute_stats(entries: list[dict[str, object]]) -> dict[str, object]:
     def _percentile(sorted_vals: list[float], p: float) -> float:
         if not sorted_vals:
             return 0.0
-        idx = int(p / 100.0 * (len(sorted_vals) - 1))
-        return round(sorted_vals[idx], 2)
+        rank = p / 100.0 * (len(sorted_vals) - 1)
+        lo = int(rank)
+        hi = min(lo + 1, len(sorted_vals) - 1)
+        frac = rank - lo
+        return round(sorted_vals[lo] + frac * (sorted_vals[hi] - sorted_vals[lo]), 2)
 
     top_rules = sorted(rule_counts.items(), key=lambda x: x[1], reverse=True)[:10]
 

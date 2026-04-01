@@ -11,11 +11,12 @@ if TYPE_CHECKING:
 _BOUNDARY_LABEL = "[cuecard \u2014 user-defined guidelines relevant to this action]"
 
 
-def format_rules(results: list[RankedResult]) -> str:
+def format_rules(results: list[RankedResult], *, scrub: bool = True) -> str:
     """Format results for injection into agent context.
 
     Returns the labeled boundary prefix followed by one rule per line.
     Uses rule.summary when available, otherwise rule.text.
+    Scrubs secrets from rule text before injection (defense-in-depth).
     No scores, no provenance — clean and directive.
 
     Returns empty string when *results* is empty.
@@ -23,9 +24,13 @@ def format_rules(results: list[RankedResult]) -> str:
     if not results:
         return ""
 
+    from cuecard.security import scrub_secrets
+
     lines: list[str] = [_BOUNDARY_LABEL]
     for r in results:
         text = r.rule.summary if r.rule.summary is not None else r.rule.text
+        if scrub:
+            text = scrub_secrets(text)
         lines.append(f"- {text}")
     return "\n".join(lines)
 

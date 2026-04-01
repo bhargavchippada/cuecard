@@ -18,18 +18,41 @@ from cuecard.indexer import load_index
 from cuecard.logger import log_retrieval
 from cuecard.retriever import retrieve
 
+_MAX_STDIN = 1_000_000  # 1 MB guard
+_MAX_TOOL_NAME = 200
+
+
+def _sanitize_field(value: str, max_len: int) -> str:
+    """Cap length and strip control characters."""
+    return value[:max_len].replace("\n", " ").replace("\r", " ")
+
+
+def _format_tool_input(tool_input: object) -> str:
+    """Format tool_input for the query string.
+
+    Dicts are serialized with json.dumps (not str(), which produces
+    Python repr syntax).  Everything else is converted via str().
+    """
+    if isinstance(tool_input, dict):
+        return json.dumps(tool_input)[:500]
+    return str(tool_input)[:500]
+
 
 def main() -> None:
     """Read hook JSON from stdin, retrieve rules, inject into context."""
-    raw = sys.stdin.read()
-    data: dict[str, object] = json.loads(raw)
-    tool_name = str(data.get("tool_name", ""))
-    tool_input = str(data.get("tool_input", ""))[:500]
-    query = f"{tool_name}: {tool_input}"
-
-    start = time.monotonic()
+    data: dict[str, object] = {}
 
     try:
+        raw = sys.stdin.read(_MAX_STDIN)
+        data = json.loads(raw)
+        tool_name = _sanitize_field(
+            str(data.get("tool_name", "")), _MAX_TOOL_NAME,
+        )
+        tool_input = _format_tool_input(data.get("tool_input", ""))
+        query = f"{tool_name}: {tool_input}"
+
+        start = time.monotonic()
+
         config = load_config()
         index = load_index(config.global_cache_dir)
 

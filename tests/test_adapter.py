@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-from cuecard.adapters.claude_code import main
+from cuecard.adapters.claude_code import _format_tool_input, main
 from cuecard.models import (
     Index,
     Provenance,
@@ -274,6 +274,54 @@ class TestAdapterMain:
         captured = capsys.readouterr()
         output = json.loads(captured.out)
         assert output["tool_name"] == "Bash"
+
+
+class TestFormatToolInput:
+    def test_dict_uses_json_dumps(self) -> None:
+        result = _format_tool_input({"key": "value"})
+        assert result == '{"key": "value"}'
+
+    def test_dict_truncated_at_500(self) -> None:
+        big = {"k": "x" * 600}
+        result = _format_tool_input(big)
+        assert len(result) == 500
+
+    def test_string_passthrough(self) -> None:
+        assert _format_tool_input("hello") == "hello"
+
+    def test_int_passthrough(self) -> None:
+        assert _format_tool_input(42) == "42"
+
+    def test_empty_string(self) -> None:
+        assert _format_tool_input("") == ""
+
+
+class TestMalformedStdin:
+    def test_empty_stdin_outputs_empty_json(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        with patch("sys.stdin") as mock_stdin:
+            mock_stdin.read.return_value = ""
+            main()
+
+        captured = capsys.readouterr()
+        output = json.loads(captured.out)
+        assert output == {}
+        assert "[cuecard] Error:" in captured.err
+
+    def test_malformed_json_outputs_empty_json(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        with patch("sys.stdin") as mock_stdin:
+            mock_stdin.read.return_value = "not valid json{{"
+            main()
+
+        captured = capsys.readouterr()
+        output = json.loads(captured.out)
+        assert output == {}
+        assert "[cuecard] Error:" in captured.err
 
 
 class TestMainGuard:
