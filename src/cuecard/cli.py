@@ -313,6 +313,7 @@ def retrieve(
     query: Annotated[str, typer.Argument(help="Tool context query string")],
     top_k: Annotated[int, typer.Option(help="Max results")] = 0,
     threshold: Annotated[float, typer.Option(help="Min similarity")] = 0.0,
+    mode: Annotated[str, typer.Option(help="Pipeline mode")] = "",
 ) -> None:
     """Retrieve top-k rules matching a query."""
     cfg = _load_config_or_exit(project_dir=Path.cwd(), home_dir=_home_dir())
@@ -327,19 +328,31 @@ def retrieve(
     from fastembed import TextEmbedding
 
     from cuecard.formatter import format_rules_verbose
-    from cuecard.retriever import retrieve as do_retrieve
 
     model = TextEmbedding(model_name=cfg.model_name)
 
-    results = do_retrieve(
-        idx,
-        query,
-        top_k=top_k if top_k > 0 else cfg.top_k,
-        threshold=threshold if threshold > 0 else cfg.threshold,
-        dedup_threshold=cfg.dedup_threshold,
-        model=model,
-        max_query_length=cfg.query_max_length,
-    )
+    # Determine effective mode: explicit flag > config > default
+    effective_mode = mode if mode else cfg.pipeline.mode
+
+    if effective_mode != "embedding":
+        from cuecard.pipeline import run_pipeline
+
+        pipeline_result = run_pipeline(
+            query, idx, cfg, embedding_model=model, mode=effective_mode,
+        )
+        results = pipeline_result.results
+    else:
+        from cuecard.retriever import retrieve as do_retrieve
+
+        results = do_retrieve(
+            idx,
+            query,
+            top_k=top_k if top_k > 0 else cfg.top_k,
+            threshold=threshold if threshold > 0 else cfg.threshold,
+            dedup_threshold=cfg.dedup_threshold,
+            model=model,
+            max_query_length=cfg.query_max_length,
+        )
 
     console.print(format_rules_verbose(results))
 
@@ -869,6 +882,7 @@ def eval_cmd(
     dedup_threshold: Annotated[
         float, typer.Option("--dedup-threshold", help="Dedup similarity threshold")
     ] = 0.95,
+    mode: Annotated[str, typer.Option(help="Pipeline mode")] = "",
 ) -> None:
     """Run evaluation against a fixture file."""
     from cuecard.eval import format_eval_report, load_fixtures, run_eval
@@ -901,6 +915,7 @@ def eval_cmd(
             top_k=top_k,
             threshold=threshold,
             dedup_threshold=dedup_threshold,
+            mode=mode if mode else None,
         )
     except Exception as exc:
         err_console.print(f"[red]Eval failed:[/red] {exc}")

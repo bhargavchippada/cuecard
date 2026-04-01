@@ -63,15 +63,28 @@ def main() -> None:
                 model_name=config.model_name,
             )
 
-            results = retrieve(
-                index,
-                query,
-                top_k=config.top_k,
-                threshold=config.threshold,
-                dedup_threshold=config.dedup_threshold,
-                max_query_length=config.query_max_length,
-                model=model,
+            pipeline_mode = getattr(
+                getattr(config, "pipeline", None), "mode", "embedding",
             )
+
+            if pipeline_mode != "embedding":
+                from cuecard.pipeline import run_pipeline
+
+                pipeline_result = run_pipeline(
+                    query, index, config,
+                    embedding_model=model, mode=pipeline_mode,
+                )
+                results = pipeline_result.results
+            else:
+                results = retrieve(
+                    index,
+                    query,
+                    top_k=config.top_k,
+                    threshold=config.threshold,
+                    dedup_threshold=config.dedup_threshold,
+                    max_query_length=config.query_max_length,
+                    model=model,
+                )
 
             latency_ms = (time.monotonic() - start) * 1000
 

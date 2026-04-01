@@ -273,6 +273,16 @@ def _percentile(values: list[float], pct: float) -> float:
     return float(np.percentile(arr, pct))
 
 
+@dataclass(frozen=True)
+class _EvalConfig:
+    """Minimal config stub for pipeline calls from eval harness."""
+
+    top_k: int = 5
+    threshold: float = 0.30
+    dedup_threshold: float = 0.95
+    query_max_length: int = 500
+
+
 def run_eval(
     fixtures: list[Fixture],
     corpus_dir: str,
@@ -282,6 +292,7 @@ def run_eval(
     top_k: int = 5,
     threshold: float = 0.30,
     dedup_threshold: float = 0.95,
+    mode: str | None = None,
 ) -> EvalSummary:
     """Run evaluation across all fixtures and aggregate metrics.
 
@@ -319,14 +330,31 @@ def run_eval(
         )
 
         start = time.perf_counter()
-        ranked = retrieve(
-            index,
-            fixture.query,
-            top_k=top_k,
-            threshold=threshold,
-            dedup_threshold=dedup_threshold,
-            model=model,  # type: ignore[arg-type]
-        )
+        if mode is not None and mode != "embedding":
+            from cuecard.pipeline import run_pipeline
+
+            pipeline_result = run_pipeline(
+                fixture.query,
+                index,
+                _EvalConfig(
+                    top_k=top_k,
+                    threshold=threshold,
+                    dedup_threshold=dedup_threshold,
+                    query_max_length=500,
+                ),  # type: ignore[arg-type]
+                embedding_model=model,  # type: ignore[arg-type]
+                mode=mode,
+            )
+            ranked = pipeline_result.results
+        else:
+            ranked = retrieve(
+                index,
+                fixture.query,
+                top_k=top_k,
+                threshold=threshold,
+                dedup_threshold=dedup_threshold,
+                model=model,  # type: ignore[arg-type]
+            )
         elapsed_ms = (time.perf_counter() - start) * 1000.0
 
         retrieved_texts = [r.rule.text for r in ranked]

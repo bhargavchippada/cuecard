@@ -483,6 +483,81 @@ class TestRetrieve:
         assert result.exit_code == 1
         assert "Not set up" in result.output
 
+    def test_retrieve_with_mode_flag(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        idx = _make_sample_index()
+        mock_model = MagicMock()
+
+        from cuecard.models import PipelineResult, StageTrace
+
+        fake_pipeline = PipelineResult(
+            results=[RankedResult(rule=idx.rules[0], score=0.9)],
+            stages=(StageTrace(
+                stage="embedding", input_count=1,
+                output_count=1, latency_ms=1.0,
+            ),),
+            mode="rerank",
+        )
+
+        with (
+            patch("cuecard.indexer.load_index", return_value=idx),
+            patch("fastembed.TextEmbedding", return_value=mock_model),
+            patch(
+                "cuecard.pipeline.run_pipeline",
+                return_value=fake_pipeline,
+            ) as mock_pipe,
+        ):
+            result = runner.invoke(
+                app, ["retrieve", "test", "--mode", "rerank"],
+            )
+
+        assert result.exit_code == 0
+        mock_pipe.assert_called_once()
+
+    def test_retrieve_with_config_pipeline_mode(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Config pipeline.mode triggers pipeline when no --mode flag."""
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+        # Write project config with pipeline mode
+        project = tmp_path / "project"
+        project.mkdir()
+        (project / "cuecard.toml").write_text('[pipeline]\nmode = "rerank"\n')
+        monkeypatch.chdir(project)
+
+        idx = _make_sample_index()
+        mock_model = MagicMock()
+
+        from cuecard.models import PipelineResult, StageTrace
+
+        fake_pipeline = PipelineResult(
+            results=[],
+            stages=(StageTrace(
+                stage="embedding", input_count=0,
+                output_count=0, latency_ms=0.5,
+            ),),
+            mode="rerank",
+        )
+
+        with (
+            patch("cuecard.indexer.load_index", return_value=idx),
+            patch("fastembed.TextEmbedding", return_value=mock_model),
+            patch(
+                "cuecard.pipeline.run_pipeline",
+                return_value=fake_pipeline,
+            ) as mock_pipe,
+        ):
+            result = runner.invoke(app, ["retrieve", "test"])
+
+        assert result.exit_code == 0
+        mock_pipe.assert_called_once()
+
 
 # ---------------------------------------------------------------------------
 # format command
@@ -1083,6 +1158,32 @@ class TestEval:
 
         assert result.exit_code == 1
         assert "Eval failed" in result.output
+
+    def test_eval_with_mode_flag(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        fixture_file = tmp_path / "fixtures.json"
+        fixture_file.write_text("[]")
+
+        mock_model = MagicMock()
+        fake_summary = MagicMock()
+
+        with (
+            patch("cuecard.eval.load_fixtures", return_value=[]),
+            patch("fastembed.TextEmbedding", return_value=mock_model),
+            patch(
+                "cuecard.eval.run_eval",
+                return_value=fake_summary,
+            ) as mock_run,
+            patch("cuecard.eval.format_eval_report", return_value="OK"),
+        ):
+            result = runner.invoke(app, [
+                "eval", str(fixture_file), "--mode", "rerank",
+            ])
+
+        assert result.exit_code == 0
+        call_kwargs = mock_run.call_args[1]
+        assert call_kwargs["mode"] == "rerank"
 
 
 class TestLoadConfigOrExit:

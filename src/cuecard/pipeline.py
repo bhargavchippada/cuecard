@@ -80,6 +80,8 @@ def _resolve_mode(mode: str | None, config: ResolvedConfig) -> str:
     """Determine effective pipeline mode from explicit override or config."""
     if mode is not None:
         effective = mode
+    elif hasattr(config, "pipeline") and hasattr(config.pipeline, "mode"):
+        effective = config.pipeline.mode
     elif hasattr(config, "retrieval") and hasattr(config.retrieval, "mode"):
         effective = config.retrieval.mode
     else:

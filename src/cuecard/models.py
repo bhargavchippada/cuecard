@@ -51,6 +51,16 @@ class SourceMeta:
 
 
 @dataclass(frozen=True)
+class PipelineConfig:
+    """Pipeline mode and LLM settings."""
+
+    mode: str = "embedding"
+    local_endpoint: str = "http://localhost:8081/v1"
+    haiku_model: str = "claude-haiku-4-5"
+    thinking: bool = False
+
+
+@dataclass(frozen=True)
 class ResolvedConfig:
     """Fully resolved and validated configuration."""
 
@@ -67,6 +77,7 @@ class ResolvedConfig:
     global_cache_dir: str
     project_cache_dir: str | None
     allowed_dirs: tuple[str, ...]
+    pipeline: PipelineConfig = field(default_factory=PipelineConfig)
 
 
 @dataclass(frozen=True)

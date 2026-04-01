@@ -276,6 +276,42 @@ class TestEmptyIndex:
 class TestModeFromConfig:
     """Mode resolved from config when not explicitly passed."""
 
+    def test_mode_from_config_with_pipeline_attr(
+        self,
+        sample_index: Index,
+        fake_results: list[RankedResult],
+    ) -> None:
+        """config.pipeline.mode is used when no explicit mode."""
+        from cuecard.models import PipelineConfig, ResolvedConfig
+
+        cfg = ResolvedConfig(
+            source_paths=(),
+            model_name="test",
+            top_k=5,
+            threshold=0.30,
+            dedup_threshold=0.95,
+            query_max_length=500,
+            hook_events=(),
+            verbose=False,
+            redact=False,
+            max_log_size_mb=10,
+            global_cache_dir="/tmp",
+            project_cache_dir=None,
+            allowed_dirs=(),
+            pipeline=PipelineConfig(mode="rerank"),
+        )
+        with (
+            patch("cuecard.retriever.retrieve", return_value=fake_results),
+            patch(
+                "cuecard.reranker.rerank",
+                side_effect=RuntimeError("stub"),
+            ),
+        ):
+            result = run_pipeline(
+                "test query", sample_index, cfg, mode=None,
+            )
+        assert result.mode == "rerank"
+
     def test_mode_from_config_with_retrieval(
         self,
         sample_index: Index,
@@ -303,6 +339,29 @@ class TestModeFromConfig:
         with patch("cuecard.retriever.retrieve", return_value=fake_results):
             result = run_pipeline(
                 "test query", sample_index, config, mode=None,
+            )
+        assert result.mode == "embedding"
+
+    def test_mode_default_bare_config(
+        self,
+        sample_index: Index,
+        fake_results: list[RankedResult],
+    ) -> None:
+        """Config with neither pipeline nor retrieval falls back to embedding."""
+
+        @dataclass(frozen=True)
+        class _BareConfig:
+            source_paths: tuple[str, ...] = ()
+            model_name: str = "test"
+            top_k: int = 5
+            threshold: float = 0.30
+            dedup_threshold: float = 0.95
+            query_max_length: int = 500
+
+        cfg = _BareConfig()
+        with patch("cuecard.retriever.retrieve", return_value=fake_results):
+            result = run_pipeline(
+                "test query", sample_index, cfg, mode=None,  # type: ignore[arg-type]
             )
         assert result.mode == "embedding"
 

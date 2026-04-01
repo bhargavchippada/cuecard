@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -498,6 +499,66 @@ class TestRunEval:
         assert tiers["easy"].count == 1
         assert tiers["hard"].count == 1
         assert tiers["custom_tier"].count == 1
+
+
+class TestRunEvalWithMode:
+    """Test run_eval with pipeline mode parameter."""
+
+    def test_mode_rerank_calls_pipeline(self, tmp_path: object) -> None:
+        corpus_dir = str(tmp_path)  # type: ignore[arg-type]
+        corpus_file = str(tmp_path / "rules.txt")  # type: ignore[operator]
+        with open(corpus_file, "w") as f:
+            f.write("Rule A\n")
+
+        fixtures = [
+            Fixture(
+                id="mode-test",
+                query="test",
+                corpus="rules.txt",
+                should_match=("Rule A",),
+                should_not_match=(),
+                difficulty="easy",
+            ),
+        ]
+        model = MockModel()
+
+        from cuecard.models import (
+            PipelineResult,
+            Provenance,
+            RankedResult,
+            Rule,
+            StageTrace,
+        )
+
+        fake_results = [
+            RankedResult(
+                rule=Rule(
+                    text="Rule A",
+                    provenance=Provenance(file=corpus_file, line_start=1, line_end=1),
+                ),
+                score=0.9,
+            ),
+        ]
+        fake_pipeline = PipelineResult(
+            results=fake_results,
+            stages=(StageTrace(
+                stage="embedding", input_count=1,
+                output_count=1, latency_ms=0.5,
+            ),),
+            mode="rerank",
+        )
+
+        with patch(
+            "cuecard.pipeline.run_pipeline",
+            return_value=fake_pipeline,
+        ) as mock_pipe:
+            summary = run_eval(
+                fixtures, corpus_dir, "test-model", model=model, mode="rerank",
+            )
+
+        assert summary.fixture_count == 1
+        mock_pipe.assert_called_once()
+        assert summary.per_fixture[0].retrieved == ("Rule A",)
 
 
 # ---------------------------------------------------------------------------

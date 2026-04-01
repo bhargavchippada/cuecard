@@ -411,6 +411,95 @@ class TestLoadConfig:
         assert set(config.hook_events) == _VALID_HOOK_EVENTS
 
 
+class TestPipelineConfig:
+    def test_default_pipeline_config(self, tmp_path: Path) -> None:
+        """No [pipeline] section yields default PipelineConfig."""
+        home = tmp_path / "home"
+        home.mkdir()
+        config = load_config(home_dir=home)
+        assert config.pipeline.mode == "embedding"
+        assert config.pipeline.local_endpoint == "http://localhost:8081/v1"
+        assert config.pipeline.haiku_model == "claude-haiku-4-5"
+        assert config.pipeline.thinking is False
+
+    def test_pipeline_mode_from_project(self, tmp_path: Path) -> None:
+        home = tmp_path / "home"
+        home.mkdir()
+        project = tmp_path / "project"
+        project.mkdir()
+        (project / "cuecard.toml").write_text(
+            '[pipeline]\nmode = "rerank"\n'
+        )
+        config = load_config(project_dir=project, home_dir=home)
+        assert config.pipeline.mode == "rerank"
+
+    def test_pipeline_llm_settings(self, tmp_path: Path) -> None:
+        home = tmp_path / "home"
+        home.mkdir()
+        project = tmp_path / "project"
+        project.mkdir()
+        (project / "cuecard.toml").write_text(
+            '[pipeline]\n'
+            'mode = "rerank-llm-local"\n\n'
+            '[pipeline.llm]\n'
+            'local_endpoint = "http://localhost:9999/v1"\n'
+            'haiku_model = "claude-haiku-4-5-2025"\n'
+            'thinking = true\n'
+        )
+        config = load_config(project_dir=project, home_dir=home)
+        assert config.pipeline.mode == "rerank-llm-local"
+        assert config.pipeline.local_endpoint == "http://localhost:9999/v1"
+        assert config.pipeline.haiku_model == "claude-haiku-4-5-2025"
+        assert config.pipeline.thinking is True
+
+    def test_pipeline_invalid_mode_raises(self, tmp_path: Path) -> None:
+        home = tmp_path / "home"
+        home.mkdir()
+        project = tmp_path / "project"
+        project.mkdir()
+        (project / "cuecard.toml").write_text(
+            '[pipeline]\nmode = "invalid-mode"\n'
+        )
+        with pytest.raises(ConfigError, match="Invalid pipeline mode"):
+            load_config(project_dir=project, home_dir=home)
+
+    def test_pipeline_extract_flat(self) -> None:
+        raw = {
+            "pipeline": {
+                "mode": "rerank",
+                "llm": {
+                    "local_endpoint": "http://localhost:1234/v1",
+                    "haiku_model": "test-model",
+                    "thinking": True,
+                },
+            },
+        }
+        flat = _extract_flat(raw)
+        assert flat["pipeline_mode"] == "rerank"
+        assert flat["pipeline_local_endpoint"] == "http://localhost:1234/v1"
+        assert flat["pipeline_haiku_model"] == "test-model"
+        assert flat["pipeline_thinking"] is True
+
+    def test_pipeline_extract_flat_empty(self) -> None:
+        """Empty pipeline section produces no pipeline keys."""
+        flat = _extract_flat({})
+        assert "pipeline_mode" not in flat
+
+    def test_pipeline_global_fallback(self, tmp_path: Path) -> None:
+        """Global pipeline config used when project doesn't set it."""
+        home = tmp_path / "home"
+        cuecard_dir = home / ".cuecard"
+        cuecard_dir.mkdir(parents=True)
+        (cuecard_dir / "config.toml").write_text(
+            '[pipeline]\nmode = "rerank"\n'
+        )
+        project = tmp_path / "project"
+        project.mkdir()
+        (project / "cuecard.toml").write_text("")
+        config = load_config(project_dir=project, home_dir=home)
+        assert config.pipeline.mode == "rerank"
+
+
 class TestAllowedModels:
     def test_all_defaults_in_allowlist(self) -> None:
         assert "BAAI/bge-small-en-v1.5" in _ALLOWED_MODELS

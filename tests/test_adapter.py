@@ -11,11 +11,14 @@ import numpy as np
 from cuecard.adapters.claude_code import _format_tool_input, main
 from cuecard.models import (
     Index,
+    PipelineConfig,
+    PipelineResult,
     Provenance,
     RankedResult,
     ResolvedConfig,
     Rule,
     SourceMeta,
+    StageTrace,
 )
 
 if TYPE_CHECKING:
@@ -24,7 +27,11 @@ if TYPE_CHECKING:
     import pytest
 
 
-def _make_config(tmp_path: Path) -> ResolvedConfig:
+def _make_config(
+    tmp_path: Path,
+    *,
+    pipeline_mode: str = "embedding",
+) -> ResolvedConfig:
     return ResolvedConfig(
         source_paths=(),
         model_name="BAAI/bge-small-en-v1.5",
@@ -39,6 +46,7 @@ def _make_config(tmp_path: Path) -> ResolvedConfig:
         global_cache_dir=str(tmp_path / "index"),
         project_cache_dir=None,
         allowed_dirs=(),
+        pipeline=PipelineConfig(mode=pipeline_mode),
     )
 
 
@@ -246,6 +254,50 @@ class TestAdapterMain:
         hook_out = output["hookSpecificOutput"]
         assert hook_out["existingKey"] == "val"
         assert "additionalContext" in hook_out
+
+    def test_with_pipeline_mode(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        hook_input = {
+            "tool_name": "Bash",
+            "tool_input": "git commit -m 'fix'",
+        }
+        config = _make_config(tmp_path, pipeline_mode="rerank")
+        index = _make_index()
+        results = _make_results()
+
+        fake_pipeline = PipelineResult(
+            results=results,
+            stages=(
+                StageTrace(
+                    stage="embedding", input_count=2,
+                    output_count=1, latency_ms=1.0,
+                ),
+            ),
+            mode="rerank",
+        )
+
+        with (
+            patch("sys.stdin") as mock_stdin,
+            patch(f"{_MOD}.load_config", return_value=config),
+            patch(f"{_MOD}.load_index", return_value=index),
+            patch("fastembed.TextEmbedding"),
+            patch(
+                "cuecard.pipeline.run_pipeline",
+                return_value=fake_pipeline,
+            ) as mock_pipe,
+            patch(f"{_MOD}.log_retrieval"),
+        ):
+            mock_stdin.read.return_value = json.dumps(hook_input)
+            main()
+
+        captured = capsys.readouterr()
+        output = json.loads(captured.out)
+        hook_out = output["hookSpecificOutput"]
+        assert "Never commit secrets" in hook_out["additionalContext"]
+        mock_pipe.assert_called_once()
 
     def test_tool_input_truncation(
         self,

@@ -9,7 +9,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from cuecard.models import ResolvedConfig
+from cuecard.models import PipelineConfig, ResolvedConfig
 from cuecard.security import ConfigError, validate_source_path
 
 logger = logging.getLogger(__name__)
@@ -141,6 +141,19 @@ def _extract_flat(raw: dict[str, Any]) -> dict[str, Any]:
         flat["source_rules"] = sources["rules"]
     if "allowed_dirs" in sources:
         flat["allowed_dirs"] = sources["allowed_dirs"]
+
+    pipeline_section = raw.get("pipeline", {})
+    if pipeline_section:
+        if "mode" in pipeline_section:
+            flat["pipeline_mode"] = pipeline_section["mode"]
+        llm_section = pipeline_section.get("llm", {})
+        if llm_section:
+            if "local_endpoint" in llm_section:
+                flat["pipeline_local_endpoint"] = llm_section["local_endpoint"]
+            if "haiku_model" in llm_section:
+                flat["pipeline_haiku_model"] = llm_section["haiku_model"]
+            if "thinking" in llm_section:
+                flat["pipeline_thinking"] = llm_section["thinking"]
 
     return flat
 
@@ -316,6 +329,33 @@ def load_config(
         else None
     )
 
+    # Build PipelineConfig (project wins, then global, then default)
+    from cuecard.pipeline import VALID_MODES
+
+    pipeline_mode = project_flat.get(
+        "pipeline_mode",
+        global_flat.get("pipeline_mode", "embedding"),
+    )
+    if pipeline_mode not in VALID_MODES:
+        msg = f"Invalid pipeline mode {pipeline_mode!r}"
+        raise ConfigError(msg)
+
+    pipeline_config = PipelineConfig(
+        mode=pipeline_mode,
+        local_endpoint=project_flat.get(
+            "pipeline_local_endpoint",
+            global_flat.get("pipeline_local_endpoint", "http://localhost:8081/v1"),
+        ),
+        haiku_model=project_flat.get(
+            "pipeline_haiku_model",
+            global_flat.get("pipeline_haiku_model", "claude-haiku-4-5"),
+        ),
+        thinking=project_flat.get(
+            "pipeline_thinking",
+            global_flat.get("pipeline_thinking", False),
+        ),
+    )
+
     return ResolvedConfig(
         source_paths=tuple(all_paths),
         model_name=merged["model"],
@@ -330,4 +370,5 @@ def load_config(
         global_cache_dir=global_cache,
         project_cache_dir=project_cache,
         allowed_dirs=all_allowed,
+        pipeline=pipeline_config,
     )
