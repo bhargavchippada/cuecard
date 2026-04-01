@@ -146,7 +146,7 @@ def _run_rerank_stage(
     t0 = time.monotonic()
 
     try:
-        from cuecard import reranker  # type: ignore[attr-defined]
+        from cuecard import reranker
 
         results = reranker.rerank(candidates, query, config=config)
         latency_ms = (time.monotonic() - t0) * 1000.0
@@ -189,10 +189,10 @@ def _run_llm_stage(
     t0 = time.monotonic()
 
     try:
-        from cuecard import llm_reranker  # type: ignore[attr-defined]
+        from cuecard import llm_reranker
 
         results = llm_reranker.rerank_llm(
-            candidates, query, config=config, backend=backend,
+            candidates, query, backend=backend,
         )
         latency_ms = (time.monotonic() - t0) * 1000.0
         return results, StageTrace(
