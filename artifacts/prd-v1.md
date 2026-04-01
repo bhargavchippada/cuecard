@@ -114,7 +114,55 @@ Source Files              cuecard.toml / ~/.cuecard/config.toml
 
 Each step is independently callable via CLI and inspectable in the notebook.
 
-### 3.3 Asymmetric Encoding (CRITICAL)
+### 3.3 Multi-Stage Retrieval Pipeline
+
+The retrieval pipeline has up to 3 stages. Each stage is independently valuable — any subsequent stage can be disabled without breaking the system.
+
+```
+All rules (N)
+     ↓
+Stage 1: EMBEDDING RETRIEVAL (fast, high recall)
+  query_embed → dot product → top-20 candidates
+  Deterministic, CPU, <5ms, always runs
+     ↓
+Stage 2: CROSS-ENCODER RE-RANKING (lightweight, high precision)
+  Cross-encoder scores each (query, rule) pair
+  Deterministic, CPU, ONNX, <100ms for 20 items
+  Optional — improves precision without LLM cost
+     ↓
+Stage 3: LLM RE-RANKING (semantic understanding)
+  LLM reads candidates + tool context, picks relevant ones
+  Non-deterministic, GPU or API
+  Optional — highest quality, highest cost
+     ↓
+Final: top-k results → format → inject
+```
+
+**Cost pyramid:** embeddings (free, 5ms) → cross-encoder (free, 50ms) → local LLM (free, 500ms) → API LLM ($0.001, 300ms).
+
+**Quality target:** 90%+ recall at the end of the pipeline. Each stage should be independently tuned to maximize its quality before relying on the next.
+
+**Provenance:** Every result at every stage logs which rules survived and which were dropped, enabling per-stage quality analysis in the notebook.
+
+**Configuration:**
+```toml
+[retrieval]
+mode = "embedding"          # "embedding" | "rerank" | "rerank-llm-local" | "rerank-llm-haiku"
+top_k = 5                   # final output
+recall_top_k = 20           # stage 1 candidates for re-ranking
+recall_threshold = 0.2      # looser threshold for stage 1
+
+[reranker]
+model = "..."               # cross-encoder model (TBD based on research)
+
+[llm]
+local_endpoint = "http://localhost:8081/v1"
+local_ctx_size = 8192
+haiku_model = "claude-haiku-4-5-20251001"
+thinking = false
+```
+
+### 3.4 Asymmetric Encoding (CRITICAL)
 
 Many embedding models (BGE, Nomic, Snowflake) use different prefixes for documents vs queries to optimize retrieval:
 

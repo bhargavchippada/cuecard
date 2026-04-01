@@ -4,475 +4,655 @@
         "query": "Bash: git commit -m 'fix auth bug'",
         "corpus": "rules_basic.txt",
         "should_match": ["Never commit secrets (API keys, tokens, passwords) to git"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "medium"
     },
     {
         "id": "git-commit-quality",
         "query": "Bash: git commit -m 'add feature'",
         "corpus": "rules_basic.txt",
         "should_match": ["Run quality checks before every commit", "Use conventional commit format (feat:, fix:, refactor:, etc.)"],
-        "should_not_match": ["Use asyncio for I/O-bound operations, not threads"]
+        "should_not_match": ["Use asyncio for I/O-bound operations, not threads"],
+        "difficulty": "medium"
     },
     {
         "id": "tmux-sendkeys",
         "query": "Bash: tmux send-keys -t cody 'hello world'",
         "corpus": "rules_basic.txt",
         "should_match": ["Send Enter after every tmux send-keys command"],
-        "should_not_match": ["Use uv for all Python package operations, never pip"]
+        "should_not_match": ["Use uv for all Python package operations, never pip"],
+        "difficulty": "easy"
     },
     {
         "id": "pip-install",
         "query": "Bash: pip install requests",
         "corpus": "rules_basic.txt",
         "should_match": ["Use uv for all Python package operations, never pip"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "easy"
     },
     {
         "id": "write-env-file",
         "query": "Write: {\"file_path\": \"/home/user/.env\", \"content\": \"API_KEY=sk-123\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Never commit secrets (API keys, tokens, passwords) to git", "Use environment variables for configuration, not hardcoded values"],
-        "should_not_match": ["Use frozen dataclasses for immutable data"]
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "medium"
     },
     {
         "id": "edit-python-file",
         "query": "Edit: {\"file_path\": \"src/auth.py\", \"old_string\": \"def login\", \"new_string\": \"def login_user\"}",
         "corpus": "rules_basic.txt",
-        "should_match": ["Always validate user input at system boundaries", "Use type hints on all function signatures"],
-        "should_not_match": ["Never force-push to main or master branch"]
+        "should_match": ["Use type hints on all function signatures"],
+        "should_not_match": ["Never force-push to main or master branch"],
+        "difficulty": "hard"
     },
     {
         "id": "bash-eval",
         "query": "Bash: python -c \"eval(input())\"",
         "corpus": "rules_basic.txt",
         "should_match": ["Never use eval() or exec() in production code"],
-        "should_not_match": ["Use conventional commit format (feat:, fix:, refactor:, etc.)"]
+        "should_not_match": ["Use conventional commit format (feat:, fix:, refactor:, etc.)"],
+        "difficulty": "easy"
     },
     {
         "id": "sql-query",
         "query": "Bash: psql -c \"SELECT * FROM users WHERE name = '\" + user_input + \"'\"",
         "corpus": "rules_basic.txt",
         "should_match": ["Use parameterized queries to prevent SQL injection"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "medium"
     },
     {
         "id": "git-push-force",
         "query": "Bash: git push --force origin main",
         "corpus": "rules_basic.txt",
         "should_match": ["Never force-push to main or master branch"],
-        "should_not_match": ["Use frozen dataclasses for immutable data"]
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "easy"
     },
     {
         "id": "run-tests",
         "query": "Bash: uv run pytest --cov=myapp",
         "corpus": "rules_basic.txt",
         "should_match": ["100% test coverage on all new code", "Write tests before implementation (TDD red-green-refactor)"],
-        "should_not_match": ["Never force-push to main or master branch"]
+        "should_not_match": ["Never force-push to main or master branch"],
+        "difficulty": "easy"
     },
     {
         "id": "write-html",
         "query": "Write: {\"file_path\": \"templates/index.html\", \"content\": \"<div>{{ user_input }}</div>\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Sanitize all HTML output to prevent XSS"],
-        "should_not_match": ["Use uv for all Python package operations, never pip"]
+        "should_not_match": ["Use uv for all Python package operations, never pip"],
+        "difficulty": "medium"
     },
     {
         "id": "chmod-file",
         "query": "Bash: chmod 777 /etc/passwd",
         "corpus": "rules_basic.txt",
         "should_match": ["Set file permissions to 0o600 for sensitive files"],
-        "should_not_match": ["Use asyncio for I/O-bound operations, not threads"]
+        "should_not_match": ["Use asyncio for I/O-bound operations, not threads"],
+        "difficulty": "medium"
     },
     {
         "id": "print-debug",
         "query": "Edit: {\"file_path\": \"src/api.py\", \"new_string\": \"print('DEBUG:', response)\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["No console.log or print debug statements in production code"],
-        "should_not_match": ["Never force-push to main or master branch"]
+        "should_not_match": ["Never force-push to main or master branch"],
+        "difficulty": "easy"
     },
     {
         "id": "new-branch",
         "query": "Bash: git checkout -b feature/add-login",
         "corpus": "rules_basic.txt",
         "should_match": ["Always create a new branch for feature work"],
-        "should_not_match": ["Use parameterized queries to prevent SQL injection"]
+        "should_not_match": ["Use parameterized queries to prevent SQL injection"],
+        "difficulty": "easy"
     },
     {
         "id": "ruff-check",
         "query": "Bash: uv run ruff check src/",
         "corpus": "rules_basic.txt",
         "should_match": ["Run ruff and mypy before committing Python code"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "easy"
     },
     {
         "id": "npm-audit",
         "query": "Bash: npm audit",
         "corpus": "rules_basic.txt",
         "should_match": ["Review all dependencies for known vulnerabilities before adding"],
-        "should_not_match": ["Use frozen dataclasses for immutable data"]
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "medium"
     },
     {
         "id": "dataclass-creation",
         "query": "Edit: {\"file_path\": \"src/models.py\", \"new_string\": \"@dataclass\\nclass User:\\n    name: str\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Use frozen dataclasses for immutable data"],
-        "should_not_match": ["Never force-push to main or master branch"]
+        "should_not_match": ["Never force-push to main or master branch"],
+        "difficulty": "easy"
     },
     {
         "id": "try-except-pass",
         "query": "Edit: {\"file_path\": \"src/api.py\", \"new_string\": \"try:\\n    do_thing()\\nexcept:\\n    pass\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Always handle errors explicitly, never silently swallow exceptions"],
-        "should_not_match": ["Use uv for all Python package operations, never pip"]
+        "should_not_match": ["Use uv for all Python package operations, never pip"],
+        "difficulty": "medium"
     },
     {
         "id": "magic-number",
         "query": "Edit: {\"file_path\": \"src/config.py\", \"new_string\": \"timeout = 30\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Extract magic numbers into named constants"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "medium"
     },
     {
         "id": "long-function",
         "query": "Edit: {\"file_path\": \"src/processor.py\", \"new_string\": \"def process_all_data(data, config, options, flags, params):\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Keep functions under 50 lines, files under 400 lines", "Use type hints on all function signatures"],
-        "should_not_match": ["Never commit secrets (API keys, tokens, passwords) to git"]
+        "should_not_match": ["Never commit secrets (API keys, tokens, passwords) to git"],
+        "difficulty": "medium"
     },
     {
         "id": "read-python-file",
         "query": "Read: {\"file_path\": \"src/utils.py\"}",
         "corpus": "rules_basic.txt",
-        "should_match": ["Use type hints on all function signatures"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_match": [],
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "easy"
     },
     {
         "id": "write-typescript-file",
         "query": "Write: {\"file_path\": \"src/components/Button.tsx\", \"content\": \"export function Button({ label }) { return <button>{label}</button> }\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Sanitize all HTML output to prevent XSS"],
-        "should_not_match": ["Use uv for all Python package operations, never pip"]
+        "should_not_match": ["Use uv for all Python package operations, never pip"],
+        "difficulty": "hard"
     },
     {
         "id": "edit-json-config",
         "query": "Edit: {\"file_path\": \"config.json\", \"old_string\": \"port: 3000\", \"new_string\": \"port: 8080\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Use environment variables for configuration, not hardcoded values"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "medium"
     },
     {
         "id": "write-yaml-secrets",
         "query": "Write: {\"file_path\": \"deploy/secrets.yaml\", \"content\": \"api_key: sk-live-abc123\\ndb_password: hunter2\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Never commit secrets (API keys, tokens, passwords) to git"],
-        "should_not_match": ["Use frozen dataclasses for immutable data"]
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "easy"
     },
     {
         "id": "edit-env-example",
         "query": "Edit: {\"file_path\": \".env.example\", \"old_string\": \"DB_URL=\", \"new_string\": \"DB_URL=postgres://localhost:5432/mydb\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Use environment variables for configuration, not hardcoded values"],
-        "should_not_match": ["Use asyncio for I/O-bound operations, not threads"]
+        "should_not_match": ["Use asyncio for I/O-bound operations, not threads"],
+        "difficulty": "medium"
     },
     {
         "id": "write-markdown-docs",
         "query": "Write: {\"file_path\": \"docs/api.md\", \"content\": \"# API Reference\\n## Endpoints\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Document all public API functions with docstrings"],
-        "should_not_match": ["Use parameterized queries to prevent SQL injection"]
+        "should_not_match": ["Use parameterized queries to prevent SQL injection"],
+        "difficulty": "medium"
     },
     {
         "id": "git-add-all",
         "query": "Bash: git add -A",
         "corpus": "rules_basic.txt",
         "should_match": ["Never commit secrets (API keys, tokens, passwords) to git", "Add .gitignore entries for generated files and build artifacts"],
-        "should_not_match": ["Use asyncio for I/O-bound operations, not threads"]
+        "should_not_match": ["Use asyncio for I/O-bound operations, not threads"],
+        "difficulty": "medium"
     },
     {
         "id": "git-stash",
         "query": "Bash: git stash save 'work in progress'",
         "corpus": "rules_basic.txt",
-        "should_match": ["Always create a new branch for feature work"],
-        "should_not_match": ["Use parameterized queries to prevent SQL injection"]
+        "should_match": [],
+        "should_not_match": ["Use parameterized queries to prevent SQL injection"],
+        "difficulty": "easy"
     },
     {
         "id": "git-rebase-main",
         "query": "Bash: git rebase main",
         "corpus": "rules_basic.txt",
-        "should_match": ["Always create a new branch for feature work"],
-        "should_not_match": ["Use frozen dataclasses for immutable data"]
+        "should_match": [],
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "easy"
     },
     {
         "id": "git-cherry-pick",
         "query": "Bash: git cherry-pick abc123",
         "corpus": "rules_basic.txt",
-        "should_match": ["Use conventional commit format (feat:, fix:, refactor:, etc.)"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_match": [],
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "easy"
     },
     {
         "id": "git-tag",
         "query": "Bash: git tag v1.0.0",
         "corpus": "rules_basic.txt",
         "should_match": ["Run quality checks before every commit"],
-        "should_not_match": ["Use uv for all Python package operations, never pip"]
+        "should_not_match": ["Use uv for all Python package operations, never pip"],
+        "difficulty": "medium"
     },
     {
         "id": "git-diff",
         "query": "Bash: git diff HEAD~3",
         "corpus": "rules_basic.txt",
-        "should_match": ["Run quality checks before every commit"],
-        "should_not_match": ["Use frozen dataclasses for immutable data"]
+        "should_match": [],
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "easy"
     },
     {
         "id": "git-blame",
         "query": "Bash: git blame src/auth.py",
         "corpus": "rules_basic.txt",
-        "should_match": ["Always validate user input at system boundaries"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_match": [],
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "easy"
     },
     {
         "id": "docker-build",
         "query": "Bash: docker build -t myapp:latest .",
         "corpus": "rules_basic.txt",
         "should_match": ["Review all dependencies for known vulnerabilities before adding"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "hard"
     },
     {
         "id": "docker-run",
         "query": "Bash: docker run -p 8080:80 myapp:latest",
         "corpus": "rules_basic.txt",
         "should_match": ["Use environment variables for configuration, not hardcoded values"],
-        "should_not_match": ["Use frozen dataclasses for immutable data"]
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "hard"
     },
     {
         "id": "docker-compose-up",
         "query": "Bash: docker compose up -d",
         "corpus": "rules_basic.txt",
         "should_match": ["Use environment variables for configuration, not hardcoded values"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "hard"
     },
     {
         "id": "npm-install-package",
         "query": "Bash: npm install express",
         "corpus": "rules_basic.txt",
         "should_match": ["Review all dependencies for known vulnerabilities before adding"],
-        "should_not_match": ["Use uv for all Python package operations, never pip"]
+        "should_not_match": ["Use uv for all Python package operations, never pip"],
+        "difficulty": "medium"
     },
     {
         "id": "cargo-add",
         "query": "Bash: cargo add serde --features derive",
         "corpus": "rules_basic.txt",
         "should_match": ["Review all dependencies for known vulnerabilities before adding"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "medium"
     },
     {
         "id": "go-get",
         "query": "Bash: go get github.com/gin-gonic/gin",
         "corpus": "rules_basic.txt",
         "should_match": ["Review all dependencies for known vulnerabilities before adding"],
-        "should_not_match": ["Use frozen dataclasses for immutable data"]
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "medium"
     },
     {
         "id": "jest-test",
         "query": "Bash: npx jest --coverage",
         "corpus": "rules_basic.txt",
         "should_match": ["100% test coverage on all new code", "Write tests before implementation (TDD red-green-refactor)"],
-        "should_not_match": ["Use uv for all Python package operations, never pip"]
+        "should_not_match": ["Use uv for all Python package operations, never pip"],
+        "difficulty": "medium"
     },
     {
         "id": "vitest-run",
         "query": "Bash: npx vitest run --reporter=verbose",
         "corpus": "rules_basic.txt",
         "should_match": ["100% test coverage on all new code", "Write tests before implementation (TDD red-green-refactor)"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "medium"
     },
     {
         "id": "cargo-test",
         "query": "Bash: cargo test -- --nocapture",
         "corpus": "rules_basic.txt",
         "should_match": ["100% test coverage on all new code", "Write tests before implementation (TDD red-green-refactor)"],
-        "should_not_match": ["Use uv for all Python package operations, never pip"]
+        "should_not_match": ["Use uv for all Python package operations, never pip"],
+        "difficulty": "medium"
     },
     {
         "id": "eslint-check",
         "query": "Bash: npx eslint src/ --fix",
         "corpus": "rules_basic.txt",
-        "should_match": ["Run ruff and mypy before committing Python code"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_match": ["Run quality checks before every commit"],
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "medium"
     },
     {
         "id": "prettier-format",
         "query": "Bash: npx prettier --write 'src/**/*.ts'",
         "corpus": "rules_basic.txt",
         "should_match": ["Run quality checks before every commit"],
-        "should_not_match": ["Use frozen dataclasses for immutable data"]
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "medium"
     },
     {
         "id": "black-format",
         "query": "Bash: uv run black src/",
         "corpus": "rules_basic.txt",
         "should_match": ["Run ruff and mypy before committing Python code"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "medium"
     },
     {
         "id": "cargo-fmt",
         "query": "Bash: cargo fmt --all",
         "corpus": "rules_basic.txt",
         "should_match": ["Run quality checks before every commit"],
-        "should_not_match": ["Use uv for all Python package operations, never pip"]
+        "should_not_match": ["Use uv for all Python package operations, never pip"],
+        "difficulty": "medium"
     },
     {
         "id": "short-query-ls",
         "query": "Bash: ls",
         "corpus": "rules_basic.txt",
         "should_match": [],
-        "should_not_match": ["Use uv for all Python package operations, never pip"]
+        "should_not_match": ["Use uv for all Python package operations, never pip"],
+        "difficulty": "easy"
     },
     {
         "id": "short-query-pwd",
         "query": "Bash: pwd",
         "corpus": "rules_basic.txt",
         "should_match": [],
-        "should_not_match": ["Never commit secrets (API keys, tokens, passwords) to git"]
+        "should_not_match": ["Never commit secrets (API keys, tokens, passwords) to git"],
+        "difficulty": "easy"
     },
     {
         "id": "no-relevant-rules",
         "query": "Bash: echo 'hello world'",
         "corpus": "rules_basic.txt",
         "should_match": [],
-        "should_not_match": ["Use parameterized queries to prevent SQL injection"]
+        "should_not_match": ["Use parameterized queries to prevent SQL injection"],
+        "difficulty": "easy"
     },
     {
         "id": "multi-match-git-commit-with-secrets",
         "query": "Bash: git commit -am 'add AWS_SECRET_KEY to config'",
         "corpus": "rules_basic.txt",
         "should_match": ["Never commit secrets (API keys, tokens, passwords) to git", "Run quality checks before every commit", "Use conventional commit format (feat:, fix:, refactor:, etc.)"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "medium"
     },
     {
         "id": "special-chars-pipe",
         "query": "Bash: cat /etc/hosts | grep 'localhost' && echo $?",
         "corpus": "rules_basic.txt",
         "should_match": [],
-        "should_not_match": ["Use uv for all Python package operations, never pip"]
+        "should_not_match": ["Use uv for all Python package operations, never pip"],
+        "difficulty": "easy"
     },
     {
         "id": "special-chars-redirect",
         "query": "Bash: python script.py 2>&1 | tee output.log",
         "corpus": "rules_basic.txt",
         "should_match": [],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "easy"
     },
     {
         "id": "chown-system-file",
         "query": "Bash: chown root:root /etc/nginx/nginx.conf",
         "corpus": "rules_basic.txt",
         "should_match": ["Set file permissions to 0o600 for sensitive files"],
-        "should_not_match": ["Use frozen dataclasses for immutable data"]
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "medium"
     },
     {
         "id": "curl-with-auth",
         "query": "Bash: curl -H 'Authorization: Bearer sk-live-abc123' https://api.example.com/data",
         "corpus": "rules_basic.txt",
         "should_match": ["Never commit secrets (API keys, tokens, passwords) to git", "Rotate any secrets that may have been exposed"],
-        "should_not_match": ["Use frozen dataclasses for immutable data"]
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "medium"
     },
     {
         "id": "docker-privileged",
         "query": "Bash: docker run --privileged -v /:/host ubuntu bash",
         "corpus": "rules_basic.txt",
         "should_match": ["Set file permissions to 0o600 for sensitive files"],
-        "should_not_match": ["Use uv for all Python package operations, never pip"]
+        "should_not_match": ["Use uv for all Python package operations, never pip"],
+        "difficulty": "hard"
     },
     {
         "id": "write-to-etc",
         "query": "Write: {\"file_path\": \"/etc/cron.d/backup\", \"content\": \"0 * * * * root /opt/backup.sh\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Set file permissions to 0o600 for sensitive files"],
-        "should_not_match": ["Use frozen dataclasses for immutable data"]
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "hard"
     },
     {
         "id": "pip-install-global",
         "query": "Bash: sudo pip install flask",
         "corpus": "rules_basic.txt",
         "should_match": ["Use uv for all Python package operations, never pip"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "easy"
     },
     {
         "id": "git-force-push-master",
         "query": "Bash: git push --force-with-lease origin master",
         "corpus": "rules_basic.txt",
         "should_match": ["Never force-push to main or master branch"],
-        "should_not_match": ["Use frozen dataclasses for immutable data"]
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "easy"
     },
     {
         "id": "mypy-check",
         "query": "Bash: uv run mypy src/ --strict",
         "corpus": "rules_basic.txt",
         "should_match": ["Run ruff and mypy before committing Python code", "Use type hints on all function signatures"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "easy"
     },
     {
         "id": "async-code",
         "query": "Edit: {\"file_path\": \"src/client.py\", \"new_string\": \"async def fetch_data(url: str) -> dict:\\n    async with aiohttp.ClientSession() as session:\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Use asyncio for I/O-bound operations, not threads", "Always close file handles and database connections"],
-        "should_not_match": ["Never force-push to main or master branch"]
+        "should_not_match": ["Never force-push to main or master branch"],
+        "difficulty": "medium"
     },
     {
         "id": "db-connection-no-close",
         "query": "Edit: {\"file_path\": \"src/db.py\", \"new_string\": \"conn = sqlite3.connect('app.db')\\ncursor = conn.cursor()\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Always close file handles and database connections"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "medium"
     },
     {
         "id": "csrf-form",
         "query": "Write: {\"file_path\": \"templates/login.html\", \"content\": \"<form method='POST' action='/login'>\\n<input name='username'>\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Enable CSRF protection on all forms", "Sanitize all HTML output to prevent XSS"],
-        "should_not_match": ["Use frozen dataclasses for immutable data"]
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "medium"
     },
     {
         "id": "gitignore-update",
         "query": "Edit: {\"file_path\": \".gitignore\", \"old_string\": \"node_modules/\", \"new_string\": \"node_modules/\\ndist/\\n.env\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Add .gitignore entries for generated files and build artifacts"],
-        "should_not_match": ["Use parameterized queries to prevent SQL injection"]
+        "should_not_match": ["Use parameterized queries to prevent SQL injection"],
+        "difficulty": "easy"
     },
     {
         "id": "exec-usage",
         "query": "Edit: {\"file_path\": \"src/plugin.py\", \"new_string\": \"exec(compile(code, '<string>', 'exec'))\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Never use eval() or exec() in production code"],
-        "should_not_match": ["Use conventional commit format (feat:, fix:, refactor:, etc.)"]
+        "should_not_match": ["Use conventional commit format (feat:, fix:, refactor:, etc.)"],
+        "difficulty": "easy"
     },
     {
         "id": "console-log-debug",
         "query": "Edit: {\"file_path\": \"src/app.ts\", \"new_string\": \"console.log('DEBUG: user data', userData)\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["No console.log or print debug statements in production code"],
-        "should_not_match": ["Use uv for all Python package operations, never pip"]
+        "should_not_match": ["Use uv for all Python package operations, never pip"],
+        "difficulty": "easy"
     },
     {
         "id": "immutable-pattern",
         "query": "Edit: {\"file_path\": \"src/state.py\", \"new_string\": \"state['items'].append(new_item)\\nstate['count'] += 1\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Prefer immutable data structures over mutable ones"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "medium"
     },
     {
         "id": "secret-rotation",
         "query": "Bash: grep -r 'AKIA' . --include='*.py'",
         "corpus": "rules_basic.txt",
         "should_match": ["Never commit secrets (API keys, tokens, passwords) to git", "Rotate any secrets that may have been exposed"],
-        "should_not_match": ["Use frozen dataclasses for immutable data"]
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "hard"
     },
     {
         "id": "docstring-missing",
         "query": "Edit: {\"file_path\": \"src/api.py\", \"new_string\": \"def create_user(name: str, email: str) -> User:\\n    user = User(name=name, email=email)\"}",
         "corpus": "rules_basic.txt",
         "should_match": ["Document all public API functions with docstrings", "Use type hints on all function signatures"],
-        "should_not_match": ["Send Enter after every tmux send-keys command"]
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "medium"
+    },
+    {
+        "id": "file-handle-leak",
+        "query": "Edit: {\"file_path\": \"src/loader.py\", \"new_string\": \"f = open('data.txt')\\ndata = f.read()\\nprocess(data)\"}",
+        "corpus": "rules_basic.txt",
+        "should_match": ["Always close file handles and database connections"],
+        "should_not_match": ["Use uv for all Python package operations, never pip"],
+        "difficulty": "medium"
+    },
+    {
+        "id": "thread-usage-io",
+        "query": "Edit: {\"file_path\": \"src/fetcher.py\", \"new_string\": \"import threading\\nt = threading.Thread(target=fetch_url)\\nt.start()\"}",
+        "corpus": "rules_basic.txt",
+        "should_match": ["Use asyncio for I/O-bound operations, not threads"],
+        "should_not_match": ["Never force-push to main or master branch"],
+        "difficulty": "medium"
+    },
+    {
+        "id": "proper-except-handling",
+        "query": "Edit: {\"file_path\": \"src/service.py\", \"new_string\": \"try:\\n    result = api_call()\\nexcept Exception as e:\\n    logger.error('API failed: %s', e)\\n    raise\"}",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": ["Always handle errors explicitly, never silently swallow exceptions"],
+        "difficulty": "hard"
+    },
+    {
+        "id": "env-var-read",
+        "query": "Edit: {\"file_path\": \"src/config.py\", \"new_string\": \"db_url = os.getenv('DB_URL', 'sqlite:///default.db')\"}",
+        "corpus": "rules_basic.txt",
+        "should_match": ["Use environment variables for configuration, not hardcoded values"],
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "easy"
+    },
+    {
+        "id": "git-merge-feature",
+        "query": "Bash: git merge feature/payments --no-ff",
+        "corpus": "rules_basic.txt",
+        "should_match": ["Run quality checks before every commit"],
+        "should_not_match": ["Use uv for all Python package operations, never pip"],
+        "difficulty": "hard"
+    },
+    {
+        "id": "write-dockerfile",
+        "query": "Write: {\"file_path\": \"Dockerfile\", \"content\": \"FROM python:3.12\\nRUN pip install flask gunicorn\\nCOPY . /app\\nCMD [\\\"gunicorn\\\", \\\"app:app\\\"]\"}",
+        "corpus": "rules_basic.txt",
+        "should_match": ["Review all dependencies for known vulnerabilities before adding", "Set file permissions to 0o600 for sensitive files"],
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "hard"
+    },
+    {
+        "id": "socket-no-close",
+        "query": "Edit: {\"file_path\": \"src/client.py\", \"new_string\": \"import socket\\ns = socket.socket()\\ns.connect(('api.example.com', 80))\\ns.sendall(b'GET / HTTP/1.1')\"}",
+        "corpus": "rules_basic.txt",
+        "should_match": ["Always close file handles and database connections"],
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "hard"
+    },
+    {
+        "id": "inline-sql-fstring",
+        "query": "Edit: {\"file_path\": \"src/db.py\", \"new_string\": \"cursor.execute(f\\\"DELETE FROM users WHERE id={user_id}\\\")\"}",
+        "corpus": "rules_basic.txt",
+        "should_match": ["Use parameterized queries to prevent SQL injection"],
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "easy"
+    },
+    {
+        "id": "subprocess-shell-true",
+        "query": "Edit: {\"file_path\": \"src/deploy.py\", \"new_string\": \"import subprocess\\nsubprocess.call(cmd, shell=True)\"}",
+        "corpus": "rules_basic.txt",
+        "should_match": ["Never use eval() or exec() in production code"],
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "hard"
+    },
+    {
+        "id": "password-in-code",
+        "query": "Edit: {\"file_path\": \"src/auth.py\", \"new_string\": \"password = \\\"admin123\\\"\\ndb_pass = \\\"supersecret\\\"\"}",
+        "corpus": "rules_basic.txt",
+        "should_match": ["Never commit secrets (API keys, tokens, passwords) to git"],
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "medium"
+    },
+    {
+        "id": "rm-rf-system",
+        "query": "Bash: rm -rf /var/data/*",
+        "corpus": "rules_basic.txt",
+        "should_match": ["Set file permissions to 0o600 for sensitive files"],
+        "should_not_match": ["Use uv for all Python package operations, never pip"],
+        "difficulty": "hard"
+    },
+    {
+        "id": "write-test-file",
+        "query": "Write: {\"file_path\": \"tests/test_auth.py\", \"content\": \"import pytest\\nfrom myapp.auth import login\\n\\ndef test_login_success():\\n    assert login('user', 'pass')\"}",
+        "corpus": "rules_basic.txt",
+        "should_match": ["100% test coverage on all new code", "Write tests before implementation (TDD red-green-refactor)"],
+        "should_not_match": ["Never force-push to main or master branch"],
+        "difficulty": "medium"
+    },
+    {
+        "id": "git-reset-hard",
+        "query": "Bash: git reset --hard HEAD~5",
+        "corpus": "rules_basic.txt",
+        "should_match": ["Never force-push to main or master branch"],
+        "should_not_match": ["Use frozen dataclasses for immutable data"],
+        "difficulty": "hard"
+    },
+    {
+        "id": "mutable-class-attrs",
+        "query": "Edit: {\"file_path\": \"src/config.py\", \"new_string\": \"class Config:\\n    items = []\\n    settings = {}\\n    def add(self, item):\\n        self.items.append(item)\"}",
+        "corpus": "rules_basic.txt",
+        "should_match": ["Prefer immutable data structures over mutable ones", "Use frozen dataclasses for immutable data"],
+        "should_not_match": ["Send Enter after every tmux send-keys command"],
+        "difficulty": "medium"
     }
 ]

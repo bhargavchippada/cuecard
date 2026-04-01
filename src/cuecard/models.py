@@ -69,6 +69,26 @@ class ResolvedConfig:
     allowed_dirs: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class StageTrace:
+    """Provenance for one pipeline stage."""
+
+    stage: str  # "embedding", "rerank", "llm"
+    input_count: int
+    output_count: int
+    latency_ms: float
+    error: str | None = None  # None if successful, error message if degraded
+
+
+@dataclass(frozen=True)
+class PipelineResult:
+    """Full pipeline output with per-stage tracing."""
+
+    results: list[RankedResult]
+    stages: tuple[StageTrace, ...]
+    mode: str
+
+
 class Index:
     """Embedding index over rules for semantic retrieval.
 
