@@ -983,55 +983,71 @@
     "query": "Bash: curl wttr.in/London",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Weather check \u2014 no coding rules apply"
+    "notes": "Weather check \u2014 no coding rules apply",
+    "corpus": "rules_basic.txt",
+    "should_not_match": []
   },
   {
     "id": "negative-calculator",
     "query": "Bash: python3 -c \"print(2 + 2)\"",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Simple arithmetic \u2014 no coding rules apply"
+    "notes": "Simple arithmetic \u2014 no coding rules apply",
+    "corpus": "rules_basic.txt",
+    "should_not_match": []
   },
   {
     "id": "negative-disk-usage",
     "query": "Bash: df -h",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "System info \u2014 no coding rules apply"
+    "notes": "System info \u2014 no coding rules apply",
+    "corpus": "rules_basic.txt",
+    "should_not_match": []
   },
   {
     "id": "negative-read-logs",
     "query": "Bash: journalctl -u nginx --since today",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Reading logs \u2014 no coding rules apply"
+    "notes": "Reading logs \u2014 no coding rules apply",
+    "corpus": "rules_basic.txt",
+    "should_not_match": []
   },
   {
     "id": "negative-ssh-connect",
     "query": "Bash: ssh user@dev-server",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "SSH connection \u2014 no coding rules apply"
+    "notes": "SSH connection \u2014 no coding rules apply",
+    "corpus": "rules_basic.txt",
+    "should_not_match": []
   },
   {
     "id": "negative-read-readme",
     "query": "Read: {\"file_path\": \"README.md\"}",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Reading README \u2014 no coding rules apply"
+    "notes": "Reading README \u2014 no coding rules apply",
+    "corpus": "rules_basic.txt",
+    "should_not_match": []
   },
   {
     "id": "negative-list-branches",
     "query": "Bash: git branch -a",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Listing branches is read-only \u2014 no coding rules apply"
+    "notes": "Listing branches is read-only \u2014 no coding rules apply",
+    "corpus": "rules_basic.txt",
+    "should_not_match": []
   },
   {
     "id": "negative-grep-search",
     "query": "Bash: grep -r 'TODO' src/",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Code search \u2014 no coding rules apply"
+    "notes": "Code search \u2014 no coding rules apply",
+    "corpus": "rules_basic.txt",
+    "should_not_match": []
   }
 ]
