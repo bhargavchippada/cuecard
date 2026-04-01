@@ -174,8 +174,8 @@ class TestParseLLMResponse:
     def test_regex_fallback_space_separated(self) -> None:
         assert _parse_llm_response("1 3 5", 5) == [1, 3, 5]
 
-    def test_invalid_prose_returns_empty(self) -> None:
-        assert _parse_llm_response("Error: rule 42 not found", 5) == []
+    def test_invalid_prose_returns_none(self) -> None:
+        assert _parse_llm_response("Error: rule 42 not found", 5) is None
 
     def test_out_of_range_filtered(self) -> None:
         assert _parse_llm_response('{"rules": [0, 1, 99]}', 5) == [1]
@@ -187,22 +187,28 @@ class TestParseLLMResponse:
         indices = list(range(1, 21))
         response = json.dumps({"rules": indices})
         result = _parse_llm_response(response, 10)
+        assert result is not None
         assert len(result) <= 10
 
-    def test_empty_response(self) -> None:
-        assert _parse_llm_response("", 5) == []
+    def test_empty_response_returns_none(self) -> None:
+        assert _parse_llm_response("", 5) is None
+
+    def test_empty_rules_array_returns_empty_list(self) -> None:
+        assert _parse_llm_response('{"rules": []}', 5) == []
 
     def test_thinking_tags_stripped(self) -> None:
         text = '<think>thinking...</think>{"rules": [2, 4]}'
         assert _parse_llm_response(text, 5) == [2, 4]
 
+    def test_thinking_with_empty_rules(self) -> None:
+        text = '<think>\n\n</think>\n\n{"rules": []}'
+        assert _parse_llm_response(text, 5) == []
+
     def test_json_missing_rules_key(self) -> None:
-        # Falls through to regex; but full JSON string won't match number list pattern
-        assert _parse_llm_response('{"data": 42}', 50) == []
+        assert _parse_llm_response('{"data": 42}', 50) is None
 
     def test_json_missing_rules_key_with_prose(self) -> None:
-        # Falls through to regex; prose won't match
-        assert _parse_llm_response('{"error": "not found"}', 5) == []
+        assert _parse_llm_response('{"error": "not found"}', 5) is None
 
 
 class TestComputeOrdinalScores:
@@ -579,7 +585,7 @@ class TestRerankLLM:
                 endpoint="http://localhost:8081/v1",
                 top_k=2,
             )
-            # Parse returns [], so fallback is used
+            # Parse returns None (unparseable), so fallback is used
             assert len(result) == 2
 
 

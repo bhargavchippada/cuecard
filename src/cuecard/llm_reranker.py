@@ -120,11 +120,11 @@ def rerank_llm(
             raw = _call_haiku(system_prompt, user_prompt, haiku_model)
 
         indices = _parse_llm_response(raw, len(candidates))
-        if not indices:
-            logger.warning("LLM returned no valid indices; returning fallback")
-            return fallback
+        if indices is not None:
+            return _compute_ordinal_scores(indices, candidates)[:top_k]
 
-        return _compute_ordinal_scores(indices, candidates)[:top_k]
+        logger.warning("LLM returned unparseable response; returning fallback")
+        return fallback
 
     except (ConfigError, ValueError):
         raise
@@ -237,11 +237,16 @@ def _strip_thinking_tags(response: str) -> str:
     return re.sub(r"<think>.*?</think>", "", response, flags=re.DOTALL).strip()
 
 
-def _parse_llm_response(response: str, max_rule_id: int) -> list[int]:
+def _parse_llm_response(
+    response: str, max_rule_id: int,
+) -> list[int] | None:
     """Parse LLM response to extract rule indices.
 
+    Returns list of indices (possibly empty for "no rules apply"),
+    or None if the response could not be parsed at all.
+
     1. Strip thinking tags
-    2. Try JSON: {"rules": [1, 5, 12]}
+    2. Try JSON: {"rules": [1, 5, 12]} or {"rules": []}
     3. Guarded regex fallback: only if response looks like a number list
     4. Validate: filter to [1, max_rule_id]
     5. Deduplicate preserving order
@@ -270,7 +275,7 @@ def _parse_llm_response(response: str, max_rule_id: int) -> list[int]:
         indices = [int(x) for x in raw]
         return _validate_indices(indices, max_rule_id)
 
-    return []
+    return None
 
 
 def _validate_indices(indices: list[int], max_rule_id: int) -> list[int]:
