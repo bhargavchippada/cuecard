@@ -153,12 +153,34 @@ The embedding model (jina-code) has a **hard quality ceiling** for this task:
 
 **No amount of post-retrieval filtering can fix this.** The problem is that relevant and irrelevant rules score too similarly in the embedding space. The score distributions overlap heavily (match median=0.350, non-match max=0.703).
 
+### LLM Reranker Results (Qwen3.5-35B, 226 fixtures)
+
+**Critical bug fixed:** Empty `{"rules": []}` was treated as unparseable, causing fallback to ALL candidates for negative queries.
+
+| Tier | Recall | Precision | Noise | Silence | AvgRet |
+|------|--------|-----------|-------|---------|--------|
+| easy | 84.0% | 87.5% | **12.5%** | 0% | 1.4 |
+| medium | 55.6% | 62.4% | **29.1%** | 8.5% | 1.7 |
+| hard | 31.6% | 40.2% | **32.2%** | 27.6% | 1.1 |
+| negative | — | — | 24.1% | **75.9%** | 0.4 |
+
+**Overall noise: 25.1%** (target <30% ✅), **neg silence: 75.9%** (target 80% ~close)
+
+The LLM reranker is conservative — avg 1.1 results, almost no noise. Latency p50=281ms, p99=3s.
+
+### Recommended Configuration
+
+| Use Case | Mode | Threshold | Strengths |
+|----------|------|-----------|-----------|
+| **Low latency** | embedding | 0.30 | 15ms, 91% easy recall |
+| **Low noise** | llm-local | 0.30 | 25% noise, 76% neg silence |
+| **Balanced** | llm-local | 0.30 | Best overall quality |
+
 ### Path Forward
 
-1. **LLM reranker is the quality lever** — it can understand semantics that embeddings miss
-2. **Prompt engineering** for the LLM to also FILTER (not just select) — return empty when nothing matches
-3. **Embedding-only mode is production-ready for easy queries** — 91% recall is good
-4. **Consider the fixture expectations** — some "should_match" may be unreasonable for any IR system
+1. **Easy recall gap** — LLM drops easy recall from 91% to 84%. Prompt tuning could recover this.
+2. **Neg silence** — 75.9% is close to 80% target. 9 unparseable LLM responses fall back to noisy embedding results.
+3. **0.6B reranker** — Qwen3-Reranker-0.6B benchmarks pending (latency vs quality tradeoff)
 
 ## What's Next
 
