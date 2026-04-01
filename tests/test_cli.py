@@ -40,7 +40,7 @@ def _make_config_toml(
         f'model = "{model}"\n\n'
         "[retrieval]\n"
         "top_k = 5\n"
-        "threshold = 0.35\n"
+        "threshold = 0.30\n"
     )
     return config_path
 

@@ -149,7 +149,7 @@ class TestLoadConfig:
         config = load_config(home_dir=home)
         assert isinstance(config, ResolvedConfig)
         assert config.top_k == 5
-        assert config.threshold == 0.35
+        assert config.threshold == 0.30
         assert config.dedup_threshold == 0.95
         assert config.query_max_length == 500
         assert config.max_log_size_mb == 10

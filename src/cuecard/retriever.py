@@ -22,7 +22,7 @@ def retrieve(
     query: str,
     *,
     top_k: int = 5,
-    threshold: float = 0.35,
+    threshold: float = 0.30,
     dedup_threshold: float = 0.95,
     max_query_length: int = 500,
     model: TextEmbedding | None = None,

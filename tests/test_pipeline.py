@@ -49,7 +49,7 @@ class _ConfigWithRetrieval:
     source_paths: tuple[str, ...] = ()
     model_name: str = "test"
     top_k: int = 5
-    threshold: float = 0.35
+    threshold: float = 0.30
     dedup_threshold: float = 0.95
     query_max_length: int = 500
     hook_events: tuple[str, ...] = ()
@@ -74,7 +74,7 @@ def config(sample_index: Index) -> ResolvedConfig:
         source_paths=(),
         model_name="test",
         top_k=5,
-        threshold=0.35,
+        threshold=0.30,
         dedup_threshold=0.95,
         query_max_length=500,
         hook_events=(),

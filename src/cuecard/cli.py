@@ -124,7 +124,7 @@ def setup(
             f'model = "{model}"\n\n'
             '[retrieval]\n'
             'top_k = 5\n'
-            'threshold = 0.35\n',
+            'threshold = 0.30\n',
         )
         console.print(f"Created config: {config_path}")
 
@@ -865,7 +865,7 @@ def eval_cmd(
     ] = 5,
     threshold: Annotated[
         float, typer.Option(help="Min similarity threshold")
-    ] = 0.35,
+    ] = 0.30,
     dedup_threshold: Annotated[
         float, typer.Option("--dedup-threshold", help="Dedup similarity threshold")
     ] = 0.95,

@@ -88,7 +88,7 @@ class TestResolvedConfig:
             source_paths=("/tmp/rules.txt",),
             model_name="BAAI/bge-small-en-v1.5",
             top_k=5,
-            threshold=0.35,
+            threshold=0.30,
             dedup_threshold=0.95,
             query_max_length=500,
             hook_events=("PreToolUse",),
