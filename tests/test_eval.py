@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import numpy as np
@@ -24,6 +25,9 @@ from cuecard.eval import (
     recall_at_k,
     run_eval,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -559,6 +563,54 @@ class TestRunEvalWithMode:
         assert summary.fixture_count == 1
         mock_pipe.assert_called_once()
         assert summary.per_fixture[0].retrieved == ("Rule A",)
+
+
+# ---------------------------------------------------------------------------
+# TestCorpusOverride
+# ---------------------------------------------------------------------------
+
+
+class TestCorpusOverride:
+    def test_corpus_override_builds_unified_index(
+        self, tmp_path: Path,
+    ) -> None:
+        """corpus_override forces all fixtures to use a combined corpus."""
+        # Create two corpus files
+        corpus_a = tmp_path / "corpus_a.txt"
+        corpus_a.write_text("Rule from corpus A\n")
+        corpus_b = tmp_path / "corpus_b.txt"
+        corpus_b.write_text("Rule from corpus B\n")
+
+        fixtures = [
+            Fixture(
+                id="fix-a",
+                query="test query A",
+                corpus="corpus_a.txt",
+                should_match=("Rule from corpus A",),
+                should_not_match=(),
+                difficulty="easy",
+            ),
+            Fixture(
+                id="fix-b",
+                query="test query B",
+                corpus="corpus_b.txt",
+                should_match=("Rule from corpus B",),
+                should_not_match=(),
+                difficulty="easy",
+            ),
+        ]
+
+        model = MockModel()
+        summary = run_eval(
+            fixtures,
+            str(tmp_path),
+            "test-model",
+            model=model,
+            corpus_override=(str(corpus_a), str(corpus_b)),
+        )
+
+        # Both fixtures ran against the unified index (2 rules)
+        assert summary.fixture_count == 2
 
 
 # ---------------------------------------------------------------------------

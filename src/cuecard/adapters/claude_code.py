@@ -26,6 +26,10 @@ from cuecard.retriever import retrieve
 
 _MAX_STDIN = 1_000_000  # 1 MB guard
 _MAX_TOOL_NAME = 200
+_KNOWN_HOOK_EVENTS: frozenset[str] = frozenset({
+    "PreToolUse", "UserPromptSubmit", "PostToolUse",
+    "Stop", "SessionStart",
+})
 
 
 def _sanitize_field(value: str, max_len: int) -> str:
@@ -51,12 +55,8 @@ def main() -> None:
     try:
         raw = sys.stdin.read(_MAX_STDIN)
         data = json.loads(raw)
-        _KNOWN_EVENTS = frozenset({
-            "PreToolUse", "UserPromptSubmit", "PostToolUse",
-            "Stop", "SessionStart", "UserPromptSubmit",
-        })
         raw_event = str(data.get("event", "PreToolUse"))
-        event = raw_event if raw_event in _KNOWN_EVENTS else "PreToolUse"
+        event = raw_event if raw_event in _KNOWN_HOOK_EVENTS else "PreToolUse"
 
         if event == "UserPromptSubmit":
             prompt_text = _sanitize_field(

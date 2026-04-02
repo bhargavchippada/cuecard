@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
-    from cuecard.models import RankedResult
+    from cuecard.models import Index, RankedResult, Rule
 
 import numpy as np
 
@@ -296,6 +296,7 @@ def run_eval(
     dedup_threshold: float = 0.95,
     mode: str | None = None,
     query_max_length: int = 500,
+    corpus_override: tuple[str, ...] | None = None,
 ) -> EvalSummary:
     """Run evaluation across all fixtures and aggregate metrics.
 
@@ -320,23 +321,36 @@ def run_eval(
             threshold args above. This is intentional: re-ranking stages
             need a wider candidate pool to be effective.
         query_max_length: Maximum character length for queries before truncation.
+        corpus_override: If set, use these corpus file paths for ALL fixtures
+            instead of each fixture's corpus field. Builds a single unified
+            index. Useful for testing cross-domain noise.
 
     Returns:
         EvalSummary with per-fixture and aggregate metrics.
     """
     results: list[FixtureResult] = []
 
-    for fixture in fixtures:
-        corpus_path = str(Path(corpus_dir) / fixture.corpus)
-        rules = tuple(parse_rules((corpus_path,)))
+    # Index cache: corpus key -> (rules, index)
+    _index_cache: dict[tuple[str, ...], tuple[tuple[Rule, ...], Index]] = {}
 
-        sources: dict[str, object] = {}
-        index = build_index(
-            rules,
-            sources,  # type: ignore[arg-type]
-            model_name,
-            model=model,  # type: ignore[arg-type]
-        )
+    for fixture in fixtures:
+        if corpus_override is not None:
+            corpus_key = corpus_override
+        else:
+            corpus_key = (str(Path(corpus_dir) / fixture.corpus),)
+
+        if corpus_key not in _index_cache:
+            rules = tuple(parse_rules(corpus_key))
+            sources: dict[str, object] = {}
+            idx = build_index(
+                rules,
+                sources,  # type: ignore[arg-type]
+                model_name,
+                model=model,  # type: ignore[arg-type]
+            )
+            _index_cache[corpus_key] = (rules, idx)
+
+        _cached_rules, index = _index_cache[corpus_key]
 
         start = time.perf_counter()
         if mode is not None and mode != "embedding":

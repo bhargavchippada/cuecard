@@ -115,7 +115,33 @@ RULES:
 </rule_data_EXAMPLE>
 3. <rule_data_EXAMPLE>Use conventional commit format</rule_data_EXAMPLE>
 ACTION: <query_data_EXAMPLE>Bash: git rebase main</query_data_EXAMPLE>
-RESPONSE: {{"reasoning": "The action is git rebase, which replays commits onto a new base. This is NOT a force-push — rebase is a local operation that does not push to remote. Rule 1 is about force-pushing, not rebasing. Rules 2 and 3 are about branching and commit format, not rebasing.", "rules": []}}"""
+RESPONSE: {{"reasoning": "The action is git rebase, which replays commits onto a new base. This is NOT a force-push — rebase is a local operation that does not push to remote. Rule 1 is about force-pushing, not rebasing. Rules 2 and 3 are about branching and commit format, not rebasing.", "rules": []}}
+
+Example 6 — UserPromptSubmit match (complex task):
+RULES:
+1. <rule_data_EXAMPLE>Classify every task as SIMPLE, MEDIUM, or COMPLEX \
+before starting</rule_data_EXAMPLE>
+2. <rule_data_EXAMPLE>Use type hints on all function signatures\
+</rule_data_EXAMPLE>
+3. <rule_data_EXAMPLE>COMPLEX tasks require a full PRD written to \
+artifacts/ before implementation</rule_data_EXAMPLE>
+4. <rule_data_EXAMPLE>Use subagents for medium to complex tasks\
+</rule_data_EXAMPLE>
+ACTION: <query_data_EXAMPLE>UserPromptSubmit: Add authentication and \
+authorization to all API endpoints</query_data_EXAMPLE>
+RESPONSE: {{"reasoning": "The user is requesting a complex feature (auth across all endpoints). Rule 1 applies — classify the task first. Rule 3 applies — a complex task needs a PRD. Rule 4 applies — use subagents for delegation. Rule 2 is a coding style rule for when code is being written, not relevant to planning.", "rules": [1, 3, 4]}}
+
+Example 7 — UserPromptSubmit negative (simple question):
+RULES:
+1. <rule_data_EXAMPLE>Classify every task as SIMPLE, MEDIUM, or COMPLEX \
+before starting</rule_data_EXAMPLE>
+2. <rule_data_EXAMPLE>Write tests before implementation (TDD)\
+</rule_data_EXAMPLE>
+3. <rule_data_EXAMPLE>Run security review before every commit\
+</rule_data_EXAMPLE>
+ACTION: <query_data_EXAMPLE>UserPromptSubmit: What does the retrieve \
+function do?</query_data_EXAMPLE>
+RESPONSE: {{"reasoning": "The user is asking a question about existing code. This is an information request, not a task that needs classification, testing, or security review. No workflow or coding rules apply to answering questions.", "rules": []}}"""
 
 
 def validate_endpoint(endpoint: str) -> None:

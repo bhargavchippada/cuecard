@@ -893,6 +893,13 @@ def eval_cmd(
         float, typer.Option("--dedup-threshold", help="Dedup similarity threshold")
     ] = 0.95,
     mode: Annotated[str, typer.Option(help="Pipeline mode")] = "",
+    corpus_override: Annotated[
+        str | None,
+        typer.Option(
+            "--corpus-override",
+            help="Comma-separated corpus files for unified index",
+        ),
+    ] = None,
 ) -> None:
     """Run evaluation against a fixture file."""
     from cuecard.eval import format_eval_report, load_fixtures, run_eval
@@ -916,6 +923,13 @@ def eval_cmd(
         err_console.print(f"[red]Failed to load model:[/red] {exc}")
         raise typer.Exit(1) from None
 
+    override_paths: tuple[str, ...] | None = None
+    if corpus_override:
+        override_paths = tuple(
+            str(Path(resolved_corpus_dir) / p.strip())
+            for p in corpus_override.split(",")
+        )
+
     try:
         summary = run_eval(
             fixtures,
@@ -926,6 +940,7 @@ def eval_cmd(
             threshold=threshold,
             dedup_threshold=dedup_threshold,
             mode=mode if mode else None,
+            corpus_override=override_paths,
         )
     except Exception as exc:
         err_console.print(f"[red]Eval failed:[/red] {exc}")

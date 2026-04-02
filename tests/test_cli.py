@@ -1207,6 +1207,35 @@ class TestEval:
         assert call_kwargs["mode"] == "rerank"
 
 
+    def test_eval_with_corpus_override(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        fixture_file = tmp_path / "fixtures.json"
+        fixture_file.write_text("[]")
+
+        mock_model = MagicMock()
+        fake_summary = MagicMock()
+
+        with (
+            patch("cuecard.eval.load_fixtures", return_value=[]),
+            patch("fastembed.TextEmbedding", return_value=mock_model),
+            patch(
+                "cuecard.eval.run_eval",
+                return_value=fake_summary,
+            ) as mock_run,
+            patch("cuecard.eval.format_eval_report", return_value="OK"),
+        ):
+            result = runner.invoke(app, [
+                "eval", str(fixture_file),
+                "--corpus-override", "rules_a.txt,rules_b.txt",
+            ])
+
+        assert result.exit_code == 0
+        call_kwargs = mock_run.call_args[1]
+        assert call_kwargs["corpus_override"] is not None
+        assert len(call_kwargs["corpus_override"]) == 2
+
+
 class TestLoadConfigOrExit:
     def test_config_error_exits(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
