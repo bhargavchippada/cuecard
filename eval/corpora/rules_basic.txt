@@ -10,7 +10,7 @@ Use frozen dataclasses for immutable data
 No console.log or print debug statements in production code
 Use parameterized queries to prevent SQL injection
 Sanitize all HTML output to prevent XSS
-Enable CSRF protection on all forms
+Enable CSRF protection on all forms and state-changing endpoints
 Set file permissions to 0o600 for sensitive files
 Use environment variables for configuration, not hardcoded values
 Run ruff and mypy before committing Python code
@@ -19,10 +19,10 @@ Never use eval() or exec() in production code
 Always handle errors explicitly, never silently swallow exceptions
 Use type hints on all function signatures
 Keep functions under 50 lines, files under 400 lines
-Extract magic numbers into named constants
+Extract magic numbers and hardcoded values into named constants
 Prefer immutable data structures over mutable ones
 Use asyncio for I/O-bound operations, not threads
-Always close file handles and database connections
+Always close file handles, database connections, network sockets, and other resources
 Rotate any secrets that may have been exposed
 Review all dependencies for known vulnerabilities before adding
 Never force-push to main or master branch

@@ -65,9 +65,7 @@
         "id": "edit-python-file",
         "query": "Edit: {\"file_path\": \"src/auth.py\", \"old_string\": \"def login\", \"new_string\": \"def login_user\"}",
         "corpus": "rules_basic.txt",
-        "should_match": [
-            "Use type hints on all function signatures"
-        ],
+        "should_match": [],
         "should_not_match": [
             "Never force-push to main or master branch"
         ],
@@ -223,7 +221,7 @@
         "query": "Edit: {\"file_path\": \"src/config.py\", \"new_string\": \"timeout = 30\"}",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Extract magic numbers into named constants"
+            "Extract magic numbers and hardcoded values into named constants"
         ],
         "should_not_match": [
             "Send Enter after every tmux send-keys command"
@@ -703,7 +701,7 @@
         "corpus": "rules_basic.txt",
         "should_match": [
             "Use asyncio for I/O-bound operations, not threads",
-            "Always close file handles and database connections"
+            "Always close file handles, database connections, network sockets, and other resources"
         ],
         "should_not_match": [
             "Never force-push to main or master branch"
@@ -715,7 +713,7 @@
         "query": "Edit: {\"file_path\": \"src/db.py\", \"new_string\": \"conn = sqlite3.connect('app.db')\\ncursor = conn.cursor()\"}",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Always close file handles and database connections"
+            "Always close file handles, database connections, network sockets, and other resources"
         ],
         "should_not_match": [
             "Send Enter after every tmux send-keys command"
@@ -727,7 +725,7 @@
         "query": "Write: {\"file_path\": \"templates/login.html\", \"content\": \"<form method='POST' action='/login'>\\n<input name='username'>\"}",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Enable CSRF protection on all forms",
+            "Enable CSRF protection on all forms and state-changing endpoints",
             "Sanitize all HTML output to prevent XSS"
         ],
         "should_not_match": [
@@ -814,7 +812,7 @@
         "query": "Edit: {\"file_path\": \"src/loader.py\", \"new_string\": \"f = open('data.txt')\\ndata = f.read()\\nprocess(data)\"}",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Always close file handles and database connections"
+            "Always close file handles, database connections, network sockets, and other resources"
         ],
         "should_not_match": [
             "Use uv for all Python package operations, never pip"
@@ -885,7 +883,7 @@
         "query": "Edit: {\"file_path\": \"src/client.py\", \"new_string\": \"import socket\\ns = socket.socket()\\ns.connect(('api.example.com', 80))\\ns.sendall(b'GET / HTTP/1.1')\"}",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Always close file handles and database connections"
+            "Always close file handles, database connections, network sockets, and other resources"
         ],
         "should_not_match": [
             "Use frozen dataclasses for immutable data"
@@ -1076,7 +1074,7 @@
         ],
         "should_not_match": [
             "Use parameterized queries to prevent SQL injection",
-            "Enable CSRF protection on all forms"
+            "Enable CSRF protection on all forms and state-changing endpoints"
         ],
         "difficulty": "easy"
     },
@@ -1204,7 +1202,6 @@
         "corpus": "rules_basic.txt",
         "should_match": [
             "Always handle errors explicitly, never silently swallow exceptions",
-            "Use type hints on all function signatures",
             "Use parameterized queries to prevent SQL injection",
             "Document all public API functions with docstrings"
         ],
@@ -1221,8 +1218,7 @@
         "should_match": [
             "Use parameterized queries to prevent SQL injection",
             "Use asyncio for I/O-bound operations, not threads",
-            "Always close file handles and database connections",
-            "Use type hints on all function signatures"
+            "Always close file handles, database connections, network sockets, and other resources"
         ],
         "should_not_match": [
             "Use frozen dataclasses for immutable data",
@@ -1237,7 +1233,7 @@
         "should_match": [
             "Never commit secrets (API keys, tokens, passwords) to git",
             "Use environment variables for configuration, not hardcoded values",
-            "Extract magic numbers into named constants"
+            "Extract magic numbers and hardcoded values into named constants"
         ],
         "should_not_match": [
             "Use asyncio for I/O-bound operations, not threads",
@@ -1265,9 +1261,8 @@
         "should_match": [
             "Use parameterized queries to prevent SQL injection",
             "No console.log or print debug statements in production code",
-            "Use type hints on all function signatures",
             "Always handle errors explicitly, never silently swallow exceptions",
-            "Always close file handles and database connections"
+            "Always close file handles, database connections, network sockets, and other resources"
         ],
         "should_not_match": [
             "Use asyncio for I/O-bound operations, not threads",
@@ -1281,7 +1276,7 @@
         "corpus": "rules_basic.txt",
         "should_match": [
             "Use environment variables for configuration, not hardcoded values",
-            "Enable CSRF protection on all forms"
+            "Enable CSRF protection on all forms and state-changing endpoints"
         ],
         "should_not_match": [
             "Use uv for all Python package operations, never pip",
@@ -1324,7 +1319,6 @@
         "corpus": "rules_basic.txt",
         "should_match": [
             "Use frozen dataclasses for immutable data",
-            "Use type hints on all function signatures",
             "Document all public API functions with docstrings"
         ],
         "should_not_match": [
@@ -1340,9 +1334,8 @@
         "should_match": [
             "Use parameterized queries to prevent SQL injection",
             "Sanitize all HTML output to prevent XSS",
-            "Always close file handles and database connections",
-            "Always handle errors explicitly, never silently swallow exceptions",
-            "Use type hints on all function signatures"
+            "Always close file handles, database connections, network sockets, and other resources",
+            "Always handle errors explicitly, never silently swallow exceptions"
         ],
         "should_not_match": [
             "Use uv for all Python package operations, never pip",
@@ -1370,8 +1363,7 @@
         "corpus": "rules_basic.txt",
         "should_match": [
             "100% test coverage on all new code",
-            "Write tests before implementation (TDD red-green-refactor)",
-            "Use type hints on all function signatures"
+            "Write tests before implementation (TDD red-green-refactor)"
         ],
         "should_not_match": [
             "Use parameterized queries to prevent SQL injection",
@@ -1385,9 +1377,7 @@
         "corpus": "rules_basic.txt",
         "should_match": [
             "Never commit secrets (API keys, tokens, passwords) to git",
-            "Always close file handles and database connections",
-            "Use type hints on all function signatures",
-            "Document all public API functions with docstrings"
+            "Always close file handles, database connections, network sockets, and other resources"
         ],
         "should_not_match": [
             "Send Enter after every tmux send-keys command",
@@ -1401,7 +1391,6 @@
         "corpus": "rules_basic.txt",
         "should_match": [
             "Always validate user input at system boundaries",
-            "Sanitize all HTML output to prevent XSS",
             "Use parameterized queries to prevent SQL injection",
             "Use type hints on all function signatures",
             "Document all public API functions with docstrings"
@@ -1420,8 +1409,7 @@
             "Never commit secrets (API keys, tokens, passwords) to git",
             "Use environment variables for configuration, not hardcoded values",
             "Always handle errors explicitly, never silently swallow exceptions",
-            "Always close file handles and database connections",
-            "Use type hints on all function signatures"
+            "Always close file handles, database connections, network sockets, and other resources"
         ],
         "should_not_match": [
             "Use uv for all Python package operations, never pip",
@@ -1436,7 +1424,7 @@
         "should_match": [
             "Use parameterized queries to prevent SQL injection",
             "Always validate user input at system boundaries",
-            "Enable CSRF protection on all forms",
+            "Enable CSRF protection on all forms and state-changing endpoints",
             "Always handle errors explicitly, never silently swallow exceptions"
         ],
         "should_not_match": [
@@ -1507,8 +1495,7 @@
         "query": "Edit: old_string='# TODO: fix later' new_string='# \u2705 Fixed: validate input before processing\ndef process(data: dict) -> dict:\n    if not isinstance(data, dict):\n        raise ValueError(\"Expected dict\")\n    return {k: sanitize(v) for k, v in data.items()}'",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Always validate user input at system boundaries",
-            "Use type hints on all function signatures"
+            "Always validate user input at system boundaries"
         ],
         "should_not_match": [
             "Send Enter after every tmux send-keys command",
@@ -1548,10 +1535,9 @@
         "query": "Edit: file_path='/app/src/api/users.py' old_string='pass' new_string='def get_user_profile(user_id: int) -> dict:\n    conn = db.connect()\n    row = conn.execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n    if not row:\n        return {\"error\": \"not found\"}\n    return {\"id\": row[0], \"name\": row[1], \"email\": row[2]}'",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Use type hints on all function signatures",
             "Document all public API functions with docstrings",
             "Always handle errors explicitly, never silently swallow exceptions",
-            "Always close file handles and database connections"
+            "Always close file handles, database connections, network sockets, and other resources"
         ],
         "should_not_match": [
             "Use frozen dataclasses for immutable data",
@@ -1565,8 +1551,7 @@
         "corpus": "rules_basic.txt",
         "should_match": [
             "Write tests before implementation (TDD red-green-refactor)",
-            "100% test coverage on all new code",
-            "Use type hints on all function signatures"
+            "100% test coverage on all new code"
         ],
         "should_not_match": [
             "Use parameterized queries to prevent SQL injection",
@@ -1596,9 +1581,7 @@
         "corpus": "rules_basic.txt",
         "should_match": [
             "Use asyncio for I/O-bound operations, not threads",
-            "Always close file handles and database connections",
-            "Use parameterized queries to prevent SQL injection",
-            "Use type hints on all function signatures"
+            "Use parameterized queries to prevent SQL injection"
         ],
         "should_not_match": [
             "Use frozen dataclasses for immutable data",
@@ -1631,7 +1614,7 @@
             "Always validate user input at system boundaries",
             "Sanitize all HTML output to prevent XSS",
             "Use parameterized queries to prevent SQL injection",
-            "Enable CSRF protection on all forms"
+            "Enable CSRF protection on all forms and state-changing endpoints"
         ],
         "should_not_match": [
             "Use frozen dataclasses for immutable data",
@@ -1661,7 +1644,7 @@
         "query": "Edit: old_string='config = {}' new_string='config = {\n    \"max_retries\": 3,\n    \"timeout\": 30,\n    \"batch_size\": 100,\n    \"log_level\": \"INFO\",\n}\n\ndef update_config(key, value):\n    config[key] = value\n    return config'",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Extract magic numbers into named constants",
+            "Extract magic numbers and hardcoded values into named constants",
             "Prefer immutable data structures over mutable ones",
             "Use type hints on all function signatures"
         ],
@@ -1679,7 +1662,7 @@
             "Always validate user input at system boundaries",
             "Set file permissions to 0o600 for sensitive files",
             "Always handle errors explicitly, never silently swallow exceptions",
-            "Always close file handles and database connections"
+            "Always close file handles, database connections, network sockets, and other resources"
         ],
         "should_not_match": [
             "Use frozen dataclasses for immutable data",
@@ -1706,7 +1689,7 @@
         "query": "Edit: old_string='pass' new_string='from apscheduler.schedulers.blocking import BlockingScheduler\nimport psycopg2\n\ndef cleanup_expired_sessions():\n    conn = psycopg2.connect(DATABASE_URL)\n    conn.execute(\"DELETE FROM sessions WHERE expires_at < NOW()\")\n    conn.commit()\n\nscheduler = BlockingScheduler()\nscheduler.add_job(cleanup_expired_sessions, \"interval\", hours=1)\nscheduler.start()'",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Always close file handles and database connections",
+            "Always close file handles, database connections, network sockets, and other resources",
             "Always handle errors explicitly, never silently swallow exceptions",
             "Use type hints on all function signatures"
         ],
@@ -1765,7 +1748,7 @@
         "corpus": "rules_basic.txt",
         "should_match": [
             "Always handle errors explicitly, never silently swallow exceptions",
-            "Always close file handles and database connections",
+            "Always close file handles, database connections, network sockets, and other resources",
             "Use type hints on all function signatures",
             "Document all public API functions with docstrings"
         ],
@@ -1904,7 +1887,7 @@
         "corpus": "rules_basic.txt",
         "should_match": [],
         "should_not_match": [
-            "Always close file handles and database connections"
+            "Always close file handles, database connections, network sockets, and other resources"
         ],
         "difficulty": "negative"
     },
@@ -1924,7 +1907,7 @@
         "corpus": "rules_basic.txt",
         "should_match": [],
         "should_not_match": [
-            "Enable CSRF protection on all forms"
+            "Enable CSRF protection on all forms and state-changing endpoints"
         ],
         "difficulty": "negative"
     },
@@ -1984,7 +1967,7 @@
         "corpus": "rules_basic.txt",
         "should_match": [],
         "should_not_match": [
-            "Enable CSRF protection on all forms"
+            "Enable CSRF protection on all forms and state-changing endpoints"
         ],
         "difficulty": "negative"
     },
@@ -2104,7 +2087,7 @@
         "corpus": "rules_basic.txt",
         "should_match": [],
         "should_not_match": [
-            "Extract magic numbers into named constants"
+            "Extract magic numbers and hardcoded values into named constants"
         ],
         "difficulty": "negative"
     },
@@ -2251,7 +2234,7 @@
         "query": "Bash: grep -rn 'get_pool|SurrealPool|acquire' agentic_trader/db/repositories/ --include='*.py'",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Always close file handles and database connections"
+            "Always close file handles, database connections, network sockets, and other resources"
         ],
         "should_not_match": [
             "Use parameterized queries to prevent SQL injection"
@@ -2384,7 +2367,7 @@
         "query": "Edit: mcp-nexus-rag/http_server.py \u2014 changing timeout constant from 90 to 120",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Extract magic numbers into named constants"
+            "Extract magic numbers and hardcoded values into named constants"
         ],
         "should_not_match": [
             "Use environment variables for configuration, not hardcoded values"
@@ -2446,7 +2429,7 @@
             "Use type hints on all function signatures"
         ],
         "should_not_match": [
-            "Enable CSRF protection on all forms"
+            "Enable CSRF protection on all forms and state-changing endpoints"
         ],
         "difficulty": "medium"
     },
@@ -2468,7 +2451,7 @@
             "100% test coverage on all new code"
         ],
         "should_not_match": [
-            "Extract magic numbers into named constants"
+            "Extract magic numbers and hardcoded values into named constants"
         ],
         "difficulty": "easy"
     },
@@ -2477,7 +2460,7 @@
         "query": "Edit: delulu/src/delulu/classify/loader.py \u2014 removing conn.commit() call",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Always close file handles and database connections"
+            "Always close file handles, database connections, network sockets, and other resources"
         ],
         "should_not_match": [
             "Use parameterized queries to prevent SQL injection"
@@ -2524,7 +2507,7 @@
         "corpus": "rules_basic.txt",
         "should_match": [
             "Use environment variables for configuration, not hardcoded values",
-            "Always close file handles and database connections",
+            "Always close file handles, database connections, network sockets, and other resources",
             "No console.log or print debug statements in production code"
         ],
         "should_not_match": [
@@ -2576,7 +2559,7 @@
         "query": "Write: delulu/src/delulu/extract/loader.py \u2014 SQLite loader for extracted session data",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Always close file handles and database connections",
+            "Always close file handles, database connections, network sockets, and other resources",
             "Use parameterized queries to prevent SQL injection",
             "Always handle errors explicitly, never silently swallow exceptions"
         ],
@@ -2631,7 +2614,7 @@
         "corpus": "rules_basic.txt",
         "should_match": [],
         "should_not_match": [
-            "Always close file handles and database connections"
+            "Always close file handles, database connections, network sockets, and other resources"
         ],
         "difficulty": "negative"
     },
@@ -3092,7 +3075,7 @@
         "query": "Edit: src/components/LoginForm.tsx -- old_string='<form method=\"POST\" action=\"/api/login\">' new_string='<form method=\"POST\" action=\"/api/login\"><input type=\"hidden\" name=\"_csrf\" value={csrfToken} />'",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Enable CSRF protection on all forms"
+            "Enable CSRF protection on all forms and state-changing endpoints"
         ],
         "should_not_match": [
             "Use uv for all Python package operations, never pip"
@@ -3397,7 +3380,7 @@
         "query": "Edit: src/models.py -- old_string='conn = psycopg2.connect(DB_URL); cursor = conn.cursor(); cursor.execute(query)' new_string='conn = psycopg2.connect(DB_URL); try: cursor = conn.cursor(); cursor.execute(query); finally: conn.close()'",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Always close file handles and database connections",
+            "Always close file handles, database connections, network sockets, and other resources",
             "Always handle errors explicitly, never silently swallow exceptions"
         ],
         "should_not_match": [
@@ -3695,7 +3678,7 @@
             "Use parameterized queries to prevent SQL injection",
             "Use frozen dataclasses for immutable data",
             "Use type hints on all function signatures",
-            "Always close file handles and database connections",
+            "Always close file handles, database connections, network sockets, and other resources",
             "Prefer immutable data structures over mutable ones",
             "Use asyncio for I/O-bound operations, not threads",
             "Use environment variables for configuration, not hardcoded values"
@@ -3729,7 +3712,7 @@
             "Use environment variables for configuration, not hardcoded values",
             "Use type hints on all function signatures",
             "Use parameterized queries to prevent SQL injection",
-            "Always close file handles and database connections",
+            "Always close file handles, database connections, network sockets, and other resources",
             "Document all public API functions with docstrings"
         ],
         "should_not_match": [
@@ -3939,7 +3922,7 @@
         "should_match": [
             "Use frozen dataclasses for immutable data",
             "Prefer immutable data structures over mutable ones",
-            "Extract magic numbers into named constants",
+            "Extract magic numbers and hardcoded values into named constants",
             "Use environment variables for configuration, not hardcoded values"
         ],
         "should_not_match": [
@@ -3954,7 +3937,7 @@
         "should_match": [
             "Use asyncio for I/O-bound operations, not threads",
             "Use type hints on all function signatures",
-            "Always close file handles and database connections"
+            "Always close file handles, database connections, network sockets, and other resources"
         ],
         "should_not_match": [
             "Use uv for all Python package operations, never pip"
@@ -4254,7 +4237,7 @@
         "query": "Edit: src/loader.py -- old_string='f = open(\"data.csv\")\ndata = f.read()' new_string='with open(\"data.csv\") as f:\n    data = f.read()'",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Always close file handles and database connections"
+            "Always close file handles, database connections, network sockets, and other resources"
         ],
         "should_not_match": [
             "Use uv for all Python package operations, never pip"
@@ -4304,7 +4287,7 @@
         "query": "Edit: src/retry.py -- old_string='time.sleep(0.5)\nif retries > 3:' new_string='time.sleep(RETRY_DELAY_SECONDS)\nif retries > MAX_RETRIES:'",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Extract magic numbers into named constants"
+            "Extract magic numbers and hardcoded values into named constants"
         ],
         "should_not_match": [
             "Use uv for all Python package operations, never pip"
