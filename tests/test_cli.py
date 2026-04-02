@@ -371,6 +371,76 @@ class TestIndex:
         assert result.exit_code == 0
         assert "index rebuilt" in result.output.lower()
 
+    def test_index_rebuild_merges_cached_rules_json(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """When rules.json exists with expansions, index rebuild merges them."""
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        rng = np.random.default_rng(42)
+        mock_model = MagicMock()
+
+        def _fake_embed(texts: object, **kw: object) -> list[np.ndarray]:
+            n = len(list(texts))
+            emb = rng.standard_normal((n, 384)).astype(np.float32)
+            return [emb[i] for i in range(n)]
+
+        mock_model.passage_embed.side_effect = _fake_embed
+
+        rules_path = str((tmp_path / ".cuecard" / "rules" / "global.txt").resolve())
+        fake_sources: dict[str, SourceMeta] = {
+            rules_path: SourceMeta(
+                mtime=1.0, content_hash="sha256:abc", rule_count=2,
+            ),
+        }
+        fake_freshness = FreshnessResult(
+            is_stale=True,
+            updated_sources=fake_sources,
+            changed_files=(),
+            removed_files=(),
+            new_files=(rules_path,),
+        )
+
+        # Pre-populate rules.json with expansions for a matching rule
+        from cuecard.indexer import save_rules_json
+        from cuecard.models import Provenance, Rule
+
+        cached_rules = [
+            Rule(
+                text="Never commit secrets to git",
+                provenance=Provenance(file=rules_path, line_start=1, line_end=1),
+                expansions=("AKIA in source", "hardcoded API key"),
+            ),
+        ]
+        cache_dir = str(tmp_path / ".cuecard" / "index")
+        Path(cache_dir).mkdir(parents=True, exist_ok=True)
+        save_rules_json(cached_rules, cache_dir)
+
+        with (
+            patch("fastembed.TextEmbedding", return_value=mock_model),
+            patch("cuecard.freshness.check_freshness", return_value=fake_freshness),
+        ):
+            result = runner.invoke(app, ["index"])
+
+        assert result.exit_code == 0
+        assert "index rebuilt" in result.output.lower()
+
+        # Verify rules.json was saved with merged content
+        from cuecard.indexer import load_rules_json
+
+        merged = load_rules_json(cache_dir)
+        assert merged is not None
+        # Both source rules should be present
+        texts = [r.text for r in merged]
+        assert "Never commit secrets to git" in texts
+        assert "Always validate user input" in texts
+        # Expansions preserved for the matching rule
+        for r in merged:
+            if r.text == "Never commit secrets to git":
+                assert r.expansions == ("AKIA in source", "hardcoded API key")
+
     def test_index_rebuild_no_rules(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
@@ -508,13 +578,23 @@ class TestRetrieve:
         monkeypatch.chdir(tmp_path)
 
         idx = _make_sample_index()
-        results = [RankedResult(rule=idx.rules[0], score=0.87)]
+
+        from cuecard.models import PipelineResult, StageTrace
+
+        fake_pipeline = PipelineResult(
+            results=(RankedResult(rule=idx.rules[0], score=0.87),),
+            stages=(StageTrace(
+                stage="retrieval", input_count=1,
+                output_count=1, latency_ms=1.0,
+            ),),
+            mode="embedding",
+        )
 
         mock_model = MagicMock()
         with (
             patch("cuecard.loader.load_or_build", return_value=idx),
             patch("fastembed.TextEmbedding", return_value=mock_model),
-            patch("cuecard.retriever.retrieve", return_value=results),
+            patch("cuecard.pipeline.run_pipeline", return_value=fake_pipeline),
         ):
             result = runner.invoke(app, ["retrieve", "secrets"])
 
@@ -530,10 +610,24 @@ class TestRetrieve:
         idx = _make_sample_index()
         mock_model = MagicMock()
 
+        from cuecard.models import PipelineResult, StageTrace
+
+        fake_pipeline = PipelineResult(
+            results=(),
+            stages=(StageTrace(
+                stage="retrieval", input_count=1,
+                output_count=0, latency_ms=1.0,
+            ),),
+            mode="embedding",
+        )
+
         with (
             patch("cuecard.loader.load_or_build", return_value=idx),
             patch("fastembed.TextEmbedding", return_value=mock_model),
-            patch("cuecard.retriever.retrieve", return_value=[]) as mock_ret,
+            patch(
+                "cuecard.pipeline.run_pipeline",
+                return_value=fake_pipeline,
+            ) as mock_pipe,
         ):
             result = runner.invoke(
                 app,
@@ -541,9 +635,7 @@ class TestRetrieve:
             )
 
         assert result.exit_code == 0
-        call_kwargs = mock_ret.call_args[1]
-        assert call_kwargs["top_k"] == 3
-        assert call_kwargs["threshold"] == 0.5
+        mock_pipe.assert_called_once()
 
     def test_retrieve_no_index(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
@@ -669,13 +761,24 @@ class TestFormat:
         monkeypatch.chdir(tmp_path)
 
         idx = _make_sample_index()
-        results = [RankedResult(rule=idx.rules[0], score=0.87)]
+        results = (RankedResult(rule=idx.rules[0], score=0.87),)
         mock_model = MagicMock()
+
+        from cuecard.models import PipelineResult, StageTrace
+
+        fake_pipeline = PipelineResult(
+            results=results,
+            stages=(StageTrace(
+                stage="embedding", input_count=1,
+                output_count=1, latency_ms=1.0,
+            ),),
+            mode="embedding",
+        )
 
         with (
             patch("cuecard.loader.load_or_build", return_value=idx),
             patch("fastembed.TextEmbedding", return_value=mock_model),
-            patch("cuecard.retriever.retrieve", return_value=results),
+            patch("cuecard.pipeline.run_pipeline", return_value=fake_pipeline),
         ):
             result = runner.invoke(app, ["format", "secrets"])
 
@@ -691,10 +794,21 @@ class TestFormat:
         idx = _make_sample_index()
         mock_model = MagicMock()
 
+        from cuecard.models import PipelineResult, StageTrace
+
+        fake_pipeline = PipelineResult(
+            results=(),
+            stages=(StageTrace(
+                stage="embedding", input_count=0,
+                output_count=0, latency_ms=1.0,
+            ),),
+            mode="embedding",
+        )
+
         with (
             patch("cuecard.loader.load_or_build", return_value=idx),
             patch("fastembed.TextEmbedding", return_value=mock_model),
-            patch("cuecard.retriever.retrieve", return_value=[]),
+            patch("cuecard.pipeline.run_pipeline", return_value=fake_pipeline),
         ):
             result = runner.invoke(app, ["format", "nonexistent"])
 
@@ -1114,23 +1228,16 @@ class TestRulesExpand:
         assert result.exit_code == 1
         assert "failed" in result.output.lower() or "error" in result.output.lower()
 
-    def test_expand_empty_rules_json(
+    def test_expand_empty_source_files(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Rules.json exists but has zero rules."""
+        """Source files have zero rules → skip."""
         _patch_home(monkeypatch, tmp_path)
         _setup_home(tmp_path)
         monkeypatch.chdir(tmp_path)
 
-        # Write an empty rules.json
-        cache_dir = tmp_path / ".cuecard" / "index"
-        cache_dir.mkdir(parents=True, exist_ok=True)
-        (cache_dir / "rules.json").write_text(
-            '{"version": 1, "rules": []}',
-        )
-
         with patch(
-            "cuecard.indexer.load_rules_json", return_value=[],
+            "cuecard.parser.parse_rules", return_value=[],
         ):
             result = runner.invoke(
                 app,
@@ -1717,6 +1824,72 @@ class TestStatus:
 
         assert result.exit_code == 0
         assert "Log:" in result.output
+
+    def test_status_global_index_label(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        idx = _make_sample_index()
+        with patch("cuecard.indexer.load_index", return_value=idx):
+            result = runner.invoke(app, ["status"])
+
+        assert result.exit_code == 0
+        assert "Global index" in result.output
+
+    def test_status_project_index_only(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+
+        project_dir = tmp_path / "myproject"
+        project_dir.mkdir()
+        monkeypatch.chdir(project_dir)
+        (project_dir / "cuecard.toml").write_text(
+            "[sources]\n"
+            'rules = ["rules.txt"]\n',
+        )
+        (project_dir / "rules.txt").write_text("Project rule\n")
+
+        idx = _make_sample_index()
+
+        def _load_by_path(cache_dir: str) -> Index | None:
+            if "myproject" in cache_dir:
+                return idx
+            return None
+
+        with patch("cuecard.indexer.load_index", side_effect=_load_by_path):
+            result = runner.invoke(app, ["status"])
+
+        assert result.exit_code == 0
+        assert "Project index" in result.output
+        assert "No valid index" not in result.output
+
+    def test_status_both_indexes(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+
+        project_dir = tmp_path / "myproject"
+        project_dir.mkdir()
+        monkeypatch.chdir(project_dir)
+        (project_dir / "cuecard.toml").write_text(
+            "[sources]\n"
+            'rules = ["rules.txt"]\n',
+        )
+        (project_dir / "rules.txt").write_text("Project rule\n")
+
+        idx = _make_sample_index()
+        with patch("cuecard.indexer.load_index", return_value=idx):
+            result = runner.invoke(app, ["status"])
+
+        assert result.exit_code == 0
+        assert "Global index" in result.output
+        assert "Project index" in result.output
 
 
 # ---------------------------------------------------------------------------

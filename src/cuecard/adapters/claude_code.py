@@ -23,7 +23,6 @@ from cuecard.config import load_config
 from cuecard.formatter import format_rules
 from cuecard.loader import load_or_build
 from cuecard.logger import log_retrieval
-from cuecard.retriever import retrieve
 
 _MAX_STDIN = 1_000_000  # 1 MB guard
 _MAX_TOOL_NAME = 200
@@ -86,25 +85,13 @@ def main() -> None:
                 getattr(config, "pipeline", None), "mode", "embedding",
             )
 
-            results: Sequence[RankedResult]
-            if pipeline_mode != "embedding":
-                from cuecard.pipeline import run_pipeline
+            from cuecard.pipeline import run_pipeline
 
-                pipeline_result = run_pipeline(
-                    query, index, config,
-                    embedding_model=model, mode=pipeline_mode,
-                )
-                results = pipeline_result.results
-            else:
-                results = retrieve(
-                    index,
-                    query,
-                    top_k=config.top_k,
-                    threshold=config.threshold,
-                    dedup_threshold=config.dedup_threshold,
-                    max_query_length=config.query_max_length,
-                    model=model,
-                )
+            pipeline_result = run_pipeline(
+                query, index, config,
+                embedding_model=model, mode=pipeline_mode,
+            )
+            results: Sequence[RankedResult] = pipeline_result.results
 
             latency_ms = (time.monotonic() - start) * 1000
 

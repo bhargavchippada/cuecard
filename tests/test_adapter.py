@@ -95,7 +95,26 @@ def _make_results() -> list[RankedResult]:
     return [RankedResult(rule=rule, score=0.87)]
 
 
+def _make_pipeline_result(
+    results: list[RankedResult] | None = None,
+    mode: str = "embedding",
+) -> PipelineResult:
+    if results is None:
+        results = _make_results()
+    return PipelineResult(
+        results=tuple(results),
+        stages=(
+            StageTrace(
+                stage="retrieval", input_count=2,
+                output_count=len(results), latency_ms=1.0,
+            ),
+        ),
+        mode=mode,
+    )
+
+
 _MOD = "cuecard.adapters.claude_code"
+_PIPELINE = "cuecard.pipeline.run_pipeline"
 
 
 class TestAdapterMain:
@@ -117,7 +136,7 @@ class TestAdapterMain:
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
             patch(f"{_MOD}.load_or_build", return_value=index),
-            patch(f"{_MOD}.retrieve", return_value=results),
+            patch(_PIPELINE, return_value=_make_pipeline_result(results)),
             patch(f"{_MOD}.log_retrieval") as mock_log,
         ):
             mock_stdin.read.return_value = json.dumps(hook_input)
@@ -147,7 +166,7 @@ class TestAdapterMain:
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
             patch(f"{_MOD}.load_or_build", return_value=index),
-            patch(f"{_MOD}.retrieve", return_value=[]),
+            patch(_PIPELINE, return_value=_make_pipeline_result([])),
             patch(f"{_MOD}.log_retrieval"),
         ):
             mock_stdin.read.return_value = json.dumps(hook_input)
@@ -247,7 +266,7 @@ class TestAdapterMain:
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
             patch(f"{_MOD}.load_or_build", return_value=index),
-            patch(f"{_MOD}.retrieve", return_value=results),
+            patch(_PIPELINE, return_value=_make_pipeline_result(results)),
             patch(f"{_MOD}.log_retrieval"),
         ):
             mock_stdin.read.return_value = json.dumps(hook_input)
@@ -278,17 +297,17 @@ class TestAdapterMain:
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
             patch(f"{_MOD}.load_or_build", return_value=index),
-            patch(f"{_MOD}.retrieve", return_value=results) as mock_ret,
+            patch(
+                _PIPELINE, return_value=_make_pipeline_result(results),
+            ) as mock_pipe,
             patch(f"{_MOD}.log_retrieval") as mock_log,
         ):
             mock_stdin.read.return_value = json.dumps(hook_input)
             main()
 
         # Verify query has UserPromptSubmit prefix
-        call_kwargs = mock_ret.call_args
-        assert "UserPromptSubmit:" in call_kwargs[1].get(
-            "query", call_kwargs[0][1] if len(call_kwargs[0]) > 1 else "",
-        ) or "UserPromptSubmit:" in str(call_kwargs)
+        pipe_args = mock_pipe.call_args
+        assert "UserPromptSubmit:" in pipe_args[0][0]
 
         # Verify log uses UserPromptSubmit as tool_name
         log_kwargs = mock_log.call_args
@@ -313,25 +332,14 @@ class TestAdapterMain:
         index = _make_index()
         results = _make_results()
 
-        fake_pipeline = PipelineResult(
-            results=tuple(results),
-            stages=(
-                StageTrace(
-                    stage="embedding", input_count=2,
-                    output_count=1, latency_ms=1.0,
-                ),
-            ),
-            mode="rerank",
-        )
-
         with (
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
             patch(f"{_MOD}.load_or_build", return_value=index),
             patch(
-                "cuecard.pipeline.run_pipeline",
-                return_value=fake_pipeline,
+                _PIPELINE,
+                return_value=_make_pipeline_result(results, mode="rerank"),
             ) as mock_pipe,
             patch(f"{_MOD}.log_retrieval"),
         ):
@@ -362,7 +370,7 @@ class TestAdapterMain:
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
             patch(f"{_MOD}.load_or_build", return_value=index),
-            patch(f"{_MOD}.retrieve", return_value=[]),
+            patch(_PIPELINE, return_value=_make_pipeline_result([])),
             patch(f"{_MOD}.log_retrieval"),
         ):
             mock_stdin.read.return_value = json.dumps(hook_input)

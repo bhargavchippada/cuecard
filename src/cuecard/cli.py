@@ -320,7 +320,13 @@ def index(
     from fastembed import TextEmbedding
 
     from cuecard.freshness import check_freshness
-    from cuecard.indexer import build_index, save_index
+    from cuecard.indexer import (
+        build_index,
+        load_rules_json,
+        merge_rules_json,
+        save_index,
+        save_rules_json,
+    )
     from cuecard.parser import parse_rules
 
     model = TextEmbedding(model_name=cfg.model_name)
@@ -331,6 +337,13 @@ def index(
         if not rules:
             console.print(f"[yellow]{label}: no rules found.[/yellow]")
             continue
+
+        # Merge with cached rules.json to preserve expansions
+        cached_rules = load_rules_json(cache_dir)
+        if cached_rules is not None:
+            rules = merge_rules_json(rules, cached_rules)
+        save_rules_json(rules, cache_dir)
+
         freshness = check_freshness(source_paths, {})
         idx = build_index(
             tuple(rules), freshness.updated_sources, cfg.model_name,
@@ -384,25 +397,12 @@ def retrieve(
         )
         raise typer.Exit(1)
 
-    if effective_mode != "embedding":
-        from cuecard.pipeline import run_pipeline
+    from cuecard.pipeline import run_pipeline
 
-        pipeline_result = run_pipeline(
-            query, idx, cfg, embedding_model=model, mode=effective_mode,
-        )
-        results: Sequence[RankedResult] = pipeline_result.results
-    else:
-        from cuecard.retriever import retrieve as do_retrieve
-
-        results = do_retrieve(
-            idx,
-            query,
-            top_k=top_k if top_k > 0 else cfg.top_k,
-            threshold=threshold if threshold > 0 else cfg.threshold,
-            dedup_threshold=cfg.dedup_threshold,
-            model=model,
-            max_query_length=cfg.query_max_length,
-        )
+    pipeline_result = run_pipeline(
+        query, idx, cfg, embedding_model=model, mode=effective_mode,
+    )
+    results: Sequence[RankedResult] = pipeline_result.results
 
     console.print(format_rules_verbose(results))
 
@@ -421,7 +421,7 @@ def format_cmd(
 
     from cuecard.formatter import format_rules
     from cuecard.loader import load_or_build
-    from cuecard.retriever import retrieve as do_retrieve
+    from cuecard.pipeline import run_pipeline
 
     model = TextEmbedding(model_name=cfg.model_name)
     idx = load_or_build(cfg, model)  # type: ignore[arg-type]
@@ -429,12 +429,10 @@ def format_cmd(
         err_console.print(_SETUP_NOT_DONE)
         raise typer.Exit(1)
 
-    results = do_retrieve(
-        idx, query, top_k=cfg.top_k, threshold=cfg.threshold,
-        dedup_threshold=cfg.dedup_threshold, model=model,
-        max_query_length=cfg.query_max_length,
+    pipeline_result = run_pipeline(
+        query, idx, cfg, embedding_model=model, mode=cfg.pipeline.mode,
     )
-    output = format_rules(results)
+    output = format_rules(pipeline_result.results)
     if output:
         console.print(output)
     else:

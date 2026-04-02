@@ -19,7 +19,6 @@ import numpy as np
 
 from cuecard.indexer import build_index
 from cuecard.parser import parse_rules
-from cuecard.retriever import retrieve
 
 logger = logging.getLogger(__name__)
 
@@ -283,6 +282,8 @@ class _EvalConfig:
     threshold: float = 0.30
     dedup_threshold: float = 0.95
     query_max_length: int = 500
+    sparse_enabled: bool = True
+    fusion_k: int = 60
 
 
 def run_eval(
@@ -352,33 +353,24 @@ def run_eval(
 
         _cached_rules, index = _index_cache[corpus_key]
 
-        start = time.perf_counter()
-        if mode is not None and mode != "embedding":
-            from cuecard.pipeline import run_pipeline
+        effective_mode = mode if mode is not None else "embedding"
 
-            pipeline_result = run_pipeline(
-                fixture.query,
-                index,
-                _EvalConfig(
-                    top_k=top_k,
-                    threshold=threshold,
-                    dedup_threshold=dedup_threshold,
-                    query_max_length=query_max_length,
-                ),  # type: ignore[arg-type]
-                embedding_model=model,  # type: ignore[arg-type]
-                mode=mode,
-            )
-            ranked: Sequence[RankedResult] = pipeline_result.results
-        else:
-            ranked = retrieve(
-                index,
-                fixture.query,
+        start = time.perf_counter()
+        from cuecard.pipeline import run_pipeline
+
+        pipeline_result = run_pipeline(
+            fixture.query,
+            index,
+            _EvalConfig(
                 top_k=top_k,
                 threshold=threshold,
                 dedup_threshold=dedup_threshold,
-                max_query_length=query_max_length,
-                model=model,  # type: ignore[arg-type]
-            )
+                query_max_length=query_max_length,
+            ),  # type: ignore[arg-type]
+            embedding_model=model,  # type: ignore[arg-type]
+            mode=effective_mode,
+        )
+        ranked: Sequence[RankedResult] = pipeline_result.results
         elapsed_ms = (time.perf_counter() - start) * 1000.0
 
         retrieved_texts = [r.rule.text for r in ranked]

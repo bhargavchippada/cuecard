@@ -137,11 +137,11 @@ mutmut verifies that tests actually detect code changes (mutations). 100% line c
 - Core library is agent-agnostic — no Claude Code imports in core modules
 - Adapters are thin wrappers in `src/cuecard/adapters/`
 - Multi-stage pipeline: multi-retriever (dense + sparse) → cross-encoder (opt-in) → LLM (opt-in)
-- pipeline.py orchestrates all stages, CLI/adapter delegate to it
+- pipeline.py orchestrates all stages; ALL retrieval paths (CLI, adapter, eval) route through `run_pipeline()` — even `embedding` mode uses the full dense+sparse+RRF stage
 - Retriever adapter pattern: `Retriever` protocol in `retrievers/__init__.py`, pluggable dense/sparse/future
 - RRF (Reciprocal Rank Fusion) merges results from multiple retrievers
 - Parent-child collapse: rules have expansions (paraphrases), each embedded separately, max-score collapse via `rule_map`
-- JSON intermediate: `rules.json` is the canonical format. Parser→JSON→Indexer. Expansions survive rebuilds via merge.
+- JSON intermediate: `rules.json` is the canonical format. Parser→JSON→Indexer. Expansions survive rebuilds via merge. Both `cuecard index` and `load_or_build()` use the same merge lifecycle.
 - Scoped caches: global index in `~/.cuecard/index/`, project index in `.cuecard/index/`. Both loaded and composed at retrieval time via `loader.py`. No cross-project rule leakage.
 - Every pipeline step independently callable via CLI
 - Provenance on every data object — trace back to source file + line

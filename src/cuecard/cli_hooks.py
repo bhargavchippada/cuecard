@@ -178,13 +178,27 @@ def status() -> None:
 
     from cuecard.indexer import load_index
 
-    idx = load_index(cfg.global_cache_dir)
-    if idx is not None:
+    found_any = False
+    global_idx = load_index(cfg.global_cache_dir)
+    if global_idx is not None:
+        found_any = True
+        idx = global_idx
         console.print(
-            f"[green]\u2713[/green] Index: {idx.size} rules, dim={idx.dim}",
+            f"[green]\u2713[/green] Global index: {idx.size} rules, dim={idx.dim}",
         )
-        console.print(f"  Model: {idx.model_name}")
-    else:
+        console.print(f"  Model: {global_idx.model_name}")
+
+    if cfg.project_cache_dir:
+        project_idx = load_index(cfg.project_cache_dir)
+        if project_idx is not None:
+            found_any = True
+            idx = project_idx
+            console.print(
+                f"[green]\u2713[/green] Project index: {idx.size} rules, dim={idx.dim}",
+            )
+            console.print(f"  Model: {project_idx.model_name}")
+
+    if not found_any:
         console.print("[yellow]\u2717[/yellow] No valid index found")
 
     # Check log

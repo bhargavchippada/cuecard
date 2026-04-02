@@ -235,7 +235,7 @@ def expand(
 ) -> None:
     """Generate LLM expansions for rules."""
     from cuecard.expander import expand_rules
-    from cuecard.indexer import load_rules_json, save_rules_json
+    from cuecard.indexer import load_rules_json, merge_rules_json, save_rules_json
     from cuecard.parser import parse_rules
 
     cfg = _cli._load_config_or_exit(
@@ -243,19 +243,15 @@ def expand(
     )
 
     for label, cache_dir, source_paths in _cli._iter_scoped_sources(cfg):
-        # Load existing rules.json or build from source files
-        rules = load_rules_json(cache_dir)
-        if rules is None:
-            parsed = parse_rules(source_paths)
-            if not parsed:
-                console.print(f"[yellow]{label}: no rules found.[/yellow]")
-                continue
-            save_rules_json(parsed, cache_dir)
-            rules = parsed
-
-        if not rules:
+        # Always parse fresh source files
+        parsed = parse_rules(source_paths)
+        if not parsed:
             console.print(f"[yellow]{label}: no rules found.[/yellow]")
             continue
+        # Merge with cached rules.json to preserve existing expansions
+        cached = load_rules_json(cache_dir)
+        rules = merge_rules_json(parsed, cached) if cached is not None else parsed
+        save_rules_json(rules, cache_dir)
 
         if dry_run:
             skipped = sum(1 for r in rules if missing_only and r.expansions)
