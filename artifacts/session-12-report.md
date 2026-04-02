@@ -196,13 +196,31 @@ Few-shot examples + DO/DONT guidelines massively improved negative handling.
 4. **False negative analysis** — 78 missed instances: 29% reasonable miss, 28% wrong fixture expectations, 23% narrow corpus rules, 19% need better embedding.
 5. **Qwen3-Reranker-0.6B** — cross-encoder, NOT instruction-following. Can't generate JSON. Use via fastembed only.
 
+### DEFINITIVE RESULTS (357 fixtures, thinking=OFF, server -c 16384 --jinja)
+
+| Tier | Recall | Precision | Noise | Silence | AvgRet |
+|------|--------|-----------|-------|---------|--------|
+| easy | **80.9%** | 76.7% | **18.4%** | — | 1.5 |
+| medium | 59.7% | 61.4% | **17.8%** | — | 1.6 |
+| hard | 33.1% | 41.3% | **25.3%** | — | 1.5 |
+| negative | — | — | **4.0%** | **96.0%** | 0.0 |
+
+**Overall noise: 14.2%** (was 64%) — 78% reduction
+**Neg silence: 96.0%** (was 24.2%) — 4x improvement
+**Precision: 39.9%** (was 23.9%) — 67% improvement
+**Latency p50: 889ms** (thinking disabled via chat_template_kwargs)
+
+### Key Breakthrough: `chat_template_kwargs: {"enable_thinking": false}`
+Disabling Qwen3.5's thinking mode via Jinja template gives 10x latency reduction
+(7s → 889ms) while maintaining quality. Server needs `--jinja` flag.
+
 ### Path Forward
 
-1. **Fix 22 over-expected fixtures** (free recall improvement, in progress)
-2. **Rewrite 3 narrow corpus rules** (close resources, CSRF, magic numbers)
-3. **Implement rule augmentation** (category prefix, +1.7% recall)
-4. **Evaluate CodeRankEmbed** (137M, +10.7 MRR potential)
-5. **Reduce unparseable LLM responses** (25+ failures on 357 fixtures)
+1. **Easy recall gap** — 80.9% vs 90.2% embedding. LLM too conservative. Prompt tuning.
+2. **Two-stage thinking** — budget-capped thinking for hard queries (~1s total)
+3. **Rule augmentation** — category prefix, +1.7% recall, +3.5% MRR
+4. **CodeRankEmbed** — 137M, +10.7 MRR potential (SOTA research)
+5. **Phase 4: Publish** — PyPI, GitHub CI, README
 
 ## What's Next
 
