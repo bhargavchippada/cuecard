@@ -100,9 +100,18 @@ Eval dataset: 438 curated fixtures + 149 mined from real developer sessions acro
 
 ## Local LLM Server
 
-For best quality, run a local Qwen3.5-35B instance:
+For best quality, run a local Qwen3.5 instance:
 
 ```bash
+# Recommended: 9B (matches 35B quality, 4x smaller)
+llama-server -m ~/models/Qwen3.5-9B-Q4_K_M.gguf \
+  --port 8081 -ngl 99 -c 16384 --jinja
+
+# CPU/laptop: 4B (2.6GB, ~850ms per query)
+llama-server -m ~/models/Qwen3.5-4B-Q4_K_M.gguf \
+  --port 8081 -ngl 0 -c 16384 --jinja
+
+# Max quality: 35B MoE (needs 32GB GPU)
 llama-server -m ~/models/Qwen3.5-35B-A3B-Q4_K_M.gguf \
   --port 8081 -ngl 99 -c 16384 --jinja
 ```
@@ -145,7 +154,7 @@ uv run mypy src/
 uv run mutmut run                    # Mutation testing
 ```
 
-826+ tests, 100% coverage, ruff clean, mypy strict.
+831+ tests, 100% coverage, ruff clean, mypy strict.
 
 ## License
 
