@@ -1,0 +1,144 @@
+{
+  "model": "Qwen3-0.6B-Q4_K_M",
+  "endpoint": "http://localhost:8082/v1",
+  "embedding_model": "BAAI/bge-small-en-v1.5",
+  "timestamp": "2026-04-02T03:34:41",
+  "results": {
+    "basic": {
+      "fixture_count": 354,
+      "mean_precision": 0.1521,
+      "mean_recall": 0.2224,
+      "mean_mrr": 0.2715,
+      "mean_ndcg": 0.2365,
+      "mean_anti_precision": 0.0362,
+      "mean_noise_ratio": 0.2801,
+      "mean_context_waste_ratio": 0.28,
+      "negative_silence_rate": 0.8421,
+      "mean_retrieved_count": 1.33,
+      "latency_p50_ms": 1408.9,
+      "latency_p95_ms": 3664.9,
+      "latency_p99_ms": 15374.8,
+      "per_tier": [
+        {
+          "tier": "easy",
+          "count": 62,
+          "mean_precision": 0.4043,
+          "mean_recall": 0.6075,
+          "mean_mrr": 0.6505,
+          "mean_noise_ratio": 0.3054,
+          "mean_context_waste_ratio": 0.3071,
+          "silence_rate": 0.2903,
+          "mean_retrieved_count": 1.92
+        },
+        {
+          "tier": "medium",
+          "count": 113,
+          "mean_precision": 0.2084,
+          "mean_recall": 0.3071,
+          "mean_mrr": 0.4052,
+          "mean_noise_ratio": 0.3757,
+          "mean_context_waste_ratio": 0.3737,
+          "silence_rate": 0.4159,
+          "mean_retrieved_count": 1.81
+        },
+        {
+          "tier": "hard",
+          "count": 46,
+          "mean_precision": 0.1134,
+          "mean_recall": 0.1381,
+          "mean_mrr": 0.2174,
+          "mean_noise_ratio": 0.3649,
+          "mean_context_waste_ratio": 0.3663,
+          "silence_rate": 0.5217,
+          "mean_retrieved_count": 1.61
+        },
+        {
+          "tier": "negative",
+          "count": 133,
+          "mean_precision": 0.0,
+          "mean_recall": 0.0,
+          "mean_mrr": 0.0,
+          "mean_noise_ratio": 0.1579,
+          "mean_context_waste_ratio": 0.1579,
+          "silence_rate": 0.8421,
+          "mean_retrieved_count": 0.55
+        }
+      ]
+    },
+    "workflow": {
+      "fixture_count": 84,
+      "mean_precision": 0.1339,
+      "mean_recall": 0.3175,
+      "mean_mrr": 0.3377,
+      "mean_ndcg": 0.301,
+      "mean_anti_precision": 0.0095,
+      "mean_noise_ratio": 0.3899,
+      "mean_context_waste_ratio": 0.3912,
+      "negative_silence_rate": 0.8333,
+      "mean_retrieved_count": 2.27,
+      "latency_p50_ms": 1408.4,
+      "latency_p95_ms": 1984.4,
+      "latency_p99_ms": 2493.8,
+      "per_tier": [
+        {
+          "tier": "easy",
+          "count": 22,
+          "mean_precision": 0.2932,
+          "mean_recall": 0.7955,
+          "mean_mrr": 0.8636,
+          "mean_noise_ratio": 0.6159,
+          "mean_context_waste_ratio": 0.6228,
+          "silence_rate": 0.0909,
+          "mean_retrieved_count": 3.77
+        },
+        {
+          "tier": "medium",
+          "count": 23,
+          "mean_precision": 0.1478,
+          "mean_recall": 0.2246,
+          "mean_mrr": 0.2804,
+          "mean_noise_ratio": 0.4609,
+          "mean_context_waste_ratio": 0.4614,
+          "silence_rate": 0.3913,
+          "mean_retrieved_count": 2.52
+        },
+        {
+          "tier": "hard",
+          "count": 15,
+          "mean_precision": 0.0933,
+          "mean_recall": 0.2667,
+          "mean_mrr": 0.1944,
+          "mean_noise_ratio": 0.3067,
+          "mean_context_waste_ratio": 0.3034,
+          "silence_rate": 0.6,
+          "mean_retrieved_count": 2.0
+        },
+        {
+          "tier": "negative",
+          "count": 24,
+          "mean_precision": 0.0,
+          "mean_recall": 0.0,
+          "mean_mrr": 0.0,
+          "mean_noise_ratio": 0.1667,
+          "mean_context_waste_ratio": 0.1667,
+          "silence_rate": 0.8333,
+          "mean_retrieved_count": 0.83
+        }
+      ]
+    }
+  },
+  "meta": {
+    "basic": {
+      "successes": 354,
+      "failures": 0,
+      "failure_rate": 0.0,
+      "sample_errors": []
+    },
+    "workflow": {
+      "successes": 84,
+      "failures": 0,
+      "failure_rate": 0.0,
+      "sample_errors": []
+    }
+  }
+}

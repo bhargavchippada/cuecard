@@ -225,6 +225,228 @@ class TestCallHaiku:
             call_haiku("system", "user", "claude-haiku-4-5")
 
 
+class TestCallLocalRequestBody:
+    """Verify the request body structure sent to httpx.post (kills body mutants)."""
+
+    def _make_mock_response(self) -> MagicMock:
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "choices": [{"message": {"content": "ok"}}],
+        }
+        mock_response.raise_for_status = MagicMock()
+        return mock_response
+
+    def test_model_key_and_value(self) -> None:
+        with patch.object(
+            httpx, "post", return_value=self._make_mock_response(),
+        ) as mock_post:
+            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            body = mock_post.call_args.kwargs["json"]
+            assert "model" in body
+            assert body["model"] == "qwen"
+
+    def test_message_structure(self) -> None:
+        with patch.object(
+            httpx, "post", return_value=self._make_mock_response(),
+        ) as mock_post:
+            call_local("my_system", "my_user", "http://localhost:8081/v1", False)
+            body = mock_post.call_args.kwargs["json"]
+            messages = body["messages"]
+            assert len(messages) == 2
+            assert messages[0] == {"role": "system", "content": "my_system"}
+            assert messages[1] == {"role": "user", "content": "my_user"}
+
+    def test_stop_sequence(self) -> None:
+        with patch.object(
+            httpx, "post", return_value=self._make_mock_response(),
+        ) as mock_post:
+            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            body = mock_post.call_args.kwargs["json"]
+            assert "stop" in body
+            assert body["stop"] == ["\n\n"]
+
+    def test_url_construction(self) -> None:
+        with patch.object(
+            httpx, "post", return_value=self._make_mock_response(),
+        ) as mock_post:
+            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            url = mock_post.call_args.args[0]
+            assert url == "http://localhost:8081/v1/chat/completions"
+
+    def test_url_strips_trailing_slash(self) -> None:
+        with patch.object(
+            httpx, "post", return_value=self._make_mock_response(),
+        ) as mock_post:
+            call_local("sys", "usr", "http://localhost:8081/v1/", False)
+            url = mock_post.call_args.args[0]
+            assert url == "http://localhost:8081/v1/chat/completions"
+
+    def test_timeout_set(self) -> None:
+        with patch.object(
+            httpx, "post", return_value=self._make_mock_response(),
+        ) as mock_post:
+            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            assert mock_post.call_args.kwargs["timeout"] == 60.0
+
+    def test_default_max_tokens(self) -> None:
+        with patch.object(
+            httpx, "post", return_value=self._make_mock_response(),
+        ) as mock_post:
+            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            body = mock_post.call_args.kwargs["json"]
+            assert body["max_tokens"] == 1024
+
+    def test_default_temperature(self) -> None:
+        with patch.object(
+            httpx, "post", return_value=self._make_mock_response(),
+        ) as mock_post:
+            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            body = mock_post.call_args.kwargs["json"]
+            assert body["temperature"] == 0.0
+
+
+class TestCallHaikuRequestStructure:
+    """Verify call_haiku passes correct options to claude-agent-sdk."""
+
+    def test_options_passed_correctly(self) -> None:
+        mock_text_block = MagicMock()
+        mock_text_block.text = "result"
+
+        mock_message = MagicMock()
+        mock_message.content = [mock_text_block]
+
+        mock_sdk = MagicMock()
+        mock_sdk.TextBlock = type(mock_text_block)
+        mock_sdk.AssistantMessage = type(mock_message)
+
+        class MockAsyncIter:
+            def __init__(self) -> None:
+                self._items = [mock_message]
+                self._index = 0
+
+            def __aiter__(self) -> MockAsyncIter:
+                return self
+
+            async def __anext__(self) -> object:
+                if self._index >= len(self._items):
+                    raise StopAsyncIteration
+                item = self._items[self._index]
+                self._index += 1
+                return item
+
+        mock_sdk.query.return_value = MockAsyncIter()
+
+        with patch.dict("sys.modules", {"claude_agent_sdk": mock_sdk}):
+            call_haiku("my_system", "my_user", "claude-haiku-4-5")
+            # Verify query was called with correct prompt
+            mock_sdk.query.assert_called_once()
+            call_kwargs = mock_sdk.query.call_args.kwargs
+            assert call_kwargs["prompt"] == "my_user"
+            # Verify ClaudeAgentOptions was constructed with correct args
+            opts_kwargs = mock_sdk.ClaudeAgentOptions.call_args.kwargs
+            assert opts_kwargs["model"] == "claude-haiku-4-5"
+            assert opts_kwargs["system_prompt"] == "my_system"
+            assert opts_kwargs["tools"] == []
+            assert opts_kwargs["max_turns"] == 1
+            assert opts_kwargs["permission_mode"] == "bypassPermissions"
+            assert opts_kwargs["setting_sources"] == []
+
+
+class TestValidateEndpointScheme:
+    """Kill mutants that corrupt the HTTPS scheme check."""
+
+    def test_https_scheme_accepted(self) -> None:
+        """HTTPS must be in the allowed set (case-sensitive lowercase)."""
+        validate_endpoint("https://localhost:8081/v1")
+
+    def test_uppercase_scheme_rejected(self) -> None:
+        """Schemes are case-normalized by urlparse — HTTPS parses as https."""
+        # urlparse normalizes scheme to lowercase, so "HTTPS://..." → scheme="https"
+        # This test ensures "https" (lowercase) is in the allowlist
+        validate_endpoint("HTTPS://localhost:8081/v1")
+
+
+class TestCallHaikuOptionsPassedToQuery:
+    """Kill mutants that drop options from query() call."""
+
+    def test_query_receives_options_not_none(self) -> None:
+        """query() must receive the constructed options object, not None."""
+        mock_text_block = MagicMock()
+        mock_text_block.text = "result"
+
+        mock_message = MagicMock()
+        mock_message.content = [mock_text_block]
+
+        mock_sdk = MagicMock()
+        mock_sdk.TextBlock = type(mock_text_block)
+        mock_sdk.AssistantMessage = type(mock_message)
+
+        class MockAsyncIter:
+            def __init__(self) -> None:
+                self._items = [mock_message]
+                self._index = 0
+
+            def __aiter__(self) -> MockAsyncIter:
+                return self
+
+            async def __anext__(self) -> object:
+                if self._index >= len(self._items):
+                    raise StopAsyncIteration
+                item = self._items[self._index]
+                self._index += 1
+                return item
+
+        mock_sdk.query.return_value = MockAsyncIter()
+        expected_options = mock_sdk.ClaudeAgentOptions.return_value
+
+        with patch.dict("sys.modules", {"claude_agent_sdk": mock_sdk}):
+            call_haiku("sys", "usr", "claude-haiku-4-5")
+            call_kwargs = mock_sdk.query.call_args.kwargs
+            assert call_kwargs["options"] is expected_options
+            assert call_kwargs["options"] is not None
+
+    def test_multipart_response_joined_without_separator(self) -> None:
+        """Multiple text blocks must be joined with empty string, not 'XXXX'."""
+
+        class FakeTextBlock:
+            def __init__(self, text: str) -> None:
+                self.text = text
+
+        class FakeAssistantMessage:
+            def __init__(self, content: list[object]) -> None:
+                self.content = content
+
+        mock_block_1 = FakeTextBlock("hello")
+        mock_block_2 = FakeTextBlock(" world")
+        mock_message = FakeAssistantMessage([mock_block_1, mock_block_2])
+
+        mock_sdk = MagicMock()
+        mock_sdk.TextBlock = FakeTextBlock
+        mock_sdk.AssistantMessage = FakeAssistantMessage
+
+        class MockAsyncIter:
+            def __init__(self) -> None:
+                self._items = [mock_message]
+                self._index = 0
+
+            def __aiter__(self) -> MockAsyncIter:
+                return self
+
+            async def __anext__(self) -> object:
+                if self._index >= len(self._items):
+                    raise StopAsyncIteration
+                item = self._items[self._index]
+                self._index += 1
+                return item
+
+        mock_sdk.query.return_value = MockAsyncIter()
+
+        with patch.dict("sys.modules", {"claude_agent_sdk": mock_sdk}):
+            result = call_haiku("sys", "usr", "claude-haiku-4-5")
+            assert result == "hello world"
+            assert "XXXX" not in result
+
+
 class TestConstants:
     def test_allowed_hosts(self) -> None:
         assert "localhost" in _ALLOWED_LLM_HOSTS

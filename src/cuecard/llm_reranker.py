@@ -193,7 +193,21 @@ def rerank_llm(
         if parse_result.indices is not None:
             return _compute_ordinal_scores(parse_result.indices, candidates)[:top_k]
 
-        logger.warning("LLM returned unparseable response; returning fallback")
+        # Single retry on parse failure
+        logger.info("LLM response unparseable, retrying once")
+        if backend == "local":
+            raw = call_local(
+                system_prompt, user_prompt, endpoint, thinking,
+            )
+        else:
+            raw = call_haiku(system_prompt, user_prompt, haiku_model)
+        parse_result = _parse_llm_response(raw, len(candidates))
+        if parse_result.reasoning:
+            logger.debug("LLM reasoning (retry): %s", parse_result.reasoning)
+        if parse_result.indices is not None:
+            return _compute_ordinal_scores(parse_result.indices, candidates)[:top_k]
+
+        logger.warning("LLM returned unparseable response after retry; returning fallback")
         return fallback
 
     except (ConfigError, ValueError):
@@ -264,26 +278,34 @@ def _parse_llm_response(
     cleaned = _strip_thinking_tags(response)
     reasoning: str | None = None
 
-    # Try JSON parsing
+    # Try JSON parsing — extract first JSON object if response has trailing text
     try:
         parsed = json.loads(cleaned)
-        if isinstance(parsed, dict) and "rules" in parsed:
-            raw_reasoning = parsed.get("reasoning")
-            if isinstance(raw_reasoning, str) and raw_reasoning.strip():
-                reasoning = raw_reasoning.strip()
-            raw_indices = parsed["rules"]
-            if isinstance(raw_indices, list):
-                indices = [
-                    int(x)
-                    for x in raw_indices
-                    if isinstance(x, (int, float)) and float(x) == int(x)
-                ]
-                return LLMParseResult(
-                    indices=_validate_indices(indices, max_rule_id),
-                    reasoning=reasoning,
-                )
-    except (json.JSONDecodeError, ValueError):
-        pass
+    except json.JSONDecodeError:
+        # Try extracting first {...} block
+        match = re.search(r"\{.*?\}", cleaned, re.DOTALL)
+        if match:
+            try:
+                parsed = json.loads(match.group())
+            except json.JSONDecodeError:
+                parsed = None
+        else:
+            parsed = None
+    if isinstance(parsed, dict) and "rules" in parsed:
+        raw_reasoning = parsed.get("reasoning")
+        if isinstance(raw_reasoning, str) and raw_reasoning.strip():
+            reasoning = raw_reasoning.strip()
+        raw_indices = parsed["rules"]
+        if isinstance(raw_indices, list):
+            indices = [
+                int(x)
+                for x in raw_indices
+                if isinstance(x, (int, float)) and float(x) == int(x)
+            ]
+            return LLMParseResult(
+                indices=_validate_indices(indices, max_rule_id),
+                reasoning=reasoning,
+            )
 
     # Guarded regex fallback: only match number lists, not prose
     if _NUMBER_LIST_PATTERN.match(cleaned):

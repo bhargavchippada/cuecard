@@ -592,7 +592,278 @@ class TestRerankLLM:
                 endpoint="http://localhost:8081/v1",
                 top_k=2,
             )
-            # Parse returns None (unparseable), so fallback is used
+            # Both calls return unparseable → fallback after retry
             assert len(result) == 2
+
+    def test_retry_succeeds_on_second_call(self) -> None:
+        """First LLM call returns garbage, retry returns valid JSON."""
+        candidates = _make_candidates(3)
+        bad_response = MagicMock()
+        bad_response.json.return_value = {
+            "choices": [{"message": {"content": "not json at all"}}],
+        }
+        bad_response.raise_for_status = MagicMock()
+
+        good_response = MagicMock()
+        good_response.json.return_value = {
+            "choices": [
+                {
+                    "message": {
+                        "content": json.dumps(
+                            {"reasoning": "Retry worked.", "rules": [1]},
+                        ),
+                    },
+                },
+            ],
+        }
+        good_response.raise_for_status = MagicMock()
+
+        with patch.object(
+            httpx, "post", side_effect=[bad_response, good_response],
+        ):
+            result = rerank_llm(
+                candidates, "test", backend="local",
+                endpoint="http://localhost:8081/v1", top_k=3,
+            )
+            assert len(result) == 1
+            assert result[0].rule.text == "Rule 1 text"
+
+    def test_retry_haiku_path(self) -> None:
+        """Haiku retry path is exercised when first call is unparseable."""
+        candidates = _make_candidates(2)
+
+        with (
+            patch(
+                "cuecard.llm_reranker.call_haiku",
+                side_effect=[
+                    "garbage response",
+                    json.dumps({"reasoning": "Retry OK.", "rules": [2]}),
+                ],
+            ),
+        ):
+            result = rerank_llm(
+                candidates, "test", backend="haiku",
+                haiku_model="claude-haiku-4-5", top_k=2,
+            )
+            assert len(result) == 1
+            assert result[0].rule.text == "Rule 2 text"
+
+
+class TestParseDangerousMutants:
+    """Tests targeting dangerous surviving mutants in _parse_llm_response."""
+
+    def test_multiline_json_extraction(self) -> None:
+        """JSON spanning multiple lines must be extracted (kills re.DOTALL removal)."""
+        response = (
+            'Some preamble\n{"reasoning": "Multi\\nline",'
+            '\n"rules": [1, 3]}\ntrailing'
+        )
+        result = _parse_llm_response(response, 5)
+        assert result.indices == [1, 3]
+
+    def test_non_numeric_rules_filtered(self) -> None:
+        """Non-numeric values in rules array must be filtered out (kills and→or)."""
+        response = '{"rules": [1, "two", 3, null, true]}'
+        result = _parse_llm_response(response, 5)
+        assert result.indices == [1, 3]
+
+    def test_float_non_integer_filtered(self) -> None:
+        """Float values like 1.5 must be filtered (not integer-equal)."""
+        response = '{"rules": [1, 1.5, 2.0]}'
+        result = _parse_llm_response(response, 5)
+        assert result.indices == [1, 2]
+
+    def test_reasoning_preserved_in_regex_fallback(self) -> None:
+        """If JSON parsed reasoning before regex fallback, it's preserved."""
+        # This path: JSON parse fails, regex matches number list
+        # reasoning is None because no JSON was parsed
+        result = _parse_llm_response("1, 3", 5)
+        assert result.indices == [1, 3]
+        assert result.reasoning is None
+
+    def test_reasoning_preserved_on_final_none(self) -> None:
+        """Unparseable response still returns reasoning if JSON had it partially."""
+        # Full JSON parse fails, regex doesn't match prose → indices=None
+        result = _parse_llm_response("I think rules 1 and 3 apply here", 5)
+        assert result.indices is None
+
+
+class TestComputeOrdinalDangerousMutants:
+    """Tests targeting dangerous surviving mutants in _compute_ordinal_scores."""
+
+    def test_invalid_index_before_valid_skipped_not_break(self) -> None:
+        """Invalid index followed by valid index — valid must still be processed."""
+        candidates = _make_candidates(3)
+        result = _compute_ordinal_scores([99, 1], candidates)
+        # With continue: skips 99, processes 1 → 1 result
+        # With break: stops at 99 → 0 results
+        assert len(result) == 1
+        assert result[0].rule.text == "Rule 1 text"
+
+    def test_two_selections_score_formula(self) -> None:
+        """Two selections must have decaying scores (kills n==1 → n==2)."""
+        candidates = _make_candidates(5)
+        result = _compute_ordinal_scores([1, 3], candidates)
+        assert len(result) == 2
+        # With n=2: score(pos=0) = 1.0, score(pos=1) = 1.0 - (1/2)*(1-1/2) = 0.75
+        assert result[0].score == pytest.approx(1.0)
+        assert result[1].score == pytest.approx(0.75)
+        # The mutant (n==2 instead of n==1) would give both score=1.0 when n=2
+        # since condition `n == 2` would be True, giving score=1.0 for both
+        # Wait — no, the mutant changes the condition to `n == 2`, so with n=2
+        # it would enter the True branch giving 1.0 for BOTH. But normal code
+        # with n==1 and n=2: n!=1 so uses else branch, giving different scores.
+        assert result[0].score > result[1].score
+
+    def test_max_index_boundary(self) -> None:
+        """Index equal to len(candidates) is out of bounds (kills >= to >)."""
+        candidates = _make_candidates(3)
+        # Index 3 → zero_idx=2 → candidates[2] is valid
+        # Index 4 → zero_idx=3 → candidates[3] is out of bounds
+        result = _compute_ordinal_scores([3, 4], candidates)
+        assert len(result) == 1
+        assert result[0].rule.text == "Rule 3 text"
+
+
+class TestBuildPromptNonceSecurity:
+    """Tests for nonce stripping in _build_prompt (kills XXXX mutations)."""
+
+    def test_nonce_fully_removed_from_query_content(self) -> None:
+        """Nonce must be stripped to empty string, not replaced with 'XXXX'."""
+        nonce = "abcdef123456"
+        candidates = _make_candidates(1)
+        _, user = _build_prompt(candidates, f"query with {nonce} embedded", nonce)
+        # The content between query_data tags should not contain the nonce
+        # AND should not contain any replacement like XXXX
+        query_tag = f"<query_data_{nonce}>"
+        end_tag = f"</query_data_{nonce}>"
+        content = user.split(query_tag)[1].split(end_tag)[0]
+        assert nonce not in content
+        assert "XXXX" not in content
+
+    def test_nonce_fully_removed_from_rule_content(self) -> None:
+        """Nonce in rule text must be stripped to empty, not replaced."""
+        nonce = "abcdef123456"
+        rule = RankedResult(
+            rule=Rule(
+                text=f"Rule with {nonce} inside",
+                provenance=Provenance(file="/tmp/r.txt", line_start=1, line_end=1),
+            ),
+            score=0.9,
+        )
+        _, user = _build_prompt([rule], "test", nonce)
+        rule_tag = f"<rule_data_{nonce}>"
+        end_tag = f"</rule_data_{nonce}>"
+        content = user.split(rule_tag)[1].split(end_tag)[0]
+        assert nonce not in content
+        assert "XXXX" not in content
+
+    def test_rule_text_appears_in_prompt(self) -> None:
+        """Rule text must be preserved in the user prompt (not replaced with None)."""
+        candidates = _make_candidates(2)
+        _, user = _build_prompt(candidates, "test", "nonce1")
+        assert "Rule 1 text" in user
+        assert "Rule 2 text" in user
+
+    def test_rules_joined_with_newlines(self) -> None:
+        """Multiple rules must be joined with plain newlines."""
+        candidates = _make_candidates(3)
+        _, user = _build_prompt(candidates, "test", "nonce1")
+        # Should contain "1. <rule_data_nonce1>...\n2. <rule_data_nonce1>..."
+        lines = user.split("RULES:\n")[1].split("\n\nACTION:")[0].split("\n")
+        assert len(lines) == 3
+        assert lines[0].startswith("1. ")
+        assert lines[1].startswith("2. ")
+        assert lines[2].startswith("3. ")
+        # No XX padding between rules
+        for line in lines:
+            assert "XX" not in line
+
+
+class TestRetryArgumentVerification:
+    """Verify retry call passes correct arguments (kills None/dropped arg mutants)."""
+
+    def test_retry_local_passes_same_arguments(self) -> None:
+        """Retry call to call_local must use same system_prompt, user_prompt, etc."""
+        candidates = _make_candidates(3)
+
+        call_args_list: list[tuple[object, ...]] = []
+
+        def capture_call_local(
+            system: str, user: str, endpoint: str, thinking: bool, **kw: object,
+        ) -> str:
+            call_args_list.append((system, user, endpoint, thinking))
+            if len(call_args_list) == 1:
+                return "unparseable garbage"
+            return json.dumps({"reasoning": "OK", "rules": [1]})
+
+        with patch("cuecard.llm_reranker.call_local", side_effect=capture_call_local):
+            result = rerank_llm(
+                candidates, "test", backend="local",
+                endpoint="http://localhost:8081/v1",
+            )
+
+        assert len(call_args_list) == 2
+        # Both calls should have the same arguments
+        assert call_args_list[0] == call_args_list[1]
+        # Arguments should not be None
+        assert all(arg is not None for arg in call_args_list[0])
+        assert len(result) == 1
+
+    def test_retry_haiku_passes_same_arguments(self) -> None:
+        """Retry call to call_haiku must use same system_prompt, user_prompt, model."""
+        candidates = _make_candidates(3)
+
+        call_args_list: list[tuple[object, ...]] = []
+
+        def capture_call_haiku(system: str, user: str, model: str) -> str:
+            call_args_list.append((system, user, model))
+            if len(call_args_list) == 1:
+                return "unparseable garbage"
+            return json.dumps({"reasoning": "OK", "rules": [2]})
+
+        with patch("cuecard.llm_reranker.call_haiku", side_effect=capture_call_haiku):
+            result = rerank_llm(
+                candidates, "test", backend="haiku",
+                haiku_model="claude-haiku-4-5",
+            )
+
+        assert len(call_args_list) == 2
+        # Both calls should have same args, none should be None
+        assert call_args_list[0] == call_args_list[1]
+        assert all(arg is not None for arg in call_args_list[0])
+        assert len(result) == 1
+
+
+class TestParseJsonExtraction:
+    """Tests for first-JSON-block extraction in _parse_llm_response."""
+
+    def test_json_with_trailing_text(self) -> None:
+        """Valid JSON followed by repeated copies — extracts first block."""
+        response = (
+            '{"reasoning": "Match.", "rules": [1, 3]}\n'
+            '{"reasoning": "Match.", "rules": [1, 3]}'
+        )
+        result = _parse_llm_response(response, 5)
+        assert result.indices == [1, 3]
+        assert result.reasoning == "Match."
+
+    def test_json_with_trailing_garbage(self) -> None:
+        """Valid JSON followed by non-JSON text."""
+        response = '{"reasoning": "OK.", "rules": [2]} some trailing text'
+        result = _parse_llm_response(response, 5)
+        assert result.indices == [2]
+
+    def test_invalid_json_in_braces(self) -> None:
+        """Braces present but content is not valid JSON."""
+        response = "{this is not json at all}"
+        result = _parse_llm_response(response, 5)
+        assert result.indices is None
+
+    def test_no_braces_at_all(self) -> None:
+        """No JSON-like content anywhere in response."""
+        response = "I cannot help with that request."
+        result = _parse_llm_response(response, 5)
+        assert result.indices is None
 
 

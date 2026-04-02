@@ -53,6 +53,7 @@ def call_local(
         ],
         "max_tokens": max_tokens,
         "temperature": temperature,
+        "stop": ["\n\n"],
     }
     if not thinking:
         body["chat_template_kwargs"] = {"enable_thinking": False}
