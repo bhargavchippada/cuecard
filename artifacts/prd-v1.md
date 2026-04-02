@@ -59,12 +59,14 @@ The core library exposes three functions:
 ```python
 import cuecard
 
-index = cuecard.load_or_build(reindex: bool = True)  # handles config, freshness, rebuild
+config = cuecard.load_config()                         # handles config loading + validation
 results = cuecard.retrieve(index, query)               # asymmetric query embed + dedup
 context = cuecard.format_rules(results)                # plain text for injection
 ```
 
-**`load_or_build(reindex=True)`**: When `reindex=True` (default), checks freshness and triggers full rebuild if any source file changed. Worst-case latency: ~1-2s (model load + embed 500 rules). Typical latency with no changes: <10ms (mtime check only). When `reindex=False`, skips freshness checks entirely and loads the cached index as-is — useful for latency-sensitive paths that defer freshness to a background `cuecard index` call.
+> **Note (post-implementation):** `load_or_build()` is now an internal function in `loader.py`, not part of the public package API. The public API exports `load_config`, `retrieve`, and `format_rules`. The original design below is preserved for historical context.
+
+**`load_or_build(reindex=True)`** *(internal, in `loader.py`)*: When `reindex=True` (default), checks freshness and triggers full rebuild if any source file changed. Worst-case latency: ~1-2s (model load + embed 500 rules). Typical latency with no changes: <10ms (mtime check only). When `reindex=False`, skips freshness checks entirely and loads the cached index as-is — useful for latency-sensitive paths that defer freshness to a background `cuecard index` call.
 
 **Note:** fastembed's `passage_embed()` and `query_embed()` return generators, not arrays. The implementation must materialize them: `np.array(list(model.passage_embed(texts)))`.
 
@@ -383,7 +385,7 @@ Use frozen dataclasses for immutable data
 
 ## 5. Index Freshness Protocol
 
-On every `load_or_build()` call:
+On every `load_or_build()` call (internal, in `loader.py`):
 
 ```
 1. Load existing index from disk (if exists)
@@ -624,7 +626,8 @@ src/cuecard/adapters/claude_code/
 import json
 import sys
 
-from cuecard import load_or_build, retrieve, format_rules
+from cuecard import load_config, retrieve, format_rules
+from cuecard.loader import load_or_build  # internal
 from cuecard.logger import log_retrieval
 
 def main():
@@ -634,7 +637,7 @@ def main():
     query = f"{tool_name}: {tool_input}"
 
     try:
-        index = load_or_build()
+        index = load_or_build()  # internal loader, not public API
         results = retrieve(index, query)
         if results:
             context = format_rules(results)
@@ -726,7 +729,8 @@ Mitigation: evaluate code-specific models (jina-embeddings-v2-base-code) early i
 ```
 cuecard/
 ├── src/cuecard/                    # Core library (agent-agnostic)
-│   ├── __init__.py                 # Public API: load_or_build, retrieve, format_rules
+│   ├── __init__.py                 # Public API: load_config, retrieve, format_rules
+│   ├── loader.py                   # Unified index loading with freshness + scope composition (internal)
 │   ├── config.py                   # Load/merge/validate cuecard.toml configs
 │   ├── parser.py                   # Parse rule files → list[Rule] (dispatch by suffix)
 │   ├── indexer.py                  # Embed rules, build index, atomic writes

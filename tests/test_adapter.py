@@ -34,6 +34,8 @@ def _make_config(
 ) -> ResolvedConfig:
     return ResolvedConfig(
         source_paths=(),
+        global_source_paths=(),
+        project_source_paths=(),
         model_name="BAAI/bge-small-en-v1.5",
         top_k=5,
         threshold=0.30,
@@ -113,8 +115,8 @@ class TestAdapterMain:
         with (
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
-            patch(f"{_MOD}.load_index", return_value=index),
             patch("fastembed.TextEmbedding"),
+            patch(f"{_MOD}.load_or_build", return_value=index),
             patch(f"{_MOD}.retrieve", return_value=results),
             patch(f"{_MOD}.log_retrieval") as mock_log,
         ):
@@ -143,8 +145,8 @@ class TestAdapterMain:
         with (
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
-            patch(f"{_MOD}.load_index", return_value=index),
             patch("fastembed.TextEmbedding"),
+            patch(f"{_MOD}.load_or_build", return_value=index),
             patch(f"{_MOD}.retrieve", return_value=[]),
             patch(f"{_MOD}.log_retrieval"),
         ):
@@ -167,7 +169,8 @@ class TestAdapterMain:
         with (
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
-            patch(f"{_MOD}.load_index", return_value=None),
+            patch("fastembed.TextEmbedding"),
+            patch(f"{_MOD}.load_or_build", return_value=None),
         ):
             mock_stdin.read.return_value = json.dumps(hook_input)
             main()
@@ -194,7 +197,8 @@ class TestAdapterMain:
         with (
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
-            patch(f"{_MOD}.load_index", return_value=empty_index),
+            patch("fastembed.TextEmbedding"),
+            patch(f"{_MOD}.load_or_build", return_value=empty_index),
         ):
             mock_stdin.read.return_value = json.dumps(hook_input)
             main()
@@ -241,8 +245,8 @@ class TestAdapterMain:
         with (
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
-            patch(f"{_MOD}.load_index", return_value=index),
             patch("fastembed.TextEmbedding"),
+            patch(f"{_MOD}.load_or_build", return_value=index),
             patch(f"{_MOD}.retrieve", return_value=results),
             patch(f"{_MOD}.log_retrieval"),
         ):
@@ -272,8 +276,8 @@ class TestAdapterMain:
         with (
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
-            patch(f"{_MOD}.load_index", return_value=index),
             patch("fastembed.TextEmbedding"),
+            patch(f"{_MOD}.load_or_build", return_value=index),
             patch(f"{_MOD}.retrieve", return_value=results) as mock_ret,
             patch(f"{_MOD}.log_retrieval") as mock_log,
         ):
@@ -323,8 +327,8 @@ class TestAdapterMain:
         with (
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
-            patch(f"{_MOD}.load_index", return_value=index),
             patch("fastembed.TextEmbedding"),
+            patch(f"{_MOD}.load_or_build", return_value=index),
             patch(
                 "cuecard.pipeline.run_pipeline",
                 return_value=fake_pipeline,
@@ -356,8 +360,8 @@ class TestAdapterMain:
         with (
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
-            patch(f"{_MOD}.load_index", return_value=index),
             patch("fastembed.TextEmbedding"),
+            patch(f"{_MOD}.load_or_build", return_value=index),
             patch(f"{_MOD}.retrieve", return_value=[]),
             patch(f"{_MOD}.log_retrieval"),
         ):

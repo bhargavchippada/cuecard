@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import sys
 import time
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
 
 from cuecard.config import load_config
 from cuecard.formatter import format_rules
-from cuecard.indexer import load_index
+from cuecard.loader import load_or_build
 from cuecard.logger import log_retrieval
 from cuecard.retriever import retrieve
 
@@ -73,16 +74,14 @@ def main() -> None:
 
         start = time.monotonic()
 
-        config = load_config()
-        index = load_index(config.global_cache_dir)
+        config = load_config(project_dir=Path.cwd())
+
+        from fastembed import TextEmbedding
+
+        model = TextEmbedding(model_name=config.model_name)
+        index = load_or_build(config, model)  # type: ignore[arg-type]
 
         if index is not None and index.size > 0:
-            from fastembed import TextEmbedding
-
-            model = TextEmbedding(
-                model_name=config.model_name,
-            )
-
             pipeline_mode = getattr(
                 getattr(config, "pipeline", None), "mode", "embedding",
             )

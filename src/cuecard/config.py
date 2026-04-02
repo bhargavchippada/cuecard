@@ -383,6 +383,8 @@ def load_config(
 
     return ResolvedConfig(
         source_paths=tuple(all_paths),
+        global_source_paths=global_resolved,
+        project_source_paths=project_resolved,
         model_name=merged["model"],
         top_k=merged["top_k"],
         threshold=float(merged["threshold"]),

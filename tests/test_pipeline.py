@@ -72,6 +72,8 @@ def config(sample_index: Index) -> ResolvedConfig:
 
     return ResolvedConfig(
         source_paths=(),
+        global_source_paths=(),
+        project_source_paths=(),
         model_name="test",
         top_k=5,
         threshold=0.30,
@@ -286,6 +288,8 @@ class TestModeFromConfig:
 
         cfg = ResolvedConfig(
             source_paths=(),
+            global_source_paths=(),
+            project_source_paths=(),
             model_name="test",
             top_k=5,
             threshold=0.30,

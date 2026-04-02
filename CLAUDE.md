@@ -15,7 +15,8 @@ cuecard/
 │   ├── prd-v1.md           # PRD v1.2 — core pipeline (converged)
 │   └── multi-stage-retrieval-prd.md  # Multi-stage PRD v1.1 (converged)
 ├── src/cuecard/            # Core library (agent-agnostic)
-│   ├── __init__.py         # Public API: load_or_build, retrieve, format_rules
+│   ├── __init__.py         # Public API: load_config, retrieve, format_rules
+│   ├── loader.py           # Unified index loading with freshness + scope composition
 │   ├── models.py           # Frozen dataclasses (Rule, Provenance, Index, etc.)
 │   ├── config.py           # Load/merge/validate cuecard.toml configs
 │   ├── security.py         # Path validation, secrets scrubbing, permissions
@@ -103,6 +104,7 @@ uv run mypy src/                               # Type check
 - Adapters are thin wrappers in `src/cuecard/adapters/`
 - Multi-stage pipeline: embedding → cross-encoder (opt-in) → LLM (opt-in)
 - pipeline.py orchestrates all stages, CLI/adapter delegate to it
+- Scoped caches: global index in `~/.cuecard/index/`, project index in `.cuecard/index/`. Both loaded and composed at retrieval time via `loader.py`. No cross-project rule leakage.
 - Every pipeline step independently callable via CLI
 - Provenance on every data object — trace back to source file + line
 
@@ -124,6 +126,7 @@ uv run mypy src/                               # Type check
 - Atomic writes: NamedTempFile + os.replace
 - File locking: fcntl.flock during writes
 - Integrity check: checksum + rule count validation on load
+- Freshness checking via `load_or_build()` auto-rebuilds stale indexes on source file changes
 
 ## Key Design Decisions
 
@@ -135,6 +138,7 @@ Critical ones:
 - D7a: Asymmetric encoding (query_embed vs passage_embed)
 - D10: Full rebuild on change (no incremental splice corruption)
 - S1: Path validation with allowlist (prevents traversal)
+- D-new: Scoped index caching prevents cross-project rule contamination. Global and project indexes built separately, composed at query time via merge_indexes().
 
 ## Model Recommendations (from benchmarks)
 

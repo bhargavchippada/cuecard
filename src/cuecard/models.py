@@ -67,6 +67,8 @@ class ResolvedConfig:
     """Fully resolved and validated configuration."""
 
     source_paths: tuple[str, ...]
+    global_source_paths: tuple[str, ...]
+    project_source_paths: tuple[str, ...]
     model_name: str
     top_k: int
     threshold: float

@@ -86,6 +86,8 @@ class TestResolvedConfig:
     def test_frozen(self) -> None:
         cfg = ResolvedConfig(
             source_paths=("/tmp/rules.txt",),
+            global_source_paths=("/tmp/rules.txt",),
+            project_source_paths=(),
             model_name="BAAI/bge-small-en-v1.5",
             top_k=5,
             threshold=0.30,
@@ -105,6 +107,8 @@ class TestResolvedConfig:
     def test_all_fields(self) -> None:
         cfg = ResolvedConfig(
             source_paths=("/a.txt", "/b.txt"),
+            global_source_paths=("/a.txt",),
+            project_source_paths=("/b.txt",),
             model_name="test-model",
             top_k=10,
             threshold=0.5,

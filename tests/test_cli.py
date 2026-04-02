@@ -369,7 +369,7 @@ class TestIndex:
             result = runner.invoke(app, ["index"])
 
         assert result.exit_code == 0
-        assert "Index rebuilt" in result.output
+        assert "index rebuilt" in result.output.lower()
 
     def test_index_rebuild_no_rules(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
@@ -416,7 +416,82 @@ class TestIndex:
             result = runner.invoke(app, ["index", "--status"])
 
         assert result.exit_code == 0
-        assert "No valid index found" in result.output
+        assert "no valid index" in result.output.lower()
+
+
+class TestIndexWithProjectScope:
+    """Exercise project-scope branches in _iter_cache_dirs/_iter_scoped_sources."""
+
+    def test_index_rebuild_with_project_sources(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+
+        # Set up project with its own rules
+        project_dir = tmp_path / "myproject"
+        project_dir.mkdir()
+        monkeypatch.chdir(project_dir)
+        (project_dir / "cuecard.toml").write_text(
+            "[sources]\n"
+            'rules = ["rules.txt"]\n',
+        )
+        (project_dir / "rules.txt").write_text("Project specific rule\n")
+
+        rng = np.random.default_rng(42)
+        mock_model = MagicMock()
+
+        def _fake_passage_embed(texts: list[str], **kw: object) -> list[np.ndarray]:
+            n = len(list(texts))
+            emb = rng.standard_normal((n, 384)).astype(np.float32)
+            return [emb[i] for i in range(n)]
+
+        mock_model.passage_embed.side_effect = _fake_passage_embed
+
+        fake_freshness = FreshnessResult(
+            is_stale=True,
+            updated_sources={},
+            changed_files=(),
+            removed_files=(),
+            new_files=("fake",),
+        )
+
+        with (
+            patch("fastembed.TextEmbedding", return_value=mock_model),
+            patch("cuecard.freshness.check_freshness", return_value=fake_freshness),
+        ):
+            result = runner.invoke(app, ["index"])
+
+        assert result.exit_code == 0
+        # Both scopes should be built
+        output_lower = result.output.lower()
+        assert "global" in output_lower
+        assert "project" in output_lower
+        assert "total:" in output_lower
+
+    def test_index_status_with_project(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+
+        project_dir = tmp_path / "myproject"
+        project_dir.mkdir()
+        monkeypatch.chdir(project_dir)
+        (project_dir / "cuecard.toml").write_text(
+            "[sources]\n"
+            'rules = ["rules.txt"]\n',
+        )
+        (project_dir / "rules.txt").write_text("Project rule\n")
+
+        idx = _make_sample_index()
+
+        with patch("cuecard.indexer.load_index", return_value=idx):
+            result = runner.invoke(app, ["index", "--status"])
+
+        assert result.exit_code == 0
+        assert "Global" in result.output
+        assert "Project" in result.output
 
 
 # ---------------------------------------------------------------------------
@@ -437,7 +512,7 @@ class TestRetrieve:
 
         mock_model = MagicMock()
         with (
-            patch("cuecard.indexer.load_index", return_value=idx),
+            patch("cuecard.loader.load_or_build", return_value=idx),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch("cuecard.retriever.retrieve", return_value=results),
         ):
@@ -456,7 +531,7 @@ class TestRetrieve:
         mock_model = MagicMock()
 
         with (
-            patch("cuecard.indexer.load_index", return_value=idx),
+            patch("cuecard.loader.load_or_build", return_value=idx),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch("cuecard.retriever.retrieve", return_value=[]) as mock_ret,
         ):
@@ -477,7 +552,7 @@ class TestRetrieve:
         _setup_home(tmp_path)
         monkeypatch.chdir(tmp_path)
 
-        with patch("cuecard.indexer.load_index", return_value=None):
+        with patch("cuecard.loader.load_or_build", return_value=None):
             result = runner.invoke(app, ["retrieve", "test"])
 
         assert result.exit_code == 1
@@ -505,7 +580,7 @@ class TestRetrieve:
         )
 
         with (
-            patch("cuecard.indexer.load_index", return_value=idx),
+            patch("cuecard.loader.load_or_build", return_value=idx),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch(
                 "cuecard.pipeline.run_pipeline",
@@ -530,7 +605,7 @@ class TestRetrieve:
         mock_model = MagicMock()
 
         with (
-            patch("cuecard.indexer.load_index", return_value=idx),
+            patch("cuecard.loader.load_or_build", return_value=idx),
             patch("fastembed.TextEmbedding", return_value=mock_model),
         ):
             result = runner.invoke(
@@ -567,7 +642,7 @@ class TestRetrieve:
         )
 
         with (
-            patch("cuecard.indexer.load_index", return_value=idx),
+            patch("cuecard.loader.load_or_build", return_value=idx),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch(
                 "cuecard.pipeline.run_pipeline",
@@ -598,7 +673,7 @@ class TestFormat:
         mock_model = MagicMock()
 
         with (
-            patch("cuecard.indexer.load_index", return_value=idx),
+            patch("cuecard.loader.load_or_build", return_value=idx),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch("cuecard.retriever.retrieve", return_value=results),
         ):
@@ -617,7 +692,7 @@ class TestFormat:
         mock_model = MagicMock()
 
         with (
-            patch("cuecard.indexer.load_index", return_value=idx),
+            patch("cuecard.loader.load_or_build", return_value=idx),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch("cuecard.retriever.retrieve", return_value=[]),
         ):
@@ -633,7 +708,7 @@ class TestFormat:
         _setup_home(tmp_path)
         monkeypatch.chdir(tmp_path)
 
-        with patch("cuecard.indexer.load_index", return_value=None):
+        with patch("cuecard.loader.load_or_build", return_value=None):
             result = runner.invoke(app, ["format", "test"])
 
         assert result.exit_code == 1
