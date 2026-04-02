@@ -90,10 +90,21 @@ Per-tier (Basic):
 | hard | 0.613 | 0.528 | 0.317 |
 | negative | 0.923 | 0.000 | 0.077 |
 
+### 8. Comprehensive Fixture Audit (agent)
+- Audited all 587 fixtures against 76 rules
+- Found 23 wrong expectations, applied 19 corrections
+- Key systemic patterns:
+  - Compliant code triggering violation rules (using uv fires "use uv" rule)
+  - Running tests triggering TDD rule (running tests IS the check)
+  - Read-only operations over-matching (chown, git tag, docker run)
+  - Fixes triggering violation rules (adding env vars fires env var rule)
+- Proposed 20 new fixtures for coverage gaps
+- Suggested new reranker principle: "compliance vs violation"
+
 ## What's Next (Priority Order)
 
 ### From Fixture Auditor
-1. Apply corrections from comprehensive fixture audit
+1. ~~Apply corrections from comprehensive fixture audit~~ DONE
 2. Add new fixtures for underrepresented scenarios
 3. Re-benchmark with corrected ground truth
 
