@@ -135,7 +135,7 @@ def main() -> None:
             latency_ms = (time.monotonic() - start) * 1000
             if index is not None:
                 log_retrieval(
-                    event="PreToolUse",
+                    event=event,
                     tool_name=tool_name,
                     query=query,
                     results=[],
