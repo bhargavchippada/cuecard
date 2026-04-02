@@ -242,8 +242,10 @@ max_expansion_length = 200  # Max chars per expansion
 - **Eval metrics:** noise ratio, context waste, per-tier breakdown, negative silence — COMPLETE
 - **Quality iteration:** 354 PreToolUse + 84 UserPromptSubmit fixtures — COMPLETE
 - **Unified events:** UserPromptSubmit support, reasoning-in-response prompt — COMPLETE
-- **Enriched retrieval:** JSON intermediate, expansion-aware indexing, parent collapse, BM25+RRF, expansion CLI — COMPLETE (763+ tests, 100% coverage)
+- **Enriched retrieval:** JSON intermediate, expansion-aware indexing, parent collapse, BM25+RRF, expansion CLI — COMPLETE (826 tests, 100% coverage)
 - **Benchmarking:** 6 embedding models, raw vs enriched vs LLM, v1 vs v3 expansion prompts — COMPLETE
+- **Small model investigation:** Qwen3-0.6B not viable; Qwen3.5-4B/9B identified as replacements — RESEARCH COMPLETE
+- **LLM robustness:** Stop sequence, JSON extraction, retry on parse failure — COMPLETE
 - **Eval dataset:** 587 fixtures (438 original + 149 mined from 7 real projects)
 - **Phase 4:** Publish — pending
 - **Phase 5:** Multi-source parsing (markdown, YAML, CLAUDE.md) — DRAFT PRD (`artifacts/phase5-multi-source-prd-draft.md`)

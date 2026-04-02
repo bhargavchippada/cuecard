@@ -145,7 +145,7 @@ uv run mypy src/
 uv run mutmut run                    # Mutation testing
 ```
 
-763+ tests, 100% coverage, ruff clean, mypy strict.
+826+ tests, 100% coverage, ruff clean, mypy strict.
 
 ## License
 
