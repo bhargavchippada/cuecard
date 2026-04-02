@@ -175,6 +175,7 @@ class TestAdapterMain:
         captured = capsys.readouterr()
         output = json.loads(captured.out)
         hook_out = output.get("hookSpecificOutput", {})
+        assert hook_out.get("permissionDecision") == "allow"
         assert "additionalContext" not in hook_out
 
     def test_with_no_index(

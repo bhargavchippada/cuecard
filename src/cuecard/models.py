@@ -39,6 +39,17 @@ class Rule:
 
 
 @dataclass(frozen=True)
+class ExpandProgress:
+    """Progress update from expand_rules()."""
+
+    rule_index: int  # 0-based index of the rule being processed
+    total_rules: int  # total number of rules
+    rule_text: str  # text of the current rule (for display)
+    expansions_generated: int  # total expansions generated so far
+    skipped: bool  # True if this rule was skipped (missing_only)
+
+
+@dataclass(frozen=True)
 class RankedResult:
     """A rule with its retrieval score."""
 

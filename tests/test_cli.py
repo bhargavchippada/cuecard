@@ -1267,6 +1267,58 @@ class TestRulesExpand:
             )
         assert result.exit_code == 0
 
+    def test_expand_with_progress_skipped_message(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """_expand_with_progress shows skipped count for --missing-only."""
+        from cuecard.cli_rules import _expand_with_progress
+        from cuecard.models import Provenance, Rule
+
+        rules = [
+            Rule(
+                text="Has expansions",
+                provenance=Provenance(file="a.txt", line_start=1, line_end=1),
+                expansions=("existing",),
+            ),
+        ]
+
+        with patch(
+            "cuecard.expander.call_local",
+            return_value='{"expansions": ["new"]}',
+        ):
+            result = _expand_with_progress(
+                rules,
+                backend="local",
+                endpoint="http://localhost:8081/v1",
+                missing_only=True,
+            )
+        assert len(result) == 1
+        assert result[0].expansions == ("existing",)
+
+
+class TestTruncateRule:
+    def test_short_text_unchanged(self) -> None:
+        from cuecard.cli_rules import _truncate_rule
+        assert _truncate_rule("short text") == "short text"
+
+    def test_exact_length_unchanged(self) -> None:
+        from cuecard.cli_rules import _truncate_rule
+        text = "a" * 60
+        assert _truncate_rule(text) == text
+
+    def test_long_text_truncated(self) -> None:
+        from cuecard.cli_rules import _truncate_rule
+        text = "a" * 80
+        result = _truncate_rule(text)
+        assert len(result) == 60
+        assert result.endswith("...")
+
+    def test_custom_max_len(self) -> None:
+        from cuecard.cli_rules import _truncate_rule
+        result = _truncate_rule("a" * 20, max_len=10)
+        assert len(result) == 10
+        assert result.endswith("...")
+
 
 # ---------------------------------------------------------------------------
 # embed command
@@ -1597,8 +1649,12 @@ class TestInstall:
         assert result.exit_code == 0
         assert "Installed" in result.output
         settings = json.loads((claude_dir / "settings.json").read_text())
-        hooks = settings["hooks"]["PreToolUse"]
-        assert any("cuecard" in h.get("command", "") for h in hooks)
+        for event in ("PreToolUse", "UserPromptSubmit"):
+            hooks = settings["hooks"][event]
+            assert any(
+                "cuecard" in str(h.get("hooks", []))
+                for h in hooks
+            )
 
     def test_install_already_installed(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
@@ -1611,7 +1667,7 @@ class TestInstall:
                 "PreToolUse": [
                     {
                         "type": "command",
-                        "command": "uv run python -m cuecard.adapters.claude_code",
+                        "command": "cuecard hook 2>/dev/null",
                     },
                 ],
             },
@@ -1680,6 +1736,7 @@ class TestInstall:
         )
         assert settings["other_key"] == "value"
         assert "PreToolUse" in settings["hooks"]
+        assert "UserPromptSubmit" in settings["hooks"]
 
 
 # ---------------------------------------------------------------------------
@@ -1710,10 +1767,14 @@ class TestUninstall:
         settings = {
             "hooks": {
                 "PreToolUse": [
-                    {
-                        "type": "command",
-                        "command": "uv run python -m cuecard.adapters.claude_code",
-                    },
+                    {"matcher": "", "hooks": [
+                        {"type": "command", "command": "cuecard hook 2>/dev/null"},
+                    ]},
+                ],
+                "UserPromptSubmit": [
+                    {"matcher": "", "hooks": [
+                        {"type": "command", "command": "cuecard hook 2>/dev/null"},
+                    ]},
                 ],
             },
         }
@@ -1733,11 +1794,12 @@ class TestUninstall:
         settings = {
             "hooks": {
                 "PreToolUse": [
-                    {"type": "command", "command": "other-tool"},
-                    {
-                        "type": "command",
-                        "command": "uv run python -m cuecard.adapters.claude_code",
-                    },
+                    {"matcher": "Bash", "hooks": [
+                        {"type": "command", "command": "other-tool"},
+                    ]},
+                    {"matcher": "", "hooks": [
+                        {"type": "command", "command": "cuecard hook 2>/dev/null"},
+                    ]},
                 ],
             },
         }
@@ -1746,7 +1808,7 @@ class TestUninstall:
         assert result.exit_code == 0
         updated = json.loads((claude_dir / "settings.json").read_text())
         assert len(updated["hooks"]["PreToolUse"]) == 1
-        assert "other-tool" in updated["hooks"]["PreToolUse"][0]["command"]
+        assert "other-tool" in str(updated["hooks"]["PreToolUse"][0])
 
 
 # ---------------------------------------------------------------------------
@@ -1766,10 +1828,9 @@ class TestStatus:
         settings = {
             "hooks": {
                 "PreToolUse": [
-                    {
-                        "type": "command",
-                        "command": "uv run python -m cuecard.adapters.claude_code",
-                    },
+                    {"matcher": "", "hooks": [
+                        {"type": "command", "command": "cuecard hook 2>/dev/null"},
+                    ]},
                 ],
             },
         }
@@ -1997,6 +2058,13 @@ class TestLogCmd:
 # ---------------------------------------------------------------------------
 
 
+class TestHookCommand:
+    def test_hook_invokes_adapter(self) -> None:
+        with patch("cuecard.adapters.claude_code.main") as mock_main:
+            runner.invoke(app, ["hook"])
+            mock_main.assert_called_once()
+
+
 class TestAdapterMainGuard:
     def test_main_guard(self) -> None:
         import subprocess
@@ -2212,6 +2280,34 @@ class TestClaudeSettingsHelpers:
         }
         assert _has_cuecard_hook(settings) is False
 
+    def test_has_hook_nested_hooks_format(self) -> None:
+        """Settings.json uses nested {matcher, hooks: [...]} format."""
+        from cuecard.cli import _has_cuecard_hook
+
+        settings: dict[str, object] = {
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "",
+                        "hooks": [
+                            {"type": "command", "command": "cuecard hook 2>/dev/null"},
+                        ],
+                    },
+                ],
+            },
+        }
+        assert _has_cuecard_hook(settings) is True
+
+    def test_entry_has_cuecard_non_dict(self) -> None:
+        from cuecard.cli_hooks import _entry_has_cuecard
+
+        assert _entry_has_cuecard("not a dict") is False
+
+    def test_entry_has_cuecard_hooks_not_list(self) -> None:
+        from cuecard.cli_hooks import _entry_has_cuecard
+
+        assert _entry_has_cuecard({"hooks": "not_a_list"}) is False
+
     def test_claude_settings_path(
         self,
         tmp_path: Path,
@@ -2222,3 +2318,263 @@ class TestClaudeSettingsHelpers:
         _patch_home(monkeypatch, tmp_path)
         p = _claude_settings_path()
         assert p == tmp_path / ".claude" / "settings.json"
+
+
+# ---------------------------------------------------------------------------
+# configure command
+# ---------------------------------------------------------------------------
+
+
+class TestConfigure:
+    def test_configure_fresh_embedding_mode(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Fresh configure with all defaults (embedding mode)."""
+        _patch_home(monkeypatch, tmp_path)
+        result = runner.invoke(
+            app,
+            ["configure"],
+            input="embedding\n5\n0.30\ny\n",
+        )
+        assert result.exit_code == 0
+        config_path = tmp_path / ".cuecard" / "config.toml"
+        assert config_path.exists()
+        content = config_path.read_text()
+        assert 'mode = "embedding"' in content
+        assert "top_k = 5" in content
+        assert "threshold = 0.30" in content
+        assert "sparse_enabled = true" in content
+        assert "Next steps" in result.output
+
+    def test_configure_llm_local_mode(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Configure with llm-local mode prompts for endpoint."""
+        _patch_home(monkeypatch, tmp_path)
+        result = runner.invoke(
+            app,
+            ["configure"],
+            input="llm-local\nhttp://localhost:9999/v1\n3\n0.25\nn\n",
+        )
+        assert result.exit_code == 0
+        content = (tmp_path / ".cuecard" / "config.toml").read_text()
+        assert 'mode = "llm-local"' in content
+        assert 'local_endpoint = "http://localhost:9999/v1"' in content
+        assert "top_k = 3" in content
+        assert "sparse_enabled = false" in content
+
+    def test_configure_llm_haiku_with_key(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Configure with llm-haiku mode when API key is present."""
+        _patch_home(monkeypatch, tmp_path)
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-key")
+        result = runner.invoke(
+            app,
+            ["configure"],
+            input="llm-haiku\n5\n0.30\ny\n",
+        )
+        assert result.exit_code == 0
+        content = (tmp_path / ".cuecard" / "config.toml").read_text()
+        assert 'mode = "llm-haiku"' in content
+        assert "Anthropic API key found" in result.output
+
+    def test_configure_llm_haiku_no_key_confirmed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Configure with llm-haiku, no env key, user confirms they have one."""
+        _patch_home(monkeypatch, tmp_path)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        result = runner.invoke(
+            app,
+            ["configure"],
+            input="llm-haiku\ny\n5\n0.30\ny\n",
+        )
+        assert result.exit_code == 0
+        content = (tmp_path / ".cuecard" / "config.toml").read_text()
+        assert 'mode = "llm-haiku"' in content
+
+    def test_configure_llm_haiku_no_key_denied(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Configure with llm-haiku, no key, user says no — exits."""
+        _patch_home(monkeypatch, tmp_path)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        result = runner.invoke(
+            app,
+            ["configure"],
+            input="llm-haiku\nn\n",
+        )
+        assert result.exit_code == 1
+        assert "Set ANTHROPIC_API_KEY" in result.output
+
+    def test_configure_invalid_mode(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Invalid pipeline mode exits with error."""
+        _patch_home(monkeypatch, tmp_path)
+        result = runner.invoke(
+            app,
+            ["configure"],
+            input="invalid-mode\n",
+        )
+        assert result.exit_code == 1
+        assert "Invalid mode" in result.output
+
+    def test_configure_preserves_existing_defaults(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Re-running configure uses previous config as defaults."""
+        _patch_home(monkeypatch, tmp_path)
+        cuecard_dir = tmp_path / ".cuecard"
+        cuecard_dir.mkdir(parents=True)
+        (cuecard_dir / "config.toml").write_text(
+            "[sources]\n"
+            'rules = ["rules/custom.txt"]\n\n'
+            "[embedding]\n"
+            'model = "BAAI/bge-base-en-v1.5"\n\n'
+            "[retrieval]\n"
+            "top_k = 10\n"
+            "threshold = 0.40\n"
+            "sparse_enabled = false\n\n"
+            "[pipeline]\n"
+            'mode = "llm-local"\n\n'
+            "[pipeline.llm]\n"
+            'local_endpoint = "http://localhost:9000/v1"\n',
+        )
+
+        # Accept all defaults (just press enter for each prompt)
+        result = runner.invoke(
+            app,
+            ["configure"],
+            input="\n\n\n\n\n",
+        )
+        assert result.exit_code == 0
+        content = (cuecard_dir / "config.toml").read_text()
+        # Previous values should be preserved as defaults
+        assert 'mode = "llm-local"' in content
+        assert 'local_endpoint = "http://localhost:9000/v1"' in content
+        assert "top_k = 10" in content
+        assert "threshold = 0.40" in content
+        assert "sparse_enabled = false" in content
+        assert 'model = "BAAI/bge-base-en-v1.5"' in content
+        assert "rules/custom.txt" in content
+
+    def test_configure_overwrites_existing(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Running configure again overwrites the config file."""
+        _patch_home(monkeypatch, tmp_path)
+        cuecard_dir = tmp_path / ".cuecard"
+        cuecard_dir.mkdir(parents=True)
+        (cuecard_dir / "config.toml").write_text("[retrieval]\ntop_k = 5\n")
+
+        result = runner.invoke(
+            app,
+            ["configure"],
+            input="embedding\n8\n0.35\ny\n",
+        )
+        assert result.exit_code == 0
+        content = (cuecard_dir / "config.toml").read_text()
+        assert "top_k = 8" in content
+        assert "threshold = 0.35" in content
+
+
+class TestBuildConfigToml:
+    def test_embedding_mode_no_pipeline_llm(self) -> None:
+        from cuecard.cli import _build_config_toml
+
+        content = _build_config_toml(
+            mode="embedding",
+            model="BAAI/bge-small-en-v1.5",
+            top_k=5,
+            threshold=0.30,
+            sparse_enabled=True,
+            local_endpoint="http://localhost:8081/v1",
+            rules=["rules/global.txt"],
+        )
+        assert "[pipeline.llm]" not in content
+        assert 'mode = "embedding"' in content
+
+    def test_llm_local_has_endpoint(self) -> None:
+        from cuecard.cli import _build_config_toml
+
+        content = _build_config_toml(
+            mode="llm-local",
+            model="BAAI/bge-small-en-v1.5",
+            top_k=5,
+            threshold=0.30,
+            sparse_enabled=True,
+            local_endpoint="http://localhost:9999/v1",
+            rules=["rules/global.txt"],
+        )
+        assert "[pipeline.llm]" in content
+        assert 'local_endpoint = "http://localhost:9999/v1"' in content
+        assert "thinking = false" in content
+
+    def test_llm_haiku_no_endpoint(self) -> None:
+        from cuecard.cli import _build_config_toml
+
+        content = _build_config_toml(
+            mode="llm-haiku",
+            model="BAAI/bge-small-en-v1.5",
+            top_k=5,
+            threshold=0.30,
+            sparse_enabled=True,
+            local_endpoint="http://localhost:8081/v1",
+            rules=["rules/global.txt"],
+        )
+        assert "[pipeline.llm]" in content
+        assert "local_endpoint" not in content
+        assert "thinking = false" in content
+
+
+class TestFormatRulesToml:
+    def test_single_rule(self) -> None:
+        from cuecard.cli import _format_rules_toml
+
+        assert _format_rules_toml(["a.txt"]) == '["a.txt"]'
+
+    def test_multiple_rules(self) -> None:
+        from cuecard.cli import _format_rules_toml
+
+        result = _format_rules_toml(["a.txt", "b.txt"])
+        assert result == '["a.txt", "b.txt"]'
+
+
+class TestLoadExistingGlobalConfig:
+    def test_missing_config(self, tmp_path: Path) -> None:
+        from cuecard.cli import _load_existing_global_config
+
+        result = _load_existing_global_config(tmp_path)
+        assert result == {}
+
+    def test_loads_all_fields(self, tmp_path: Path) -> None:
+        from cuecard.cli import _load_existing_global_config
+
+        cuecard_dir = tmp_path / ".cuecard"
+        cuecard_dir.mkdir()
+        (cuecard_dir / "config.toml").write_text(
+            "[pipeline]\n"
+            'mode = "llm-local"\n\n'
+            "[pipeline.llm]\n"
+            'local_endpoint = "http://localhost:9000/v1"\n'
+            "thinking = true\n\n"
+            "[retrieval]\n"
+            "top_k = 10\n"
+            "threshold = 0.40\n"
+            "sparse_enabled = false\n\n"
+            "[embedding]\n"
+            'model = "BAAI/bge-base-en-v1.5"\n\n'
+            "[sources]\n"
+            'rules = ["rules/custom.txt"]\n',
+        )
+        result = _load_existing_global_config(tmp_path)
+        assert result["mode"] == "llm-local"
+        assert result["local_endpoint"] == "http://localhost:9000/v1"
+        assert result["thinking"] is True
+        assert result["top_k"] == 10
+        assert result["threshold"] == 0.40
+        assert result["sparse_enabled"] is False
+        assert result["model"] == "BAAI/bge-base-en-v1.5"
+        assert result["rules"] == ["rules/custom.txt"]

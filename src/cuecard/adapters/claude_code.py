@@ -48,6 +48,13 @@ def _format_tool_input(tool_input: object) -> str:
     return str(tool_input)[:500]
 
 
+def _try_daemon(data: dict[str, object]) -> dict[str, object] | None:
+    """Try the daemon fast path.  Returns response dict or None."""
+    from cuecard.serve import query_daemon
+
+    return query_daemon(data)
+
+
 def main() -> None:
     """Read hook JSON from stdin, retrieve rules, inject into context."""
     data: dict[str, object] = {}
@@ -55,7 +62,17 @@ def main() -> None:
     try:
         raw = sys.stdin.read(_MAX_STDIN)
         data = json.loads(raw)
-        raw_event = str(data.get("event", "PreToolUse"))
+
+        # Fast path: try daemon first
+        daemon_result = _try_daemon(data)
+        if daemon_result is not None:
+            print(json.dumps(daemon_result))
+            return
+
+        # Slow path: load model and index inline
+        raw_event = str(
+            data.get("hook_event_name", data.get("event", "PreToolUse")),
+        )
         event = raw_event if raw_event in _KNOWN_HOOK_EVENTS else "PreToolUse"
 
         if event == "UserPromptSubmit":
@@ -95,12 +112,16 @@ def main() -> None:
 
             latency_ms = (time.monotonic() - start) * 1000
 
+            hook_output = data.get("hookSpecificOutput")
+            if not isinstance(hook_output, dict):
+                hook_output = {}
+                data["hookSpecificOutput"] = hook_output
+            hook_output["hookEventName"] = event
+            if event == "PreToolUse":
+                hook_output["permissionDecision"] = "allow"
+
             if results:
                 context = format_rules(results)
-                hook_output = data.get("hookSpecificOutput")
-                if not isinstance(hook_output, dict):
-                    hook_output = {}
-                    data["hookSpecificOutput"] = hook_output
                 hook_output["additionalContext"] = context
 
             log_retrieval(

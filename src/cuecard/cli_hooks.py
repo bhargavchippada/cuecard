@@ -13,8 +13,8 @@ from cuecard.cli import app, console, err_console
 
 # --- hook helpers ---
 
-_HOOK_COMMAND = "uv run python -m cuecard.adapters.claude_code"
-_HOOK_MARKER = "cuecard.adapters.claude_code"
+_HOOK_COMMAND = "cuecard hook 2>/dev/null"
+_HOOK_MARKER = "cuecard"
 
 
 def _claude_settings_path() -> Path:
@@ -50,18 +50,35 @@ def _save_claude_settings(path: Path, data: dict[str, object]) -> None:
     os.replace(tmp_path, str(path))
 
 
+def _entry_has_cuecard(entry: object) -> bool:
+    """Check if a single hook entry contains a cuecard command."""
+    if not isinstance(entry, dict):
+        return False
+    # Flat format: {"type": "command", "command": "cuecard hook"}
+    if _HOOK_MARKER in str(entry.get("command", "")):
+        return True
+    # Nested format: {"matcher": "", "hooks": [{...command...}]}
+    inner = entry.get("hooks", [])
+    if isinstance(inner, list):
+        return any(
+            isinstance(h, dict) and _HOOK_MARKER in str(h.get("command", ""))
+            for h in inner
+        )
+    return False
+
+
 def _has_cuecard_hook(settings: dict[str, object]) -> bool:
-    """Check if cuecard hook is already registered."""
+    """Check if cuecard hook is already registered in any event."""
     hooks = settings.get("hooks", {})
     if not isinstance(hooks, dict):
         return False
-    pre_tool = hooks.get("PreToolUse", [])
-    if not isinstance(pre_tool, list):
-        return False
-    return any(
-        isinstance(h, dict) and _HOOK_MARKER in str(h.get("command", ""))
-        for h in pre_tool
-    )
+    for event in ("PreToolUse", "UserPromptSubmit"):
+        event_hooks = hooks.get(event, [])
+        if not isinstance(event_hooks, list):
+            continue
+        if any(_entry_has_cuecard(h) for h in event_hooks):
+            return True
+    return False
 
 
 # --- install ---
@@ -93,16 +110,23 @@ def install(
         hooks = {}
         settings["hooks"] = hooks
 
-    pre_tool = hooks.get("PreToolUse")
-    if not isinstance(pre_tool, list):
-        pre_tool = []
-        hooks["PreToolUse"] = pre_tool
+    hook_entry = {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": _HOOK_COMMAND}],
+    }
 
-    pre_tool.append({"type": "command", "command": _HOOK_COMMAND})
+    for event in ("PreToolUse", "UserPromptSubmit"):
+        event_hooks = hooks.get(event)
+        if not isinstance(event_hooks, list):
+            event_hooks = []
+            hooks[event] = event_hooks
+        event_hooks.append(hook_entry)
+
     _save_claude_settings(settings_path, settings)
 
     console.print(
-        "[green]Installed[/green] cuecard PreToolUse hook"
+        "[green]Installed[/green] cuecard hooks"
+        " (PreToolUse + UserPromptSubmit)"
         f" in {settings_path}"
     )
 
@@ -133,24 +157,21 @@ def uninstall(
 
     hooks = settings.get("hooks", {})
     if isinstance(hooks, dict):
-        pre_tool = hooks.get("PreToolUse", [])
-        if isinstance(pre_tool, list):
-            hooks["PreToolUse"] = [
-                h for h in pre_tool
-                if not (
-                    isinstance(h, dict)
-                    and _HOOK_MARKER in str(h.get("command", ""))
-                )
-            ]
-            # Clean up empty lists
-            if not hooks["PreToolUse"]:
-                del hooks["PreToolUse"]
-            if not hooks:
-                del settings["hooks"]
+        for event in ("PreToolUse", "UserPromptSubmit"):
+            event_hooks = hooks.get(event, [])
+            if isinstance(event_hooks, list):
+                hooks[event] = [
+                    h for h in event_hooks
+                    if not _entry_has_cuecard(h)
+                ]
+                if not hooks[event]:
+                    del hooks[event]
+        if not hooks:
+            del settings["hooks"]
 
     _save_claude_settings(settings_path, settings)
     console.print(
-        "[green]Uninstalled[/green] cuecard hook"
+        "[green]Uninstalled[/green] cuecard hooks"
         f" from {settings_path}"
     )
 
@@ -200,6 +221,15 @@ def status() -> None:
 
     if not found_any:
         console.print("[yellow]\u2717[/yellow] No valid index found")
+
+    # Check daemon
+    from cuecard.serve import daemon_status as _daemon_status
+
+    running, pid = _daemon_status(_cli._home_dir())
+    if running:
+        console.print(f"[green]\u2713[/green] Daemon running (PID {pid})")
+    else:
+        console.print("[dim]-[/dim] Daemon not running")
 
     # Check log
     log_path = Path(cfg.global_cache_dir).parent / "log.jsonl"

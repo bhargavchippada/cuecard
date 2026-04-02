@@ -523,6 +523,68 @@ class TestExpandRules:
         assert "PreToolUse" in _VALID_EVENT_TYPES
         assert "UserPromptSubmit" in _VALID_EVENT_TYPES
 
+    def test_on_progress_called_for_each_rule(self) -> None:
+        """on_progress callback is invoked once per rule."""
+        rules = [_make_rule(text="Rule A"), _make_rule(text="Rule B")]
+        updates: list[object] = []
+
+        with patch(
+            "cuecard.expander.call_local",
+            return_value='{"expansions": ["x"]}',
+        ):
+            expand_rules(
+                rules,
+                backend="local",
+                endpoint="http://localhost:8081/v1",
+                on_progress=updates.append,
+            )
+
+        assert len(updates) == 2
+        assert updates[0].rule_index == 0  # type: ignore[union-attr]
+        assert updates[0].total_rules == 2  # type: ignore[union-attr]
+        assert updates[0].skipped is False  # type: ignore[union-attr]
+        assert updates[1].rule_index == 1  # type: ignore[union-attr]
+        assert updates[1].expansions_generated == 2  # type: ignore[union-attr]
+
+    def test_on_progress_skipped_for_missing_only(self) -> None:
+        """on_progress reports skipped=True for rules with existing expansions."""
+        rules = [
+            _make_rule(text="Has expansions", expansions=("a", "b")),
+            _make_rule(text="No expansions"),
+        ]
+        updates: list[object] = []
+
+        with patch(
+            "cuecard.expander.call_local",
+            return_value='{"expansions": ["new"]}',
+        ):
+            expand_rules(
+                rules,
+                backend="local",
+                endpoint="http://localhost:8081/v1",
+                missing_only=True,
+                on_progress=updates.append,
+            )
+
+        assert len(updates) == 2
+        assert updates[0].skipped is True  # type: ignore[union-attr]
+        assert updates[0].expansions_generated == 2  # type: ignore[union-attr]
+        assert updates[1].skipped is False  # type: ignore[union-attr]
+        assert updates[1].expansions_generated == 3  # type: ignore[union-attr]
+
+    def test_on_progress_not_called_when_none(self) -> None:
+        """No error when on_progress is None (default)."""
+        with patch(
+            "cuecard.expander.call_local",
+            return_value='{"expansions": ["x"]}',
+        ):
+            result = expand_rules(
+                [_make_rule()],
+                backend="local",
+                endpoint="http://localhost:8081/v1",
+            )
+        assert len(result) == 1
+
 
 class TestSemanticDedup:
     def test_empty_list(self) -> None:

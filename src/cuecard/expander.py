@@ -20,7 +20,9 @@ from cuecard.llm_utils import (
 from cuecard.security import ConfigError, scrub_secrets
 
 if TYPE_CHECKING:
-    from cuecard.models import Rule
+    from collections.abc import Callable
+
+    from cuecard.models import ExpandProgress, Rule
 
 from cuecard.models import MAX_EXPANSION_LENGTH, MAX_EXPANSIONS_PER_RULE
 
@@ -384,6 +386,7 @@ def expand_rules(
     missing_only: bool = False,
     dry_run: bool = False,
     event_type: str = "PreToolUse",
+    on_progress: Callable[[ExpandProgress], None] | None = None,
 ) -> list[Rule]:
     """Generate LLM expansions for rules.
 
@@ -396,6 +399,7 @@ def expand_rules(
         dry_run: Show what would be generated without calling LLM.
         event_type: "PreToolUse" or "UserPromptSubmit" — controls prompt
             targeting for expansion style.
+        on_progress: Optional callback invoked after each rule is processed.
 
     Returns:
         New list of Rule objects with populated expansions.
@@ -404,6 +408,8 @@ def expand_rules(
         ValueError: If backend, haiku_model, or event_type is invalid.
         ConfigError: If endpoint validation fails.
     """
+    from cuecard.models import ExpandProgress as _ExpandProgress
+
     if backend not in ("local", "haiku"):
         msg = f"Invalid backend: {backend!r}, expected 'local' or 'haiku'"
         raise ValueError(msg)
@@ -426,9 +432,20 @@ def expand_rules(
         validate_endpoint(endpoint)
 
     result: list[Rule] = []
-    for rule in rules:
+    total_expansions = 0
+    total_rules = len(rules)
+    for idx, rule in enumerate(rules):
         if missing_only and rule.expansions:
+            total_expansions += len(rule.expansions)
             result.append(rule)
+            if on_progress is not None:
+                on_progress(_ExpandProgress(
+                    rule_index=idx,
+                    total_rules=total_rules,
+                    rule_text=rule.text,
+                    expansions_generated=total_expansions,
+                    skipped=True,
+                ))
             continue
 
         if dry_run:
@@ -460,6 +477,7 @@ def expand_rules(
 
             expansions = _parse_expansion_response(raw)
             expansions = _semantic_dedup(expansions)
+            total_expansions += len(expansions)
             result.append(replace(rule, expansions=tuple(expansions)))
 
         except (ConfigError, ValueError):
@@ -471,5 +489,14 @@ def expand_rules(
                 type(exc).__name__,
             )
             result.append(rule)
+
+        if on_progress is not None:
+            on_progress(_ExpandProgress(
+                rule_index=idx,
+                total_rules=total_rules,
+                rule_text=rule.text,
+                expansions_generated=total_expansions,
+                skipped=False,
+            ))
 
     return result

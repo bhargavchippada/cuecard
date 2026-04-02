@@ -5,12 +5,22 @@ from __future__ import annotations
 import os
 import tempfile
 from pathlib import Path
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import typer
+from rich.progress import (
+    BarColumn,
+    MofNCompleteColumn,
+    Progress,
+    TextColumn,
+    TimeElapsedColumn,
+)
 
 import cuecard.cli as _cli
 from cuecard.cli import console, err_console, rules_app
+
+if TYPE_CHECKING:
+    from cuecard.models import ExpandProgress, Rule
 
 
 @rules_app.callback(invoke_without_command=True)
@@ -217,6 +227,66 @@ def search(
         )
 
 
+def _truncate_rule(text: str, max_len: int = 60) -> str:
+    """Truncate rule text for progress display."""
+    if len(text) <= max_len:
+        return text
+    return text[: max_len - 3] + "..."
+
+
+def _expand_with_progress(
+    rules: list[Rule],
+    *,
+    backend: str,
+    endpoint: str = "http://localhost:8081/v1",
+    missing_only: bool = False,
+) -> list[Rule]:
+    """Run expand_rules with a Rich progress display on stderr."""
+    from cuecard.expander import expand_rules
+
+    skipped_count = 0
+
+    with Progress(
+        TextColumn("[bold blue]{task.description}"),
+        BarColumn(),
+        MofNCompleteColumn(),
+        TextColumn("[dim]{task.fields[status]}"),
+        TimeElapsedColumn(),
+        console=err_console,
+        transient=False,
+    ) as progress:
+        task_id = progress.add_task(
+            "Expanding rules",
+            total=len(rules),
+            status="",
+        )
+
+        def _on_progress(p: ExpandProgress) -> None:
+            nonlocal skipped_count
+            if p.skipped:
+                skipped_count += 1
+            label = _truncate_rule(p.rule_text)
+            status = (
+                f'{p.expansions_generated} expansions | "{label}"'
+            )
+            progress.update(task_id, completed=p.rule_index + 1, status=status)
+
+        result = expand_rules(
+            rules,
+            backend=backend,
+            endpoint=endpoint,
+            missing_only=missing_only,
+            on_progress=_on_progress,
+        )
+
+    if skipped_count > 0:
+        err_console.print(
+            f"[dim]Skipped {skipped_count} rules with existing expansions[/dim]",
+        )
+
+    return result
+
+
 @rules_app.command()
 def expand(
     backend: Annotated[
@@ -234,7 +304,6 @@ def expand(
     ] = False,
 ) -> None:
     """Generate LLM expansions for rules."""
-    from cuecard.expander import expand_rules
     from cuecard.indexer import load_rules_json, merge_rules_json, save_rules_json
     from cuecard.parser import parse_rules
 
@@ -268,7 +337,7 @@ def expand(
         )
 
         try:
-            expanded = expand_rules(
+            expanded = _expand_with_progress(
                 rules,
                 backend=backend,
                 endpoint=endpoint,
@@ -286,8 +355,26 @@ def expand(
         old_count = sum(len(r.expansions) for r in rules)
         console.print(
             f"[green]{label}:[/green] {new_count} total expansions "
-            f"({new_count - old_count} new). "
-            f"Run 'cuecard index' to rebuild.",
+            f"({new_count - old_count} new).",
+        )
+
+        # Auto-rebuild index with new expansions
+        from fastembed import TextEmbedding
+
+        from cuecard.freshness import check_freshness
+        from cuecard.indexer import build_index, save_index
+
+        console.print(f"[bold]{label}:[/bold] rebuilding index...")
+        model = TextEmbedding(model_name=cfg.model_name)
+        freshness = check_freshness(source_paths, {})
+        idx = build_index(
+            tuple(expanded), freshness.updated_sources, cfg.model_name,
+            model=model,  # type: ignore[arg-type]
+        )
+        save_index(idx, cache_dir)
+        console.print(
+            f"[green]{label}:[/green] index rebuilt"
+            f" ({idx.size} rules, dim={idx.dim}).",
         )
 
 

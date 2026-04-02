@@ -32,10 +32,11 @@ cuecard/
 │   ├── expander.py         # LLM-based rule expansion generation
 │   ├── eval.py             # Evaluation framework (precision, recall, MRR, nDCG)
 │   ├── logger.py           # Structured JSONL logging with secrets scrubbing
-│   ├── cli.py              # Typer CLI (setup, config, retrieve, rules, eval, etc.)
+│   ├── cli.py              # Typer CLI (setup, config, configure, retrieve, rules, eval, serve, etc.)
 │   ├── cli_rules.py        # Rules subcommands (add, remove, search, expand)
 │   ├── cli_hooks.py        # Install/uninstall/status/log commands
 │   ├── cli_eval.py         # Eval command
+│   ├── serve.py            # Persistent daemon server (HTTP, PID management)
 │   ├── py.typed            # PEP 561 marker
 │   ├── retrievers/         # Pluggable retriever adapters
 │   │   ├── __init__.py     # Retriever protocol, ScoredCandidate, fuse()
@@ -265,6 +266,10 @@ max_expansion_length = 200  # Max chars per expansion
 - **Eval infrastructure:** tqdm progress, stratified sampling, bench_models.py script — COMPLETE
 - **Expansion prompt v5:** Reasoning-field prompt for expansions (structured CoT before generating) — COMPLETE
 - **Eval dataset:** 587 fixtures (438 original + 149 mined from 7 real projects)
+- **CLI UX:** `cuecard configure` interactive setup, `cuecard serve` daemon, expand progress bar — COMPLETE
+- **Hook format:** Correct `hookEventName` + `permissionDecision` for PreToolUse, `hook_event_name` input field detection — COMPLETE
+- **Global install:** `uv tool install` support, `cuecard hook` CLI entry point — COMPLETE
+- **Live validation:** Verified agent compliance in real Claude Code sessions — COMPLETE
 - **Phase 4:** Publish — pending
 - **Phase 5:** Multi-source parsing (markdown, YAML, CLAUDE.md) — DRAFT PRD (`artifacts/phase5-multi-source-prd-draft.md`)
 
@@ -276,6 +281,28 @@ cuecard supports two Claude Code hook events:
 - **UserPromptSubmit**: Triggered when the user sends a message. Retrieves workflow/process rules.
 
 Both event types use the same pipeline. The adapter prefixes queries with the event type (`Bash: git commit` or `UserPromptSubmit: add auth to the API`). The LLM reranker uses event context to discriminate between coding and workflow rules.
+
+### Hook Output Format (CRITICAL)
+
+Claude Code hooks require specific JSON output formats per event type:
+
+**PreToolUse** — must include `permissionDecision`:
+```json
+{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "allow", "additionalContext": "..."}}
+```
+
+**UserPromptSubmit** — NO `permissionDecision` (omit to allow):
+```json
+{"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": "..."}}
+```
+
+**Input field**: Claude Code sends `hook_event_name` (not `event`). The adapter checks both for backwards compat.
+
+**Stderr**: Any stderr output causes "hook error" display. Hook command uses `2>/dev/null`.
+
+### Serve Daemon
+
+`cuecard serve` runs a persistent HTTP server on localhost:8452 that keeps the embedding model loaded. The hook adapter (`claude_code.py`) tries the daemon first (500ms timeout), falls back to direct model loading if unavailable. Saves ~200ms cold-start per hook call.
 
 ## LLM Reranker Setup
 

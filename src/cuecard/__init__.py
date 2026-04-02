@@ -3,6 +3,7 @@
 from cuecard.config import load_config
 from cuecard.formatter import format_rules
 from cuecard.models import (
+    ExpandProgress,
     Index,
     PipelineResult,
     Provenance,
@@ -15,6 +16,7 @@ from cuecard.models import (
 from cuecard.retriever import retrieve
 
 __all__ = [
+    "ExpandProgress",
     "Index",
     "PipelineResult",
     "Provenance",

@@ -22,25 +22,34 @@ Both use a unified index. The LLM reranker distinguishes coding rules from workf
 ## Quick Start
 
 ```bash
-# Install
-uv pip install cuecard
+# 1. Install globally (recommended — makes `cuecard` available everywhere)
+uv tool install .
 
-# Setup (downloads embedding model, builds index)
+# 2. Initial setup (creates ~/.cuecard/, downloads embedding model, builds index)
 cuecard setup
 
-# Add rules
-cuecard rules add "Use uv for all Python package operations, never pip"
-cuecard rules add "Run quality checks before every commit"
+# 3. Add your rules
+cuecard rules add --global "Use uv for all Python package operations, never pip"
+cuecard rules add --global "Run quality checks before every commit"
+cuecard rules add --global "Never commit secrets to git"
 
-# Generate expansions for better hard-case matching (optional, needs local LLM)
-cuecard rules expand --backend local --endpoint http://localhost:8081/v1
+# 4. Configure pipeline mode (interactive — choose embedding, llm-local, or llm-haiku)
+cuecard configure
 
-# Install as Claude Code hook
+# 5. Rebuild index with your rules
+cuecard index
+
+# 6. Generate expansions for better matching (optional, needs local LLM)
+cuecard rules expand
+
+# 7. Install as Claude Code hook (registers PreToolUse + UserPromptSubmit)
 cuecard install claude-code
 
-# Test it
+# 8. Test it
 cuecard retrieve "Bash: pip install requests"
 ```
+
+You can re-run `cuecard configure` at any time to change settings.
 
 ## Pipeline
 
@@ -85,12 +94,12 @@ Each rule gets 5-10 trigger phrases like "docker build with untrusted base image
 | Medium | 76.8% | — |
 | Hard | 60.0% | — |
 
-**With LLM reranker (Qwen3.5-35B, llm-local mode):**
+**With LLM reranker (Qwen3.5-35B, llm-local mode, full dataset):**
 
-| Event Type | Recall | Noise | Neg Silence | Latency |
-|-----------|--------|-------|-------------|---------|
-| PreToolUse (354 fixtures) | 42.2% | 21.4% | 92.9% | 1.1s |
-| UserPromptSubmit (84 fixtures) | 46.2% | 24.5% | 95.8% | 3.0s |
+| Event Type | Quality (F2) | Pos Recall | Noise | Neg Silence | Latency |
+|-----------|-------------|-----------|-------|-------------|---------|
+| PreToolUse (354 fixtures) | 0.782 | 76.4% | 20.0% | 87.6% | 1.5s |
+| UserPromptSubmit (84 fixtures) | 0.776 | 74.4% | 24.8% | 95.8% | 1.5s |
 
 The LLM reranker is essential for noise filtering and negative silence. Embedding mode alone achieves high recall but cannot reject irrelevant queries.
 
@@ -118,30 +127,132 @@ llama-server -m ~/models/Qwen3.5-35B-A3B-Q4_K_M.gguf \
 
 ## Configuration
 
-Two config files, layered (project wins):
-- **Global:** `~/.cuecard/config.toml`
-- **Project:** `./cuecard.toml`
+Run `cuecard configure` for interactive setup, or edit config files directly.
+
+Two config files, layered (project overrides global):
+- **Global:** `~/.cuecard/config.toml` — applies to all projects
+- **Project:** `./cuecard.toml` — project-specific overrides
 
 ```toml
+[sources]
+rules = ["rules/global.txt"]     # Rule files (relative to config dir)
+
 [embedding]
-model = "jinaai/jina-embeddings-v2-base-code"
+model = "BAAI/bge-small-en-v1.5"  # Embedding model (see model table below)
 
 [retrieval]
-top_k = 5
-threshold = 0.30
+top_k = 5                  # Max results (embedding mode only; LLM modes use 20 internally)
+threshold = 0.30            # Min similarity score
 fusion_k = 60              # RRF parameter
 sparse_enabled = true       # Enable BM25 hybrid retrieval
 
 [pipeline]
-mode = "llm-local"
+mode = "embedding"          # embedding | llm-local | llm-haiku
 
 [pipeline.llm]
-local_endpoint = "http://localhost:8081/v1"
-thinking = false
+local_endpoint = "http://localhost:8081/v1"  # For llm-local mode
+thinking = false            # Enable LLM thinking mode (slower, not recommended)
 
 [expansion]
-max_per_rule = 10
-max_expansion_length = 200
+max_per_rule = 10           # Max expansions per rule
+max_expansion_length = 200  # Max chars per expansion
+```
+
+**Pipeline modes:**
+- `embedding` — fast, CPU-only, dense + BM25 hybrid (~20ms). No noise filtering.
+- `llm-local` — best quality. Needs a local LLM server (Qwen3.5-9B recommended). ~1s latency.
+- `llm-haiku` — best quality via API. Needs `ANTHROPIC_API_KEY`. ~500ms latency.
+
+## CLI Reference
+
+### Setup and Status
+
+```bash
+cuecard setup                       # Download model, create config, build index
+cuecard setup --check               # Verify setup (config + index exist)
+cuecard setup --allow-custom-model   # Use a model not on the allowlist
+cuecard configure                    # Interactive config (pipeline mode, endpoint, thresholds)
+cuecard config                       # Show resolved config (global + project merged)
+cuecard status                       # Show hook status, index health, model info
+```
+
+### Rules Management
+
+```bash
+cuecard rules                        # List all rules with numbers and source files
+cuecard rules --global               # List only global rules
+cuecard rules --project              # List only project rules
+cuecard rules add "rule text"        # Add rule to project rules.txt
+cuecard rules add "rule text" --global  # Add rule to ~/.cuecard/rules/global.txt
+cuecard rules remove 3               # Remove rule #3 (number from `cuecard rules`)
+cuecard rules search "commit"        # Search rules by substring
+cuecard rules sources                # Show configured rule file paths and status
+```
+
+### Expansions
+
+```bash
+cuecard rules expand                 # Generate LLM expansions for all rules
+cuecard rules expand --backend local # Use local LLM (default)
+cuecard rules expand --backend haiku # Use Anthropic Haiku API
+cuecard rules expand --endpoint URL  # Custom LLM endpoint (default: localhost:8081)
+cuecard rules expand --missing-only  # Only expand rules without expansions
+cuecard rules expand --dry-run       # Preview what would be expanded
+```
+
+### Index
+
+```bash
+cuecard index                        # Rebuild index from scratch (preserves expansions)
+cuecard index --status               # Show index status (model, rules, dim, sources)
+```
+
+### Retrieval and Inspection
+
+```bash
+cuecard retrieve "Bash: git push --force"  # Retrieve matching rules for a query
+cuecard retrieve "query" --mode llm-local  # Override pipeline mode
+cuecard retrieve "query" --top-k 10        # Override max results
+cuecard retrieve "query" --threshold 0.40  # Override similarity threshold
+cuecard format "Bash: git push --force"    # Show final injectable text for a query
+cuecard parse                              # Show all parsed rules with provenance
+cuecard embed                              # Show embedding stats (model, dim, count)
+```
+
+### Hook Management
+
+```bash
+cuecard install claude-code          # Register hooks in ~/.claude/settings.json
+cuecard uninstall claude-code        # Remove hooks from settings.json
+cuecard status                       # Check if hooks are installed
+cuecard log                          # Show recent hook log entries (last 20)
+cuecard log --limit 50               # Show more entries
+cuecard log --stats                  # Show aggregate statistics (latency, coverage, top rules)
+```
+
+The `cuecard hook` command exists but is hidden — it is the internal entry point called by Claude Code hooks via stdin/stdout.
+
+### Daemon Server
+
+```bash
+cuecard serve                        # Start persistent daemon on port 8452
+cuecard serve --port 9000            # Start on custom port
+cuecard serve --daemon               # Fork to background
+cuecard serve --stop                 # Stop running daemon
+```
+
+The daemon keeps the embedding model loaded in memory, eliminating cold-start latency. The hook adapter automatically uses the daemon when running (with 500ms timeout fallback to direct mode).
+
+### Evaluation
+
+```bash
+cuecard eval fixtures.json                  # Run eval against fixture file
+cuecard eval fixtures.json --mode llm-local # Use LLM reranker
+cuecard eval fixtures.json --model MODEL    # Override embedding model
+cuecard eval fixtures.json --corpus-dir DIR # Custom corpus directory
+cuecard eval fixtures.json --corpus-override "a.json,b.json"  # Specific corpus files
+cuecard eval fixtures.json --sample-ratio 0.2  # Stratified 20% sample (fast iteration)
+cuecard eval fixtures.json --top-k 10 --threshold 0.25 --dedup-threshold 0.90
 ```
 
 ## Development
@@ -154,7 +265,7 @@ uv run mypy src/
 uv run mutmut run                    # Mutation testing
 ```
 
-860+ tests, 100% coverage, ruff clean, mypy strict.
+946 tests, 100% coverage, ruff clean, mypy strict.
 
 ## License
 

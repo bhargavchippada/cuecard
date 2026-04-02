@@ -150,7 +150,21 @@ def setup(
             f'model = "{model}"\n\n'
             '[retrieval]\n'
             'top_k = 5\n'
-            'threshold = 0.30\n',
+            'threshold = 0.30\n'
+            '# fusion_k = 60                   '
+            '# RRF parameter\n'
+            '# sparse_enabled = true            '
+            '# Enable BM25 hybrid retrieval\n\n'
+            '# [pipeline]\n'
+            '# mode = "embedding"              '
+            '# embedding | llm-local | llm-haiku\n'
+            '#\n'
+            '# [pipeline.llm]\n'
+            '# local_endpoint = "http://localhost:8081/v1"\n'
+            '# thinking = false\n\n'
+            '# [expansion]\n'
+            '# max_per_rule = 10\n'
+            '# max_expansion_length = 200\n',
         )
         console.print(f"Created config: {config_path}")
 
@@ -248,8 +262,13 @@ def config() -> None:
     table.add_row("model", cfg.model_name)
     table.add_row("top_k", str(cfg.top_k))
     table.add_row("threshold", str(cfg.threshold))
+    table.add_row("fusion_k", str(cfg.fusion_k))
+    table.add_row("sparse_enabled", str(cfg.sparse_enabled))
     table.add_row("dedup_threshold", str(cfg.dedup_threshold))
     table.add_row("query_max_length", str(cfg.query_max_length))
+    table.add_row("pipeline_mode", cfg.pipeline.mode)
+    table.add_row("local_endpoint", cfg.pipeline.local_endpoint)
+    table.add_row("thinking", str(cfg.pipeline.thinking))
     table.add_row("hook_events", ", ".join(cfg.hook_events))
     table.add_row("verbose", str(cfg.verbose))
     table.add_row("redact", str(cfg.redact))
@@ -466,6 +485,293 @@ def embed() -> None:
     if not found:
         err_console.print(_SETUP_NOT_DONE)
         raise typer.Exit(1)
+
+
+# --- hook ---
+
+
+def _hook_main() -> None:
+    """Wrapper so tests can patch this entry point."""
+    from cuecard.adapters.claude_code import main
+
+    main()
+
+
+@app.command(hidden=True)
+def hook() -> None:
+    """Run the hook adapter (reads stdin, writes stdout). Used by Claude Code hooks."""
+    _hook_main()
+
+
+# --- serve ---
+
+
+@app.command()
+def serve(
+    port: Annotated[
+        int, typer.Option(help="Port to listen on")
+    ] = 8452,
+    stop: Annotated[
+        bool, typer.Option("--stop", help="Stop running daemon")
+    ] = False,
+    daemon: Annotated[
+        bool, typer.Option("--daemon", help="Fork to background")
+    ] = False,
+) -> None:
+    """Start a persistent daemon to serve rule retrieval requests."""
+    from cuecard.serve import (
+        daemon_status,
+        run_server,
+        stop_server,
+    )
+
+    home = _home_dir()
+
+    if stop:
+        stopped = stop_server(home)
+        if stopped:
+            console.print("[green]Daemon stopped.[/green]")
+        else:
+            console.print("[yellow]No daemon running.[/yellow]")
+        return
+
+    running, existing_pid = daemon_status(home)
+    if running:
+        err_console.print(
+            f"[red]Daemon already running (PID {existing_pid}).[/red]"
+            " Use 'cuecard serve --stop' to stop it.",
+        )
+        raise typer.Exit(1)
+
+    if daemon:
+        _fork_daemon(port, home)
+        return
+
+    console.print(f"Starting cuecard daemon on 127.0.0.1:{port} ...")
+    run_server(port=port, home=home)
+
+
+def _fork_daemon(port: int, home: Path) -> None:
+    """Fork to background and run the server in the child process."""
+    import os
+
+    pid = os.fork()
+    if pid > 0:
+        # Parent — report and exit
+        console.print(
+            f"[green]Daemon started[/green] (PID {pid})"
+            f" on 127.0.0.1:{port}"
+        )
+        return
+
+    # Child — detach and run
+    os.setsid()
+
+    from cuecard.serve import _log_path, run_server
+
+    log_file = _log_path(home)
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+
+    fd = os.open(str(log_file), os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+    os.dup2(fd, 1)
+    os.dup2(fd, 2)
+    os.close(fd)
+
+    # Close stdin
+    devnull = os.open(os.devnull, os.O_RDONLY)
+    os.dup2(devnull, 0)
+    os.close(devnull)
+
+    import contextlib
+
+    with contextlib.suppress(SystemExit):
+        run_server(port=port, home=home)
+
+
+# --- configure ---
+
+_VALID_PIPELINE_MODES = ("embedding", "llm-local", "llm-haiku")
+
+
+def _load_existing_global_config(home: Path) -> dict[str, object]:
+    """Load existing global config.toml as flat dict for defaults."""
+    import tomllib
+
+    config_path = home / ".cuecard" / "config.toml"
+    if not config_path.exists():
+        return {}
+    with open(config_path, "rb") as f:
+        raw = tomllib.load(f)
+    flat: dict[str, object] = {}
+    pipeline = raw.get("pipeline", {})
+    if "mode" in pipeline:
+        flat["mode"] = pipeline["mode"]
+    llm = pipeline.get("llm", {})
+    if "local_endpoint" in llm:
+        flat["local_endpoint"] = llm["local_endpoint"]
+    if "thinking" in llm:
+        flat["thinking"] = llm["thinking"]
+    retrieval = raw.get("retrieval", {})
+    if "top_k" in retrieval:
+        flat["top_k"] = retrieval["top_k"]
+    if "threshold" in retrieval:
+        flat["threshold"] = retrieval["threshold"]
+    if "sparse_enabled" in retrieval:
+        flat["sparse_enabled"] = retrieval["sparse_enabled"]
+    embedding = raw.get("embedding", {})
+    if "model" in embedding:
+        flat["model"] = embedding["model"]
+    sources = raw.get("sources", {})
+    if "rules" in sources:
+        flat["rules"] = sources["rules"]
+    return flat
+
+
+def _format_rules_toml(rules: list[str]) -> str:
+    """Format a list of rule paths as a TOML inline array."""
+    items = ", ".join(f'"{r}"' for r in rules)
+    return f"[{items}]"
+
+
+def _build_config_toml(
+    *,
+    mode: str,
+    model: str,
+    top_k: int,
+    threshold: float,
+    sparse_enabled: bool,
+    local_endpoint: str,
+    rules: list[str],
+) -> str:
+    """Build a TOML config string from configure choices."""
+    lines = [
+        "# cuecard configuration",
+        "# Generated by: cuecard configure",
+        "",
+        "[sources]",
+        f"rules = {_format_rules_toml(rules)}",
+        "",
+        "[embedding]",
+        f'model = "{model}"',
+        "",
+        "[retrieval]",
+        f"top_k = {top_k}",
+        f"threshold = {threshold:.2f}",
+        f"sparse_enabled = {'true' if sparse_enabled else 'false'}",
+        "",
+        "[pipeline]",
+        f'mode = "{mode}"',
+    ]
+    if mode in ("llm-local", "llm-haiku"):
+        lines.append("")
+        lines.append("[pipeline.llm]")
+        if mode == "llm-local":
+            lines.append(f'local_endpoint = "{local_endpoint}"')
+        lines.append("thinking = false")
+    lines.append("")
+    return "\n".join(lines)
+
+
+@app.command()
+def configure() -> None:
+    """Interactively configure cuecard settings."""
+    from cuecard.security import ensure_directory
+
+    home = _home_dir()
+    cuecard_dir = home / ".cuecard"
+
+    # Load existing config for defaults
+    existing = _load_existing_global_config(home)
+
+    # Pipeline mode
+    default_mode = str(existing.get("mode", "embedding"))
+    mode = typer.prompt(
+        "Pipeline mode (embedding / llm-local / llm-haiku)",
+        default=default_mode,
+    )
+    if mode not in _VALID_PIPELINE_MODES:
+        err_console.print(
+            f"[red]Invalid mode {mode!r}. "
+            f"Valid: {list(_VALID_PIPELINE_MODES)}[/red]",
+        )
+        raise typer.Exit(1)
+
+    # LLM-specific prompts
+    default_endpoint = str(
+        existing.get("local_endpoint", "http://localhost:8081/v1"),
+    )
+    local_endpoint = default_endpoint
+    if mode == "llm-local":
+        local_endpoint = typer.prompt(
+            "Local LLM endpoint URL",
+            default=default_endpoint,
+        )
+    elif mode == "llm-haiku":
+        import os
+
+        has_key = bool(os.environ.get("ANTHROPIC_API_KEY"))
+        if has_key:
+            console.print("Anthropic API key found in environment.")
+        else:
+            confirmed = typer.confirm(
+                "No ANTHROPIC_API_KEY found. Do you have one set up?",
+                default=False,
+            )
+            if not confirmed:
+                console.print(
+                    "Set ANTHROPIC_API_KEY in your environment before"
+                    " using llm-haiku mode.",
+                )
+                raise typer.Exit(1)
+
+    # Retrieval settings
+    raw_top_k = existing.get("top_k", 5)
+    default_top_k = int(str(raw_top_k))
+    top_k = typer.prompt("top_k (max results)", default=default_top_k, type=int)
+
+    raw_threshold = existing.get("threshold", 0.30)
+    default_threshold = float(str(raw_threshold))
+    threshold = typer.prompt(
+        "threshold (min similarity)",
+        default=default_threshold,
+        type=float,
+    )
+
+    default_sparse = bool(existing.get("sparse_enabled", True))
+    sparse_enabled = typer.confirm(
+        "Enable BM25 sparse retrieval?",
+        default=default_sparse,
+    )
+
+    # Preserve existing values
+    default_model = str(existing.get("model", _DEFAULT_MODEL))
+    raw_rules = existing.get("rules", ["rules/global.txt"])
+    default_rules: list[str] = (
+        list(raw_rules) if isinstance(raw_rules, list) else ["rules/global.txt"]
+    )
+
+    # Build and write config
+    config_content = _build_config_toml(
+        mode=mode,
+        model=default_model,
+        top_k=top_k,
+        threshold=threshold,
+        sparse_enabled=sparse_enabled,
+        local_endpoint=local_endpoint,
+        rules=default_rules,
+    )
+
+    ensure_directory(cuecard_dir)
+    config_path = cuecard_dir / "config.toml"
+    config_path.write_text(config_content)
+    config_path.chmod(0o600)
+
+    console.print(f"\n[green]Config written to:[/green] {config_path}\n")
+    console.print(config_content)
+    console.print("[bold]Next steps:[/bold]")
+    console.print("  1. cuecard index     — rebuild index")
+    console.print("  2. cuecard rules expand — generate expansions")
+    console.print("  3. cuecard install   — install Claude Code hook")
 
 
 # --- Register commands from submodules ---
