@@ -159,10 +159,20 @@ Merge: scalars = project wins, sources = union, model = project wins (must match
 - **Phase 1:** Core pipeline — COMPLETE
 - **Phase 2:** Adapter + logging — COMPLETE
 - **Phase 3:** Eval framework + notebook — COMPLETE
-- **Multi-stage:** Pipeline + reranker + LLM reranker — COMPLETE (534 tests, 100% coverage)
+- **Multi-stage:** Pipeline + reranker + LLM reranker — COMPLETE (541 tests, 100% coverage)
 - **Eval metrics:** noise ratio, context waste, per-tier breakdown, negative silence — COMPLETE
-- **Quality iteration:** 357 fixtures, benchmarked all modes — COMPLETE
+- **Quality iteration:** 354 PreToolUse + 84 UserPromptSubmit fixtures — COMPLETE
+- **Unified events:** UserPromptSubmit support, reasoning-in-response prompt — COMPLETE
 - **Phase 4:** Publish — pending
+
+## Event Types
+
+cuecard supports two Claude Code hook events:
+
+- **PreToolUse**: Triggered before each tool call (Bash, Read, Edit, etc.). Retrieves coding rules.
+- **UserPromptSubmit**: Triggered when the user sends a message. Retrieves workflow/process rules.
+
+Both event types use the same pipeline. The adapter prefixes queries with the event type (`Bash: git commit` or `UserPromptSubmit: add auth to the API`). The LLM reranker uses event context to discriminate between coding and workflow rules.
 
 ## LLM Reranker Setup
 
@@ -175,16 +185,42 @@ llama-server -m ~/models/Qwen3.5-35B-A3B-Q4_K_M.gguf \
 
 Key requirements:
 - `--jinja` flag (NOT `--chat-template chatml`) — needed for `chat_template_kwargs`
-- `-c 16384` — 5 few-shot system prompt needs ~4K tokens
-- Thinking disabled by default via `enable_thinking: false` for <1s latency
-- `_MAX_TOKENS=512` — enough for response, server context handles the rest
+- `-c 16384` — 7 few-shot system prompt needs ~5K tokens
+- Thinking disabled by default via `enable_thinking: false` for ~1s latency
+- `_MAX_TOKENS=1024` — reasoning-in-response needs room for 3-5 sentence analysis
+- Reasoning captured in `LLMParseResult.reasoning` for debugging
 
-## Quality Benchmarks (357 fixtures, jina-code + Qwen3.5-35B)
+## Quality Benchmarks
+
+### PreToolUse (354 fixtures, jina-code + Qwen3.5-35B, reasoning prompt)
 
 | Mode | Noise | NegSilence | Recall | p50 Latency |
 |------|-------|------------|--------|-------------|
-| embedding (t=0.30) | 64.0% | 24.2% | 40.9% | 15ms |
-| **llm-local (thinking=OFF)** | **14.2%** | **96.0%** | 38.9% | 889ms |
+| embedding (t=0.30) | 64.4% | 23.6% | 40.6% | 23ms |
+| **llm-local (reasoning)** | **21.4%** | **92.9%** | **42.2%** | 1143ms |
+
+Per-tier (LLM-local):
+| Tier | Recall | Noise | Silence |
+|------|--------|-------|---------|
+| easy | 85.2% | 25.4% | — |
+| medium | 66.0% | 30.3% | — |
+| hard | 40.4% | 32.7% | — |
+| negative | — | 7.1% | 92.9% |
+
+### UserPromptSubmit (84 fixtures, jina-code + Qwen3.5-35B, reasoning prompt)
+
+| Mode | Noise | NegSilence | Recall | p50 Latency |
+|------|-------|------------|--------|-------------|
+| embedding (t=0.30) | 89.8% | 4.2% | 31.5% | 10ms |
+| **llm-local (reasoning)** | **24.5%** | **95.8%** | **46.2%** | 3008ms |
+
+Per-tier (LLM-local):
+| Tier | Recall | Noise | Silence |
+|------|--------|-------|---------|
+| easy | 93.2% | 25.0% | — |
+| medium | 47.1% | 44.6% | — |
+| hard | 50.0% | 25.3% | — |
+| negative | — | 4.2% | 95.8% |
 
 Cross-encoder (MiniLM) is a regression on code — skip it. Use llm-local or llm-haiku.
 - **Phase 4:** Publish (PyPI, GitHub, CI)
