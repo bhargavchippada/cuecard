@@ -23,8 +23,8 @@ _ALLOWED_HAIKU_MODELS: frozenset[str] = frozenset({
     "claude-haiku-4-5",
     "claude-haiku-4-5-20251001",
 })
-_MAX_TOKENS = 512
-_TIMEOUT = 30.0
+_MAX_TOKENS = 2048
+_TIMEOUT = 60.0
 _NUMBER_LIST_PATTERN = re.compile(r"^\s*\[?\s*(\d+\s*[,\s]\s*)*\d+\s*\]?\s*$")
 
 _SYSTEM_PROMPT_TEMPLATE = """\
