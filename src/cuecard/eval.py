@@ -293,6 +293,7 @@ def run_eval(
     threshold: float = 0.30,
     dedup_threshold: float = 0.95,
     mode: str | None = None,
+    query_max_length: int = 500,
 ) -> EvalSummary:
     """Run evaluation across all fixtures and aggregate metrics.
 
@@ -316,6 +317,7 @@ def run_eval(
             threshold=0.10) for the embedding stage, ignoring the top_k and
             threshold args above. This is intentional: re-ranking stages
             need a wider candidate pool to be effective.
+        query_max_length: Maximum character length for queries before truncation.
 
     Returns:
         EvalSummary with per-fixture and aggregate metrics.
@@ -345,7 +347,7 @@ def run_eval(
                     top_k=top_k,
                     threshold=threshold,
                     dedup_threshold=dedup_threshold,
-                    query_max_length=500,
+                    query_max_length=query_max_length,
                 ),  # type: ignore[arg-type]
                 embedding_model=model,  # type: ignore[arg-type]
                 mode=mode,
@@ -358,6 +360,7 @@ def run_eval(
                 top_k=top_k,
                 threshold=threshold,
                 dedup_threshold=dedup_threshold,
+                max_query_length=query_max_length,
                 model=model,  # type: ignore[arg-type]
             )
         elapsed_ms = (time.perf_counter() - start) * 1000.0

