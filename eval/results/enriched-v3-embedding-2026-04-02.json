@@ -1,0 +1,441 @@
+{
+  "meta": {
+    "date": "2026-04-02",
+    "expansion_version": "v3",
+    "basic_rules": 30,
+    "basic_expansions": 267,
+    "workflow_rules": 46,
+    "workflow_expansions": 377
+  },
+  "bge_small": {
+    "basic": {
+      "fixture_count": 354,
+      "mean_precision": 0.1548,
+      "mean_recall": 0.4574,
+      "mean_mrr": 0.4174,
+      "mean_ndcg": 0.3963,
+      "mean_anti_precision": 0.0407,
+      "mean_noise_ratio": 0.8452,
+      "mean_context_waste_ratio": 0.8454,
+      "negative_silence_rate": 0.0,
+      "mean_retrieved_count": 5.0,
+      "latency_p50_ms": 7.7,
+      "latency_p95_ms": 19.7,
+      "latency_p99_ms": 25.8,
+      "per_tier": [
+        {
+          "tier": "easy",
+          "count": 62,
+          "mean_precision": 0.2548,
+          "mean_recall": 0.9059,
+          "mean_mrr": 0.7895,
+          "mean_noise_ratio": 0.7452,
+          "mean_context_waste_ratio": 0.7484,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "medium",
+          "count": 113,
+          "mean_precision": 0.2531,
+          "mean_recall": 0.7347,
+          "mean_mrr": 0.6823,
+          "mean_noise_ratio": 0.7469,
+          "mean_context_waste_ratio": 0.749,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "hard",
+          "count": 46,
+          "mean_precision": 0.2261,
+          "mean_recall": 0.4945,
+          "mean_mrr": 0.4717,
+          "mean_noise_ratio": 0.7739,
+          "mean_context_waste_ratio": 0.7661,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "negative",
+          "count": 133,
+          "mean_precision": 0.0,
+          "mean_recall": 0.0,
+          "mean_mrr": 0.0,
+          "mean_noise_ratio": 1.0,
+          "mean_context_waste_ratio": 1.0,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        }
+      ]
+    },
+    "workflow": {
+      "fixture_count": 84,
+      "mean_precision": 0.1619,
+      "mean_recall": 0.5,
+      "mean_mrr": 0.4796,
+      "mean_ndcg": 0.4479,
+      "mean_anti_precision": 0.0452,
+      "mean_noise_ratio": 0.8381,
+      "mean_context_waste_ratio": 0.8365,
+      "negative_silence_rate": 0.0,
+      "mean_retrieved_count": 5.0,
+      "latency_p50_ms": 8.2,
+      "latency_p95_ms": 11.4,
+      "latency_p99_ms": 18.8,
+      "per_tier": [
+        {
+          "tier": "easy",
+          "count": 22,
+          "mean_precision": 0.2273,
+          "mean_recall": 0.9091,
+          "mean_mrr": 0.8561,
+          "mean_noise_ratio": 0.7727,
+          "mean_context_waste_ratio": 0.7775,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "medium",
+          "count": 23,
+          "mean_precision": 0.2522,
+          "mean_recall": 0.587,
+          "mean_mrr": 0.6268,
+          "mean_noise_ratio": 0.7478,
+          "mean_context_waste_ratio": 0.7415,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "hard",
+          "count": 15,
+          "mean_precision": 0.1867,
+          "mean_recall": 0.5667,
+          "mean_mrr": 0.4689,
+          "mean_noise_ratio": 0.8133,
+          "mean_context_waste_ratio": 0.807,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "negative",
+          "count": 24,
+          "mean_precision": 0.0,
+          "mean_recall": 0.0,
+          "mean_mrr": 0.0,
+          "mean_noise_ratio": 1.0,
+          "mean_context_waste_ratio": 1.0,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        }
+      ]
+    },
+    "mined-sessions": {
+      "fixture_count": 69,
+      "mean_precision": 0.0812,
+      "mean_recall": 0.2899,
+      "mean_mrr": 0.2623,
+      "mean_ndcg": 0.2508,
+      "mean_anti_precision": 0.0261,
+      "mean_noise_ratio": 0.9188,
+      "mean_context_waste_ratio": 0.9291,
+      "negative_silence_rate": 0.0,
+      "mean_retrieved_count": 5.0,
+      "latency_p50_ms": 11.6,
+      "latency_p95_ms": 22.0,
+      "latency_p99_ms": 36.8,
+      "per_tier": [
+        {
+          "tier": "easy",
+          "count": 15,
+          "mean_precision": 0.2267,
+          "mean_recall": 0.8333,
+          "mean_mrr": 0.7833,
+          "mean_noise_ratio": 0.7733,
+          "mean_context_waste_ratio": 0.8045,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "medium",
+          "count": 13,
+          "mean_precision": 0.1692,
+          "mean_recall": 0.5769,
+          "mean_mrr": 0.4885,
+          "mean_noise_ratio": 0.8308,
+          "mean_context_waste_ratio": 0.8493,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "hard",
+          "count": 6,
+          "mean_precision": 0.0,
+          "mean_recall": 0.0,
+          "mean_mrr": 0.0,
+          "mean_noise_ratio": 1.0,
+          "mean_context_waste_ratio": 1.0,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "negative",
+          "count": 35,
+          "mean_precision": 0.0,
+          "mean_recall": 0.0,
+          "mean_mrr": 0.0,
+          "mean_noise_ratio": 1.0,
+          "mean_context_waste_ratio": 1.0,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        }
+      ]
+    },
+    "mined-sessions-v2": {
+      "fixture_count": 80,
+      "mean_precision": 0.0575,
+      "mean_recall": 0.2229,
+      "mean_mrr": 0.1942,
+      "mean_ndcg": 0.1949,
+      "mean_anti_precision": 0.0175,
+      "mean_noise_ratio": 0.9425,
+      "mean_context_waste_ratio": 0.9499,
+      "negative_silence_rate": 0.0,
+      "mean_retrieved_count": 5.0,
+      "latency_p50_ms": 12.0,
+      "latency_p95_ms": 24.2,
+      "latency_p99_ms": 32.8,
+      "per_tier": [
+        {
+          "tier": "easy",
+          "count": 9,
+          "mean_precision": 0.2889,
+          "mean_recall": 1.0,
+          "mean_mrr": 0.8704,
+          "mean_noise_ratio": 0.7111,
+          "mean_context_waste_ratio": 0.7366,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "medium",
+          "count": 15,
+          "mean_precision": 0.0933,
+          "mean_recall": 0.3889,
+          "mean_mrr": 0.4167,
+          "mean_noise_ratio": 0.9067,
+          "mean_context_waste_ratio": 0.9273,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "hard",
+          "count": 13,
+          "mean_precision": 0.0462,
+          "mean_recall": 0.2308,
+          "mean_mrr": 0.1115,
+          "mean_noise_ratio": 0.9538,
+          "mean_context_waste_ratio": 0.958,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "negative",
+          "count": 43,
+          "mean_precision": 0.0,
+          "mean_recall": 0.0,
+          "mean_mrr": 0.0,
+          "mean_noise_ratio": 1.0,
+          "mean_context_waste_ratio": 1.0,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        }
+      ]
+    },
+    "combined": {
+      "fixture_count": 438,
+      "mean_precision": 0.1292,
+      "mean_recall": 0.396,
+      "mean_mrr": 0.3738,
+      "mean_ndcg": 0.3438,
+      "mean_anti_precision": 0.0269,
+      "mean_noise_ratio": 0.8708,
+      "mean_context_waste_ratio": 0.8867,
+      "negative_silence_rate": 0.0,
+      "mean_retrieved_count": 5.0,
+      "latency_p50_ms": 11.0,
+      "latency_p95_ms": 23.8,
+      "latency_p99_ms": 33.1,
+      "per_tier": [
+        {
+          "tier": "easy",
+          "count": 84,
+          "mean_precision": 0.2238,
+          "mean_recall": 0.8244,
+          "mean_mrr": 0.7772,
+          "mean_noise_ratio": 0.7762,
+          "mean_context_waste_ratio": 0.8042,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "medium",
+          "count": 136,
+          "mean_precision": 0.2015,
+          "mean_recall": 0.5779,
+          "mean_mrr": 0.5522,
+          "mean_noise_ratio": 0.7985,
+          "mean_context_waste_ratio": 0.8277,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "hard",
+          "count": 61,
+          "mean_precision": 0.1705,
+          "mean_recall": 0.42,
+          "mean_mrr": 0.3828,
+          "mean_noise_ratio": 0.8295,
+          "mean_context_waste_ratio": 0.8401,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "negative",
+          "count": 157,
+          "mean_precision": 0.0,
+          "mean_recall": 0.0,
+          "mean_mrr": 0.0,
+          "mean_noise_ratio": 1.0,
+          "mean_context_waste_ratio": 1.0,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        }
+      ]
+    }
+  },
+  "jina_code": {
+    "basic": {
+      "fixture_count": 354,
+      "mean_precision": 0.163,
+      "mean_recall": 0.4874,
+      "mean_mrr": 0.4306,
+      "mean_ndcg": 0.4156,
+      "mean_anti_precision": 0.0536,
+      "mean_noise_ratio": 0.8313,
+      "mean_context_waste_ratio": 0.83,
+      "negative_silence_rate": 0.015,
+      "mean_retrieved_count": 4.9,
+      "latency_p50_ms": 15.6,
+      "latency_p95_ms": 29.6,
+      "latency_p99_ms": 36.7,
+      "per_tier": [
+        {
+          "tier": "easy",
+          "count": 62,
+          "mean_precision": 0.2699,
+          "mean_recall": 0.9315,
+          "mean_mrr": 0.8589,
+          "mean_noise_ratio": 0.7301,
+          "mean_context_waste_ratio": 0.7338,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 4.97
+        },
+        {
+          "tier": "medium",
+          "count": 113,
+          "mean_precision": 0.2642,
+          "mean_recall": 0.7796,
+          "mean_mrr": 0.6761,
+          "mean_noise_ratio": 0.7358,
+          "mean_context_waste_ratio": 0.7345,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 4.99
+        },
+        {
+          "tier": "hard",
+          "count": 46,
+          "mean_precision": 0.242,
+          "mean_recall": 0.5803,
+          "mean_mrr": 0.4953,
+          "mean_noise_ratio": 0.758,
+          "mean_context_waste_ratio": 0.7459,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 4.96
+        },
+        {
+          "tier": "negative",
+          "count": 133,
+          "mean_precision": 0.0,
+          "mean_recall": 0.0,
+          "mean_mrr": 0.0,
+          "mean_noise_ratio": 0.985,
+          "mean_context_waste_ratio": 0.985,
+          "silence_rate": 0.015,
+          "mean_retrieved_count": 4.77
+        }
+      ]
+    },
+    "workflow": {
+      "fixture_count": 84,
+      "mean_precision": 0.1405,
+      "mean_recall": 0.4524,
+      "mean_mrr": 0.4046,
+      "mean_ndcg": 0.3794,
+      "mean_anti_precision": 0.0286,
+      "mean_noise_ratio": 0.8595,
+      "mean_context_waste_ratio": 0.8601,
+      "negative_silence_rate": 0.0,
+      "mean_retrieved_count": 5.0,
+      "latency_p50_ms": 15.6,
+      "latency_p95_ms": 21.1,
+      "latency_p99_ms": 29.4,
+      "per_tier": [
+        {
+          "tier": "easy",
+          "count": 22,
+          "mean_precision": 0.2364,
+          "mean_recall": 0.9318,
+          "mean_mrr": 0.7424,
+          "mean_noise_ratio": 0.7636,
+          "mean_context_waste_ratio": 0.7683,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "medium",
+          "count": 23,
+          "mean_precision": 0.1913,
+          "mean_recall": 0.4783,
+          "mean_mrr": 0.463,
+          "mean_noise_ratio": 0.8087,
+          "mean_context_waste_ratio": 0.808,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "hard",
+          "count": 15,
+          "mean_precision": 0.1467,
+          "mean_recall": 0.4333,
+          "mean_mrr": 0.4667,
+          "mean_noise_ratio": 0.8533,
+          "mean_context_waste_ratio": 0.8506,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        },
+        {
+          "tier": "negative",
+          "count": 24,
+          "mean_precision": 0.0,
+          "mean_recall": 0.0,
+          "mean_mrr": 0.0,
+          "mean_noise_ratio": 1.0,
+          "mean_context_waste_ratio": 1.0,
+          "silence_rate": 0.0,
+          "mean_retrieved_count": 5.0
+        }
+      ]
+    }
+  }
+}

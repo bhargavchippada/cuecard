@@ -193,15 +193,26 @@ Critical ones:
 - D17: Merge preserves expansions for unchanged rules
 - S1: Path validation with allowlist (prevents traversal)
 
-## Model Recommendations (from benchmarks)
+## Model Recommendations (from session 16 benchmarks, 587 fixtures)
 
 | Stage | Model | Why |
 |-------|-------|-----|
-| Embedding | jina-embeddings-v2-base-code | Best recall (82.5%), code-specific |
-| Cross-encoder (opt-in) | Xenova/ms-marco-MiniLM-L-6-v2 | 13ms, but regressions on code |
-| LLM (lightweight) | Qwen3-Reranker-0.6B via llama-server | MTEB-Code 73.42, promptable, 370MB |
+| Embedding | jina-embeddings-v2-base-code | Best PreToolUse hard recall (60%), code-specific, 22ms |
+| Embedding (workflow alt) | snowflake-arctic-embed-m | Best UserPromptSubmit hard recall (73.3%), 14ms |
+| Cross-encoder (opt-in) | Xenova/ms-marco-MiniLM-L-6-v2 | 13ms, but regressions on code — skip |
 | LLM (full) | Qwen3.5-35B-A3B via llama-server | Best quality, MoE, free |
 | LLM (API) | Haiku via claude-agent-sdk | Fast, Max subscription |
+
+### Embedding Model Comparison (enriched, embedding mode, 354 basic fixtures)
+
+| Model | Dim | Easy | Medium | Hard | Recall | Noise | p50ms |
+|-------|-----|------|--------|------|--------|-------|-------|
+| jina-code-v2 | 768 | 95.3% | 76.8% | 60.0% | 49.0% | 83.1% | 22ms |
+| mxbai-embed-large | 1024 | 96.0% | 77.7% | 57.7% | 49.1% | 83.6% | 45ms |
+| snowflake-arctic-m | 768 | 94.2% | 73.7% | 57.5% | 47.5% | 83.7% | 14ms |
+| bge-small (default) | 384 | 94.2% | 74.1% | 51.1% | 46.8% | 84.0% | 4ms |
+
+Key insight: model choice gives ~4% recall spread. The LLM reranker gives ~70% improvement on noise/silence. Embedding mode alone cannot achieve negative silence >0% (except jina-v3 at 6%, but 457ms).
 
 ## Config
 
@@ -231,9 +242,11 @@ max_expansion_length = 200  # Max chars per expansion
 - **Eval metrics:** noise ratio, context waste, per-tier breakdown, negative silence — COMPLETE
 - **Quality iteration:** 354 PreToolUse + 84 UserPromptSubmit fixtures — COMPLETE
 - **Unified events:** UserPromptSubmit support, reasoning-in-response prompt — COMPLETE
-- **Enriched retrieval:** JSON intermediate, expansion-aware indexing, parent collapse, BM25+RRF, expansion CLI — COMPLETE (735+ tests, 100% coverage)
+- **Enriched retrieval:** JSON intermediate, expansion-aware indexing, parent collapse, BM25+RRF, expansion CLI — COMPLETE (763+ tests, 100% coverage)
+- **Benchmarking:** 6 embedding models, raw vs enriched vs LLM, v1 vs v3 expansion prompts — COMPLETE
 - **Eval dataset:** 587 fixtures (438 original + 149 mined from 7 real projects)
 - **Phase 4:** Publish — pending
+- **Phase 5:** Multi-source parsing (markdown, YAML, CLAUDE.md) — DRAFT PRD (`artifacts/phase5-multi-source-prd-draft.md`)
 
 ## Event Types
 

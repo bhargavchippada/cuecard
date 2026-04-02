@@ -1,0 +1,635 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "text": "Never commit secrets (API keys, tokens, passwords) to git",
+      "expansions": [
+        "git commit with .env file containing API key",
+        "pushing AWS_SECRET_ACCESS_KEY to remote repo",
+        "committing .pem SSH key file",
+        "hardcoded bearer token in config.json committed to git",
+        "git add .netrc file with password",
+        "checking in private_key.pem to repository",
+        "committing DATABASE_URL with credentials",
+        "pushing .gitignore not covering secrets",
+        "using git push with exposed JWT token in code",
+        "committing .aws/credentials file"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 3,
+        "line_end": 3,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Use uv for all Python package operations, never pip",
+      "expansions": [
+        "pip install requests",
+        "python -m pip install numpy",
+        "pip freeze > requirements.txt",
+        "pip list to check installed packages",
+        "pip uninstall flask",
+        "using pip to update dependencies",
+        "pip download package.tar.gz",
+        "pip install -r requirements.txt",
+        "python -m pip install --upgrade pip",
+        "pipenv install using pip backend"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 4,
+        "line_end": 4,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Send Enter after every tmux send-keys command",
+      "expansions": [
+        "tmux send-keys without trailing Enter",
+        "send-keys 'ls' missing newline character",
+        "tmux send-keys command not followed by newline",
+        "sending commands via tmux send-keys without pressing enter",
+        "tmux send-keys 'cd' without newline",
+        "sending shell command via tmux without Enter key",
+        "tmux send-keys missing final carriage return",
+        "sending input to tmux pane without newline termination",
+        "tmux send-keys command missing Enter key press",
+        "tmux send-keys string not terminated with newline"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 5,
+        "line_end": 5,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Always validate user input at system boundaries",
+      "expansions": [
+        "parsing raw JSON from POST request body without validation",
+        "accepting query parameters directly in SQL query string",
+        "passing user input to subprocess.run() without sanitization",
+        "using flask request.form data in template without escaping",
+        "reading environment variables from stdin without type checking",
+        "accepting file upload paths from URL parameter",
+        "parsing XML input from external API without schema validation",
+        "converting string input to integer without try/except block",
+        "using axios to send user data without schema check",
+        "piping command line arguments to shell script directly"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 6,
+        "line_end": 6,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Run quality checks before every commit",
+      "expansions": [
+        "git commit without running pytest",
+        "pushing code without ruff or black checks",
+        "committing without mypy type checking",
+        "git add and commit skipping pre-commit hooks",
+        "merging PR without CI pipeline passing",
+        "pushing to main without eslint validation",
+        "committing unlinted Python code",
+        "git push without running unit tests first",
+        "creating a commit before running flake8",
+        "merging changes without sonarqube analysis"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 7,
+        "line_end": 7,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Use frozen dataclasses for immutable data",
+      "expansions": [
+        "dataclass with frozen=False or missing frozen flag",
+        "modifying fields on a dataclass instance",
+        "assigning to attributes of a frozen dataclass",
+        "dataclass decorator without frozen=True",
+        "creating mutable dataclass for configuration",
+        "dataclass fields that are modified after initialization",
+        "using dataclass for immutable state without frozen",
+        "setting attributes on dataclass object directly",
+        "dataclass instance with mutable default arguments",
+        "changing dataclass field values post-creation"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 8,
+        "line_end": 8,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "100% test coverage on all new code",
+      "expansions": [
+        "git commit with 0% test coverage on new files",
+        "merging PR where coverage dropped below 100%",
+        "running pytest without coverage report",
+        "updating function without adding unit test",
+        "merge conflict resolution without new tests",
+        "code review approving untested code",
+        "coverage report showing 99% due to missed branch",
+        "adding new module without test suite",
+        "CI failing due to missing test coverage",
+        "pushing code with uncovered new logic"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 9,
+        "line_end": 9,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "No console.log or print debug statements in production code",
+      "expansions": [
+        "console.log statements in production build",
+        "print('debug') left in code",
+        "console.error used for logging",
+        "debugger statement in production",
+        "console.trace calls remaining",
+        "log.info with sensitive data",
+        "console.warn messages in prod",
+        "logging.debug enabled in production",
+        "console.log inside production bundle",
+        "debug prints not removed before deploy"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 10,
+        "line_end": 10,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Use parameterized queries to prevent SQL injection",
+      "expansions": [
+        "f-string formatting SQL query with user input",
+        "MySQL connector execute with %s string concatenation",
+        "psycopg2 cursor execute without parameter placeholder",
+        "SQLAlchemy text() with raw string interpolation",
+        "mongoose query with $where and user input",
+        "sqlite3 execute using f-string for WHERE clause",
+        "JDBC Statement addRow with concatenated SQL",
+        "Node.js mysql2 query with template literal injection",
+        "PDO prepare called but execute without bound params",
+        "raw SQL query in Python using format() method"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 11,
+        "line_end": 11,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Sanitize all HTML output to prevent XSS",
+      "expansions": [
+        "innerHTML assignment with user input",
+        "dangerouslySetInnerHTML in React component",
+        "template string injection into DOM",
+        "Vue v-html binding with raw data",
+        "Jinja2 render with unescaped {{ variable }}",
+        "Django template {{ value }} without autoescape",
+        "jQuery .html() with unsanitized string",
+        "document.write() with user-provided content",
+        "Babel/ES6 template literal concatenation into HTML",
+        "React dangerouslySetInnerHTML with untrusted prop"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 12,
+        "line_end": 12,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Enable CSRF protection on all forms and state-changing endpoints",
+      "expansions": [
+        "form post without CSRF token field",
+        "axios POST request missing xsrf token",
+        "Django form view missing csrf_protect decorator",
+        "Flask route without csrf_exempt or token validation",
+        "Spring Security CSRF disabled in configuration",
+        "jQuery $.ajax POST without _token parameter",
+        "Express middleware missing csurf or cookie-parser",
+        "Rails form_tag without authenticity_token",
+        "state-changing API endpoint without X-CSRF-Token header check",
+        "GraphQL mutation without CSRF protection middleware"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 13,
+        "line_end": 13,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Set file permissions to 0o600 for sensitive files",
+      "expansions": [
+        "chmod 644 on private_key.pem",
+        "writing secrets file without umask 077",
+        "os.chmod with 0o666 on config.json",
+        "creating .env file with world-readable permissions",
+        "ssh-keygen output not set to 600",
+        "AWS credentials file with 777 permissions",
+        "git add private_config.txt with 644 mode",
+        "chmod 0o640 on database_password.txt",
+        "copying .ssh/id_rsa to /tmp with 666",
+        "docker volume mount with default permissions"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 14,
+        "line_end": 14,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Use environment variables for configuration, not hardcoded values",
+      "expansions": [
+        "hardcoded password in .env file",
+        "setting AWS_SECRET_KEY as string literal",
+        "config.json with plaintext database credentials",
+        "using os.environ.get instead of hardcoded API key",
+        "Dockerfile ARG with static secret value",
+        "hardcoding Stripe API key in source code",
+        "config.py with hardcoded admin username",
+        "Spring Boot application.properties with db password",
+        "kubernetes secret injected as env var vs hardcoded",
+        "reading hardcoded port number from file"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 15,
+        "line_end": 15,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Run ruff and mypy before committing Python code",
+      "expansions": [
+        "git commit without running ruff",
+        "pushing code without mypy type check",
+        "committing Python without linting with ruff",
+        "running pytest before git commit but skipping ruff",
+        "merging PR without pre-commit hooks for ruff",
+        "adding files with type errors before mypy check",
+        "git push without static analysis via mypy",
+        "committing without pre-commit ruff validation",
+        "running flake8 instead of ruff before commit",
+        "skipping mypy in CI pipeline before merge"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 16,
+        "line_end": 16,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Write tests before implementation (TDD red-green-refactor)",
+      "expansions": [
+        "writing implementation before running failing tests",
+        "skipping the red phase in TDD cycle",
+        "implementing feature without writing unit test first",
+        "editing production code before creating test file",
+        "running pytest without a failing test case present",
+        "adding logic before defining assert statements",
+        "writing code before setting up test fixture",
+        "implementing function before writing test case",
+        "committing code without a failing test",
+        "starting implementation without red-green-refactor steps"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 17,
+        "line_end": 17,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Never use eval() or exec() in production code",
+      "expansions": [
+        "using eval() to parse JSON or config",
+        "executing user input via eval in python",
+        "dynamic code execution with exec() function",
+        "evaluating string as python code in production",
+        "running eval() on untrusted input",
+        "executing arbitrary code with exec()",
+        "eval() call in production environment",
+        "dynamic import using __import__ or eval",
+        "evaluating user provided expressions",
+        "exec() used for plugin loading in production"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 18,
+        "line_end": 18,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Always handle errors explicitly, never silently swallow exceptions",
+      "expansions": [
+        "try/except with empty except block",
+        "pass statement inside except clause",
+        "except Exception: pass",
+        "logging.error without re-raising exception",
+        "catching exceptions but ignoring the error object",
+        "try block with bare except: pass",
+        "swallowing ValueError without handling",
+        "silently catching and continuing execution",
+        "except: return None without logging",
+        "using try/except to suppress runtime errors"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 19,
+        "line_end": 19,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Use type hints on all function signatures",
+      "expansions": [
+        "def function_name without type annotations",
+        "missing return type hint on method",
+        "calling function with no type hints defined",
+        "Python def without : int or str parameters",
+        "mypy error due to untyped function",
+        "adding type: ignore comment to hide missing hints",
+        "dynamic typing used instead of explicit types",
+        "type hints omitted in new module",
+        "function signature missing -> return type",
+        "using type hints with typing module imports"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 20,
+        "line_end": 20,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Keep functions under 50 lines, files under 400 lines",
+      "expansions": [
+        "function exceeds 50 lines of code",
+        "file is over 400 lines long",
+        "refactor large method into smaller functions",
+        "split file into multiple modules",
+        "extract function from 60-line method",
+        "check file line count exceeds 400",
+        "condense long function to under 50 lines",
+        "move code from main file to utility module",
+        "git blame shows massive function block",
+        "linter warning: function too long"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 21,
+        "line_end": 21,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants",
+      "expansions": [
+        "hardcoded timeout value 30000 in socket.connect",
+        "magic number 5000000 used as memory limit",
+        "using 86400 directly instead of SECONDS_PER_DAY constant",
+        "array size 1024 hardcoded in buffer allocation",
+        "retry count set to 3 without named constant",
+        "hardcoded threshold 0.95 for validation logic",
+        "sleep(3600) call without TIME_INTERVAL constant",
+        "using 255 as max username length directly",
+        "config value 100 hardcoded in pagination limit",
+        "magic number 15000 hardcoded in request timeout"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 22,
+        "line_end": 22,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Prefer immutable data structures over mutable ones",
+      "expansions": [
+        "defining mutable lists instead of tuples",
+        "using list() for constant data",
+        "modifying dictionary values directly",
+        "setting mutable default arguments in functions",
+        "using set() for fixed collections",
+        "appending to a list marked as constant",
+        "changing object properties in place",
+        "reassigning list elements instead of creating new ones",
+        "passing mutable objects to pure functions",
+        "using pandas DataFrame for immutable data"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 23,
+        "line_end": 23,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Use asyncio for I/O-bound operations, not threads",
+      "expansions": [
+        "import threading for I/O wait",
+        "threading.Thread for network request",
+        "concurrent.futures.ThreadPoolExecutor for API calls",
+        "using threads instead of await",
+        "blocking socket calls in separate thread",
+        "multiprocessing for I/O bound task",
+        "asyncio.run with threading.Thread",
+        "threading.Lock for shared I/O resource",
+        "run blocking IO in background thread",
+        "concurrent.futures.ThreadPool for file read"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 24,
+        "line_end": 24,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Always close file handles, database connections, network sockets, HTTP sessions, and other resources",
+      "expansions": [
+        "open() without close() or context manager",
+        "aiohttp.ClientSession not closed after request",
+        "psycopg2.connect() missing connection.close()",
+        "socket.socket() without cleanup in finally block",
+        "SMTP connection left open after sending email",
+        "redis client pool not properly shut down",
+        "requests.Session created but never closed",
+        "FileInputStream not closed in try-with-resources",
+        "curl request without closing response stream",
+        "grpc channel not closed after RPC calls"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 25,
+        "line_end": 25,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Rotate any secrets that may have been exposed",
+      "expansions": [
+        "aws cli rotate secret for key exposed in logs",
+        "revoke and regenerate GitHub personal access token leaked in repo",
+        "reset database password after detecting leak in .env file",
+        "rotate API keys found in public git history",
+        "invalidate and issue new JWT secret after breach",
+        "rotate AWS IAM access keys exposed in error messages",
+        "regenerate Stripe secret key after it appears in build logs",
+        "reset SSH private key after accidental push to public repo",
+        "revoke OAuth refresh tokens after credential theft",
+        "rotate MongoDB connection string found in public commit"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 26,
+        "line_end": 26,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Review all dependencies for known vulnerabilities before adding",
+      "expansions": [
+        "npm install without checking for vulnerabilities",
+        "pip install package without running pip-audit",
+        "add dependency to requirements.txt without verifying CVEs",
+        "yarn add without checking for known security issues",
+        "docker pull image without scanning for vulnerabilities",
+        "add new npm package without audit check",
+        "installing package via pip without vulnerability scan",
+        "add dependency without running trivy or snyk",
+        "importing library without checking for known exploits",
+        "adding package to package.json without security audit"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 27,
+        "line_end": 27,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Never force-push to main or master branch",
+      "expansions": [
+        "git push -f to main",
+        "git push --force to master",
+        "force push to remote main branch",
+        "overwriting history on main with force",
+        "pushing changes to master with --force flag",
+        "git push -f origin main",
+        "rewriting history on master branch",
+        "force-updating the main branch",
+        "git push -f master",
+        "pushing to main without rebase or merge"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 28,
+        "line_end": 28,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Use conventional commit format (feat:, fix:, refactor:, etc.)",
+      "expansions": [
+        "git commit with message 'added new feature' instead of feat:",
+        "commit message starting with 'Update' or 'Fix' without scope",
+        "git commit -m 'refactor code' missing conventional prefix",
+        "committing with subject 'bugfix' instead of fix:",
+        "creating a tag with non-conventional commit message",
+        "git commit message containing only 'changed files'",
+        "pushing changes with commit subject 'WIP' or 'TODO'",
+        "git commit -m 'update dependencies' without conventional type",
+        "conventional commits not used in PR description",
+        "git commit message lacks colon after type"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 29,
+        "line_end": 29,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Always create a new branch for feature work",
+      "expansions": [
+        "git checkout -b feature/my-feature",
+        "creating a new branch with git branch",
+        "switching to a new branch before coding",
+        "git checkout -b feature-123",
+        "starting work on a feature branch",
+        "creating a hotfix branch for bugs",
+        "git checkout -b fix/login-issue",
+        "using a feature branch instead of main",
+        "creating a release branch from develop",
+        "branching off develop for new feature"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 30,
+        "line_end": 30,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Add .gitignore entries for generated files and build artifacts",
+      "expansions": [
+        "adding compiled .class files to git",
+        "committing __pycache__ directories",
+        "tracking build artifacts like dist/ or build/",
+        "ignoring node_modules with .gitignore",
+        "accidentally adding .env or .local files",
+        "neglecting to ignore .DS_Store and Thumbs.db",
+        "pushing generated .pyc files to repository",
+        "forgetting to add *.log to .gitignore",
+        "committing IDE settings like .idea/ or .vscode/",
+        "tracking temporary files like .tmp or .bak"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 31,
+        "line_end": 31,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Document all public API functions with docstrings",
+      "expansions": [
+        "def public_function missing docstring",
+        "public method without triple-quoted string",
+        "Flask route handler missing documentation",
+        "public class missing docstring block",
+        "exported function without description",
+        "API endpoint function no docstring",
+        "public generator function missing doc",
+        "module-level public function undocumented",
+        "decorated public function missing docstring",
+        "exposed function without Google style doc"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_basic.txt",
+        "line_start": 32,
+        "line_end": 32,
+        "chunk_type": "rule"
+      }
+    }
+  ]
+}

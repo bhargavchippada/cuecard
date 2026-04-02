@@ -77,12 +77,24 @@ Each rule gets 5-10 trigger phrases like "docker build with untrusted base image
 
 ## Quality (587 fixtures)
 
+**Enriched retrieval (jina-code + expansions + BM25, embedding mode):**
+
+| Tier | Recall | Noise |
+|------|--------|-------|
+| Easy | 95.3% | 83.1% |
+| Medium | 76.8% | — |
+| Hard | 60.0% | — |
+
+**With LLM reranker (Qwen3.5-35B, llm-local mode):**
+
 | Event Type | Recall | Noise | Neg Silence | Latency |
 |-----------|--------|-------|-------------|---------|
 | PreToolUse (354 fixtures) | 42.2% | 21.4% | 92.9% | 1.1s |
 | UserPromptSubmit (84 fixtures) | 46.2% | 24.5% | 95.8% | 3.0s |
 
-*Pre-enrichment numbers. Post-enrichment benchmarks pending.*
+The LLM reranker is essential for noise filtering and negative silence. Embedding mode alone achieves high recall but cannot reject irrelevant queries.
+
+6 embedding models benchmarked. See CLAUDE.md for full comparison.
 
 Eval dataset: 438 curated fixtures + 149 mined from real developer sessions across 7 projects.
 

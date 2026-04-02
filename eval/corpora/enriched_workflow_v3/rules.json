@@ -1,0 +1,888 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "text": "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
+      "expansions": [
+        "add authentication to the API",
+        "fix the typo on line 42",
+        "refactor the payment processing module",
+        "build a new microservice for notifications",
+        "I want to redesign the database schema",
+        "update the CSS for the login page",
+        "write a unit test for the checkout flow",
+        "merge the feature branch into main",
+        "can you explain how this regex works?",
+        "let's start implementing the new dashboard"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 3,
+        "line_end": 3,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "SIMPLE tasks (1-2 files, low risk) can proceed without a plan \u2014 just implement and verify",
+      "expansions": [
+        "quick fix for a typo in the config file",
+        "just rename the variable here",
+        "add a simple console log for debugging",
+        "I'm changing the API response format slightly",
+        "update the database schema with one new column",
+        "this bug fix is isolated to the checkout function",
+        "small UI tweak for the button alignment",
+        "refactor this single function to be cleaner",
+        "I'm done with the hotfix, let's merge it",
+        "just need to patch this security hole quickly"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 4,
+        "line_end": 4,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "MEDIUM tasks (3-10 files) require an inline plan, research, tests alongside code, and agent review after implementation",
+      "expansions": [
+        "add a new endpoint for user profiles",
+        "refactor the database migration script",
+        "fix the login bug in the auth service",
+        "update the error handling in the payment module",
+        "I need to add tests for the checkout flow",
+        "let's get an extra pair of eyes on this refactor",
+        "start planning out the API changes before coding"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 5,
+        "line_end": 5,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins",
+      "expansions": [
+        "refactor the entire payment service architecture",
+        "migrate the monolith to microservices",
+        "rebuild the user database schema from scratch",
+        "I'm starting a massive rewrite of the auth system",
+        "design a new caching layer for 100 microservices",
+        "let's tackle the full-stack redesign before coding",
+        "planning the new infrastructure with 20+ new files",
+        "need to map out the whole system before I touch code",
+        "this is a big architectural shift, not a quick fix",
+        "I'm about to touch over a dozen files, let's plan first"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 6,
+        "line_end": 6,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Review PRDs with multiple specialist subagents (architect, security, database, code quality) in parallel before implementing",
+      "expansions": [
+        "let's have the security agent review this before we code",
+        "I need the database expert and architect to weigh in on this PRD",
+        "run a parallel review with code quality and security subagents",
+        "get multiple specialist opinions on this spec before implementation starts",
+        "I want to validate the PRD with separate security and database agents",
+        "let's have the team of specialists review the requirements in parallel",
+        "run the multi-agent PRD check before writing any code"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 7,
+        "line_end": 7,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Run iterative PRD reviews until a round comes back clean \u2014 typical convergence is 4 rounds",
+      "expansions": [
+        "the PRD feedback says keep iterating",
+        "round 3 of PRD review still has blockers",
+        "we haven't reached a clean PRD yet",
+        "product requirements keep changing after each review",
+        "need to run another round on the specs",
+        "PRD review loop not converging",
+        "feedback from round 2 needs rework",
+        "product specs are stuck in revision mode"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 8,
+        "line_end": 8,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Never implement a feature without reading 2-3 similar files in the codebase first to understand existing patterns",
+      "expansions": [
+        "add a new endpoint to the user service",
+        "create a validation helper for the payment module",
+        "I want to build a similar scheduler for the cron jobs",
+        "need to write a new utility function like the logger one",
+        "implementing the same pattern but for the notification system",
+        "let's add a new middleware that follows the existing flow",
+        "building a feature that mirrors the existing auth logic"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 9,
+        "line_end": 9,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Use the planner agent for complex features, architect agent for system design decisions, tdd-guide agent for new features and bug fixes",
+      "expansions": [
+        "design the microservice architecture and API contracts",
+        "implement the new user authentication flow with tests",
+        "fix the memory leak in the background worker",
+        "plan out the database migration for the new schema",
+        "refactor the entire checkout process",
+        "I need to decide on the caching strategy for the dashboard",
+        "build a feature to export reports to PDF",
+        "debug why the login form is timing out",
+        "let's design the event sourcing system",
+        "I'm starting a new feature for dark mode"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 10,
+        "line_end": 10,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Launch parallel subagents for independent review tasks \u2014 never run them sequentially when they can run simultaneously",
+      "expansions": [
+        "run two separate security audits at the same time",
+        "check the API and database schema in parallel",
+        "launch independent linting and type-checking agents together",
+        "review the frontend and backend changes simultaneously",
+        "run the integration tests and unit tests concurrently",
+        "I have two unrelated tasks that should happen at once",
+        "execute these three validation steps in parallel",
+        "start the code review for module A and module B together",
+        "run the linter, formatter, and security scanner in one go",
+        "check if these independent tasks can run in parallel"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 11,
+        "line_end": 11,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
+      "expansions": [
+        "run the code review with three agents",
+        "start a multi-agent review for the PR",
+        "get security and python experts to check this",
+        "iterate the review until it passes all checks",
+        "run the triad review process on this change",
+        "fix the code until the three reviewers agree",
+        "execute a parallel review with security and python agents"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 12,
+        "line_end": 12,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Keep running review rounds until two consecutive rounds produce zero CRITICAL, HIGH, or MEDIUM findings \u2014 never use a fixed round count",
+      "expansions": [
+        "fix all the critical bugs and let's ship",
+        "we found some medium issues, keep going until they're gone",
+        "running out of time, just do three more rounds",
+        "are we done yet? I think we fixed everything",
+        "the second round still had high severity findings, need another pass",
+        "let's wrap this up after two clean rounds",
+        "I'm worried about missing critical issues, keep reviewing",
+        "the automated scanner found more medium bugs, run another round",
+        "stop counting rounds, just fix what's left",
+        "we need zero criticals and high severity before merging"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 13,
+        "line_end": 13,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling",
+      "expansions": [
+        "set up a background worker to handle the heavy lifting",
+        "run the script in tmux so I can switch contexts",
+        "I need to check if the background jobs finished",
+        "schedule a cron job to poll the worker status",
+        "start the agent in a detached tmux session",
+        "monitor the progress of that long-running task",
+        "let's offload this to a separate tmux pane",
+        "set up periodic checks for the worker's completion"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 14,
+        "line_end": 14,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion",
+      "expansions": [
+        "run the backend build in the background and check results later",
+        "execute the migration script without waiting for it to finish",
+        "start the test suite and let me know when it passes",
+        "run the linter in a detached tmux session",
+        "kick off the docker-compose setup and ping me when done",
+        "start the webpack dev server and report errors via tmux",
+        "spin up the staging environment asynchronously"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 15,
+        "line_end": 15,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Monitor agent context usage in tmux \u2014 compact when context remaining drops below 67 percent",
+      "expansions": [
+        "check how much context window is left in tmux",
+        "the session feels really long and responses are getting weird",
+        "we're running close to the context limit",
+        "context usage hit 70% in the tmux pane",
+        "should I compact the context soon",
+        "the agent is getting confused, maybe we need to clear some context",
+        "I'm worried we might hit the context wall"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 16,
+        "line_end": 16,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Write tests before implementation following TDD red-green-refactor cycle",
+      "expansions": [
+        "start writing the test for the new validation logic",
+        "I'm going to implement the function now",
+        "run the failing tests to verify the bug fix",
+        "write the code for the login endpoint",
+        "refactor the current implementation to improve readability",
+        "create a unit test for the edge case",
+        "generate the implementation based on the failing test",
+        "I need to fix the issue in the payment module",
+        "let's add the missing test case for null inputs"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 17,
+        "line_end": 17,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Require 100 percent test coverage on all new code \u2014 not 80 percent, not 90 percent, always 100 percent",
+      "expansions": [
+        "write tests for the new payment logic",
+        "add unit tests for the user registration endpoint",
+        "I finished the feature, just need to run the test suite",
+        "coverage report shows 95 percent, need to push it higher",
+        "refactoring the checkout flow, will add tests for the changes",
+        "can you generate the missing test cases for this module",
+        "the CI pipeline is failing because coverage dropped to 98 percent",
+        "I'm done coding, but the tests are incomplete",
+        "create integration tests for the new API endpoints"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 18,
+        "line_end": 18,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Validate every phase against real data before moving to the next phase \u2014 synthetic tests alone are insufficient",
+      "expansions": [
+        "generate synthetic test data for the new payment flow",
+        "run the mock service tests before deployment",
+        "create fake users to verify the signup endpoint",
+        "the tests pass but I haven't checked against production data",
+        "switching from unit tests to integration tests with real records",
+        "validate the migration script on a copy of the live database",
+        "everything looks good in the sandbox environment",
+        "run the QA suite with generated data only"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 19,
+        "line_end": 19,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Manually inspect LLM output after every classification wave \u2014 read actual output, do not trust confidence scores",
+      "expansions": [
+        "the confidence scores look high but I want to double-check the actual output",
+        "I'm seeing weird results even though the model was confident",
+        "run a spot check on the last classification batch manually",
+        "these predictions feel off, let me read through them myself",
+        "the automated check passed but I need to verify the text output",
+        "trust but verify: I'm reading the actual LLM responses now",
+        "flagged a potential issue despite low confidence score",
+        "I need to manually audit the output before proceeding",
+        "the model is overconfident, I'll review the text directly",
+        "let me cross-reference the high-confidence items with the raw output"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 20,
+        "line_end": 20,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test can save hours",
+      "expansions": [
+        "running a full LLM pipeline but worried about costs",
+        "preparing to launch the batch processing job",
+        "wanting to execute the inference script on the whole dataset",
+        "setting up the production workflow for the model",
+        "about to start the automated training run",
+        "the pipeline takes too long, need to test first",
+        "running out of credits before the job finishes"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 21,
+        "line_end": 21,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "If a single LLM call takes more than 5 seconds for a trivial prompt, investigate SDK overhead before proceeding",
+      "expansions": [
+        "why is this simple greeting taking 10 seconds",
+        "the API response is way too slow for just a status check",
+        "investigating why our SDK adds 5 seconds of latency",
+        "is there overhead in the LLM client causing delays",
+        "need to fix the slow startup on trivial queries",
+        "checking if the SDK is the bottleneck here",
+        "this basic prompt is hanging for 8 seconds",
+        "performance issue with the LLM wrapper on simple calls"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 22,
+        "line_end": 22,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Establish baseline metrics before implementing any improvement \u2014 you cannot claim X is better without before/after numbers",
+      "expansions": [
+        "optimize the database query to reduce latency",
+        "we need to improve the checkout speed",
+        "make the API response times faster",
+        "refactor the image loader for better performance",
+        "I want to speed up the initial page load",
+        "boost the search results ranking",
+        "reduce memory usage in the background worker",
+        "can we make the login flow snappier?"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 23,
+        "line_end": 23,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions",
+      "expansions": [
+        "benchmarking performance on just 100 rows",
+        "testing the new model with a tiny subset",
+        "did the speed test on a sample dataset",
+        "running quick validation checks",
+        "the results look good on this small data",
+        "trying the algorithm on 1% of the data",
+        "checking if the optimization works on a sample",
+        "I only have time to test on a few records"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 24,
+        "line_end": 24,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Never build infrastructure around unproven techniques \u2014 test hypotheses in controlled experiments first, implement only winners",
+      "expansions": [
+        "let's prototype the new vector search engine before committing to it",
+        "trying out a fresh graph database for the analytics pipeline",
+        "switching to serverless for the new billing microservice",
+        "building the entire auth system on this experimental protocol",
+        "integrating the new AI model directly into the main transaction flow",
+        "adopting this untested framework for the core platform",
+        "replacing our stable cache with this experimental solution"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 25,
+        "line_end": 25,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Fix the pipeline stage that produces bad output, do not patch the output with manual rules downstream",
+      "expansions": [
+        "the CI build is failing due to bad data formatting",
+        "fix the broken pipeline stage instead of adding a workaround",
+        "the output from the data processor is incorrect",
+        "we need to stop patching the results downstream",
+        "the ETL job is producing malformed JSON",
+        "rework the transformation logic rather than filtering garbage"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 26,
+        "line_end": 26,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Each pipeline stage must be independently high quality \u2014 do not rely on downstream stages to rescue upstream failures",
+      "expansions": [
+        "fix the lint errors in the build step",
+        "update the Dockerfile to include health checks",
+        "make sure the unit tests catch edge cases before deployment",
+        "add input validation in the API gateway layer",
+        "the deploy step is failing because of missing env vars",
+        "run the integration tests before merging to main",
+        "ensure the database migrations run atomically",
+        "fix the broken dependency in the CI workflow"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 27,
+        "line_end": 27,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Use lightweight deterministic approaches first, add LLM stages only when they demonstrably improve quality",
+      "expansions": [
+        "fix the typos in this email draft",
+        "sort the list of user IDs alphabetically",
+        "format the JSON response to be valid",
+        "convert this CSV to a Python dictionary",
+        "parse the error log and extract the timestamp",
+        "validate the email format in the signup form",
+        "rewrite this paragraph for better clarity",
+        "generate a random ID for the new user",
+        "convert the date string to ISO format",
+        "fix the indentation in the code block"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 28,
+        "line_end": 28,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "When schema or cardinality changes, audit every consumer (views, queries, CLI, exports, tests) before implementing",
+      "expansions": [
+        "adding a new column to the users table",
+        "changing the orders table from one-to-many to many-to-many",
+        "updating the database schema migration file",
+        "modifying the product schema for the new inventory system",
+        "the tests are failing after the schema update",
+        "need to check all the views after this change",
+        "let's update the exports to match the new fields"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 29,
+        "line_end": 29,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "After the parallel LLM phase, retry failed items sequentially one at a time to avoid rate limiting contention",
+      "expansions": [
+        "the LLM batch hit rate limit errors",
+        "retry the failed API calls one by one",
+        "parallel requests are getting blocked",
+        "switch to sequential retries for the failures",
+        "we're seeing too many 429 errors on the batch",
+        "how do I handle the throttled items",
+        "the queue has too many concurrent requests"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 30,
+        "line_end": 30,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "After every batch LLM response, diff sent IDs against returned IDs to detect silently dropped items",
+      "expansions": [
+        "batch processing dropped some items without error",
+        "checking why the returned list is shorter than the batch",
+        "LLM response missing expected record IDs",
+        "verify all sent IDs were processed in the batch",
+        "silent data loss detected after batch LLM call"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 31,
+        "line_end": 31,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Use semantic similarity (embeddings or LLMs) for text deduplication \u2014 never use lexical or word-based matching",
+      "expansions": [
+        "remove duplicate blog posts using fuzzy matching",
+        "merge similar customer support tickets even if wording differs",
+        "find near-duplicate images based on content not filenames",
+        "I need to clean up the dataset but some entries look different yet mean the same thing",
+        "dedup the user submissions by meaning, not exact string match",
+        "the search results are too rigid, need semantic matching for synonyms",
+        "identify duplicate records where the text varies slightly",
+        "fix the deduplication logic that misses variations like 'color' vs 'colour'",
+        "remove redundant survey responses that convey the same sentiment"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 32,
+        "line_end": 32,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Save LLM-generated artifacts (pickles, checkpoints) before overwriting \u2014 never destroy a baseline during experiments",
+      "expansions": [
+        "overwrite the current model checkpoint with the new results",
+        "save the pickle file before running the next training epoch",
+        "replacing the best model with the latest experiment output",
+        "I need to reset the experiment state to test a new configuration",
+        "run the script again to overwrite the existing artifacts",
+        "discarding the previous baseline to try a different hyperparameter"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 33,
+        "line_end": 33,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Store all predictions, reasoning, and grounding in benchmark results for later reanalysis \u2014 not just numeric scores",
+      "expansions": [
+        "export the benchmark results with full reasoning traces",
+        "save the LLM's thought process alongside the accuracy score",
+        "include the grounding citations in the evaluation report",
+        "export results for reanalysis without losing the chain of thought",
+        "generate a benchmark summary that keeps all prediction details",
+        "save the full debug log with every test case prediction",
+        "export the evaluation data with model reasoning included"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 34,
+        "line_end": 34,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
+      "expansions": [
+        "this session is getting really long and I need to pause",
+        "we're hitting the context limit and responses are getting worse",
+        "let's wrap up for the day and save our progress",
+        "I need to switch branches and come back to this later",
+        "the context window is filling up, should we compact now",
+        "I'm running out of tokens for this task",
+        "time to stop and preserve the current state before continuing"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 35,
+        "line_end": 35,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Update CLAUDE.md when project structure, architecture, or conventions change during a session",
+      "expansions": [
+        "refactor the folder structure to separate concerns",
+        "introduce a new microservice for auth handling",
+        "switching from class-based to functional components",
+        "we're adopting a new linting rule for this session",
+        "let's reorganize the src directory layout",
+        "I changed the project's dependency management strategy",
+        "updating the codebase to follow the new naming conventions",
+        "moving business logic into a separate layer",
+        "restructuring how we handle API responses"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 36,
+        "line_end": 36,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Update README when user-facing behavior, setup steps, or dependencies change",
+      "expansions": [
+        "users need to know about the new environment variable",
+        "the setup steps changed after the Docker refactor",
+        "I added a new CLI command but forgot to update the docs",
+        "we switched from npm to yarn, should I mention that?",
+        "the authentication flow is different now",
+        "this PR breaks the existing install process",
+        "need to document the new API endpoints for clients",
+        "added a dependency on redis, does the README need updating?"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 37,
+        "line_end": 37,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci",
+      "expansions": [
+        "how do I format this commit message correctly",
+        "git commit -m 'fixed login bug'",
+        "add a new feature for user profile",
+        "refactor the payment service logic",
+        "update the installation guide",
+        "write tests for the new API endpoint",
+        "update dependencies in package.json",
+        "optimize the database query performance",
+        "fix the CI pipeline failing on push",
+        "I made some changes, what's the right commit type"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 38,
+        "line_end": 38,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Run security review before every commit \u2014 check for hardcoded secrets, SQL injection, XSS, missing input validation",
+      "expansions": [
+        "I'm ready to push the changes to main",
+        "generate a pull request for the new login feature",
+        "finalize the database migration script",
+        "commit the fixes for the checkout flow",
+        "prepare the API endpoints for deployment",
+        "apply the patches to the auth module",
+        "ready to merge this branch",
+        "push the updated user profile handlers"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 39,
+        "line_end": 39,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "For new libraries or APIs, research alternatives, verify documentation, audit maintenance status, and benchmark before adopting",
+      "expansions": [
+        "what's the best library for parsing CSV files in Python",
+        "should I switch to React Query or keep using Axios",
+        "found a new Go package for logging, is it worth trying",
+        "is that npm package still maintained or abandoned",
+        "compare the performance of these two database drivers",
+        "I want to swap out the old auth library for something newer",
+        "need a lightweight JSON parser, what are my options",
+        "this dependency is getting flagged as deprecated, what replaces it",
+        "looking for a Redis client with better async support"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 40,
+        "line_end": 40,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Search GitHub for existing implementations and proven patterns before writing anything from scratch",
+      "expansions": [
+        "I need to build a custom rate limiter for our API",
+        "let's create a new authentication middleware from scratch",
+        "write a simple cron job to clean up old logs",
+        "implement a basic retry mechanism for failed requests",
+        "how do I set up OAuth2 without using a library?",
+        "I'm going to write my own JSON parser instead of using one",
+        "can you help me design a new caching strategy for Redis?",
+        "I want to roll my own JWT validation logic"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 41,
+        "line_end": 41,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search",
+      "expansions": [
+        "find docs for the new React version",
+        "search for how to use the latest Express middleware",
+        "look up the JWT library documentation",
+        "research the best way to handle rate limiting",
+        "find semantic matches for the error handler pattern",
+        "search the web for recent updates on FastAPI",
+        "grep the codebase for similar error handling logic",
+        "find examples of the new Stripe API integration",
+        "look up the documentation for the updated Tailwind classes",
+        "search for the latest best practices on database indexing"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 42,
+        "line_end": 42,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "When a tool or command fails, read the full error message and search project docs before retrying \u2014 never retry blindly",
+      "expansions": [
+        "docker build is failing with an obscure error",
+        "the API integration test keeps timing out",
+        "npm install is throwing a dependency conflict",
+        "my deployment script failed again, what's wrong?",
+        "trying to run the migration but the database won't start",
+        "the linter is red with no obvious fix",
+        "retrying the failed job but it's stuck in a loop",
+        "getting a 500 error after the last code change"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 43,
+        "line_end": 43,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "After 2 failed fix attempts on the same error, stop and ask the user for guidance instead of spiraling",
+      "expansions": [
+        "I've tried fixing this error three times and it's still failing",
+        "the tests keep failing no matter what I change",
+        "I'm stuck in a loop trying to fix this bug",
+        "this error won't go away after multiple attempts",
+        "I need help because my fix attempts aren't working"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 44,
+        "line_end": 44,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Filter pipeline noise at multiple independent stages with configurable thresholds \u2014 no single filter point",
+      "expansions": [
+        "add a secondary filter to catch edge cases",
+        "tune the noise threshold separately for each stage",
+        "why is my single filter letting bad data through",
+        "implement multi-stage validation with different cutoffs",
+        "set up independent cleanup steps for the pipeline",
+        "adjust filtering logic at the input and output stages differently",
+        "need a defense-in-depth approach for data cleaning",
+        "the first filter isn't catching everything, add another",
+        "configure distinct thresholds for upstream and downstream processing"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 45,
+        "line_end": 45,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "When running A/B benchmark comparisons on LLM artifacts, use the same pre-built artifact and change only one variable",
+      "expansions": [
+        "compare the new model output to the baseline",
+        "test if changing the temperature improves results",
+        "run a benchmark with the fresh dataset against the old one",
+        "check the performance of the updated prompt template",
+        "let's see if the new system message makes a difference",
+        "benchmark this new parameter against the current setup",
+        "compare the two runs side by side",
+        "let's run the same prompt with a different seed",
+        "compare the new output to the old one to see the difference"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 46,
+        "line_end": 46,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Run the original paper code first when reproducing published results \u2014 do not theorize about score gaps without evidence",
+      "expansions": [
+        "my results don't match the paper's numbers",
+        "why is my accuracy lower than the original study",
+        "reproducing the experiment but getting worse scores",
+        "the gap between my model and the paper is huge",
+        "checking if my implementation matches the baseline",
+        "can't replicate the reported performance metrics",
+        "is there a bug in my setup causing low scores",
+        "trying to debug why my loss isn't converging like the paper",
+        "difference in evaluation results needs explanation",
+        "need to verify the original code before tweaking hyperparameters"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 47,
+        "line_end": 47,
+        "chunk_type": "rule"
+      }
+    },
+    {
+      "text": "Score gaps between models on routine tasks usually indicate code or config differences, not model quality differences",
+      "expansions": [
+        "why is model B scoring lower on the test suite?",
+        "debug the 5 point drop in accuracy between the two runs",
+        "check if different environment variables caused the performance gap",
+        "compare the config files for the training scripts",
+        "the new model is failing unit tests that the old one passed",
+        "find out why the inference latency increased after switching models",
+        "is the test dataset different for the two evaluations?",
+        "why did refactoring the data loader break the model scores?",
+        "the results look off, maybe the seed or config changed",
+        "investigate the discrepancy in the benchmark results"
+      ],
+      "source": {
+        "file": "/home/turiya/projects/cuecard/eval/corpora/rules_workflow.txt",
+        "line_start": 48,
+        "line_end": 48,
+        "chunk_type": "rule"
+      }
+    }
+  ]
+}

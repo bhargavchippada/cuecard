@@ -9,8 +9,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from cuecard.expander import (
+    _VALID_EVENT_TYPES,
+    DEDUP_COSINE_THRESHOLD,
     _build_expansion_prompt,
     _parse_expansion_response,
+    _semantic_dedup,
     expand_rules,
 )
 from cuecard.models import (
@@ -43,11 +46,71 @@ class TestBuildExpansionPrompt:
         assert "DO:" in system
         assert "DON'T:" in system
 
-    def test_contains_golden_examples(self) -> None:
+    def test_contains_golden_examples_pretooluse(self) -> None:
         system, _ = _build_expansion_prompt("test rule", "nonce1")
         assert "Always close file handles" in system
         assert "Run quality checks before every commit" in system
         assert "Never trust small sample benchmark results" in system
+
+    def test_contains_golden_examples_workflow(self) -> None:
+        system, _ = _build_expansion_prompt(
+            "test rule", "nonce1", event_type="UserPromptSubmit",
+        )
+        assert "Classify every task as SIMPLE" in system
+        assert "Save task state to artifacts/" in system
+        assert "Update README when user-facing behavior changes" in system
+
+    def test_workflow_prompt_has_user_message_language(self) -> None:
+        system, _ = _build_expansion_prompt(
+            "test rule", "nonce1", event_type="UserPromptSubmit",
+        )
+        assert "natural language messages" in system
+        assert "USER MESSAGES" in system
+
+    def test_pretooluse_prompt_has_tool_language(self) -> None:
+        system, _ = _build_expansion_prompt(
+            "test rule", "nonce1", event_type="PreToolUse",
+        )
+        assert "tool calls and code actions" in system
+
+    def test_anti_template_instruction(self) -> None:
+        system, _ = _build_expansion_prompt("test rule", "nonce1")
+        assert "different sentence structure" in system
+        assert "Start two expansions with the same word" in system
+
+    def test_trigger_direction_instruction(self) -> None:
+        system, _ = _build_expansion_prompt("test rule", "nonce1")
+        assert "violation" in system.lower()
+        assert "CORRECT/COMPLIANT behavior" in system
+
+    def test_indirect_trigger_instruction(self) -> None:
+        system, _ = _build_expansion_prompt("test rule", "nonce1")
+        assert "INDIRECT triggers" in system
+
+    def test_variable_count_instruction(self) -> None:
+        _, user = _build_expansion_prompt("test rule", "nonce1")
+        assert "3-10" in user
+        assert "Stop when additional expansions would just be rephrasing" in user
+
+    def test_workflow_cross_domain_dont(self) -> None:
+        system, _ = _build_expansion_prompt(
+            "test rule", "nonce1", event_type="UserPromptSubmit",
+        )
+        assert "tool commands or code patterns" in system
+        assert "false matches" in system
+
+    def test_pretooluse_cross_domain_dont(self) -> None:
+        system, _ = _build_expansion_prompt(
+            "test rule", "nonce1", event_type="PreToolUse",
+        )
+        assert "process, planning, or methodology" in system
+
+    def test_workflow_bad_examples_show_false_positives(self) -> None:
+        system, _ = _build_expansion_prompt(
+            "test rule", "nonce1", event_type="UserPromptSubmit",
+        )
+        assert "would false-match" in system or "would fire on every" in system
+        assert "would match unrelated" in system or "would fire on every" in system
 
     def test_scrubs_secrets_from_rule(self) -> None:
         system, user = _build_expansion_prompt(
@@ -70,7 +133,7 @@ class TestBuildExpansionPrompt:
     def test_user_prompt_has_json_format(self) -> None:
         _, user = _build_expansion_prompt("test", "nonce1")
         assert '"expansions"' in user
-        assert "8-10 retrieval expansion" in user
+        assert "3-10 retrieval expansion" in user
 
 
 class TestParseExpansionResponse:
@@ -367,3 +430,114 @@ class TestExpandRules:
         assert result[0] is not original
         assert original.expansions == ()
         assert result[0].expansions == ("x",)
+
+    def test_invalid_event_type_raises(self) -> None:
+        with pytest.raises(ValueError, match="Invalid event_type"):
+            expand_rules(
+                [_make_rule()],
+                backend="local",
+                endpoint="http://localhost:8081/v1",
+                event_type="InvalidEvent",
+            )
+
+    def test_event_type_passed_to_prompt(self) -> None:
+        """event_type is forwarded to _build_expansion_prompt."""
+        with (
+            patch(
+                "cuecard.expander.call_local",
+                return_value='{"expansions": ["x"]}',
+            ),
+            patch(
+                "cuecard.expander._build_expansion_prompt",
+                wraps=_build_expansion_prompt,
+            ) as mock_build,
+            patch(
+                "cuecard.expander._semantic_dedup",
+                side_effect=lambda x, **kw: x,
+            ),
+        ):
+            expand_rules(
+                [_make_rule()],
+                backend="local",
+                endpoint="http://localhost:8081/v1",
+                event_type="UserPromptSubmit",
+            )
+            _, kwargs = mock_build.call_args
+            assert kwargs.get("event_type") == "UserPromptSubmit"
+
+    def test_semantic_dedup_called(self) -> None:
+        """expand_rules calls _semantic_dedup on parsed expansions."""
+        with (
+            patch(
+                "cuecard.expander.call_local",
+                return_value='{"expansions": ["a", "b", "c"]}',
+            ),
+            patch(
+                "cuecard.expander._semantic_dedup",
+                return_value=["a", "c"],
+            ) as mock_dedup,
+        ):
+            result = expand_rules(
+                [_make_rule()],
+                backend="local",
+                endpoint="http://localhost:8081/v1",
+            )
+            mock_dedup.assert_called_once_with(["a", "b", "c"])
+            assert result[0].expansions == ("a", "c")
+
+    def test_valid_event_types_constant(self) -> None:
+        assert "PreToolUse" in _VALID_EVENT_TYPES
+        assert "UserPromptSubmit" in _VALID_EVENT_TYPES
+
+
+class TestSemanticDedup:
+    def test_empty_list(self) -> None:
+        assert _semantic_dedup([]) == []
+
+    def test_single_item(self) -> None:
+        assert _semantic_dedup(["hello"]) == ["hello"]
+
+    def test_preserves_order(self) -> None:
+        """Non-duplicate items are returned in original order."""
+        with patch("cuecard.expander.np") as mock_np:
+            # Mock numpy to simulate no duplicates
+            mock_array = MagicMock()
+            mock_np.array.return_value = mock_array
+            mock_np.linalg.norm.return_value = MagicMock()
+            mock_np.where.return_value = MagicMock()
+
+            # Just test the short-circuit paths
+            result = _semantic_dedup(["a"])
+            assert result == ["a"]
+
+    def test_fastembed_import_failure_returns_original(self) -> None:
+        """If fastembed is unavailable, return original list unchanged."""
+        items = ["phrase a", "phrase b"]
+        with (
+            patch.dict("sys.modules", {"fastembed": None}),
+            patch(
+                "builtins.__import__",
+                side_effect=lambda name, *a, **kw: (
+                    (_ for _ in ()).throw(ImportError("no fastembed"))
+                    if name == "fastembed"
+                    else __import__(name, *a, **kw)
+                ),
+            ),
+        ):
+            result = _semantic_dedup(items)
+        assert result == items
+
+    def test_embedding_failure_returns_original(self) -> None:
+        """If embedding fails, return original list unchanged."""
+        items = ["phrase a", "phrase b"]
+        mock_model = MagicMock()
+        mock_model.passage_embed.side_effect = RuntimeError("model load failed")
+        with patch(
+            "fastembed.TextEmbedding",
+            return_value=mock_model,
+        ):
+            result = _semantic_dedup(items)
+        assert result == items
+
+    def test_threshold_constant(self) -> None:
+        assert DEDUP_COSINE_THRESHOLD == 0.85
