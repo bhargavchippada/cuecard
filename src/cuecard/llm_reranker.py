@@ -6,7 +6,7 @@ import json
 import logging
 import re
 import secrets
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 import httpx
@@ -205,9 +205,11 @@ def rerank_llm(
         else:
             raw = _call_haiku(system_prompt, user_prompt, haiku_model)
 
-        indices = _parse_llm_response(raw, len(candidates))
-        if indices is not None:
-            return _compute_ordinal_scores(indices, candidates)[:top_k]
+        parse_result = _parse_llm_response(raw, len(candidates))
+        if parse_result.reasoning:
+            logger.debug("LLM reasoning: %s", parse_result.reasoning)
+        if parse_result.indices is not None:
+            return _compute_ordinal_scores(parse_result.indices, candidates)[:top_k]
 
         logger.warning("LLM returned unparseable response; returning fallback")
         return fallback
@@ -329,27 +331,40 @@ def _strip_thinking_tags(response: str) -> str:
     return re.sub(r"<think>.*?</think>", "", response, flags=re.DOTALL).strip()
 
 
+@dataclass(frozen=True)
+class LLMParseResult:
+    """Parsed LLM response with optional reasoning."""
+
+    indices: list[int] | None  # None = unparseable
+    reasoning: str | None = None
+
+
 def _parse_llm_response(
     response: str, max_rule_id: int,
-) -> list[int] | None:
-    """Parse LLM response to extract rule indices.
+) -> LLMParseResult:
+    """Parse LLM response to extract rule indices and reasoning.
 
-    Returns list of indices (possibly empty for "no rules apply"),
-    or None if the response could not be parsed at all.
+    Returns LLMParseResult with:
+      - indices: list of valid indices (possibly empty), or None if unparseable
+      - reasoning: extracted reasoning text if present
 
     1. Strip thinking tags
-    2. Try JSON: {"rules": [1, 5, 12]} or {"rules": []}
+    2. Try JSON: {"reasoning": "...", "rules": [1, 5, 12]}
     3. Guarded regex fallback: only if response looks like a number list
     4. Validate: filter to [1, max_rule_id]
     5. Deduplicate preserving order
     6. Cap at max_rule_id items
     """
     cleaned = _strip_thinking_tags(response)
+    reasoning: str | None = None
 
     # Try JSON parsing
     try:
         parsed = json.loads(cleaned)
         if isinstance(parsed, dict) and "rules" in parsed:
+            raw_reasoning = parsed.get("reasoning")
+            if isinstance(raw_reasoning, str) and raw_reasoning.strip():
+                reasoning = raw_reasoning.strip()
             raw_indices = parsed["rules"]
             if isinstance(raw_indices, list):
                 indices = [
@@ -357,7 +372,10 @@ def _parse_llm_response(
                     for x in raw_indices
                     if isinstance(x, (int, float)) and float(x) == int(x)
                 ]
-                return _validate_indices(indices, max_rule_id)
+                return LLMParseResult(
+                    indices=_validate_indices(indices, max_rule_id),
+                    reasoning=reasoning,
+                )
     except (json.JSONDecodeError, ValueError):
         pass
 
@@ -365,9 +383,12 @@ def _parse_llm_response(
     if _NUMBER_LIST_PATTERN.match(cleaned):
         raw = re.findall(r"\d+", cleaned)
         indices = [int(x) for x in raw]
-        return _validate_indices(indices, max_rule_id)
+        return LLMParseResult(
+            indices=_validate_indices(indices, max_rule_id),
+            reasoning=reasoning,
+        )
 
-    return None
+    return LLMParseResult(indices=None, reasoning=reasoning)
 
 
 def _validate_indices(indices: list[int], max_rule_id: int) -> list[int]:

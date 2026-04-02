@@ -180,55 +180,86 @@ class TestStripThinkingTags:
 
 class TestParseLLMResponse:
     def test_valid_json(self) -> None:
-        assert _parse_llm_response('{"rules": [1, 3]}', 5) == [1, 3]
+        result = _parse_llm_response('{"rules": [1, 3]}', 5)
+        assert result.indices == [1, 3]
 
     def test_json_extra_whitespace(self) -> None:
-        assert _parse_llm_response('  { "rules" : [ 1 , 3 ] }  ', 5) == [1, 3]
+        result = _parse_llm_response('  { "rules" : [ 1 , 3 ] }  ', 5)
+        assert result.indices == [1, 3]
 
     def test_regex_fallback_comma_separated(self) -> None:
-        assert _parse_llm_response("1, 3, 5", 5) == [1, 3, 5]
+        result = _parse_llm_response("1, 3, 5", 5)
+        assert result.indices == [1, 3, 5]
 
     def test_regex_fallback_brackets(self) -> None:
-        assert _parse_llm_response("[1,3,5]", 5) == [1, 3, 5]
+        result = _parse_llm_response("[1,3,5]", 5)
+        assert result.indices == [1, 3, 5]
 
     def test_regex_fallback_space_separated(self) -> None:
-        assert _parse_llm_response("1 3 5", 5) == [1, 3, 5]
+        result = _parse_llm_response("1 3 5", 5)
+        assert result.indices == [1, 3, 5]
 
     def test_invalid_prose_returns_none(self) -> None:
-        assert _parse_llm_response("Error: rule 42 not found", 5) is None
+        result = _parse_llm_response("Error: rule 42 not found", 5)
+        assert result.indices is None
 
     def test_out_of_range_filtered(self) -> None:
-        assert _parse_llm_response('{"rules": [0, 1, 99]}', 5) == [1]
+        result = _parse_llm_response('{"rules": [0, 1, 99]}', 5)
+        assert result.indices == [1]
 
     def test_duplicates_removed(self) -> None:
-        assert _parse_llm_response('{"rules": [1, 1, 3]}', 5) == [1, 3]
+        result = _parse_llm_response('{"rules": [1, 1, 3]}', 5)
+        assert result.indices == [1, 3]
 
     def test_capped_at_max(self) -> None:
         indices = list(range(1, 21))
         response = json.dumps({"rules": indices})
         result = _parse_llm_response(response, 10)
-        assert result is not None
-        assert len(result) <= 10
+        assert result.indices is not None
+        assert len(result.indices) <= 10
 
     def test_empty_response_returns_none(self) -> None:
-        assert _parse_llm_response("", 5) is None
+        result = _parse_llm_response("", 5)
+        assert result.indices is None
 
     def test_empty_rules_array_returns_empty_list(self) -> None:
-        assert _parse_llm_response('{"rules": []}', 5) == []
+        result = _parse_llm_response('{"rules": []}', 5)
+        assert result.indices == []
 
     def test_thinking_tags_stripped(self) -> None:
         text = '<think>thinking...</think>{"rules": [2, 4]}'
-        assert _parse_llm_response(text, 5) == [2, 4]
+        result = _parse_llm_response(text, 5)
+        assert result.indices == [2, 4]
 
     def test_thinking_with_empty_rules(self) -> None:
         text = '<think>\n\n</think>\n\n{"rules": []}'
-        assert _parse_llm_response(text, 5) == []
+        result = _parse_llm_response(text, 5)
+        assert result.indices == []
 
     def test_json_missing_rules_key(self) -> None:
-        assert _parse_llm_response('{"data": 42}', 50) is None
+        result = _parse_llm_response('{"data": 42}', 50)
+        assert result.indices is None
 
     def test_json_missing_rules_key_with_prose(self) -> None:
-        assert _parse_llm_response('{"error": "not found"}', 5) is None
+        result = _parse_llm_response('{"error": "not found"}', 5)
+        assert result.indices is None
+
+    def test_reasoning_captured(self) -> None:
+        response = '{"reasoning": "Rule 1 applies because X.", "rules": [1]}'
+        result = _parse_llm_response(response, 5)
+        assert result.indices == [1]
+        assert result.reasoning == "Rule 1 applies because X."
+
+    def test_reasoning_empty_rules(self) -> None:
+        response = '{"reasoning": "No rules apply.", "rules": []}'
+        result = _parse_llm_response(response, 5)
+        assert result.indices == []
+        assert result.reasoning == "No rules apply."
+
+    def test_no_reasoning_field(self) -> None:
+        result = _parse_llm_response('{"rules": [2]}', 5)
+        assert result.indices == [2]
+        assert result.reasoning is None
 
 
 class TestComputeOrdinalScores:
@@ -411,8 +442,9 @@ class TestRerankLLM:
     def test_local_backend_success(self) -> None:
         candidates = _make_candidates(5)
         mock_response = MagicMock()
+        content = '{"reasoning": "Rules 1 and 3 apply.", "rules": [1, 3]}'
         mock_response.json.return_value = {
-            "choices": [{"message": {"content": '{"rules": [1, 3]}'}}]
+            "choices": [{"message": {"content": content}}]
         }
         mock_response.raise_for_status = MagicMock()
 
