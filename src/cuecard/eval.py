@@ -57,6 +57,7 @@ class FixtureResult:
     context_waste_ratio: float
     retrieved_count: int
     latency_ms: float
+    quality_score: float
 
 
 @dataclass(frozen=True)
@@ -72,6 +73,7 @@ class TierSummary:
     mean_context_waste_ratio: float
     silence_rate: float
     mean_retrieved_count: float
+    mean_quality: float
 
 
 @dataclass(frozen=True)
@@ -88,6 +90,9 @@ class EvalSummary:
     mean_context_waste_ratio: float
     negative_silence_rate: float
     mean_retrieved_count: float
+    mean_quality: float
+    positive_recall: float
+    positive_quality: float
     latency_p50_ms: float
     latency_p95_ms: float
     latency_p99_ms: float
@@ -192,6 +197,47 @@ def context_waste_ratio(retrieved: list[str], relevant: set[str]) -> float:
         return 0.0
     waste_chars = sum(len(r) for r in retrieved if r not in relevant)
     return waste_chars / total_chars
+
+
+def quality_score(
+    retrieved: list[str],
+    relevant: set[str],
+    is_negative: bool,
+) -> float:
+    """Single quality score per fixture: F2 with correct-abstention convention.
+
+    Uses F-beta with beta=2 (recall-weighted), extended with the
+    empty-set convention for retrieval systems with negative queries.
+
+    For positive fixtures (has should_match):
+        F2 = 5 * P * R / (4P + R), where:
+          P = precision (hits / retrieved)
+          R = recall (hits / relevant)
+        Returns 0.0 if both P and R are 0.
+
+    For negative fixtures (no should_match):
+        1.0 if silent (correct abstention), 0.0 otherwise.
+        This is the standard empty-set convention — correct silence
+        is a perfect retrieval outcome.
+
+    The F2 formulation naturally penalizes noise (low precision) while
+    weighting recall 4x higher than precision. It handles partial
+    matches and noisy retrieval in a single principled number.
+    """
+    if is_negative:
+        return 1.0 if not retrieved else 0.0
+
+    if not relevant:
+        return 1.0 if not retrieved else 0.0
+
+    p = precision_at_k(retrieved, relevant)
+    r = recall_at_k(retrieved, relevant)
+
+    if p == 0.0 and r == 0.0:
+        return 0.0
+
+    # F2: beta=2 → (1 + 4) * P * R / (4 * P + R)
+    return 5.0 * p * r / (4.0 * p + r)
 
 
 # ---------------------------------------------------------------------------
@@ -411,6 +457,7 @@ def run_eval(
         relevant = set(fixture.should_match)
         anti_rel = set(fixture.should_not_match)
 
+        is_negative = fixture.difficulty == "negative"
         result = FixtureResult(
             fixture_id=fixture.id,
             query=fixture.query,
@@ -427,6 +474,9 @@ def run_eval(
             ),
             retrieved_count=len(retrieved_texts),
             latency_ms=elapsed_ms,
+            quality_score=quality_score(
+                retrieved_texts, relevant, is_negative,
+            ),
         )
         results.append(result)
 
@@ -445,6 +495,9 @@ def run_eval(
             mean_context_waste_ratio=0.0,
             negative_silence_rate=0.0,
             mean_retrieved_count=0.0,
+            mean_quality=0.0,
+            positive_recall=0.0,
+            positive_quality=0.0,
             latency_p50_ms=0.0,
             latency_p95_ms=0.0,
             latency_p99_ms=0.0,
@@ -453,9 +506,23 @@ def run_eval(
         )
 
     negatives = [r for r in results if r.difficulty == "negative"]
+    positives = [r for r in results if r.difficulty != "negative"]
     neg_silent = sum(1 for r in negatives if r.retrieved_count == 0)
     neg_silence_rate = (
         neg_silent / len(negatives) if negatives else 1.0
+    )
+
+    # positive_recall / positive_quality: averaged only over positive
+    # fixtures (negatives have their own metric — negative_silence_rate)
+    pos_recall = (
+        _mean(r.recall_at_k for r in positives)
+        if positives
+        else 0.0
+    )
+    pos_quality = (
+        _mean(r.quality_score for r in positives)
+        if positives
+        else 0.0
     )
 
     tier_summaries = _compute_tier_summaries(results)
@@ -475,6 +542,9 @@ def run_eval(
         mean_retrieved_count=_mean(
             float(r.retrieved_count) for r in results
         ),
+        mean_quality=_mean(r.quality_score for r in results),
+        positive_recall=pos_recall,
+        positive_quality=pos_quality,
         latency_p50_ms=_percentile(latencies, 50),
         latency_p95_ms=_percentile(latencies, 95),
         latency_p99_ms=_percentile(latencies, 99),
@@ -507,67 +577,52 @@ def _compute_tier_summaries(
         tier_results = by_tier.get(tier, [])
         if not tier_results:
             continue
-        n = len(tier_results)
-        neg_silent = sum(
-            1 for r in tier_results if r.retrieved_count == 0
-        )
         summaries.append(
-            TierSummary(
-                tier=tier,
-                count=n,
-                mean_precision=_mean(
-                    r.precision_at_k for r in tier_results
-                ),
-                mean_recall=_mean(
-                    r.recall_at_k for r in tier_results
-                ),
-                mean_mrr=_mean(r.mrr for r in tier_results),
-                mean_noise_ratio=_mean(
-                    r.noise_ratio for r in tier_results
-                ),
-                mean_context_waste_ratio=_mean(
-                    r.context_waste_ratio for r in tier_results
-                ),
-                silence_rate=neg_silent / n,
-                mean_retrieved_count=_mean(
-                    float(r.retrieved_count) for r in tier_results
-                ),
-            ),
+            _make_tier_summary(tier, tier_results),
         )
 
     # Include any tiers not in _TIER_ORDER (e.g., "unknown")
     for tier in sorted(by_tier.keys()):
         if tier not in _TIER_ORDER:
-            tier_results = by_tier[tier]
-            n = len(tier_results)
-            neg_silent = sum(
-                1 for r in tier_results if r.retrieved_count == 0
-            )
             summaries.append(
-                TierSummary(
-                    tier=tier,
-                    count=n,
-                    mean_precision=_mean(
-                        r.precision_at_k for r in tier_results
-                    ),
-                    mean_recall=_mean(
-                        r.recall_at_k for r in tier_results
-                    ),
-                    mean_mrr=_mean(r.mrr for r in tier_results),
-                    mean_noise_ratio=_mean(
-                        r.noise_ratio for r in tier_results
-                    ),
-                    mean_context_waste_ratio=_mean(
-                        r.context_waste_ratio for r in tier_results
-                    ),
-                    silence_rate=neg_silent / n,
-                    mean_retrieved_count=_mean(
-                        float(r.retrieved_count) for r in tier_results
-                    ),
-                ),
+                _make_tier_summary(tier, by_tier[tier]),
             )
 
     return summaries
+
+
+def _make_tier_summary(
+    tier: str, tier_results: list[FixtureResult],
+) -> TierSummary:
+    """Build a TierSummary for a single tier."""
+    n = len(tier_results)
+    neg_silent = sum(
+        1 for r in tier_results if r.retrieved_count == 0
+    )
+    return TierSummary(
+        tier=tier,
+        count=n,
+        mean_precision=_mean(
+            r.precision_at_k for r in tier_results
+        ),
+        mean_recall=_mean(
+            r.recall_at_k for r in tier_results
+        ),
+        mean_mrr=_mean(r.mrr for r in tier_results),
+        mean_noise_ratio=_mean(
+            r.noise_ratio for r in tier_results
+        ),
+        mean_context_waste_ratio=_mean(
+            r.context_waste_ratio for r in tier_results
+        ),
+        silence_rate=neg_silent / n,
+        mean_retrieved_count=_mean(
+            float(r.retrieved_count) for r in tier_results
+        ),
+        mean_quality=_mean(
+            r.quality_score for r in tier_results
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -584,11 +639,11 @@ _ROW_FMT = (
 )
 _TIER_HEADER_FMT = (
     "{:<10s} {:>5s} {:>6s} {:>6s} {:>6s}"
-    " {:>6s} {:>6s} {:>6s} {:>5s}"
+    " {:>6s} {:>6s} {:>6s} {:>5s} {:>6s}"
 )
 _TIER_ROW_FMT = (
     "{:<10s} {:>5d} {:>6.3f} {:>6.3f} {:>6.3f}"
-    " {:>6.3f} {:>6.3f} {:>6.3f} {:>5.1f}"
+    " {:>6.3f} {:>6.3f} {:>6.3f} {:>5.1f} {:>6.3f}"
 )
 
 
@@ -635,10 +690,10 @@ def format_eval_report(summary: EvalSummary) -> str:
         lines.append("Per-Tier Breakdown")
         tier_header = _TIER_HEADER_FMT.format(
             "Tier", "N", "P@k", "R@k", "MRR",
-            "Noise", "Waste", "Silen", "AvgRt",
+            "Noise", "Waste", "Silen", "AvgRt", "F2",
         )
         lines.append(tier_header)
-        lines.append("-" * 70)
+        lines.append("-" * 78)
         for ts in summary.per_tier:
             row = _TIER_ROW_FMT.format(
                 ts.tier,
@@ -650,6 +705,7 @@ def format_eval_report(summary: EvalSummary) -> str:
                 ts.mean_context_waste_ratio,
                 ts.silence_rate,
                 ts.mean_retrieved_count,
+                ts.mean_quality,
             )
             lines.append(row)
         lines.append("")
@@ -657,6 +713,9 @@ def format_eval_report(summary: EvalSummary) -> str:
     # Aggregates
     lines.append("Aggregate Metrics")
     lines.append(f"  Fixtures:             {summary.fixture_count}")
+    lines.append(f"  Quality (F2):         {summary.mean_quality:.3f}")
+    lines.append(f"  Positive Quality:     {summary.positive_quality:.3f}")
+    lines.append(f"  Positive Recall@k:    {summary.positive_recall:.3f}")
     lines.append(f"  Mean Precision@k:     {summary.mean_precision:.3f}")
     lines.append(f"  Mean Recall@k:        {summary.mean_recall:.3f}")
     lines.append(f"  Mean MRR:             {summary.mean_mrr:.3f}")

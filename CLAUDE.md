@@ -253,7 +253,7 @@ max_expansion_length = 200  # Max chars per expansion
 - **Phase 2:** Adapter + logging — COMPLETE
 - **Phase 3:** Eval framework + notebook — COMPLETE
 - **Multi-stage:** Pipeline + reranker + LLM reranker — COMPLETE
-- **Eval metrics:** noise ratio, context waste, per-tier breakdown, negative silence — COMPLETE
+- **Eval metrics:** noise ratio, context waste, per-tier breakdown, negative silence, quality (F2), positive recall — COMPLETE
 - **Quality iteration:** 354 PreToolUse + 84 UserPromptSubmit fixtures — COMPLETE
 - **Unified events:** UserPromptSubmit support, reasoning-in-response prompt — COMPLETE
 - **Enriched retrieval:** JSON intermediate, expansion-aware indexing, parent collapse, BM25+RRF, expansion CLI — COMPLETE (826 tests, 100% coverage)
@@ -263,6 +263,7 @@ max_expansion_length = 200  # Max chars per expansion
 - **Prompt engineering:** 13 few-shot examples, principle-based guidelines, loss-pattern driven — COMPLETE
 - **Model benchmarking:** Qwen3.5-9B/4B/2B vs 35B on v3 corpora with sampling — COMPLETE
 - **Eval infrastructure:** tqdm progress, stratified sampling, bench_models.py script — COMPLETE
+- **Expansion prompt v5:** Reasoning-field prompt for expansions (structured CoT before generating) — COMPLETE
 - **Eval dataset:** 587 fixtures (438 original + 149 mined from 7 real projects)
 - **Phase 4:** Publish — pending
 - **Phase 5:** Multi-source parsing (markdown, YAML, CLAUDE.md) — DRAFT PRD (`artifacts/phase5-multi-source-prd-draft.md`)
@@ -308,41 +309,49 @@ Key requirements:
 - "When in doubt, include" — false negatives worse than false positives
 - Loss analysis: `artifacts/llm-reranker-loss-analysis-2026-04-02.md`
 
+### Expansion Prompt
+- Reasoning-field prompt: model reasons about vocabulary gap before generating expansions
+- Variable 3-10 expansions based on rule complexity
+- Cross-domain boundary enforcement (PreToolUse vs UserPromptSubmit)
+- Semantic dedup (cosine > 0.85) removes near-duplicate expansions
+
+## Eval Metrics
+
+### Quality Score (F2) — Primary Metric
+Single composite metric per fixture using F-beta with beta=2 (recall-weighted):
+
+- **Positive fixtures** (has should_match): `F2 = 5*P*R / (4P + R)`
+  - Rewards finding correct rules (recall) while penalizing noise (precision)
+  - Weights recall 4x over precision — missed rules are worse than extra rules
+- **Negative fixtures** (no should_match): `1.0 if silent, 0.0 otherwise`
+  - Correct abstention convention — staying silent is a perfect outcome
+
+### Key Metrics
+- **positive_recall**: Recall averaged only over positive fixtures (excludes negatives)
+- **positive_quality**: F2 averaged only over positive fixtures (comparable across datasets)
+- **mean_quality**: F2 averaged over ALL fixtures (includes negatives as 1.0/0.0)
+- **negative_silence_rate**: Fraction of negative fixtures with 0 retrieved
+- **noise_ratio**: Fraction of retrieved rules that are irrelevant
+
+Note: `mean_recall` still includes negatives as 0.0 for backwards compatibility. Use `positive_recall` for the correct positive-only metric.
+
 ## Quality Benchmarks
 
-### PreToolUse (354 fixtures, jina-code + Qwen3.5-35B, reasoning prompt)
+### With v5 Expansions (reasoning-field prompt, 20% sample, jina-code + LLM)
 
-| Mode | Noise | NegSilence | Recall | p50 Latency |
-|------|-------|------------|--------|-------------|
-| embedding (t=0.30) | 64.4% | 23.6% | 40.6% | 23ms |
-| **llm-local (reasoning)** | **21.4%** | **92.9%** | **42.2%** | 1143ms |
+| Model | Basic Quality | Basic PosRecall | Basic Noise | Basic NegSil | p50ms |
+|-------|-------------|-----------------|-------------|--------------|-------|
+| **35B** | **0.750** | **0.630** | **0.184** | **0.962** | 1324ms |
+| 9B | 0.682 | 0.560 | 0.171 | 0.962 | 1593ms |
+| 4B | 0.620 | 0.573 | 0.321 | 0.885 | 1028ms |
 
-Per-tier (LLM-local):
-| Tier | Recall | Noise | Silence |
-|------|--------|-------|---------|
-| easy | 85.2% | 25.4% | — |
-| medium | 66.0% | 30.3% | — |
-| hard | 40.4% | 32.7% | — |
-| negative | — | 7.1% | 92.9% |
-
-### UserPromptSubmit (84 fixtures, jina-code + Qwen3.5-35B, reasoning prompt)
-
-| Mode | Noise | NegSilence | Recall | p50 Latency |
-|------|-------|------------|--------|-------------|
-| embedding (t=0.30) | 89.8% | 4.2% | 31.5% | 10ms |
-| **llm-local (reasoning)** | **24.5%** | **95.8%** | **46.2%** | 3008ms |
-
-Per-tier (LLM-local):
-| Tier | Recall | Noise | Silence |
-|------|--------|-------|---------|
-| easy | 93.2% | 25.0% | — |
-| medium | 47.1% | 44.6% | — |
-| hard | 50.0% | 25.3% | — |
-| negative | — | 4.2% | 95.8% |
+| Model | Workflow Quality | Workflow PosRecall | Workflow Noise | Workflow NegSil |
+|-------|----------------|-------------------|----------------|-----------------|
+| **35B** | **0.763** | **0.697** | 0.256 | **1.000** |
+| 9B | 0.636 | 0.600 | **0.260** | 0.750 |
+| 4B | 0.632 | 0.667 | 0.391 | 0.750 |
 
 Cross-encoder (MiniLM) is a regression on code — skip it. Use llm-local or llm-haiku.
-
-**Note:** These benchmarks are PRE-enrichment (no expansions, no BM25). Post-enrichment benchmarks pending.
 
 ### Expansion Validation (hand-crafted, 8 hard fixtures)
 

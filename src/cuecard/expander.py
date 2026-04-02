@@ -94,81 +94,102 @@ def _build_expansion_prompt(
     # Choose golden examples based on event type
     if is_workflow:
         examples_block = """\
-EXAMPLES:
+EXAMPLES (note the reasoning field — think through your analysis first):
 
 Rule: "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting"
-Good expansions:
-- "add authentication to the API" (complex task needing classification)
-- "fix the typo on line 42" (simple task, but classification should happen)
-- "refactor the payment processing module" (medium-complexity signal)
-- "build a new microservice for notifications" (complex, multi-service)
-- "I want to redesign the database schema" (indirect — implies COMPLEX)
+{{"reasoning": "This rule triggers when a user presents ANY new task. The \
+vocabulary gap is between the abstract concept of 'classification' and the \
+concrete task descriptions users type. I need expansions that sound like \
+real task requests — varying in complexity — so the rule fires whenever a \
+new task arrives, regardless of its domain.", \
+"expansions": [\
+"add authentication to the API", \
+"fix the typo on line 42", \
+"refactor the payment processing module", \
+"build a new microservice for notifications", \
+"I want to redesign the database schema"]}}
 Bad expansions (would false-match on code queries):
 - "git commit" (generic code action, not a workflow decision)
 - "classifying task as SIMPLE or COMPLEX" (paraphrase)
-- "estimating story points with complexity reasoning" (project management jargon)
 
 Rule: "Save task state to artifacts/ before context compaction"
-Good expansions:
-- "this session is getting really long" (indirect — compaction coming)
-- "I need to continue this tomorrow" (implies session end → save state)
-- "we're running out of context window" (compaction trigger)
-- "let's wrap up and pick this back up later" (session boundary)
-- "the responses are getting worse, maybe compact?" (symptom of context exhaustion)
+{{"reasoning": "This rule should fire when a session is approaching its \
+end or context limits. Users won't say 'save state' — they'll describe \
+symptoms (long session, degraded responses) or intentions (continue \
+tomorrow, wrap up). I need indirect triggers that signal session \
+boundaries.", \
+"expansions": [\
+"this session is getting really long", \
+"I need to continue this tomorrow", \
+"we're running out of context window", \
+"let's wrap up and pick this back up later", \
+"the responses are getting worse, maybe compact?"]}}
 Bad expansions (would match unrelated code queries):
 - "saving progress to artifacts/ directory" (robotic restatement)
 - "writing files to disk" (too generic — matches any file write)
-- "git stash before switching branches" (code action, not workflow)
 
 Rule: "Update README when user-facing behavior changes"
-Good expansions:
-- "we changed the CLI flags, should we document that?" (explicit doc trigger)
-- "the setup steps are different now after this refactor" (behavior change)
-- "users need to know about the new environment variable" (user-facing)
-- "I added a new command but forgot the docs" (admission of gap)
+{{"reasoning": "This rule triggers when behavior that users see has \
+changed. The gap is between 'README update' and the concrete changes \
+that warrant it — new CLI flags, changed setup steps, new env vars. \
+Users may explicitly ask about docs or implicitly reveal a gap.", \
+"expansions": [\
+"we changed the CLI flags, should we document that?", \
+"the setup steps are different now after this refactor", \
+"users need to know about the new environment variable", \
+"I added a new command but forgot the docs"]}}
 Bad expansions (would fire on every code query):
 - "git commit documentation changes" (matches all doc commits)
-- "editing README.md" (matches any README read/edit)
-- "updating project files" (matches everything)\""""
+- "editing README.md" (matches any README read/edit)\""""
     else:
         examples_block = """\
-EXAMPLES:
+EXAMPLES (note the reasoning field — think through your analysis first):
 
 Rule: "Always close file handles, database connections, and network sockets"
-Good expansions:
-- "open() without corresponding close() or context manager"
-- "aiohttp.ClientSession created but never closed"
-- "psycopg2.connect() missing connection.close()"
-- "socket.socket() without cleanup in finally block"
-- "tempfile.NamedTemporaryFile left open after use"
+{{"reasoning": "This rule fires when code opens a resource without \
+closing it. The vocabulary gap is between 'close resources' and the \
+specific APIs: open(), connect(), socket(). I need expansions showing \
+real code patterns where resources are opened but cleanup is missing.", \
+"expansions": [\
+"open() without corresponding close() or context manager", \
+"aiohttp.ClientSession created but never closed", \
+"psycopg2.connect() missing connection.close()", \
+"socket.socket() without cleanup in finally block", \
+"tempfile.NamedTemporaryFile left open after use"]}}
 Bad expansions (too abstract, just paraphrases):
 - "close all open resources"
 - "ensure proper resource cleanup"
-- "always close connections when done"
 
 Rule: "Run quality checks before every commit"
-Good expansions:
-- "git commit without running tests first"
-- "Bash: git add -A && git commit" (direct commit, no checks)
-- "pushing changes without type checking via mypy"
-- "I'm done with the feature, ship it" (indirect — commit is imminent)
-- "merging PR without CI passing"
+{{"reasoning": "This rule fires when a developer is about to commit \
+without running checks. The triggers are: direct git commit commands, \
+indirect signals like 'ship it' or 'done with feature', and merge/push \
+actions that bypass CI. I need both direct CLI commands and indirect \
+intent signals.", \
+"expansions": [\
+"git commit without running tests first", \
+"Bash: git add -A && git commit", \
+"pushing changes without type checking via mypy", \
+"I'm done with the feature, ship it", \
+"merging PR without CI passing"]}}
 Bad expansions:
 - "verify code quality before committing"
 - "run checks before git commit"
-- "ensure quality before pushing"
 
 Rule: "Never trust small sample benchmark results"
-Good expansions:
-- "benchmark scores from only 10 test cases"
-- "reporting accuracy from n=5 evaluation"
-- "pilot test with 20 samples shows 95 percent"
-- "A/B test with insufficient sample size"
-- "drawing conclusions from partial dataset run"
+{{"reasoning": "This rule fires when someone draws conclusions from \
+insufficient data. The triggers are: reporting metrics from small n, \
+pilot tests presented as conclusive, and any benchmark without sample \
+size disclosure. I need expansions showing specific small-n scenarios.", \
+"expansions": [\
+"benchmark scores from only 10 test cases", \
+"reporting accuracy from n=5 evaluation", \
+"pilot test with 20 samples shows 95 percent", \
+"A/B test with insufficient sample size", \
+"drawing conclusions from partial dataset run"]}}
 Bad expansions:
 - "don't trust small benchmarks"
-- "use larger sample sizes"
-- "benchmark with more data\""""
+- "use larger sample sizes"\""""
 
     system = f"""You generate retrieval expansion phrases for coding rules.
 
@@ -211,16 +232,23 @@ something like this?" If the answer is no, drop it.
 
 {examples_block}
 
-Return ONLY a JSON object: {{"expansions": ["phrase 1", "phrase 2", ...]}}"""
+Return ONLY a JSON object: {{"reasoning": "your analysis", "expansions": \
+["phrase 1", "phrase 2", ...]}}
+
+The reasoning field should contain 2-4 sentences analyzing:
+- What vocabulary gap exists between this rule and real queries
+- What types of actions/messages should trigger this rule
+- Whether the rule needs many expansions (broad) or few (narrow)"""
 
     user = (
         "Generate 3-10 retrieval expansion phrases for this rule. "
+        "First reason about the vocabulary gap, then generate expansions. "
         "Stop when additional expansions would just be rephrasing. "
         "Simple rules with a small vocabulary gap need fewer expansions. "
         "Focus on concrete actions that should trigger this rule, "
         "NOT paraphrases.\n\n"
         f"<rule_data_{nonce}>{scrubbed}</rule_data_{nonce}>\n\n"
-        'Return JSON: {"expansions": ["phrase 1", ...]}'
+        'Return JSON: {"reasoning": "...", "expansions": ["phrase 1", ...]}'
     )
 
     return system, user
@@ -253,6 +281,11 @@ def _parse_expansion_response(response: str) -> list[str]:
     if not isinstance(parsed, dict):
         logger.warning("Expansion response is not a JSON object")
         return []
+
+    # Log reasoning if present (for debugging/quality inspection)
+    reasoning = parsed.get("reasoning")
+    if isinstance(reasoning, str) and reasoning.strip():
+        logger.debug("Expansion reasoning: %s", reasoning.strip()[:200])
 
     raw_expansions = parsed.get("expansions", [])
     if not isinstance(raw_expansions, list):

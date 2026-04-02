@@ -22,6 +22,7 @@ from cuecard.eval import (
     ndcg_at_k,
     noise_ratio,
     precision_at_k,
+    quality_score,
     recall_at_k,
     run_eval,
 )
@@ -319,6 +320,45 @@ class TestContextWasteRatio:
         assert context_waste_ratio(["", ""], {"a"}) == 0.0
 
 
+class TestQualityScore:
+    def test_positive_perfect(self) -> None:
+        # Found all, no noise
+        score = quality_score(["a", "b"], {"a", "b"}, is_negative=False)
+        assert score == pytest.approx(1.0)
+
+    def test_positive_half_recall_no_noise(self) -> None:
+        # Found 1 of 2, no noise → R=0.5, P=1.0, F2=5*1*0.5/(4*1+0.5)=0.556
+        score = quality_score(["a"], {"a", "b"}, is_negative=False)
+        assert score == pytest.approx(5.0 * 1.0 * 0.5 / (4.0 + 0.5))
+
+    def test_positive_full_recall_with_noise(self) -> None:
+        # Found all + 1 noise → R=1.0, P=0.5, F2=5*0.5*1.0/(4*0.5+1.0)=0.833
+        score = quality_score(["a", "noise"], {"a"}, is_negative=False)
+        assert score == pytest.approx(5.0 * 0.5 * 1.0 / (2.0 + 1.0))
+
+    def test_positive_nothing_retrieved(self) -> None:
+        score = quality_score([], {"a", "b"}, is_negative=False)
+        assert score == 0.0
+
+    def test_negative_silent(self) -> None:
+        score = quality_score([], set(), is_negative=True)
+        assert score == 1.0
+
+    def test_negative_not_silent(self) -> None:
+        score = quality_score(["noise"], set(), is_negative=True)
+        assert score == 0.0
+
+    def test_positive_empty_relevant_silent(self) -> None:
+        # Degenerate: positive fixture with no should_match, stays silent
+        score = quality_score([], set(), is_negative=False)
+        assert score == 1.0
+
+    def test_positive_empty_relevant_noisy(self) -> None:
+        # Degenerate: positive fixture with no should_match, returns something
+        score = quality_score(["x"], set(), is_negative=False)
+        assert score == 0.0
+
+
 # ---------------------------------------------------------------------------
 # Mock model for run_eval
 # ---------------------------------------------------------------------------
@@ -425,6 +465,9 @@ class TestRunEval:
         assert 0.0 <= summary.mean_noise_ratio <= 1.0
         assert 0.0 <= summary.mean_context_waste_ratio <= 1.0
         assert summary.mean_retrieved_count >= 0.0
+        assert 0.0 <= summary.mean_quality <= 1.0
+        assert summary.positive_recall >= 0.0
+        assert summary.positive_quality >= 0.0
         assert len(summary.per_tier) > 0
         assert summary.latency_p50_ms >= 0.0
         assert summary.latency_p95_ms >= 0.0
@@ -713,6 +756,7 @@ class TestFormatEvalReport:
                 context_waste_ratio=0.15,
                 retrieved_count=1,
                 latency_ms=1.5,
+                quality_score=0.48,
             )
             for i in range(fixture_count)
         )
@@ -727,6 +771,9 @@ class TestFormatEvalReport:
             mean_context_waste_ratio=0.15,
             negative_silence_rate=1.0,
             mean_retrieved_count=1.0,
+            mean_quality=0.48,
+            positive_recall=0.6,
+            positive_quality=0.48,
             latency_p50_ms=1.5,
             latency_p95_ms=2.0,
             latency_p99_ms=2.5,
@@ -742,6 +789,7 @@ class TestFormatEvalReport:
                     mean_context_waste_ratio=0.15,
                     silence_rate=0.0,
                     mean_retrieved_count=1.0,
+                    mean_quality=0.48,
                 ),
             ),
         )
@@ -771,6 +819,9 @@ class TestFormatEvalReport:
             mean_context_waste_ratio=0.0,
             negative_silence_rate=0.0,
             mean_retrieved_count=0.0,
+            mean_quality=0.0,
+            positive_recall=0.0,
+            positive_quality=0.0,
             latency_p50_ms=0.0,
             latency_p95_ms=0.0,
             latency_p99_ms=0.0,
@@ -788,7 +839,8 @@ class TestFormatEvalReport:
 
         for label in [
             "P@k", "R@k", "MRR", "nDCG", "Noise", "Waste",
-            "AntiP", "#Ret", "Lat(ms)",
+            "AntiP", "#Ret", "Lat(ms)", "F2",
+            "Quality (F2)", "Positive Quality", "Positive Recall@k",
             "Mean Precision@k", "Mean Recall@k", "Mean MRR",
             "Mean nDCG@k", "Mean Anti-P",
             "Mean Noise Ratio", "Mean Context Waste",

@@ -134,7 +134,22 @@ class TestBuildExpansionPrompt:
     def test_user_prompt_has_json_format(self) -> None:
         _, user = _build_expansion_prompt("test", "nonce1")
         assert '"expansions"' in user
+        assert '"reasoning"' in user
         assert "3-10 retrieval expansion" in user
+
+    def test_reasoning_instruction_in_system(self) -> None:
+        system, _ = _build_expansion_prompt("test", "nonce1")
+        assert '"reasoning"' in system
+        assert "vocabulary gap" in system
+
+    def test_examples_contain_reasoning_field(self) -> None:
+        system, _ = _build_expansion_prompt("test", "nonce1")
+        assert '"reasoning":' in system
+        # Both event types should have reasoning in examples
+        system_wf, _ = _build_expansion_prompt(
+            "test", "nonce1", event_type="UserPromptSubmit",
+        )
+        assert '"reasoning":' in system_wf
 
 
 class TestParseExpansionResponse:
@@ -221,6 +236,24 @@ class TestParseExpansionResponse:
         response = '{"expansions": ["  hello  ", "  world  "]}'
         result = _parse_expansion_response(response)
         assert result == ["hello", "world"]
+
+    def test_reasoning_field_ignored_for_expansions(self) -> None:
+        response = json.dumps({
+            "reasoning": "This rule has a wide vocabulary gap.",
+            "expansions": ["phrase 1", "phrase 2"],
+        })
+        result = _parse_expansion_response(response)
+        assert result == ["phrase 1", "phrase 2"]
+
+    def test_reasoning_logged_at_debug(self, caplog: pytest.LogCaptureFixture) -> None:
+        import logging
+        with caplog.at_level(logging.DEBUG, logger="cuecard.expander"):
+            response = json.dumps({
+                "reasoning": "Wide gap between abstract rule and code.",
+                "expansions": ["phrase 1"],
+            })
+            _parse_expansion_response(response)
+        assert "Expansion reasoning:" in caplog.text
 
 
 class TestExpandRules:
