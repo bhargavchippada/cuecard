@@ -82,9 +82,25 @@ class TestBuildPrompt:
     def test_system_prompt_contains_few_shot(self) -> None:
         candidates = _make_candidates(1)
         system, _ = _build_prompt(candidates, "test", "nonce1")
-        assert "Example 1:" in system
-        assert "Example 2:" in system
+        assert "Example 1" in system
+        assert "Example 2" in system
+        assert "Example 3" in system
+        assert "Example 4" in system
+        assert "Example 5" in system
         assert "rule_data_EXAMPLE" in system
+
+    def test_system_prompt_contains_matching_guidelines(self) -> None:
+        candidates = _make_candidates(1)
+        system, _ = _build_prompt(candidates, "test", "nonce1")
+        assert "MATCHING GUIDELINES:" in system
+        assert "DO match" in system
+        assert "DO NOT match" in system
+
+    def test_system_prompt_has_empty_rules_example(self) -> None:
+        """Prompt shows the model how to return empty rules array."""
+        candidates = _make_candidates(1)
+        system, _ = _build_prompt(candidates, "test", "nonce1")
+        assert '"rules": []' in system
 
     def test_user_prompt_numbered_rules(self) -> None:
         candidates = _make_candidates(3)
