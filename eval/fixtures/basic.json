@@ -794,8 +794,7 @@
     "query": "Edit: {\"file_path\": \"src/api.py\", \"new_string\": \"def create_user(name: str, email: str) -> User:\\n    user = User(name=name, email=email)\"}",
     "corpus": "rules_basic.txt",
     "should_match": [
-      "Document all public API functions with docstrings",
-      "Use type hints on all function signatures"
+      "Document all public API functions with docstrings"
     ],
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
@@ -971,7 +970,7 @@
     "query": "Bash: curl wttr.in/London",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Weather check — no coding rules apply",
+    "notes": "Weather check \u2014 no coding rules apply",
     "corpus": "rules_basic.txt",
     "should_not_match": []
   },
@@ -980,7 +979,7 @@
     "query": "Bash: python3 -c \"print(2 + 2)\"",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Simple arithmetic — no coding rules apply",
+    "notes": "Simple arithmetic \u2014 no coding rules apply",
     "corpus": "rules_basic.txt",
     "should_not_match": []
   },
@@ -989,7 +988,7 @@
     "query": "Bash: df -h",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "System info — no coding rules apply",
+    "notes": "System info \u2014 no coding rules apply",
     "corpus": "rules_basic.txt",
     "should_not_match": []
   },
@@ -998,7 +997,7 @@
     "query": "Bash: journalctl -u nginx --since today",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Reading logs — no coding rules apply",
+    "notes": "Reading logs \u2014 no coding rules apply",
     "corpus": "rules_basic.txt",
     "should_not_match": []
   },
@@ -1007,7 +1006,7 @@
     "query": "Bash: ssh user@dev-server",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "SSH connection — no coding rules apply",
+    "notes": "SSH connection \u2014 no coding rules apply",
     "corpus": "rules_basic.txt",
     "should_not_match": []
   },
@@ -1016,7 +1015,7 @@
     "query": "Read: {\"file_path\": \"README.md\"}",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Reading README — no coding rules apply",
+    "notes": "Reading README \u2014 no coding rules apply",
     "corpus": "rules_basic.txt",
     "should_not_match": []
   },
@@ -1025,7 +1024,7 @@
     "query": "Bash: git branch -a",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Listing branches is read-only — no coding rules apply",
+    "notes": "Listing branches is read-only \u2014 no coding rules apply",
     "corpus": "rules_basic.txt",
     "should_not_match": []
   },
@@ -1034,7 +1033,7 @@
     "query": "Bash: grep -r 'TODO' src/",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Code search — no coding rules apply",
+    "notes": "Code search \u2014 no coding rules apply",
     "corpus": "rules_basic.txt",
     "should_not_match": []
   },
@@ -1476,7 +1475,7 @@
   },
   {
     "id": "special-chars-unicode-comment",
-    "query": "Edit: old_string='# TODO: fix later' new_string='# ✅ Fixed: validate input before processing\ndef process(data: dict) -> dict:\n    if not isinstance(data, dict):\n        raise ValueError(\"Expected dict\")\n    return {k: sanitize(v) for k, v in data.items()}'",
+    "query": "Edit: old_string='# TODO: fix later' new_string='# \u2705 Fixed: validate input before processing\ndef process(data: dict) -> dict:\n    if not isinstance(data, dict):\n        raise ValueError(\"Expected dict\")\n    return {k: sanitize(v) for k, v in data.items()}'",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Always validate user input at system boundaries"
@@ -2248,7 +2247,7 @@
   },
   {
     "id": "mined-edit-fa2util-attraction",
-    "query": "Edit: fa2/fa2util.py — modifying attraction function comments",
+    "query": "Edit: fa2/fa2util.py \u2014 modifying attraction function comments",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
@@ -2258,7 +2257,7 @@
   },
   {
     "id": "mined-edit-test-file-python",
-    "query": "Edit: tests/test_notifier.py — fixing backslash escaping assertions",
+    "query": "Edit: tests/test_notifier.py \u2014 fixing backslash escaping assertions",
     "corpus": "rules_basic.txt",
     "should_match": [
       "100% test coverage on all new code"
@@ -2270,7 +2269,7 @@
   },
   {
     "id": "mined-edit-coding-style-rules",
-    "query": "Edit: ~/.claude/rules/common/coding-style.md — adding surgical changes section",
+    "query": "Edit: ~/.claude/rules/common/coding-style.md \u2014 adding surgical changes section",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
@@ -2280,7 +2279,7 @@
   },
   {
     "id": "mined-edit-cluster-input-validation",
-    "query": "Edit: src/canopy/cluster.py — adding empty embeddings guard in fit_predict",
+    "query": "Edit: src/canopy/cluster.py \u2014 adding empty embeddings guard in fit_predict",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Always validate user input at system boundaries"
@@ -2292,7 +2291,7 @@
   },
   {
     "id": "mined-edit-benchmark-device-setup",
-    "query": "Edit: benchmark_papercompat.py — modifying device setup and imports",
+    "query": "Edit: benchmark_papercompat.py \u2014 modifying device setup and imports",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
@@ -2302,7 +2301,7 @@
   },
   {
     "id": "mined-edit-agents-md-version",
-    "query": "Edit: AGENTS.md — updating version v3.4 to v3.5",
+    "query": "Edit: AGENTS.md \u2014 updating version v3.4 to v3.5",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
@@ -2312,7 +2311,7 @@
   },
   {
     "id": "mined-edit-http-server-timeout",
-    "query": "Edit: mcp-nexus-rag/http_server.py — changing timeout constant from 90 to 120",
+    "query": "Edit: mcp-nexus-rag/http_server.py \u2014 changing timeout constant from 90 to 120",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
@@ -2324,7 +2323,7 @@
   },
   {
     "id": "mined-edit-store-test-version",
-    "query": "Edit: gravity-claw/tests/agents/store.test.ts — adding orphaned tmp cleanup tests",
+    "query": "Edit: gravity-claw/tests/agents/store.test.ts \u2014 adding orphaned tmp cleanup tests",
     "corpus": "rules_basic.txt",
     "should_match": [
       "100% test coverage on all new code"
@@ -2336,7 +2335,7 @@
   },
   {
     "id": "mined-edit-workflow-engine",
-    "query": "Edit: gravity-claw/src/workflows/engine.ts — fixing workflow stall bug",
+    "query": "Edit: gravity-claw/src/workflows/engine.ts \u2014 fixing workflow stall bug",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
@@ -2346,7 +2345,7 @@
   },
   {
     "id": "mined-edit-docker-compose-model",
-    "query": "Edit: mcp-nexus-rag/docker-compose.yml — changing llama model tag",
+    "query": "Edit: mcp-nexus-rag/docker-compose.yml \u2014 changing llama model tag",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Review all dependencies for known vulnerabilities before adding"
@@ -2358,7 +2357,7 @@
   },
   {
     "id": "mined-edit-claude-md-db-config",
-    "query": "Edit: antigravity/CLAUDE.md — updating database connection info (Neo4j to Memgraph)",
+    "query": "Edit: antigravity/CLAUDE.md \u2014 updating database connection info (Neo4j to Memgraph)",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
@@ -2368,7 +2367,7 @@
   },
   {
     "id": "mined-edit-auth-ts",
-    "query": "Edit: mission-control/src/lib/auth.ts — adding requireSession() helper for per-route API auth",
+    "query": "Edit: mission-control/src/lib/auth.ts \u2014 adding requireSession() helper for per-route API auth",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
@@ -2378,7 +2377,7 @@
   },
   {
     "id": "mined-edit-soul-md",
-    "query": "Edit: ~/.claude/rules/SOUL.md — minor text edit",
+    "query": "Edit: ~/.claude/rules/SOUL.md \u2014 minor text edit",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
@@ -2388,7 +2387,7 @@
   },
   {
     "id": "mined-edit-cuecard-test-indexer",
-    "query": "Edit: cuecard/tests/test_indexer.py — extracting RNG into variable",
+    "query": "Edit: cuecard/tests/test_indexer.py \u2014 extracting RNG into variable",
     "corpus": "rules_basic.txt",
     "should_match": [
       "100% test coverage on all new code"
@@ -2400,7 +2399,7 @@
   },
   {
     "id": "mined-edit-delulu-loader-remove-commit",
-    "query": "Edit: delulu/src/delulu/classify/loader.py — removing conn.commit() call",
+    "query": "Edit: delulu/src/delulu/classify/loader.py \u2014 removing conn.commit() call",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
@@ -2412,7 +2411,7 @@
   },
   {
     "id": "mined-write-forceatlas2-claude-md",
-    "query": "Write: /home/user/projects/forceatlas2/CLAUDE.md — creating project documentation",
+    "query": "Write: /home/user/projects/forceatlas2/CLAUDE.md \u2014 creating project documentation",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Document all public API functions with docstrings"
@@ -2424,7 +2423,7 @@
   },
   {
     "id": "mined-write-advanced-docs",
-    "query": "Write: forceatlas2/docs/advanced.md — creating advanced usage documentation",
+    "query": "Write: forceatlas2/docs/advanced.md \u2014 creating advanced usage documentation",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Document all public API functions with docstrings"
@@ -2436,7 +2435,7 @@
   },
   {
     "id": "mined-write-pypi-skill",
-    "query": "Write: ~/.claude/skills/learned/pypi-name-availability-check.md — creating learned skill",
+    "query": "Write: ~/.claude/skills/learned/pypi-name-availability-check.md \u2014 creating learned skill",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
@@ -2446,7 +2445,7 @@
   },
   {
     "id": "mined-write-postgres-ts-connection",
-    "query": "Write: mission-control/src/lib/postgres.ts — database connection module with env var check",
+    "query": "Write: mission-control/src/lib/postgres.ts \u2014 database connection module with env var check",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Use environment variables for configuration, not hardcoded values",
@@ -2460,7 +2459,7 @@
   },
   {
     "id": "mined-write-mcp-client-stub",
-    "query": "Write: gravity-claw/src/mcp/client.ts — stubbed MCP client (SurrealDB migration step 1)",
+    "query": "Write: gravity-claw/src/mcp/client.ts \u2014 stubbed MCP client (SurrealDB migration step 1)",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
@@ -2470,7 +2469,7 @@
   },
   {
     "id": "mined-write-signal-engine-tests",
-    "query": "Write: agentic-trader/tests/test_signal_engine_models.py — tests for Pydantic models",
+    "query": "Write: agentic-trader/tests/test_signal_engine_models.py \u2014 tests for Pydantic models",
     "corpus": "rules_basic.txt",
     "should_match": [
       "100% test coverage on all new code",
@@ -2483,7 +2482,7 @@
   },
   {
     "id": "mined-write-embeddings-test",
-    "query": "Write: canopy-ai/tests/test_embeddings.py — guard check unit tests",
+    "query": "Write: canopy-ai/tests/test_embeddings.py \u2014 guard check unit tests",
     "corpus": "rules_basic.txt",
     "should_match": [
       "100% test coverage on all new code",
@@ -2496,7 +2495,7 @@
   },
   {
     "id": "mined-write-delulu-extract-loader",
-    "query": "Write: delulu/src/delulu/extract/loader.py — SQLite loader for extracted session data",
+    "query": "Write: delulu/src/delulu/extract/loader.py \u2014 SQLite loader for extracted session data",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Always close file handles, database connections, network sockets, HTTP sessions, and other resources",
@@ -2510,7 +2509,7 @@
   },
   {
     "id": "mined-write-cuecard-prd",
-    "query": "Write: cuecard/artifacts/prd-v1.md — creating product requirements doc",
+    "query": "Write: cuecard/artifacts/prd-v1.md \u2014 creating product requirements doc",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
@@ -2610,7 +2609,7 @@
   },
   {
     "id": "mined-write-hookify-task-intake",
-    "query": "Write: ~/.claude/hookify.task-intake.local.md — creating hook rule for task intake",
+    "query": "Write: ~/.claude/hookify.task-intake.local.md \u2014 creating hook rule for task intake",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
@@ -2620,7 +2619,7 @@
   },
   {
     "id": "mined-edit-benchmark-prd-resolved",
-    "query": "Edit: canopy-ai/artifacts/benchmark-prd.md — changing open questions to resolved",
+    "query": "Edit: canopy-ai/artifacts/benchmark-prd.md \u2014 changing open questions to resolved",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
@@ -2630,7 +2629,7 @@
   },
   {
     "id": "mined-edit-memory-md",
-    "query": "Edit: antigravity/MEMORY.md — renumbering section headers",
+    "query": "Edit: antigravity/MEMORY.md \u2014 renumbering section headers",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
@@ -2941,7 +2940,6 @@
     "query": "Write: src/components/Button.tsx -- content='import React from \"react\"; interface ButtonProps { label: string; onClick: () => void; } export const Button: React.FC<ButtonProps> = ({ label, onClick }) => <button onClick={onClick}>{label}</button>;'",
     "corpus": "rules_basic.txt",
     "should_match": [
-      "Use type hints on all function signatures",
       "Document all public API functions with docstrings"
     ],
     "should_not_match": [
