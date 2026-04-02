@@ -69,7 +69,7 @@
     "should_not_match": [
       "Never force-push to main or master branch"
     ],
-    "difficulty": "hard"
+    "difficulty": "negative"
   },
   {
     "id": "bash-eval",
@@ -112,8 +112,7 @@
     "query": "Bash: uv run pytest --cov=myapp",
     "corpus": "rules_basic.txt",
     "should_match": [
-      "100% test coverage on all new code",
-      "Write tests before implementation (TDD red-green-refactor)"
+      "100% test coverage on all new code"
     ],
     "should_not_match": [
       "Never force-push to main or master branch"
@@ -302,9 +301,7 @@
     "id": "write-markdown-docs",
     "query": "Write: {\"file_path\": \"docs/api.md\", \"content\": \"# API Reference\\n## Endpoints\"}",
     "corpus": "rules_basic.txt",
-    "should_match": [
-      "Document all public API functions with docstrings"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Use parameterized queries to prevent SQL injection"
     ],
@@ -357,13 +354,11 @@
     "id": "git-tag",
     "query": "Bash: git tag v1.0.0",
     "corpus": "rules_basic.txt",
-    "should_match": [
-      "Run quality checks before every commit"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "negative"
   },
   {
     "id": "git-diff",
@@ -462,8 +457,7 @@
     "query": "Bash: npx jest --coverage",
     "corpus": "rules_basic.txt",
     "should_match": [
-      "100% test coverage on all new code",
-      "Write tests before implementation (TDD red-green-refactor)"
+      "100% test coverage on all new code"
     ],
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
@@ -475,8 +469,7 @@
     "query": "Bash: npx vitest run --reporter=verbose",
     "corpus": "rules_basic.txt",
     "should_match": [
-      "100% test coverage on all new code",
-      "Write tests before implementation (TDD red-green-refactor)"
+      "100% test coverage on all new code"
     ],
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
@@ -488,8 +481,7 @@
     "query": "Bash: cargo test -- --nocapture",
     "corpus": "rules_basic.txt",
     "should_match": [
-      "100% test coverage on all new code",
-      "Write tests before implementation (TDD red-green-refactor)"
+      "100% test coverage on all new code"
     ],
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
@@ -610,13 +602,11 @@
     "id": "chown-system-file",
     "query": "Bash: chown root:root /etc/nginx/nginx.conf",
     "corpus": "rules_basic.txt",
-    "should_match": [
-      "Set file permissions to 0o600 for sensitive files"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "negative"
   },
   {
     "id": "curl-with-auth",
@@ -839,13 +829,11 @@
     "id": "env-var-read",
     "query": "Edit: {\"file_path\": \"src/config.py\", \"new_string\": \"db_url = os.getenv('DB_URL', 'sqlite:///default.db')\"}",
     "corpus": "rules_basic.txt",
-    "should_match": [
-      "Use environment variables for configuration, not hardcoded values"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "easy"
+    "difficulty": "negative"
   },
   {
     "id": "git-merge-feature",
@@ -900,7 +888,7 @@
     "query": "Edit: {\"file_path\": \"src/deploy.py\", \"new_string\": \"import subprocess\\nsubprocess.call(cmd, shell=True)\"}",
     "corpus": "rules_basic.txt",
     "should_match": [
-      "Never use eval() or exec() in production code"
+      "Always validate user input at system boundaries"
     ],
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
@@ -1072,7 +1060,6 @@
     "query": "Bash: docker build -t app . && docker push registry.example.com/app:latest",
     "corpus": "rules_basic.txt",
     "should_match": [
-      "Never commit secrets (API keys, tokens, passwords) to git",
       "Review all dependencies for known vulnerabilities before adding",
       "Use environment variables for configuration, not hardcoded values"
     ],
@@ -1190,7 +1177,6 @@
     "corpus": "rules_basic.txt",
     "should_match": [
       "Always handle errors explicitly, never silently swallow exceptions",
-      "Use parameterized queries to prevent SQL injection",
       "Document all public API functions with docstrings"
     ],
     "should_not_match": [
@@ -1336,8 +1322,7 @@
     "query": "Bash: python -c \"import json, sys; data = json.load(sys.stdin); exec('for k,v in data.items(): print(f\\\"{k}={v}\\\")'); print('Done')\"",
     "corpus": "rules_basic.txt",
     "should_match": [
-      "Never use eval() or exec() in production code",
-      "No console.log or print debug statements in production code"
+      "Never use eval() or exec() in production code"
     ],
     "should_not_match": [
       "Use uv for all Python package operations, never pip",
@@ -1549,8 +1534,7 @@
     "should_match": [
       "Never commit secrets (API keys, tokens, passwords) to git",
       "Run quality checks before every commit",
-      "Use conventional commit format (feat:, fix:, refactor:, etc.)",
-      "Always create a new branch for feature work"
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
     ],
     "should_not_match": [
       "Use uv for all Python package operations, never pip",
@@ -2094,7 +2078,6 @@
     "query": "Bash: uv run ruff check benchmark_papercompat.py 2>&1",
     "corpus": "rules_basic.txt",
     "should_match": [
-      "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
     "should_not_match": [

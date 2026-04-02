@@ -1,886 +1,878 @@
 [
-    {
-        "id": "v2-bash-docker-compose-down",
-        "query": "Bash: cd /home/turiya/antigravity/projects/gravity-claw && docker compose down 2>&1",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use uv for all Python package operations, never pip"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-docker-ps",
-        "query": "Bash: docker ps --format \"table {{.Names}}\\t{{.Image}}\\t{{.Status}}\\t{{.Ports}}\" 2>&1",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-docker-inspect",
-        "query": "Bash: docker inspect turiya-ollama searxng --format '{{.Name}} RestartPolicy={{.HostConfig.RestartPolicy.Name}}' 2>&1",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use environment variables for configuration, not hardcoded values"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-nvidia-smi",
-        "query": "Bash: nvidia-smi --query-gpu=memory.used,memory.total,memory.free,utilization.gpu --format=csv,noheader 2>&1",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-pactl-audio-sources",
-        "query": "Bash: pactl list sources short 2>&1",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Run quality checks before every commit"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-arecord-test-mic",
-        "query": "Bash: timeout 2 arecord -d 1 -f S16_LE -r 16000 /tmp/test_mic.wav 2>&1; echo \"Exit: $?\"",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-wpctl-inspect-audio",
-        "query": "Bash: wpctl inspect @DEFAULT_SOURCE@ 2>&1 | grep -E \"node.name|media.class|audio.format|state|mute\" | head -10",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-systemctl-list-services",
-        "query": "Bash: systemctl --user list-units --type=service --state=running 2>&1",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Set file permissions to 0o600 for sensitive files"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-crontab-list",
-        "query": "Bash: crontab -l 2>&1",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Run quality checks before every commit"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-curl-health-with-auth",
-        "query": "Bash: curl -s -H \"Authorization: Bearer nyPBwXuVgZWffm_2VNYWueFol3nXMFzIc02R1WCHtvo\" http://localhost:8081/health 2>&1",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Never commit secrets (API keys, tokens, passwords) to git"
-        ],
-        "should_not_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "difficulty": "medium"
-    },
-    {
-        "id": "v2-bash-docker-exec-curl",
-        "query": "Bash: docker exec mission-control curl -s -H \"Authorization: Bearer nyPBwXuVgZWffm_2VNYWueFol3nXMFzIc02R1WCHtvo\" \"http://host.docker.internal:8081/chats\" 2>&1",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Never commit secrets (API keys, tokens, passwords) to git"
-        ],
-        "should_not_match": [
-            "Send Enter after every tmux send-keys command"
-        ],
-        "difficulty": "medium"
-    },
-    {
-        "id": "v2-bash-find-docker-compose-files",
-        "query": "Bash: find /home/turiya -name \"docker-compose.yml\" -o -name \"docker-compose.yaml\" -o -name \"compose.yml\" 2>/dev/null | sort",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Add .gitignore entries for generated files and build artifacts"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-docker-update-restart-no",
-        "query": "Bash: docker update --restart=no turiya-ollama searxng surrealdb gravity-claw 2>&1",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use environment variables for configuration, not hardcoded values"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-crontab-sed-comment",
-        "query": "Bash: crontab -l | sed 's/^0 \\*\\/4/# 0 *\\/4/' | crontab - 2>&1 && echo \"Cron commented out\" && crontab -l 2>&1",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use conventional commit format (feat:, fix:, refactor:, etc.)"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-kill-restart-process",
-        "query": "Bash: kill 20351 && sleep 2 && cd /home/turiya/code-graph-rag && source .venv/bin/activate && nohup python realtime_updater.py /home/turiya/antigravity --host localhost --port 7688 > /tmp/cgr-watcher.log 2>&1 &",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use uv for all Python package operations, never pip"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-uv-run-validate-cdt",
-        "query": "Bash: uv run python scripts/cdt_steps.py --step validate --character Kasumi --build_id optionA --cache_dir cache 2>&1 | tail -3",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Write tests before implementation (TDD red-green-refactor)"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-uv-run-build-tree",
-        "query": "Bash: uv run python scripts/cdt_steps.py --step build_tree --character Kasumi --build_id optionA --cache_dir cache --falsifiability_gen --skip_compress 2>&1 | tail -5",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "100% test coverage on all new code"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-tmux-capture-pane",
-        "query": "Bash: tmux capture-pane -t delulu -p | tail -5",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Send Enter after every tmux send-keys command"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-tmux-send-long-report",
-        "query": "Bash: tmux send-keys -t delulu \"REPORT from ralph: Code review R1 complete. 0 CRIT, 2 HIGH, 4 MED (code) + 0 CRIT, 0 HIGH, 1 MED (security).\" Enter",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Send Enter after every tmux send-keys command"
-        ],
-        "should_not_match": [
-            "Never commit secrets (API keys, tokens, passwords) to git"
-        ],
-        "difficulty": "easy"
-    },
-    {
-        "id": "v2-bash-git-add-commit-push",
-        "query": "Bash: git add README.md && git commit -m \"docs: recommend --min-chunk-size 1.5 --confidence-validation in quick start\" && git push 2>&1 | tail -3",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Run quality checks before every commit",
-            "Use conventional commit format (feat:, fix:, refactor:, etc.)",
-            "Never commit secrets (API keys, tokens, passwords) to git"
-        ],
-        "should_not_match": [
-            "Send Enter after every tmux send-keys command"
-        ],
-        "difficulty": "medium"
-    },
-    {
-        "id": "v2-bash-gh-pr-merge",
-        "query": "Bash: gh pr merge 2 --merge --delete-branch 2>&1",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Never force-push to main or master branch"
-        ],
-        "should_not_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "difficulty": "hard"
-    },
-    {
-        "id": "v2-bash-gh-release-create",
-        "query": "Bash: gh release create v0.2.0 --target main --title \"v0.2.0\" --notes \"## What's New\\n### WebSocket Streaming\"",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use conventional commit format (feat:, fix:, refactor:, etc.)"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-uv-build",
-        "query": "Bash: uv build --clear --no-cache 2>&1",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Use uv for all Python package operations, never pip"
-        ],
-        "should_not_match": [
-            "Send Enter after every tmux send-keys command"
-        ],
-        "difficulty": "medium"
-    },
-    {
-        "id": "v2-bash-uv-tool-install",
-        "query": "Bash: uv tool install \"faster-whisper-dictation[local]\" --force 2>&1 | tail -5",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Use uv for all Python package operations, never pip"
-        ],
-        "should_not_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "difficulty": "easy"
-    },
-    {
-        "id": "v2-bash-uv-pip-install-ruff",
-        "query": "Bash: uv pip install ruff 2>&1 | tail -3",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Use uv for all Python package operations, never pip"
-        ],
-        "should_not_match": [
-            "Send Enter after every tmux send-keys command"
-        ],
-        "difficulty": "easy"
-    },
-    {
-        "id": "v2-bash-ruff-check-and-pytest",
-        "query": "Bash: uv run ruff check src/ tests/ 2>&1 && uv run pytest tests/ --cov=whisper_dictation --cov-report=term-missing -q 2>&1 | tail -8",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Run ruff and mypy before committing Python code",
-            "100% test coverage on all new code"
-        ],
-        "should_not_match": [
-            "Never force-push to main or master branch"
-        ],
-        "difficulty": "easy"
-    },
-    {
-        "id": "v2-bash-miniconda-ruff-pytest",
-        "query": "Bash: /home/turiya/miniconda3/bin/python -m ruff check fa2/ tests/ 2>&1 && /home/turiya/miniconda3/bin/python -m pytest tests/ -q --no-header 2>&1 | tail -3",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Run ruff and mypy before committing Python code"
-        ],
-        "should_not_match": [
-            "Use uv for all Python package operations, never pip"
-        ],
-        "difficulty": "medium"
-    },
-    {
-        "id": "v2-bash-git-pull-rebase-push",
-        "query": "Bash: git pull origin main --rebase 2>&1 && git push origin HEAD:main 2>&1",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Never force-push to main or master branch"
-        ],
-        "should_not_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "difficulty": "hard"
-    },
-    {
-        "id": "v2-bash-git-log-oneline-branch",
-        "query": "Bash: git log --oneline main..feat/websocket-streaming",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use conventional commit format (feat:, fix:, refactor:, etc.)"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-gh-run-watch",
-        "query": "Bash: gh run watch 23481341605 --exit-status 2>&1 | tail -10",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Run quality checks before every commit"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-pgrep-process",
-        "query": "Bash: pgrep -af 'wlk serve' | grep -v pgrep",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-claude-version-check",
-        "query": "Bash: claude --version 2>&1",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Review all dependencies for known vulnerabilities before adding"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-npm-show-version",
-        "query": "Bash: npm show @anthropic-ai/claude-code version 2>&1",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use uv for all Python package operations, never pip"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-edit-whisper-engine-race-condition",
-        "query": "Edit: {\"file_path\": \"src/whisper_dictation/engine/whisperlivekit.py\", \"old_string\": \"self._latest_full_text = full_text\", \"new_string\": \"if len(full_text) < self._emitted_len:\\n                self._emitted_len = 0\\n            self._latest_full_text = full_text\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Use asyncio for I/O-bound operations, not threads"
-        ],
-        "should_not_match": [
-            "Use parameterized queries to prevent SQL injection"
-        ],
-        "difficulty": "hard"
-    },
-    {
-        "id": "v2-edit-daemon-thread-lock",
-        "query": "Edit: {\"file_path\": \"src/whisper_dictation/daemon.py\", \"old_string\": \"if normalized == self._last_ws_text:\", \"new_string\": \"with self._lock:\\n            if normalized == self._last_ws_text:\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Use asyncio for I/O-bound operations, not threads"
-        ],
-        "should_not_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "difficulty": "hard"
-    },
-    {
-        "id": "v2-edit-timer-cancel-cleanup",
-        "query": "Edit: {\"file_path\": \"src/whisper_dictation/hotkey/listener.py\", \"old_string\": \"self._pending_release = False\\n        self._listener = None\", \"new_string\": \"self._pending_release = False\\n        self._release_timer: threading.Timer | None = None\\n        self._listener = None\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
-        ],
-        "should_not_match": [
-            "Use parameterized queries to prevent SQL injection"
-        ],
-        "difficulty": "hard"
-    },
-    {
-        "id": "v2-edit-time-monotonic-guard",
-        "query": "Edit: {\"file_path\": \"src/whisper_dictation/daemon.py\", \"old_string\": \"rec_duration = time.monotonic() - rec_start\", \"new_string\": \"rec_duration = max(0.0, time.monotonic() - rec_start)\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Always handle errors explicitly, never silently swallow exceptions"
-        ],
-        "should_not_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "difficulty": "hard"
-    },
-    {
-        "id": "v2-edit-test-oversized-text",
-        "query": "Edit: {\"file_path\": \"tests/test_engine_whisperlivekit.py\", \"old_string\": \"def test_streaming_no_emit_without_callback(self):\", \"new_string\": \"def test_oversized_text_capped(self):\\n        big_text = 'x' * (2 * 1024 * 1024)\\n        engine._process_response(lines=[{'text': big_text}], buffer_text='')\\n        assert len(engine._latest_full_text) <= 1 * 1024 * 1024\\n\\n    def test_streaming_no_emit_without_callback(self):\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Write tests before implementation (TDD red-green-refactor)"
-        ],
-        "should_not_match": [
-            "Send Enter after every tmux send-keys command"
-        ],
-        "difficulty": "medium"
-    },
-    {
-        "id": "v2-edit-test-cancel-timer",
-        "query": "Edit: {\"file_path\": \"tests/test_hotkey.py\", \"old_string\": \"# _start_pynput\", \"new_string\": \"def test_stop_cancels_release_timer(self):\\n        listener = HotkeyListener(binding='alt+v', mode='hold')\\n        mock_timer = MagicMock()\\n        listener._release_timer = mock_timer\\n        listener.stop()\\n        mock_timer.cancel.assert_called_once()\\n\\n# _start_pynput\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Write tests before implementation (TDD red-green-refactor)",
-            "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
-        ],
-        "should_not_match": [
-            "Use parameterized queries to prevent SQL injection"
-        ],
-        "difficulty": "medium"
-    },
-    {
-        "id": "v2-edit-forceatlas2-new-test",
-        "query": "Edit: {\"file_path\": \"tests/test_easy.py\", \"old_string\": \"def test_community_mode_render(self):\", \"new_string\": \"def test_adjacency_dict_input(self):\\n        result = visualize({'A': ['B', 'C'], 'B': ['A']}, output='json', seed=42)\\n        assert isinstance(result, dict)\\n        assert 'nodes' in result\\n\\n    def test_community_mode_render(self):\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Write tests before implementation (TDD red-green-refactor)"
-        ],
-        "should_not_match": [
-            "Use uv for all Python package operations, never pip"
-        ],
-        "difficulty": "medium"
-    },
-    {
-        "id": "v2-edit-numpy-stress-test",
-        "query": "Edit: {\"file_path\": \"tests/test_metrics.py\", \"old_string\": \"def test_all_nodes_same_position(self):\", \"new_string\": \"def test_fully_disconnected_graph(self):\\n        G = np.zeros((4, 4), dtype=float)\\n        pos = np.array([[0, 0], [1, 0], [0, 1], [1, 1]], dtype=float)\\n        s = stress(G, pos)\\n        assert isinstance(s, float)\\n\\n    def test_all_nodes_same_position(self):\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Write tests before implementation (TDD red-green-refactor)"
-        ],
-        "should_not_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "difficulty": "medium"
-    },
-    {
-        "id": "v2-edit-readme-streaming-docs",
-        "query": "Edit: {\"file_path\": \"README.md\", \"old_string\": \"- **Streaming mode** *(experimental)*\", \"new_string\": \"- **Streaming mode**\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Document all public API functions with docstrings"
-        ],
-        "should_not_match": [
-            "Use parameterized queries to prevent SQL injection"
-        ],
-        "difficulty": "hard"
-    },
-    {
-        "id": "v2-edit-claude-md-convention",
-        "query": "Edit: {\"file_path\": \"CLAUDE.md\", \"old_string\": \"streaming mode (experimental, real-time)\", \"new_string\": \"streaming mode (real-time)\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Run ruff and mypy before committing Python code"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-edit-pyproject-version-bump",
-        "query": "Edit: {\"file_path\": \"pyproject.toml\", \"old_string\": \"version = \\\"0.1.0\\\"\", \"new_string\": \"version = \\\"0.2.0\\\"\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-edit-prd-security-nonce",
-        "query": "Edit: {\"file_path\": \"artifacts/enriched-retrieval-prd.md\", \"old_string\": \"Generic prompt, no rule-specific templates\", \"new_string\": \"Generic prompt with nonce-delimiter injection defense (see Section 3.5)\\n- scrub_secrets() on rule text before sending\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Always validate user input at system boundaries"
-        ],
-        "should_not_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "difficulty": "hard"
-    },
-    {
-        "id": "v2-edit-float-cast-fix",
-        "query": "Edit: {\"file_path\": \"scripts/cdt_steps.py\", \"old_string\": \"true_score = res.get('True', 0)\", \"new_string\": \"true_score = float(res.get('True', 0))\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Use type hints on all function signatures"
-        ],
-        "should_not_match": [
-            "Send Enter after every tmux send-keys command"
-        ],
-        "difficulty": "hard"
-    },
-    {
-        "id": "v2-write-claude-md-forceatlas2",
-        "query": "Write: {\"file_path\": \"/home/turiya/projects/forceatlas2/CLAUDE.md\", \"content\": \"# CLAUDE.md - forceatlas2\\n\\n## Project Overview\\n\\nForceAtlas2 graph layout algorithm...\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-read-docker-compose-yml",
-        "query": "Read: /home/turiya/antigravity/projects/gravity-claw/docker-compose.yml",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Never commit secrets (API keys, tokens, passwords) to git"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-read-service-health-ts",
-        "query": "Read: /home/turiya/antigravity/projects/mission-control/src/lib/service-health.ts",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use type hints on all function signatures"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-read-whisperlivekit-engine",
-        "query": "Read: /home/turiya/projects/faster-whisper-dictation-ws/src/whisper_dictation/engine/whisperlivekit.py",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Run ruff and mypy before committing Python code"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-read-hotkey-listener",
-        "query": "Read: /home/turiya/projects/faster-whisper-dictation-ws/src/whisper_dictation/hotkey/listener.py",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use asyncio for I/O-bound operations, not threads"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-read-canopy-core-py",
-        "query": "Read: /home/turiya/projects/canopy-ai/src/canopy/core.py",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Document all public API functions with docstrings"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-read-todo-md-mc",
-        "query": "Read: /home/turiya/antigravity/projects/mission-control/TODO.md",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "100% test coverage on all new code"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-grep-whisper-stt",
-        "query": "Grep: {\"pattern\": \"whisper|speech.to.text|stt|transcri\", \"-i\": true, \"output_mode\": \"files_with_matches\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use type hints on all function signatures"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-grep-import-threading",
-        "query": "Grep: {\"pattern\": \"import threading|from threading\", \"path\": \"src/whisper_dictation/\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Use asyncio for I/O-bound operations, not threads"
-        ],
-        "should_not_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "difficulty": "medium"
-    },
-    {
-        "id": "v2-grep-restart-policy-compose",
-        "query": "Grep: {\"pattern\": \"restart:\", \"path\": \"/home/turiya/antigravity/projects/gravity-claw/docker-compose.yml\", \"output_mode\": \"content\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use environment variables for configuration, not hardcoded values"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-grep-experimental-wip",
-        "query": "Grep: {\"pattern\": \"experimental|WIP|Experimental\", \"path\": \"/home/turiya/projects/faster-whisper-dictation-ws/README.md\", \"output_mode\": \"content\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Document all public API functions with docstrings"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-grep-pip-references-readme",
-        "query": "Grep: {\"pattern\": \"pip install\", \"path\": \"README.md\", \"output_mode\": \"content\", \"-n\": true}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Use uv for all Python package operations, never pip"
-        ],
-        "should_not_match": [
-            "Send Enter after every tmux send-keys command"
-        ],
-        "difficulty": "medium"
-    },
-    {
-        "id": "v2-grep-contrastive-merge-prompts",
-        "query": "Grep: {\"pattern\": \"contrastive|merge_similar|falsif\", \"path\": \"/home/turiya/projects/canopy-ai/src/canopy/prompts.py\", \"output_mode\": \"content\", \"-n\": true}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use type hints on all function signatures"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-glob-test-files-whisper",
-        "query": "Glob: {\"pattern\": \"tests/test_*.py\", \"path\": \"/home/turiya/projects/faster-whisper-dictation-ws\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Write tests before implementation (TDD red-green-refactor)"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-glob-docker-compose-files",
-        "query": "Glob: {\"pattern\": \"**/docker-compose.{yml,yaml}\", \"path\": \"/home/turiya/antigravity\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Add .gitignore entries for generated files and build artifacts"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-edit-todo-mark-done",
-        "query": "Edit: {\"file_path\": \"/home/turiya/antigravity/projects/mission-control/TODO.md\", \"old_string\": \"- [ ] **`src/components/workflow-actions.tsx`**: Workflow action buttons\", \"new_string\": \"- [x] **`src/components/workflow-actions.tsx`**: Workflow action buttons\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Write tests before implementation (TDD red-green-refactor)"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-bash-git-commit-no-verify-coauthor",
-        "query": "Bash: git add TODO.md && git commit --no-verify -m \"docs(todo): v5.25 mark all coverage gaps DONE, 1833 tests passing\"",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Run quality checks before every commit",
-            "Use conventional commit format (feat:, fix:, refactor:, etc.)"
-        ],
-        "should_not_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "difficulty": "medium"
-    },
-    {
-        "id": "v2-wf-stop-docker-free-resources",
-        "query": "UserPromptSubmit: stop all docker containers and free up VRAM for the LLM server",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
-        ],
-        "should_not_match": [
-            "Write tests before implementation following TDD red-green-refactor cycle"
-        ],
-        "difficulty": "hard"
-    },
-    {
-        "id": "v2-wf-restart-cgr-watcher",
-        "query": "UserPromptSubmit: the code graph watcher crashed, restart it and verify it's logging",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "When a tool or command fails, read the full error message and search project docs before retrying — never retry blindly"
-        ],
-        "should_not_match": [
-            "COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins"
-        ],
-        "difficulty": "hard"
-    },
-    {
-        "id": "v2-wf-merge-pr-release",
-        "query": "UserPromptSubmit: merge the WebSocket streaming PR and create a release for v0.2.0",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
-        ],
-        "should_not_match": [
-            "Write tests before implementation following TDD red-green-refactor cycle"
-        ],
-        "difficulty": "medium"
-    },
-    {
-        "id": "v2-wf-fix-hotkey-hold-mode",
-        "query": "UserPromptSubmit: the hold-to-talk hotkey stops working after 10 seconds on X11, debug and fix the timer debounce",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "When a tool or command fails, read the full error message and search project docs before retrying — never retry blindly",
-            "Fix the pipeline stage that produces bad output, do not patch the output with manual rules downstream"
-        ],
-        "should_not_match": [
-            "COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins"
-        ],
-        "difficulty": "medium"
-    },
-    {
-        "id": "v2-wf-update-readme-streaming-docs",
-        "query": "UserPromptSubmit: update the README with batch vs streaming comparison table and model selection guide",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Update README when user-facing behavior, setup steps, or dependencies change"
-        ],
-        "should_not_match": [
-            "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
-        ],
-        "difficulty": "easy"
-    },
-    {
-        "id": "v2-wf-review-code-security-parallel",
-        "query": "UserPromptSubmit: run code review and security review on the new daemon.py changes in parallel",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
-            "Launch parallel subagents for independent review tasks — never run them sequentially when they can run simultaneously"
-        ],
-        "should_not_match": [
-            "SIMPLE tasks (1-2 files, low risk) can proceed without a plan — just implement and verify"
-        ],
-        "difficulty": "easy"
-    },
-    {
-        "id": "v2-wf-send-ralph-findings",
-        "query": "UserPromptSubmit: send the code review findings to ralph via tmux so he can fix them",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion",
-            "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
-        ],
-        "should_not_match": [
-            "Establish baseline metrics before implementing any improvement — you cannot claim X is better without before/after numbers"
-        ],
-        "difficulty": "easy"
-    },
-    {
-        "id": "v2-wf-build-cdt-three-variants",
-        "query": "UserPromptSubmit: build CDT trees for all three experiment variants (optionA, optionB, optionC) and compare scores",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "When running A/B benchmark comparisons on LLM artifacts, use the same pre-built artifact and change only one variable",
-            "Establish baseline metrics before implementing any improvement — you cannot claim X is better without before/after numbers"
-        ],
-        "should_not_match": [
-            "SIMPLE tasks (1-2 files, low risk) can proceed without a plan — just implement and verify"
-        ],
-        "difficulty": "medium"
-    },
-    {
-        "id": "v2-wf-publish-pypi-release",
-        "query": "UserPromptSubmit: build and publish the package to PyPI, then verify it installs correctly",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "For new libraries or APIs, research alternatives, verify documentation, audit maintenance status, and benchmark before adopting"
-        ],
-        "should_not_match": [
-            "COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins"
-        ],
-        "difficulty": "hard"
-    },
-    {
-        "id": "v2-wf-audit-docs-stale-content",
-        "query": "UserPromptSubmit: audit the README and CLAUDE.md for stale content, wrong test counts, and outdated commands",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Update README when user-facing behavior, setup steps, or dependencies change",
-            "Update CLAUDE.md when project structure, architecture, or conventions change during a session"
-        ],
-        "should_not_match": [
-            "Run iterative PRD reviews until a round comes back clean — typical convergence is 4 rounds"
-        ],
-        "difficulty": "easy"
-    },
-    {
-        "id": "v2-wf-check-service-health-mc",
-        "query": "UserPromptSubmit: check which services are running and verify the mission control dashboard health endpoints work",
-        "corpus": "rules_workflow.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Write tests before implementation following TDD red-green-refactor cycle"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-wf-setup-audio-dictation",
-        "query": "UserPromptSubmit: set up voice dictation with faster-whisper, check if the mic works and the WhisperLiveKit server is running",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "For new libraries or APIs, research alternatives, verify documentation, audit maintenance status, and benchmark before adopting"
-        ],
-        "should_not_match": [
-            "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
-        ],
-        "difficulty": "hard"
-    },
-    {
-        "id": "v2-wf-fix-test-coverage-gap",
-        "query": "UserPromptSubmit: the coverage report shows 99% on hotkey/listener.py, find and cover the missing lines",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Require 100 percent test coverage on all new code — not 80 percent, not 90 percent, always 100 percent"
-        ],
-        "should_not_match": [
-            "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
-        ],
-        "difficulty": "easy"
-    },
-    {
-        "id": "v2-wf-neg-check-gpu-vram",
-        "query": "UserPromptSubmit: how much VRAM is free right now?",
-        "corpus": "rules_workflow.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-wf-neg-list-containers",
-        "query": "UserPromptSubmit: show me all running docker containers",
-        "corpus": "rules_workflow.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-wf-neg-read-crontab",
-        "query": "UserPromptSubmit: what's in my crontab?",
-        "corpus": "rules_workflow.txt",
-        "should_match": [],
-        "should_not_match": [
-            "SIMPLE tasks (1-2 files, low risk) can proceed without a plan — just implement and verify"
-        ],
-        "difficulty": "negative"
-    },
-    {
-        "id": "v2-wf-neg-check-ci-status",
-        "query": "UserPromptSubmit: check if the CI pipeline passed for the latest push",
-        "corpus": "rules_workflow.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
-        ],
-        "difficulty": "negative"
-    }
+  {
+    "id": "v2-bash-docker-compose-down",
+    "query": "Bash: cd /home/turiya/antigravity/projects/gravity-claw && docker compose down 2>&1",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-docker-ps",
+    "query": "Bash: docker ps --format \"table {{.Names}}\\t{{.Image}}\\t{{.Status}}\\t{{.Ports}}\" 2>&1",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-docker-inspect",
+    "query": "Bash: docker inspect turiya-ollama searxng --format '{{.Name}} RestartPolicy={{.HostConfig.RestartPolicy.Name}}' 2>&1",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use environment variables for configuration, not hardcoded values"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-nvidia-smi",
+    "query": "Bash: nvidia-smi --query-gpu=memory.used,memory.total,memory.free,utilization.gpu --format=csv,noheader 2>&1",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-pactl-audio-sources",
+    "query": "Bash: pactl list sources short 2>&1",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run quality checks before every commit"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-arecord-test-mic",
+    "query": "Bash: timeout 2 arecord -d 1 -f S16_LE -r 16000 /tmp/test_mic.wav 2>&1; echo \"Exit: $?\"",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-wpctl-inspect-audio",
+    "query": "Bash: wpctl inspect @DEFAULT_SOURCE@ 2>&1 | grep -E \"node.name|media.class|audio.format|state|mute\" | head -10",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-systemctl-list-services",
+    "query": "Bash: systemctl --user list-units --type=service --state=running 2>&1",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Set file permissions to 0o600 for sensitive files"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-crontab-list",
+    "query": "Bash: crontab -l 2>&1",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run quality checks before every commit"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-curl-health-with-auth",
+    "query": "Bash: curl -s -H \"Authorization: Bearer nyPBwXuVgZWffm_2VNYWueFol3nXMFzIc02R1WCHtvo\" http://localhost:8081/health 2>&1",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "medium"
+  },
+  {
+    "id": "v2-bash-docker-exec-curl",
+    "query": "Bash: docker exec mission-control curl -s -H \"Authorization: Bearer nyPBwXuVgZWffm_2VNYWueFol3nXMFzIc02R1WCHtvo\" \"http://host.docker.internal:8081/chats\" 2>&1",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "medium"
+  },
+  {
+    "id": "v2-bash-find-docker-compose-files",
+    "query": "Bash: find /home/turiya -name \"docker-compose.yml\" -o -name \"docker-compose.yaml\" -o -name \"compose.yml\" 2>/dev/null | sort",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Add .gitignore entries for generated files and build artifacts"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-docker-update-restart-no",
+    "query": "Bash: docker update --restart=no turiya-ollama searxng surrealdb gravity-claw 2>&1",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use environment variables for configuration, not hardcoded values"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-crontab-sed-comment",
+    "query": "Bash: crontab -l | sed 's/^0 \\*\\/4/# 0 *\\/4/' | crontab - 2>&1 && echo \"Cron commented out\" && crontab -l 2>&1",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-kill-restart-process",
+    "query": "Bash: kill 20351 && sleep 2 && cd /home/turiya/code-graph-rag && source .venv/bin/activate && nohup python realtime_updater.py /home/turiya/antigravity --host localhost --port 7688 > /tmp/cgr-watcher.log 2>&1 &",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-uv-run-validate-cdt",
+    "query": "Bash: uv run python scripts/cdt_steps.py --step validate --character Kasumi --build_id optionA --cache_dir cache 2>&1 | tail -3",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Write tests before implementation (TDD red-green-refactor)"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-uv-run-build-tree",
+    "query": "Bash: uv run python scripts/cdt_steps.py --step build_tree --character Kasumi --build_id optionA --cache_dir cache --falsifiability_gen --skip_compress 2>&1 | tail -5",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "100% test coverage on all new code"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-tmux-capture-pane",
+    "query": "Bash: tmux capture-pane -t delulu -p | tail -5",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-tmux-send-long-report",
+    "query": "Bash: tmux send-keys -t delulu \"REPORT from ralph: Code review R1 complete. 0 CRIT, 2 HIGH, 4 MED (code) + 0 CRIT, 0 HIGH, 1 MED (security).\" Enter",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "should_not_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "difficulty": "easy"
+  },
+  {
+    "id": "v2-bash-git-add-commit-push",
+    "query": "Bash: git add README.md && git commit -m \"docs: recommend --min-chunk-size 1.5 --confidence-validation in quick start\" && git push 2>&1 | tail -3",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Run quality checks before every commit",
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)",
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "medium"
+  },
+  {
+    "id": "v2-bash-gh-pr-merge",
+    "query": "Bash: gh pr merge 2 --merge --delete-branch 2>&1",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Never force-push to main or master branch"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "hard"
+  },
+  {
+    "id": "v2-bash-gh-release-create",
+    "query": "Bash: gh release create v0.2.0 --target main --title \"v0.2.0\" --notes \"## What's New\\n### WebSocket Streaming\"",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-uv-build",
+    "query": "Bash: uv build --clear --no-cache 2>&1",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "medium"
+  },
+  {
+    "id": "v2-bash-uv-tool-install",
+    "query": "Bash: uv tool install \"faster-whisper-dictation[local]\" --force 2>&1 | tail -5",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "easy"
+  },
+  {
+    "id": "v2-bash-uv-pip-install-ruff",
+    "query": "Bash: uv pip install ruff 2>&1 | tail -3",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "easy"
+  },
+  {
+    "id": "v2-bash-ruff-check-and-pytest",
+    "query": "Bash: uv run ruff check src/ tests/ 2>&1 && uv run pytest tests/ --cov=whisper_dictation --cov-report=term-missing -q 2>&1 | tail -8",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Run ruff and mypy before committing Python code",
+      "100% test coverage on all new code"
+    ],
+    "should_not_match": [
+      "Never force-push to main or master branch"
+    ],
+    "difficulty": "easy"
+  },
+  {
+    "id": "v2-bash-miniconda-ruff-pytest",
+    "query": "Bash: /home/turiya/miniconda3/bin/python -m ruff check fa2/ tests/ 2>&1 && /home/turiya/miniconda3/bin/python -m pytest tests/ -q --no-header 2>&1 | tail -3",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Run ruff and mypy before committing Python code"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "medium"
+  },
+  {
+    "id": "v2-bash-git-pull-rebase-push",
+    "query": "Bash: git pull origin main --rebase 2>&1 && git push origin HEAD:main 2>&1",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Never force-push to main or master branch"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "hard"
+  },
+  {
+    "id": "v2-bash-git-log-oneline-branch",
+    "query": "Bash: git log --oneline main..feat/websocket-streaming",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-gh-run-watch",
+    "query": "Bash: gh run watch 23481341605 --exit-status 2>&1 | tail -10",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run quality checks before every commit"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-pgrep-process",
+    "query": "Bash: pgrep -af 'wlk serve' | grep -v pgrep",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-claude-version-check",
+    "query": "Bash: claude --version 2>&1",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Review all dependencies for known vulnerabilities before adding"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-npm-show-version",
+    "query": "Bash: npm show @anthropic-ai/claude-code version 2>&1",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-edit-whisper-engine-race-condition",
+    "query": "Edit: {\"file_path\": \"src/whisper_dictation/engine/whisperlivekit.py\", \"old_string\": \"self._latest_full_text = full_text\", \"new_string\": \"if len(full_text) < self._emitted_len:\\n                self._emitted_len = 0\\n            self._latest_full_text = full_text\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-edit-daemon-thread-lock",
+    "query": "Edit: {\"file_path\": \"src/whisper_dictation/daemon.py\", \"old_string\": \"if normalized == self._last_ws_text:\", \"new_string\": \"with self._lock:\\n            if normalized == self._last_ws_text:\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use asyncio for I/O-bound operations, not threads"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "hard"
+  },
+  {
+    "id": "v2-edit-timer-cancel-cleanup",
+    "query": "Edit: {\"file_path\": \"src/whisper_dictation/hotkey/listener.py\", \"old_string\": \"self._pending_release = False\\n        self._listener = None\", \"new_string\": \"self._pending_release = False\\n        self._release_timer: threading.Timer | None = None\\n        self._listener = None\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
+    ],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "difficulty": "hard"
+  },
+  {
+    "id": "v2-edit-time-monotonic-guard",
+    "query": "Edit: {\"file_path\": \"src/whisper_dictation/daemon.py\", \"old_string\": \"rec_duration = time.monotonic() - rec_start\", \"new_string\": \"rec_duration = max(0.0, time.monotonic() - rec_start)\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-edit-test-oversized-text",
+    "query": "Edit: {\"file_path\": \"tests/test_engine_whisperlivekit.py\", \"old_string\": \"def test_streaming_no_emit_without_callback(self):\", \"new_string\": \"def test_oversized_text_capped(self):\\n        big_text = 'x' * (2 * 1024 * 1024)\\n        engine._process_response(lines=[{'text': big_text}], buffer_text='')\\n        assert len(engine._latest_full_text) <= 1 * 1024 * 1024\\n\\n    def test_streaming_no_emit_without_callback(self):\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Write tests before implementation (TDD red-green-refactor)"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "medium"
+  },
+  {
+    "id": "v2-edit-test-cancel-timer",
+    "query": "Edit: {\"file_path\": \"tests/test_hotkey.py\", \"old_string\": \"# _start_pynput\", \"new_string\": \"def test_stop_cancels_release_timer(self):\\n        listener = HotkeyListener(binding='alt+v', mode='hold')\\n        mock_timer = MagicMock()\\n        listener._release_timer = mock_timer\\n        listener.stop()\\n        mock_timer.cancel.assert_called_once()\\n\\n# _start_pynput\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Write tests before implementation (TDD red-green-refactor)",
+      "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
+    ],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "difficulty": "medium"
+  },
+  {
+    "id": "v2-edit-forceatlas2-new-test",
+    "query": "Edit: {\"file_path\": \"tests/test_easy.py\", \"old_string\": \"def test_community_mode_render(self):\", \"new_string\": \"def test_adjacency_dict_input(self):\\n        result = visualize({'A': ['B', 'C'], 'B': ['A']}, output='json', seed=42)\\n        assert isinstance(result, dict)\\n        assert 'nodes' in result\\n\\n    def test_community_mode_render(self):\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Write tests before implementation (TDD red-green-refactor)"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "medium"
+  },
+  {
+    "id": "v2-edit-numpy-stress-test",
+    "query": "Edit: {\"file_path\": \"tests/test_metrics.py\", \"old_string\": \"def test_all_nodes_same_position(self):\", \"new_string\": \"def test_fully_disconnected_graph(self):\\n        G = np.zeros((4, 4), dtype=float)\\n        pos = np.array([[0, 0], [1, 0], [0, 1], [1, 1]], dtype=float)\\n        s = stress(G, pos)\\n        assert isinstance(s, float)\\n\\n    def test_all_nodes_same_position(self):\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Write tests before implementation (TDD red-green-refactor)"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "medium"
+  },
+  {
+    "id": "v2-edit-readme-streaming-docs",
+    "query": "Edit: {\"file_path\": \"README.md\", \"old_string\": \"- **Streaming mode** *(experimental)*\", \"new_string\": \"- **Streaming mode**\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-edit-claude-md-convention",
+    "query": "Edit: {\"file_path\": \"CLAUDE.md\", \"old_string\": \"streaming mode (experimental, real-time)\", \"new_string\": \"streaming mode (real-time)\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run ruff and mypy before committing Python code"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-edit-pyproject-version-bump",
+    "query": "Edit: {\"file_path\": \"pyproject.toml\", \"old_string\": \"version = \\\"0.1.0\\\"\", \"new_string\": \"version = \\\"0.2.0\\\"\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-edit-prd-security-nonce",
+    "query": "Edit: {\"file_path\": \"artifacts/enriched-retrieval-prd.md\", \"old_string\": \"Generic prompt, no rule-specific templates\", \"new_string\": \"Generic prompt with nonce-delimiter injection defense (see Section 3.5)\\n- scrub_secrets() on rule text before sending\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Always validate user input at system boundaries"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "hard"
+  },
+  {
+    "id": "v2-edit-float-cast-fix",
+    "query": "Edit: {\"file_path\": \"scripts/cdt_steps.py\", \"old_string\": \"true_score = res.get('True', 0)\", \"new_string\": \"true_score = float(res.get('True', 0))\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-write-claude-md-forceatlas2",
+    "query": "Write: {\"file_path\": \"/home/turiya/projects/forceatlas2/CLAUDE.md\", \"content\": \"# CLAUDE.md - forceatlas2\\n\\n## Project Overview\\n\\nForceAtlas2 graph layout algorithm...\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-read-docker-compose-yml",
+    "query": "Read: /home/turiya/antigravity/projects/gravity-claw/docker-compose.yml",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-read-service-health-ts",
+    "query": "Read: /home/turiya/antigravity/projects/mission-control/src/lib/service-health.ts",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use type hints on all function signatures"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-read-whisperlivekit-engine",
+    "query": "Read: /home/turiya/projects/faster-whisper-dictation-ws/src/whisper_dictation/engine/whisperlivekit.py",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run ruff and mypy before committing Python code"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-read-hotkey-listener",
+    "query": "Read: /home/turiya/projects/faster-whisper-dictation-ws/src/whisper_dictation/hotkey/listener.py",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use asyncio for I/O-bound operations, not threads"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-read-canopy-core-py",
+    "query": "Read: /home/turiya/projects/canopy-ai/src/canopy/core.py",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Document all public API functions with docstrings"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-read-todo-md-mc",
+    "query": "Read: /home/turiya/antigravity/projects/mission-control/TODO.md",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "100% test coverage on all new code"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-grep-whisper-stt",
+    "query": "Grep: {\"pattern\": \"whisper|speech.to.text|stt|transcri\", \"-i\": true, \"output_mode\": \"files_with_matches\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use type hints on all function signatures"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-grep-import-threading",
+    "query": "Grep: {\"pattern\": \"import threading|from threading\", \"path\": \"src/whisper_dictation/\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use asyncio for I/O-bound operations, not threads"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "medium"
+  },
+  {
+    "id": "v2-grep-restart-policy-compose",
+    "query": "Grep: {\"pattern\": \"restart:\", \"path\": \"/home/turiya/antigravity/projects/gravity-claw/docker-compose.yml\", \"output_mode\": \"content\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use environment variables for configuration, not hardcoded values"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-grep-experimental-wip",
+    "query": "Grep: {\"pattern\": \"experimental|WIP|Experimental\", \"path\": \"/home/turiya/projects/faster-whisper-dictation-ws/README.md\", \"output_mode\": \"content\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Document all public API functions with docstrings"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-grep-pip-references-readme",
+    "query": "Grep: {\"pattern\": \"pip install\", \"path\": \"README.md\", \"output_mode\": \"content\", \"-n\": true}",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "medium"
+  },
+  {
+    "id": "v2-grep-contrastive-merge-prompts",
+    "query": "Grep: {\"pattern\": \"contrastive|merge_similar|falsif\", \"path\": \"/home/turiya/projects/canopy-ai/src/canopy/prompts.py\", \"output_mode\": \"content\", \"-n\": true}",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use type hints on all function signatures"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-glob-test-files-whisper",
+    "query": "Glob: {\"pattern\": \"tests/test_*.py\", \"path\": \"/home/turiya/projects/faster-whisper-dictation-ws\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Write tests before implementation (TDD red-green-refactor)"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-glob-docker-compose-files",
+    "query": "Glob: {\"pattern\": \"**/docker-compose.{yml,yaml}\", \"path\": \"/home/turiya/antigravity\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Add .gitignore entries for generated files and build artifacts"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-edit-todo-mark-done",
+    "query": "Edit: {\"file_path\": \"/home/turiya/antigravity/projects/mission-control/TODO.md\", \"old_string\": \"- [ ] **`src/components/workflow-actions.tsx`**: Workflow action buttons\", \"new_string\": \"- [x] **`src/components/workflow-actions.tsx`**: Workflow action buttons\"}",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Write tests before implementation (TDD red-green-refactor)"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-bash-git-commit-no-verify-coauthor",
+    "query": "Bash: git add TODO.md && git commit --no-verify -m \"docs(todo): v5.25 mark all coverage gaps DONE, 1833 tests passing\"",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Run quality checks before every commit",
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "medium"
+  },
+  {
+    "id": "v2-wf-stop-docker-free-resources",
+    "query": "UserPromptSubmit: stop all docker containers and free up VRAM for the LLM server",
+    "corpus": "rules_workflow.txt",
+    "should_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+    ],
+    "should_not_match": [
+      "Write tests before implementation following TDD red-green-refactor cycle"
+    ],
+    "difficulty": "hard"
+  },
+  {
+    "id": "v2-wf-restart-cgr-watcher",
+    "query": "UserPromptSubmit: the code graph watcher crashed, restart it and verify it's logging",
+    "corpus": "rules_workflow.txt",
+    "should_match": [
+      "When a tool or command fails, read the full error message and search project docs before retrying \u2014 never retry blindly"
+    ],
+    "should_not_match": [
+      "COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins"
+    ],
+    "difficulty": "hard"
+  },
+  {
+    "id": "v2-wf-merge-pr-release",
+    "query": "UserPromptSubmit: merge the WebSocket streaming PR and create a release for v0.2.0",
+    "corpus": "rules_workflow.txt",
+    "should_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+    ],
+    "should_not_match": [
+      "Write tests before implementation following TDD red-green-refactor cycle"
+    ],
+    "difficulty": "medium"
+  },
+  {
+    "id": "v2-wf-fix-hotkey-hold-mode",
+    "query": "UserPromptSubmit: the hold-to-talk hotkey stops working after 10 seconds on X11, debug and fix the timer debounce",
+    "corpus": "rules_workflow.txt",
+    "should_match": [
+      "When a tool or command fails, read the full error message and search project docs before retrying \u2014 never retry blindly",
+      "Fix the pipeline stage that produces bad output, do not patch the output with manual rules downstream"
+    ],
+    "should_not_match": [
+      "COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins"
+    ],
+    "difficulty": "medium"
+  },
+  {
+    "id": "v2-wf-update-readme-streaming-docs",
+    "query": "UserPromptSubmit: update the README with batch vs streaming comparison table and model selection guide",
+    "corpus": "rules_workflow.txt",
+    "should_match": [
+      "Update README when user-facing behavior, setup steps, or dependencies change"
+    ],
+    "should_not_match": [
+      "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
+    ],
+    "difficulty": "easy"
+  },
+  {
+    "id": "v2-wf-review-code-security-parallel",
+    "query": "UserPromptSubmit: run code review and security review on the new daemon.py changes in parallel",
+    "corpus": "rules_workflow.txt",
+    "should_match": [
+      "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
+      "Launch parallel subagents for independent review tasks \u2014 never run them sequentially when they can run simultaneously"
+    ],
+    "should_not_match": [
+      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan \u2014 just implement and verify"
+    ],
+    "difficulty": "easy"
+  },
+  {
+    "id": "v2-wf-send-ralph-findings",
+    "query": "UserPromptSubmit: send the code review findings to ralph via tmux so he can fix them",
+    "corpus": "rules_workflow.txt",
+    "should_match": [
+      "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion",
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
+    ],
+    "should_not_match": [
+      "Establish baseline metrics before implementing any improvement \u2014 you cannot claim X is better without before/after numbers"
+    ],
+    "difficulty": "easy"
+  },
+  {
+    "id": "v2-wf-build-cdt-three-variants",
+    "query": "UserPromptSubmit: build CDT trees for all three experiment variants (optionA, optionB, optionC) and compare scores",
+    "corpus": "rules_workflow.txt",
+    "should_match": [
+      "When running A/B benchmark comparisons on LLM artifacts, use the same pre-built artifact and change only one variable",
+      "Establish baseline metrics before implementing any improvement \u2014 you cannot claim X is better without before/after numbers"
+    ],
+    "should_not_match": [
+      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan \u2014 just implement and verify"
+    ],
+    "difficulty": "medium"
+  },
+  {
+    "id": "v2-wf-publish-pypi-release",
+    "query": "UserPromptSubmit: build and publish the package to PyPI, then verify it installs correctly",
+    "corpus": "rules_workflow.txt",
+    "should_match": [
+      "For new libraries or APIs, research alternatives, verify documentation, audit maintenance status, and benchmark before adopting"
+    ],
+    "should_not_match": [
+      "COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins"
+    ],
+    "difficulty": "hard"
+  },
+  {
+    "id": "v2-wf-audit-docs-stale-content",
+    "query": "UserPromptSubmit: audit the README and CLAUDE.md for stale content, wrong test counts, and outdated commands",
+    "corpus": "rules_workflow.txt",
+    "should_match": [
+      "Update README when user-facing behavior, setup steps, or dependencies change",
+      "Update CLAUDE.md when project structure, architecture, or conventions change during a session"
+    ],
+    "should_not_match": [
+      "Run iterative PRD reviews until a round comes back clean \u2014 typical convergence is 4 rounds"
+    ],
+    "difficulty": "easy"
+  },
+  {
+    "id": "v2-wf-check-service-health-mc",
+    "query": "UserPromptSubmit: check which services are running and verify the mission control dashboard health endpoints work",
+    "corpus": "rules_workflow.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Write tests before implementation following TDD red-green-refactor cycle"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-wf-setup-audio-dictation",
+    "query": "UserPromptSubmit: set up voice dictation with faster-whisper, check if the mic works and the WhisperLiveKit server is running",
+    "corpus": "rules_workflow.txt",
+    "should_match": [
+      "For new libraries or APIs, research alternatives, verify documentation, audit maintenance status, and benchmark before adopting"
+    ],
+    "should_not_match": [
+      "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
+    ],
+    "difficulty": "hard"
+  },
+  {
+    "id": "v2-wf-fix-test-coverage-gap",
+    "query": "UserPromptSubmit: the coverage report shows 99% on hotkey/listener.py, find and cover the missing lines",
+    "corpus": "rules_workflow.txt",
+    "should_match": [
+      "Require 100 percent test coverage on all new code \u2014 not 80 percent, not 90 percent, always 100 percent"
+    ],
+    "should_not_match": [
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
+    ],
+    "difficulty": "easy"
+  },
+  {
+    "id": "v2-wf-neg-check-gpu-vram",
+    "query": "UserPromptSubmit: how much VRAM is free right now?",
+    "corpus": "rules_workflow.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-wf-neg-list-containers",
+    "query": "UserPromptSubmit: show me all running docker containers",
+    "corpus": "rules_workflow.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-wf-neg-read-crontab",
+    "query": "UserPromptSubmit: what's in my crontab?",
+    "corpus": "rules_workflow.txt",
+    "should_match": [],
+    "should_not_match": [
+      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan \u2014 just implement and verify"
+    ],
+    "difficulty": "negative"
+  },
+  {
+    "id": "v2-wf-neg-check-ci-status",
+    "query": "UserPromptSubmit: check if the CI pipeline passed for the latest push",
+    "corpus": "rules_workflow.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+    ],
+    "difficulty": "negative"
+  }
 ]

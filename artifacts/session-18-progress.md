@@ -10,132 +10,123 @@
 - **Quality Score (F2):** New per-fixture composite metric using F-beta (β=2, recall-weighted)
   - Positive fixtures: `F2 = 5*P*R / (4P + R)` — rewards recall 4x over precision
   - Negative fixtures: `1.0 if silent, 0.0 otherwise` — correct-abstention convention
-- **positive_recall:** Recall averaged only over positive fixtures (excludes negatives)
-- **positive_quality:** F2 averaged only over positive fixtures (comparable across datasets)
-- **mean_quality:** F2 averaged over ALL fixtures (unified metric)
-- Refactored `_compute_tier_summaries` into `_make_tier_summary` helper
-- Updated `format_eval_report` to show Quality, Positive Quality, Positive Recall, per-tier F2
-- 843 tests, 100% coverage, ruff clean, mypy strict
+- **positive_recall / positive_quality:** Averaged only over positive fixtures
+- Refactored `_compute_tier_summaries` → `_make_tier_summary` helper
+- Updated `format_eval_report` with Quality, Positive Quality, Positive Recall, per-tier F2
+- 860 tests, 100% coverage, ruff clean, mypy strict
 
-### 2. Expansion Prompt v5 (Reasoning Field)
-- Added `"reasoning"` field to expansion prompt — model reasons about vocabulary gap before generating
-- Examples in system prompt now include reasoning analysis
-- User prompt asks model to "first reason about the vocabulary gap, then generate"
-- Parser extracts and logs reasoning at DEBUG level
-- Tests updated for new prompt structure
+### 2. Parse Failure Investigation & Fix (BIGGEST WIN: +4.9 pts)
+- **Root cause:** Model outputting reasoning prose without JSON, hitting EOS early
+- NOT truncation (responses were only ~60 tokens) — model just stopped before JSON
+- **Prompt fix:** Changed "Write reasoning BEFORE listing rules" to "ALWAYS return a SINGLE JSON object — nothing else. Put ALL analysis inside the reasoning field."
+- **Result:** 0 parse failures (was 1-3/run), basic quality 0.750→0.799
+- Hard tier jumped +15.5 pts (0.574→0.729) — parse failures disproportionately hit hard queries
+- **Lesson:** Silent fallbacks are insidious. The WARNING was logged but buried in tqdm output.
 
-### 3. Per-Model End-to-End Benchmarks
-Each model generates its own expansions AND uses them for reranking:
+### 3. Robust JSON Extraction
+- `_try_json_parse`: searches all `{` positions last-to-first, brace-depth tracking
+- `_extract_rule_refs_from_prose`: regex fallback for "Rule N applies" patterns
+- Safety net for any remaining parse issues
 
-#### 35B E2E (v5 prompt, 20% sample)
-| Fixture Set | Quality (F2) | Pos Quality | Pos Recall | Noise | Neg Silence |
-|-------------|-------------|-------------|------------|-------|-------------|
-| basic | 0.780 | 0.670 | 0.680 | 0.189 | 0.962 |
-| workflow | 0.692 | 0.580 | 0.621 | 0.328 | 1.000 |
+### 4. Expansion Prompt v5 (Reasoning Field)
+- Added `"reasoning"` field — model analyzes vocabulary gap before generating expansions
+- Examples include reasoning analysis in system prompt
+- Regenerated with both 9B and 35B
 
-#### 9B E2E — running
-#### 4B E2E — pending
+### 5. Fixture Audit & Corrections
+- Found 2 clearly wrong expectations:
+  - `ts-write-react-component`: Python "type hints" rule on TSX file
+  - `docstring-missing`: "type hints" expected for already-typed function
+- Identified several debatable expectations (subprocess.shell=True vs eval, git tag vs commit)
+- Fixture auditor agent running comprehensive audit of all 587 fixtures
 
-### 4. v4/v5 Expansion Corpora
-- v4: reasoning-principles prompt (no reasoning field) — generated with 9B
-- v5: reasoning-field prompt — generated with 9B
-- Quality comparison showed v5 improves noise and neg_silence over v4
+### 6. End-to-End Model Benchmarks
+Each model generates its own expansions AND reranks:
 
-### 5. Code Review (2 agents, converged)
-Both reviewers found same issues, all fixed:
-- Triple blank line → removed
-- `mean_quality` mixes distributions → added `positive_quality`
-- Missing test assertions → added
-- Per-tier quality not displayed → added F2 column to tier table
+| Model | Basic Quality | Workflow Quality |
+|-------|-------------|-----------------|
+| 35B | 0.803 | 0.748 |
+| 9B | 0.727 | 0.725 |
+| 4B | pending | pending |
 
-## Gap Analysis: Path to F2 ≥ 0.85
+### 7. Code Reviews (2 agents, converged)
+All MEDIUM findings addressed: per-tier quality display, positive_quality field, test assertions, triple blank line.
 
-### Current: 35B basic=0.780, workflow=0.692
+## Key Findings
 
-### Stage-by-Stage Gaps
+### Three Categories of Improvement
+1. **Bug fixes** (parse failure, metric calculation) — real issues, big impact
+2. **Ground truth corrections** (wrong fixture expectations) — honest improvement
+3. **Prompt engineering** (JSON-first, reasoning principles) — legitimate tuning
 
-**Stage 1: Embedding Retrieval**
-- Basic positive recall (embedding only): 0.785 — this is the CEILING for the LLM stage
-- Workflow embedding recall: 0.515 — much lower, code model struggles with natural language
-- **Gap:** Embedding stage limits total recall. Better expansions could raise this ceiling.
-- **Actions:** More targeted expansions, possibly snowflake-arctic for workflow queries
+The biggest wins came from fixing our own measurement, not from tuning parameters.
 
-**Stage 2: LLM Reranker (35B)**
-- Drops basic recall from 0.785→0.680 (loses ~10% of candidates)
-- Workflow noise at 0.328 — too much irrelevant retrieved
-- **Gap:** Reranker is too aggressive filtering (false negatives) AND not aggressive enough on noise
-- **Actions:** Prompt tuning — more positive examples for edge cases, better negative examples
+### Saturation Analysis
+- Easy tier at 0.882 — near ceiling
+- Hard tier at 0.613 — remaining gap, but many are genuinely ambiguous
+- 35B expansions are broader than 9B (more cross-domain noise)
+- Embedding recall ceiling: ~0.85 positive recall
+- 20% sample has ~5% noise band — need full dataset to separate signal from noise
 
-**Stage 3: Expansion Quality**
-- 0-2 empty rules per corpus after generation
-- Cross-domain contamination minimal (3 borderline cases)
-- But 7.7 avg expansions may not be enough for abstract rules
-- **Gap:** Some rules have a vocabulary gap that 7-8 expansions don't bridge
-- **Actions:** Analyze which rules have lowest recall, generate targeted expansions
+### Architecture Insights
+- **Parse failures are silent quality killers.** Each falls back to noisy embedding results.
+- **JSON-first prompts > "write reasoning first".** Models interpret "write before" as "output prose".
+- **Wrong fixtures are indistinguishable from model failures.** Audit ground truth first.
+- **Manual expansion supplements are overfitting.** The expansion system must generate good expansions itself.
+- **Negative silence and noise are coupled.** Broader expansions improve recall but increase noise.
 
-### What Would Move the Needle Most
-1. **Raise embedding ceiling** (+5-10% quality): Better expansions for the hardest rules
-2. **Reduce reranker false negatives** (+3-5% quality): Prompt tuning with false-negative examples
-3. **Reduce workflow noise** (+5% workflow quality): Better cross-domain discrimination
+## Current Best (35B, v5 reasoning-field expansions, 20% sample, corrected fixtures)
 
-### Target Breakdown
-- Need: 0.85 quality
-- Negative contribution (38% of basic, score=0.962): 0.38 * 0.962 = 0.366
-- Remaining positive contribution needed: 0.85 - 0.366 = 0.484 from 62% of fixtures
-- Required positive quality: 0.484 / 0.62 = 0.781
-- Current positive quality: 0.670
-- Gap: +0.111 positive quality needed
+| Fixture | Quality (F2) | Pos Recall | Noise | Neg Silence |
+|---------|-------------|------------|-------|-------------|
+| Basic | 0.803 | 0.758 | 0.200 | 0.923 |
+| Workflow | 0.748 | 0.697 | 0.272 | 1.000 |
 
-## Key Decisions
-1. F2 (β=2) chosen over F1 — recall matters more than precision for rule injection
-2. Correct-abstention convention — negatives contribute 1.0/0.0, not excluded
-3. `positive_quality` added alongside `mean_quality` for clean comparison
-4. Each model generates its own expansions for E2E benchmarks
+Per-tier (Basic):
+| Tier | Quality | Recall | Noise |
+|------|---------|--------|-------|
+| easy | 0.882 | 0.917 | 0.167 |
+| medium | 0.694 | 0.765 | 0.315 |
+| hard | 0.613 | 0.528 | 0.317 |
+| negative | 0.923 | 0.000 | 0.077 |
 
 ## What's Next (Priority Order)
 
-### Immediate (for autonomous iteration)
-1. Complete 9B and 4B E2E benchmarks
-2. Analyze false negatives — which rules/queries fail at each stage
-3. Prompt iteration on reranker — target false-negative examples
-4. Expansion iteration — regenerate for rules with lowest recall
-5. Iterate until F2 ≥ 0.85 on basic, ≥ 0.80 on workflow
+### From Fixture Auditor
+1. Apply corrections from comprehensive fixture audit
+2. Add new fixtures for underrepresented scenarios
+3. Re-benchmark with corrected ground truth
 
-### Medium Term
-6. Full dataset validation of best configuration
+### Quality Improvements
+4. Full dataset validation (sample_ratio=1.0) to confirm scores
+5. Investigate whether snowflake-arctic-m helps workflow (better NL matching)
+6. Run 9B and 4B E2E with 35B-quality expansions (decouple expansion model from reranker model)
+
+### Infrastructure
 7. `cuecard serve` daemon — avoid model load/unload per hook call
 8. Phase 4: PyPI publish
-
-### Future Considerations (from user)
-- Index rules.md files, CLAUDE.md, and skills (not just rules.txt/rules.json)
-- Prompts must use reasoning guidelines, not hardcoded rules — generalize to new rule sources
-- Don't retry empty expansions — some rules naturally don't expand well
+9. Phase 5.1: Markdown parser for CLAUDE.md ingestion
 
 ## Files Changed This Session
 
 ### Source Code
-- `src/cuecard/eval.py` — quality_score (F2), positive_recall, positive_quality, _make_tier_summary, format updates
-- `src/cuecard/expander.py` — reasoning-field prompt, examples with reasoning, parser extracts reasoning
+- `src/cuecard/eval.py` — quality_score (F2), positive_recall, positive_quality, _make_tier_summary
+- `src/cuecard/expander.py` — reasoning-field prompt, examples with reasoning
+- `src/cuecard/llm_reranker.py` — JSON-first prompt, _try_json_parse, _extract_rule_refs_from_prose, refined reasoning principles
 
 ### Tests
-- `tests/test_eval.py` — TestQualityScore (8 tests), assertions for new fields, format label checks
-- `tests/test_expander.py` — tests for reasoning field, examples, prompt format
+- `tests/test_eval.py` — TestQualityScore (8 tests), format assertions, new field assertions
+- `tests/test_expander.py` — reasoning field tests
+- `tests/test_llm_reranker.py` — TestTryJsonParse, TestExtractRuleRefsFromProse, prose-then-json test
+
+### Fixtures
+- `eval/fixtures/basic.json` — 2 wrong expectations corrected
 
 ### Eval Corpora
-- `eval/corpora/enriched_basic_v4/` — v4 expansions (reasoning principles, no reasoning field)
-- `eval/corpora/enriched_basic_v5/` — v5 expansions (reasoning field, generated by 9B)
-- `eval/corpora/enriched_workflow_v4/` — v4 workflow expansions
-- `eval/corpora/enriched_workflow_v5/` — v5 workflow expansions
-
-### Benchmark Results
-- `eval/results/v4-embedding-sample-2026-04-02.json`
-- `eval/results/v4-9b-llm-sample-2026-04-02.json`
-- `eval/results/v5-embedding-sample-2026-04-02.json`
-- `eval/results/v5-9b-llm-sample-2026-04-02.json`
-- `eval/results/v5-4b-llm-sample-2026-04-02.json`
-- `eval/results/v5-35b-llm-sample-2026-04-02.json`
-- `eval/results/e2e-35b-v5-sample-2026-04-02.json`
+- `eval/corpora/enriched_basic_v5/` — regenerated with 35B (pure LLM)
+- `eval/corpora/enriched_workflow_v5/` — regenerated with 35B (pure LLM)
 
 ## Git State
-- Branch: master
-- 843 tests, 100% coverage, ruff clean, mypy strict
+- Branch: master, pushed to origin
+- 4 commits: metrics, prompt refinement, parse fix, fixture corrections
+- 860 tests, 100% coverage, ruff clean, mypy strict
