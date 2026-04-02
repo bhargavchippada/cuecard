@@ -351,32 +351,76 @@ Also discovered: **Nemotron-3-Nano-30B-A3B** (NVIDIA, 3.5B active) is purpose-bu
 
 ## Inference Performance Estimates
 
-### GPU (RTX 4090, Q4_K_M, llama-server)
+### GPU Performance (Q4_K_M, llama-server, measured benchmarks)
+
+**RTX 5090 (32GB, 1792 GB/s)** — actual benchmarks:
+
+| Model | Params | tg @ 4K ctx | tg @ 8K ctx | PP @ 4K |
+|-------|--------|-------------|-------------|---------|
+| Qwen3-MoE-30B-A3B | 30B (3B active) | **234 tok/s** | 170 | 6,630 |
+| Qwen3.5-35B-A3B | 35B (3B active) | **205 tok/s** | — | 793 |
+| Qwen3-8B | 8B dense | 186 tok/s | 170 | 10,406 |
+| Qwen3-14B | 14B dense | 124 tok/s | 115 | 6,498 |
+
+**RTX 4090 (24GB, 1008 GB/s)** — actual + estimated:
 
 | Model | GGUF Size | VRAM | Est. tok/s (tg) | Est. 200-token latency |
 |-------|-----------|------|------------------|----------------------|
 | Qwen3.5-4B | 2.5GB | 3.5GB | 150-220* | 0.9-1.3s |
 | Qwen3-4B | 2.5GB | 3.5GB | 200-300 | 0.7-1.0s |
-| Phi-4-mini | 2.5GB | 3.5GB | 200-300 | 0.7-1.0s |
-| Qwen3.5-9B | 5.5GB | 7GB | 80-120* | 1.7-2.5s |
-| Qwen3-8B | 5.0GB | 6GB | 100-150 | 1.3-2.0s |
-| Nemotron-3-Nano | 18GB | 18GB | 240-360** | 0.6-0.8s |
-| **Current: Qwen3.5-35B-A3B** | **~20GB** | **~20GB** | **~80-100** | **~1.1s** |
+| Qwen3.5-9B | 5.5GB | 6.8GB | 80-120* | 1.7-2.5s |
+| Qwen3-8B | 5.0GB | 6GB | ~128 (measured for 8B) | 1.3-1.6s |
+| **Current: Qwen3.5-35B-A3B** | **~20GB** | **~21.7GB** | **~140-170** | **~1.1s** |
 
 *Qwen3.5 DeltaNet layers may add ~35% overhead in current llama.cpp builds
-**Nemotron claims 3.3x throughput vs Qwen3-30B-A3B; MoE + Mamba-2 hybrid is very fast
 
-### CPU (Modern x86, AVX-512, Q4_K_M)
+**RTX 3070 (8GB)** — actual benchmark:
 
-| Model | RAM Required | Est. tok/s | Est. 200-token latency |
-|-------|-------------|-----------|----------------------|
-| Qwen3.5-4B | 4GB | 20-30* | 7-10s |
-| Qwen3-4B | 4GB | 25-40 | 5-8s |
-| Phi-4-mini | 4GB | 25-40 | 5-8s |
-| Qwen3.5-9B | 7GB | 8-15* | 13-25s |
-| Qwen3-8B | 7GB | 12-20 | 10-17s |
+| Model | tok/s @ 4K | tok/s @ 32K | Note |
+|-------|-----------|-------------|------|
+| Qwen3.5-9B | **57.9** | 54.9 | Full GPU offload, fits in 8GB |
+| LLaMA-3-8B | ~73 | ~62 | Standard transformer, no DeltaNet overhead |
 
-*DeltaNet overhead estimate on CPU
+**Critical finding:** Qwen3.5-9B at 6.8GB fits in 8GB GPUs. 58 tok/s = ~3.4s for 200 tokens. With non-thinking mode producing ~50-100 tokens for classification, actual latency would be ~1-2s on a 3070.
+
+### CPU Performance (Q4_K_M)
+
+**Apple Silicon** — actual benchmarks:
+
+| CPU | Model | tok/s | 200-token latency |
+|-----|-------|-------|-------------------|
+| M4 Max | ~3B | ~100-150 (estimated) | 1.3-2.0s |
+| M3 Max | 8B | 51 | 3.9s |
+| M2 Ultra | 8B | 76 | 2.6s |
+
+**x86 CPU:**
+
+| CPU | Model | tok/s | 200-token latency |
+|-----|-------|-------|-------------------|
+| Ryzen AI 9 | Llama-3.2-1B | 50.7 | 3.9s |
+| ARM mobile | Llama-3.2-3B | 19.9 | 10s |
+| i7-8700K | 8B (CPU spill) | 6.6-10.9 | 18-30s |
+
+**CPU viability verdict:** Only Apple M-series can hit <2s on models >3B. x86 CPU reranking is not viable for generative models >1B. For CPU-only deployment, use cross-encoders (see `small-model-research-2026-04-02.md`).
+
+### Memory Requirements (Q4_K_M, 32K context)
+
+| Model Size | Total VRAM/RAM |
+|-----------|---------------|
+| 0.6B | ~1.2 GB |
+| 3B | ~2.7 GB |
+| 4B | ~3.2 GB |
+| 9B | **6.8 GB** |
+| 14B | ~9.7 GB |
+| 35B MoE | ~21.7 GB |
+
+### llama.cpp Optimization Tips
+
+1. **Flash Attention** (`-fa 1`) — reduces KV cache memory
+2. **KV cache quantization** (`--cache-type-k q8_0`) — halves context VRAM
+3. **100% GPU offload is critical** — even 4 layers to CPU = 70% speed collapse
+4. **Only 5 CPU threads** needed to saturate DDR5 bandwidth
+5. **ik_llama.cpp fork** — 1.9x faster MoE inference (relevant for Qwen3.5-35B-A3B)
 
 **Key insight:** For <2s CPU latency, we need either:
 - A model <3B with short output (<50 tokens) — see `small-model-research-2026-04-02.md`
