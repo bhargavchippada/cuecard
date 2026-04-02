@@ -535,3 +535,91 @@ class TestAllowedModels:
 
     def test_valid_hook_events_is_frozenset(self) -> None:
         assert isinstance(_VALID_HOOK_EVENTS, frozenset)
+
+
+class TestEnrichedRetrievalConfig:
+    """Tests for enriched retrieval config fields."""
+
+    def test_defaults(self, tmp_path: Path) -> None:
+        """Enriched fields default correctly when no TOML is present."""
+        home = tmp_path / "home"
+        (home / ".cuecard").mkdir(parents=True)
+        config = load_config(home_dir=home)
+        assert config.fusion_k == 60
+        assert config.sparse_enabled is True
+        assert config.expansion_max_per_rule == 10
+        assert config.expansion_max_length == 200
+
+    def test_from_global_toml(self, tmp_path: Path) -> None:
+        """Enriched fields are read from [retrieval] and [expansion]."""
+        home = tmp_path / "home"
+        cuecard_dir = home / ".cuecard"
+        cuecard_dir.mkdir(parents=True)
+        (cuecard_dir / "config.toml").write_text(
+            "[retrieval]\n"
+            "fusion_k = 100\n"
+            "sparse_enabled = false\n"
+            "\n"
+            "[expansion]\n"
+            "max_per_rule = 20\n"
+            "max_length = 150\n"
+        )
+        config = load_config(home_dir=home)
+        assert config.fusion_k == 100
+        assert config.sparse_enabled is False
+        assert config.expansion_max_per_rule == 20
+        assert config.expansion_max_length == 150
+
+    def test_project_overrides_global(self, tmp_path: Path) -> None:
+        """Project TOML overrides global for enriched fields."""
+        home = tmp_path / "home"
+        cuecard_dir = home / ".cuecard"
+        cuecard_dir.mkdir(parents=True)
+        (cuecard_dir / "config.toml").write_text(
+            "[retrieval]\nfusion_k = 100\n"
+        )
+        project = tmp_path / "project"
+        project.mkdir()
+        (project / "cuecard.toml").write_text(
+            "[retrieval]\nfusion_k = 42\n"
+        )
+        config = load_config(project_dir=project, home_dir=home)
+        assert config.fusion_k == 42
+
+    def test_extract_flat_retrieval_fields(self) -> None:
+        """_extract_flat reads fusion_k and sparse_enabled from [retrieval]."""
+        raw = {
+            "retrieval": {"fusion_k": 80, "sparse_enabled": False},
+        }
+        flat = _extract_flat(raw)
+        assert flat["fusion_k"] == 80
+        assert flat["sparse_enabled"] is False
+
+    def test_extract_flat_expansion_fields(self) -> None:
+        """_extract_flat reads max_per_rule and max_length from [expansion]."""
+        raw = {
+            "expansion": {"max_per_rule": 15, "max_length": 300},
+        }
+        flat = _extract_flat(raw)
+        assert flat["expansion_max_per_rule"] == 15
+        assert flat["expansion_max_length"] == 300
+
+    def test_fusion_k_validation(self, tmp_path: Path) -> None:
+        """fusion_k must be an integer in [1, 1000]."""
+        home = tmp_path / "home"
+        (home / ".cuecard").mkdir(parents=True)
+        (home / ".cuecard" / "config.toml").write_text(
+            "[retrieval]\nfusion_k = 0\n"
+        )
+        with pytest.raises(ConfigError, match="fusion_k"):
+            load_config(home_dir=home)
+
+    def test_sparse_enabled_validation(self, tmp_path: Path) -> None:
+        """sparse_enabled must be a boolean."""
+        home = tmp_path / "home"
+        (home / ".cuecard").mkdir(parents=True)
+        (home / ".cuecard" / "config.toml").write_text(
+            "[retrieval]\nsparse_enabled = 42\n"
+        )
+        with pytest.raises(ConfigError, match="sparse_enabled"):
+            load_config(home_dir=home)

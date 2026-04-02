@@ -16,7 +16,10 @@ from cuecard.indexer import (
     _compute_checksum,
     build_index,
     load_index,
+    load_rules_json,
+    merge_rules_json,
     save_index,
+    save_rules_json,
 )
 from cuecard.models import Index, Provenance, Rule, SourceMeta
 
@@ -174,7 +177,7 @@ class TestSaveIndex:
         with open(Path(cache_dir) / "metadata.json") as f:
             meta = json.load(f)
 
-        assert meta["version"] == 1
+        assert meta["version"] == 2
         assert meta["model"] == "BAAI/bge-small-en-v1.5"
         assert meta["dim"] == 384
         assert meta["checksum"].startswith("sha256:")
@@ -472,3 +475,484 @@ class TestComputeChecksum:
         file_b.write_bytes(b"content B")
 
         assert _compute_checksum(str(file_a)) != _compute_checksum(str(file_b))
+
+
+# --- rules.json tests ---
+
+
+class TestSaveRulesJson:
+    def test_round_trip(self, tmp_path: Path) -> None:
+        rules = [
+            Rule(
+                text="Never commit secrets",
+                provenance=Provenance(
+                    file="/tmp/rules.txt", line_start=1, line_end=1,
+                ),
+                expansions=("hardcoded API key", "AKIA in source"),
+            ),
+            Rule(
+                text="Use uv not pip",
+                provenance=Provenance(
+                    file="/tmp/rules.txt", line_start=2, line_end=2,
+                ),
+            ),
+        ]
+
+        save_rules_json(rules, str(tmp_path))
+        loaded = load_rules_json(str(tmp_path))
+
+        assert loaded is not None
+        assert len(loaded) == 2
+        assert loaded[0].text == "Never commit secrets"
+        assert loaded[0].expansions == ("hardcoded API key", "AKIA in source")
+        assert loaded[1].text == "Use uv not pip"
+        assert loaded[1].expansions == ()
+
+    def test_file_permissions(self, tmp_path: Path) -> None:
+        rules = [
+            Rule(
+                text="A rule",
+                provenance=Provenance(
+                    file="/tmp/rules.txt", line_start=1, line_end=1,
+                ),
+            ),
+        ]
+
+        save_rules_json(rules, str(tmp_path))
+        json_path = tmp_path / "rules.json"
+
+        mode = stat.S_IMODE(json_path.stat().st_mode)
+        assert mode == 0o600
+
+    def test_atomic_write(self, tmp_path: Path) -> None:
+        """Verify the file exists after save (no temp file left)."""
+        rules = [
+            Rule(
+                text="A rule",
+                provenance=Provenance(
+                    file="/tmp/rules.txt", line_start=1, line_end=1,
+                ),
+            ),
+        ]
+
+        save_rules_json(rules, str(tmp_path))
+
+        assert (tmp_path / "rules.json").exists()
+        # No temp files should remain
+        temp_files = [f for f in tmp_path.iterdir() if f.suffix != ".json"]
+        assert len(temp_files) == 0
+
+
+class TestLoadRulesJson:
+    def test_missing_file_returns_none(self, tmp_path: Path) -> None:
+        result = load_rules_json(str(tmp_path))
+        assert result is None
+
+    def test_corrupt_json_returns_none(self, tmp_path: Path) -> None:
+        (tmp_path / "rules.json").write_text("not json{{{")
+        result = load_rules_json(str(tmp_path))
+        assert result is None
+
+    def test_wrong_version_returns_none(self, tmp_path: Path) -> None:
+        data = {"version": 99, "rules": []}
+        (tmp_path / "rules.json").write_text(json.dumps(data))
+        result = load_rules_json(str(tmp_path))
+        assert result is None
+
+    def test_expansion_length_capped(self, tmp_path: Path) -> None:
+        data = {
+            "version": 1,
+            "rules": [
+                {
+                    "text": "A rule",
+                    "expansions": ["x" * 300],
+                    "source": {"file": "/tmp/r.txt", "line_start": 1, "line_end": 1},
+                },
+            ],
+        }
+        (tmp_path / "rules.json").write_text(json.dumps(data))
+
+        rules = load_rules_json(str(tmp_path))
+        assert rules is not None
+        assert len(rules[0].expansions[0]) == 200
+
+    def test_expansion_count_capped(self, tmp_path: Path) -> None:
+        data = {
+            "version": 1,
+            "rules": [
+                {
+                    "text": "A rule",
+                    "expansions": [f"exp{i}" for i in range(15)],
+                    "source": {"file": "/tmp/r.txt", "line_start": 1, "line_end": 1},
+                },
+            ],
+        }
+        (tmp_path / "rules.json").write_text(json.dumps(data))
+
+        rules = load_rules_json(str(tmp_path))
+        assert rules is not None
+        assert len(rules[0].expansions) == 10
+
+    def test_empty_text_skipped(self, tmp_path: Path) -> None:
+        data = {
+            "version": 1,
+            "rules": [
+                {"text": "", "expansions": [], "source": {}},
+                {"text": "Real rule", "expansions": [], "source": {}},
+            ],
+        }
+        (tmp_path / "rules.json").write_text(json.dumps(data))
+
+        rules = load_rules_json(str(tmp_path))
+        assert rules is not None
+        assert len(rules) == 1
+        assert rules[0].text == "Real rule"
+
+    def test_nonstring_expansions_skipped(self, tmp_path: Path) -> None:
+        data = {
+            "version": 1,
+            "rules": [
+                {
+                    "text": "A rule",
+                    "expansions": [42, None, "valid"],
+                    "source": {},
+                },
+            ],
+        }
+        (tmp_path / "rules.json").write_text(json.dumps(data))
+
+        rules = load_rules_json(str(tmp_path))
+        assert rules is not None
+        assert rules[0].expansions == ("valid",)
+
+    def test_empty_expansion_strings_skipped(self, tmp_path: Path) -> None:
+        data = {
+            "version": 1,
+            "rules": [
+                {
+                    "text": "A rule",
+                    "expansions": ["", "  ", "valid"],
+                    "source": {},
+                },
+            ],
+        }
+        (tmp_path / "rules.json").write_text(json.dumps(data))
+
+        rules = load_rules_json(str(tmp_path))
+        assert rules is not None
+        assert rules[0].expansions == ("valid",)
+
+
+class TestMergeRulesJson:
+    def test_preserves_expansions_for_unchanged_text(self) -> None:
+        prov = Provenance(file="/tmp/r.txt", line_start=1, line_end=1)
+        fresh = [Rule(text="Rule A", provenance=prov)]
+        cached = [
+            Rule(
+                text="Rule A",
+                provenance=prov,
+                expansions=("exp1", "exp2"),
+            ),
+        ]
+
+        merged = merge_rules_json(fresh, cached)
+
+        assert len(merged) == 1
+        assert merged[0].expansions == ("exp1", "exp2")
+
+    def test_new_rules_get_empty_expansions(self) -> None:
+        prov = Provenance(file="/tmp/r.txt", line_start=1, line_end=1)
+        fresh = [Rule(text="New rule", provenance=prov)]
+        cached: list[Rule] = []
+
+        merged = merge_rules_json(fresh, cached)
+
+        assert len(merged) == 1
+        assert merged[0].expansions == ()
+
+    def test_changed_text_loses_expansions(
+        self, caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        prov = Provenance(file="/tmp/r.txt", line_start=1, line_end=1)
+        fresh = [Rule(text="Rule A v2", provenance=prov)]
+        cached = [
+            Rule(
+                text="Rule A v1",
+                provenance=prov,
+                expansions=("exp1",),
+            ),
+        ]
+
+        with caplog.at_level("WARNING", logger="cuecard.indexer"):
+            merged = merge_rules_json(fresh, cached)
+
+        assert len(merged) == 1
+        assert merged[0].expansions == ()
+        assert "expansions lost" in caplog.text
+
+    def test_preserves_fresh_provenance(self) -> None:
+        old_prov = Provenance(file="/tmp/old.txt", line_start=1, line_end=1)
+        new_prov = Provenance(file="/tmp/new.txt", line_start=5, line_end=5)
+        fresh = [Rule(text="Rule A", provenance=new_prov)]
+        cached = [
+            Rule(
+                text="Rule A",
+                provenance=old_prov,
+                expansions=("exp1",),
+            ),
+        ]
+
+        merged = merge_rules_json(fresh, cached)
+
+        assert merged[0].provenance.file == "/tmp/new.txt"
+        assert merged[0].provenance.line_start == 5
+        assert merged[0].expansions == ("exp1",)
+
+
+class TestBuildIndexExpansions:
+    """Tests for expansion-aware build_index."""
+
+    def test_build_with_expansions(self) -> None:
+        """Expansions produce extra embedding rows + rule_map + bm25_corpus."""
+        rules = (
+            Rule(
+                text="Never commit secrets",
+                provenance=Provenance(
+                    file="/tmp/r.txt", line_start=1, line_end=1,
+                ),
+                expansions=("hardcoded API key", "AKIA in source"),
+            ),
+        )
+        model = _make_mock_model(dim=384, n_rules=3)
+        index = build_index(rules, {}, "test-model", model=model)
+
+        assert index.size == 1  # 1 rule
+        assert index.embeddings.shape[0] == 3  # 1 text + 2 expansions
+        assert index.rule_map == (0, 0, 0)
+        assert index.bm25_corpus == (
+            "Never commit secrets",
+            "hardcoded API key",
+            "AKIA in source",
+        )
+
+    def test_build_mixed_expansions(self) -> None:
+        """Rules with varying expansion counts produce correct mapping."""
+        rules = (
+            Rule(
+                text="Rule A",
+                provenance=Provenance(
+                    file="/tmp/r.txt", line_start=1, line_end=1,
+                ),
+                expansions=("exp A1",),
+            ),
+            Rule(
+                text="Rule B",
+                provenance=Provenance(
+                    file="/tmp/r.txt", line_start=2, line_end=2,
+                ),
+            ),
+        )
+        # 3 embeddings: rule A (text + 1 expansion) + rule B (text only)
+        model = _make_mock_model(dim=384, n_rules=3)
+        index = build_index(rules, {}, "test-model", model=model)
+
+        assert index.embeddings.shape[0] == 3
+        assert index.rule_map == (0, 0, 1)
+        assert index.bm25_corpus == ("Rule A", "exp A1", "Rule B")
+
+    def test_build_empty_rules_has_empty_fields(self) -> None:
+        """Empty rules produce empty rule_map and bm25_corpus."""
+        index = build_index((), {}, "test-model")
+
+        assert index.rule_map == ()
+        assert index.bm25_corpus == ()
+
+
+class TestSaveLoadV2:
+    """Tests for v2 metadata format with rule_map and bm25_corpus."""
+
+    def test_v2_roundtrip(self, tmp_path: Path) -> None:
+        """V2 index saves and loads rule_map, bm25_corpus, and expansions."""
+        rules = (
+            Rule(
+                text="Rule A",
+                provenance=Provenance(
+                    file="/tmp/r.txt", line_start=1, line_end=1,
+                ),
+                expansions=("exp 1", "exp 2"),
+            ),
+        )
+        rng = np.random.default_rng(42)
+        emb = rng.standard_normal((3, 384)).astype(np.float32)
+        norms = np.linalg.norm(emb, axis=1, keepdims=True)
+        emb = emb / norms
+
+        idx = Index(
+            embeddings=emb,
+            rules=rules,
+            model_name="test-model",
+            dim=384,
+            sources={},
+            rule_map=(0, 0, 0),
+            bm25_corpus=("Rule A", "exp 1", "exp 2"),
+        )
+
+        cache_dir = str(tmp_path / "v2_roundtrip")
+        save_index(idx, cache_dir)
+
+        loaded = load_index(cache_dir)
+        assert loaded is not None
+        assert loaded.rule_map == (0, 0, 0)
+        assert loaded.bm25_corpus == ("Rule A", "exp 1", "exp 2")
+        assert loaded.rules[0].expansions == ("exp 1", "exp 2")
+        assert loaded.embeddings.shape[0] == 3
+
+    def test_v1_metadata_loads_with_identity_rule_map(
+        self, tmp_path: Path, sample_index: Index,
+    ) -> None:
+        """V1 metadata (no rule_map) loads with identity mapping."""
+        cache_dir = str(tmp_path / "v1_compat")
+        save_index(sample_index, cache_dir)
+
+        # Downgrade metadata to v1
+        meta_path = Path(cache_dir) / "metadata.json"
+        with open(meta_path) as f:
+            meta = json.load(f)
+        meta["version"] = 1
+        del meta["rule_map"]
+        del meta["bm25_corpus"]
+        # Fix checksum
+        meta["checksum"] = _compute_checksum(
+            str(Path(cache_dir) / "embeddings.npz"),
+        )
+        with open(meta_path, "w") as f:
+            json.dump(meta, f)
+
+        loaded = load_index(cache_dir)
+        assert loaded is not None
+        assert loaded.rule_map == tuple(range(5))
+        assert loaded.bm25_corpus is None
+
+    def test_v2_bad_rule_map_returns_none(self, tmp_path: Path) -> None:
+        """V2 metadata with out-of-range rule_map returns None."""
+        rules = (
+            Rule(
+                text="Rule A",
+                provenance=Provenance(
+                    file="/tmp/r.txt", line_start=1, line_end=1,
+                ),
+            ),
+        )
+        emb = np.zeros((1, 384), dtype=np.float32)
+        idx = Index(
+            embeddings=emb,
+            rules=rules,
+            model_name="test",
+            dim=384,
+            sources={},
+        )
+        cache_dir = str(tmp_path / "bad_rulemap")
+        save_index(idx, cache_dir)
+
+        # Tamper rule_map to have out-of-range index
+        meta_path = Path(cache_dir) / "metadata.json"
+        with open(meta_path) as f:
+            meta = json.load(f)
+        meta["rule_map"] = [5]  # out of range
+        # Fix checksum
+        meta["checksum"] = _compute_checksum(
+            str(Path(cache_dir) / "embeddings.npz"),
+        )
+        with open(meta_path, "w") as f:
+            json.dump(meta, f)
+
+        loaded = load_index(cache_dir)
+        assert loaded is None
+
+    def test_v2_rule_map_length_mismatch_returns_none(
+        self, tmp_path: Path,
+    ) -> None:
+        """V2 with rule_map length != embedding rows returns None."""
+        rules = (
+            Rule(
+                text="Rule A",
+                provenance=Provenance(
+                    file="/tmp/r.txt", line_start=1, line_end=1,
+                ),
+            ),
+        )
+        emb = np.zeros((1, 384), dtype=np.float32)
+        idx = Index(
+            embeddings=emb,
+            rules=rules,
+            model_name="test",
+            dim=384,
+            sources={},
+        )
+        cache_dir = str(tmp_path / "mismatched_map")
+        save_index(idx, cache_dir)
+
+        # Tamper rule_map to have wrong length
+        meta_path = Path(cache_dir) / "metadata.json"
+        with open(meta_path) as f:
+            meta = json.load(f)
+        meta["rule_map"] = [0, 0, 0]  # length 3 but only 1 embedding
+        meta["checksum"] = _compute_checksum(
+            str(Path(cache_dir) / "embeddings.npz"),
+        )
+        with open(meta_path, "w") as f:
+            json.dump(meta, f)
+
+        loaded = load_index(cache_dir)
+        assert loaded is None
+
+    def test_v1_mismatched_rule_count_returns_none(
+        self, tmp_path: Path, sample_index: Index,
+    ) -> None:
+        """V1 metadata with rule count != embedding rows returns None."""
+        cache_dir = str(tmp_path / "v1_mismatch")
+        save_index(sample_index, cache_dir)
+
+        meta_path = Path(cache_dir) / "metadata.json"
+        with open(meta_path) as f:
+            meta = json.load(f)
+        # Downgrade to v1 and remove v2 fields
+        meta["version"] = 1
+        del meta["rule_map"]
+        del meta["bm25_corpus"]
+        # Keep only 2 rules but embeddings still has 5 rows
+        meta["rules"] = meta["rules"][:2]
+        meta["checksum"] = _compute_checksum(
+            str(Path(cache_dir) / "embeddings.npz"),
+        )
+        with open(meta_path, "w") as f:
+            json.dump(meta, f)
+
+        loaded = load_index(cache_dir)
+        assert loaded is None
+
+    def test_v2_bm25_corpus_none(self, tmp_path: Path) -> None:
+        """V2 with null bm25_corpus loads correctly."""
+        rules = (
+            Rule(
+                text="Rule A",
+                provenance=Provenance(
+                    file="/tmp/r.txt", line_start=1, line_end=1,
+                ),
+            ),
+        )
+        emb = np.zeros((1, 384), dtype=np.float32)
+        idx = Index(
+            embeddings=emb,
+            rules=rules,
+            model_name="test",
+            dim=384,
+            sources={},
+            bm25_corpus=None,
+        )
+        cache_dir = str(tmp_path / "no_bm25")
+        save_index(idx, cache_dir)
+
+        loaded = load_index(cache_dir)
+        assert loaded is not None
+        assert loaded.bm25_corpus is None

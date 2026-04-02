@@ -8,8 +8,9 @@ Contextual rule enforcement for AI coding agents. cuecard retrieves your most re
 
 1. **You write rules** in plain text files (coding standards, workflow guidelines, security policies)
 2. **cuecard indexes** them using semantic embeddings (jina-code, ~15ms)
-3. **On every agent action**, cuecard retrieves the most relevant rules and injects them into context
-4. **An LLM reranker** (optional, Qwen3.5-35B) filters noise and selects truly relevant rules (~1s)
+3. **Optionally, expand rules** with LLM-generated paraphrases for better matching on hard cases
+4. **On every agent action**, cuecard retrieves the most relevant rules via dense + BM25 hybrid retrieval
+5. **An LLM reranker** (optional, Qwen3.5-35B) filters noise and selects truly relevant rules (~1s)
 
 ## Supported Events
 
@@ -31,6 +32,9 @@ cuecard setup
 cuecard rules add "Use uv for all Python package operations, never pip"
 cuecard rules add "Run quality checks before every commit"
 
+# Generate expansions for better hard-case matching (optional, needs local LLM)
+cuecard rules expand --backend local --endpoint http://localhost:8081/v1
+
 # Install as Claude Code hook
 cuecard install claude-code
 
@@ -41,22 +45,46 @@ cuecard retrieve "Bash: pip install requests"
 ## Pipeline
 
 ```
-Query → Embedding retrieval (jina-code, top-20, ~15ms)
+Query → Multi-retriever (dense + BM25 sparse, ~20ms)
+      → RRF fusion
       → LLM re-ranking (Qwen3.5-35B, reasoning-in-response, ~1s)
       → Inject relevant rules into agent context
 ```
 
 **Three modes:**
-- `embedding` — fast, CPU-only, ~15ms, moderate quality
+- `embedding` — fast, CPU-only, dense + BM25 hybrid, ~20ms
 - `llm-local` — best quality, needs local LLM server, ~1s
 - `llm-haiku` — best quality, needs Anthropic API, ~500ms
 
-## Quality (438 fixtures)
+## Rule Expansions
+
+Rules are short and abstract ("Review dependencies for vulnerabilities"). Queries are concrete and code-like ("docker build -t myapp ."). Expansions bridge this vocabulary gap:
+
+```bash
+# Generate paraphrases for each rule using a local LLM
+cuecard rules expand --backend local
+
+# Only expand rules that don't have expansions yet
+cuecard rules expand --missing-only
+
+# Preview without calling LLM
+cuecard rules expand --dry-run
+```
+
+Each rule gets 5-10 trigger phrases like "docker build with untrusted base image" or "pip install new package check CVEs". These are embedded alongside the canonical rule, and the best match across all expansions is used (max-score parent collapse).
+
+**Validated improvement:** On hard fixtures, expansions raise average cosine similarity from 0.187 to 0.558 (+0.371), turning 10/12 misses into hits.
+
+## Quality (587 fixtures)
 
 | Event Type | Recall | Noise | Neg Silence | Latency |
 |-----------|--------|-------|-------------|---------|
 | PreToolUse (354 fixtures) | 42.2% | 21.4% | 92.9% | 1.1s |
 | UserPromptSubmit (84 fixtures) | 46.2% | 24.5% | 95.8% | 3.0s |
+
+*Pre-enrichment numbers. Post-enrichment benchmarks pending.*
+
+Eval dataset: 438 curated fixtures + 149 mined from real developer sessions across 7 projects.
 
 ## Local LLM Server
 
@@ -80,6 +108,8 @@ model = "jinaai/jina-embeddings-v2-base-code"
 [retrieval]
 top_k = 5
 threshold = 0.30
+fusion_k = 60              # RRF parameter
+sparse_enabled = true       # Enable BM25 hybrid retrieval
 
 [pipeline]
 mode = "llm-local"
@@ -87,6 +117,10 @@ mode = "llm-local"
 [pipeline.llm]
 local_endpoint = "http://localhost:8081/v1"
 thinking = false
+
+[expansion]
+max_per_rule = 10
+max_expansion_length = 200
 ```
 
 ## Development
@@ -96,9 +130,10 @@ uv sync
 uv run pytest --cov=cuecard --cov-fail-under=100
 uv run ruff check src/ tests/
 uv run mypy src/
+uv run mutmut run                    # Mutation testing
 ```
 
-541 tests, 100% coverage, ruff clean, mypy strict.
+735+ tests, 100% coverage, ruff clean, mypy strict.
 
 ## License
 

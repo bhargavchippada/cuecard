@@ -7,10 +7,18 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pytest
 
-from cuecard.models import PipelineResult, Provenance, RankedResult, Rule
+from cuecard.models import (
+    PipelineResult,
+    Provenance,
+    RankedResult,
+    RetrievalStageTrace,
+    Rule,
+)
 from cuecard.pipeline import run_pipeline
+from cuecard.retrievers import ScoredCandidate
 
 if TYPE_CHECKING:
     from cuecard.models import Index, ResolvedConfig
@@ -30,6 +38,23 @@ def _make_ranked_results(count: int) -> list[RankedResult]:
                 ),
             ),
             score=1.0 - i * 0.1,
+        )
+        for i in range(count)
+    ]
+
+
+def _make_scored_candidates(count: int) -> list[ScoredCandidate]:
+    """Build deterministic ScoredCandidate list for testing."""
+    return [
+        ScoredCandidate(
+            rule=Rule(
+                text=f"Rule {i}",
+                provenance=Provenance(
+                    file="/tmp/rules.txt", line_start=i, line_end=i,
+                ),
+            ),
+            score=1.0 - i * 0.1,
+            retriever="dense",
         )
         for i in range(count)
     ]
@@ -59,6 +84,8 @@ class _ConfigWithRetrieval:
     global_cache_dir: str = "/tmp"
     project_cache_dir: str | None = None
     allowed_dirs: tuple[str, ...] = ()
+    sparse_enabled: bool = True
+    fusion_k: int = 60
     retrieval: _FakeRetrieval = _FakeRetrieval()
 
 
@@ -94,32 +121,59 @@ def fake_results() -> list[RankedResult]:
     return _make_ranked_results(3)
 
 
+@pytest.fixture
+def fake_candidates() -> list[ScoredCandidate]:
+    return _make_scored_candidates(3)
+
+
 # --- test cases ---
 
 
-class TestEmbeddingOnlyMode:
-    """Stage 1 only."""
+class TestRetrievalStageMode:
+    """Stage 1 (retrieval) runs with multi-retriever + fusion."""
 
     def test_embedding_only_mode(
         self,
         sample_index: Index,
         config: ResolvedConfig,
-        fake_results: list[RankedResult],
+        fake_candidates: list[ScoredCandidate],
     ) -> None:
-        with patch("cuecard.retriever.retrieve", return_value=fake_results) as mock_ret:
+        with patch(
+            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            return_value=fake_candidates,
+        ):
             result = run_pipeline(
                 "test query", sample_index, config, mode="embedding",
             )
 
         assert isinstance(result, PipelineResult)
         assert result.mode == "embedding"
-        assert result.results == tuple(fake_results)
+        assert len(result.results) == len(fake_candidates)
         assert len(result.stages) == 1
-        assert result.stages[0].stage == "embedding"
+        assert result.stages[0].stage == "retrieval"
         assert result.stages[0].error is None
         assert result.stages[0].input_count == sample_index.size
-        assert result.stages[0].output_count == len(fake_results)
-        mock_ret.assert_called_once()
+        assert result.stages[0].output_count == len(fake_candidates)
+
+    def test_retrieval_stage_is_retrieval_stage_trace(
+        self,
+        sample_index: Index,
+        config: ResolvedConfig,
+        fake_candidates: list[ScoredCandidate],
+    ) -> None:
+        with patch(
+            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            return_value=fake_candidates,
+        ):
+            result = run_pipeline(
+                "test query", sample_index, config, mode="embedding",
+            )
+
+        trace = result.stages[0]
+        assert isinstance(trace, RetrievalStageTrace)
+        assert len(trace.retrievers) >= 1
+        assert trace.retrievers[0].name == "dense"
+        assert trace.fusion_latency_ms >= 0.0
 
 
 class TestRerankModeGraceful:
@@ -129,13 +183,16 @@ class TestRerankModeGraceful:
         self,
         sample_index: Index,
         config: ResolvedConfig,
-        fake_results: list[RankedResult],
+        fake_candidates: list[ScoredCandidate],
     ) -> None:
         import cuecard
 
         real_mod = getattr(cuecard, "reranker", None)
         with (
-            patch("cuecard.retriever.retrieve", return_value=fake_results),
+            patch(
+                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                return_value=fake_candidates,
+            ),
             patch.dict(sys.modules, {"cuecard.reranker": None}),
         ):
             if hasattr(cuecard, "reranker"):
@@ -149,9 +206,9 @@ class TestRerankModeGraceful:
                     cuecard.reranker = real_mod  # type: ignore[attr-defined]
 
         assert result.mode == "rerank"
-        assert result.results == tuple(fake_results)
+        assert len(result.results) == len(fake_candidates)
         assert len(result.stages) == 2
-        assert result.stages[0].stage == "embedding"
+        assert result.stages[0].stage == "retrieval"
         assert result.stages[0].error is None
         assert result.stages[1].stage == "rerank"
         assert result.stages[1].error is not None
@@ -165,7 +222,7 @@ class TestLLMModeGraceful:
         self,
         sample_index: Index,
         config: ResolvedConfig,
-        fake_results: list[RankedResult],
+        fake_candidates: list[ScoredCandidate],
     ) -> None:
         import cuecard
 
@@ -174,7 +231,10 @@ class TestLLMModeGraceful:
             "llm_reranker": getattr(cuecard, "llm_reranker", None),
         }
         with (
-            patch("cuecard.retriever.retrieve", return_value=fake_results),
+            patch(
+                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                return_value=fake_candidates,
+            ),
             patch.dict(
                 sys.modules,
                 {"cuecard.reranker": None, "cuecard.llm_reranker": None},
@@ -194,7 +254,7 @@ class TestLLMModeGraceful:
                         setattr(cuecard, attr, mod)
 
         assert result.mode == "rerank-llm-local"
-        assert result.results == tuple(fake_results)
+        assert len(result.results) == len(fake_candidates)
         assert len(result.stages) == 3
         assert result.stages[1].error is not None
         assert result.stages[2].stage == "llm"
@@ -204,7 +264,7 @@ class TestLLMModeGraceful:
         self,
         sample_index: Index,
         config: ResolvedConfig,
-        fake_results: list[RankedResult],
+        fake_candidates: list[ScoredCandidate],
     ) -> None:
         import cuecard
 
@@ -213,7 +273,10 @@ class TestLLMModeGraceful:
             "llm_reranker": getattr(cuecard, "llm_reranker", None),
         }
         with (
-            patch("cuecard.retriever.retrieve", return_value=fake_results),
+            patch(
+                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                return_value=fake_candidates,
+            ),
             patch.dict(
                 sys.modules,
                 {"cuecard.reranker": None, "cuecard.llm_reranker": None},
@@ -265,10 +328,9 @@ class TestEmptyIndex:
             dim=384,
             sources={},
         )
-        with patch("cuecard.retriever.retrieve", return_value=[]):
-            result = run_pipeline(
-                "test query", empty_index, config, mode="embedding",
-            )
+        result = run_pipeline(
+            "test query", empty_index, config, mode="embedding",
+        )
 
         assert result.results == ()
         assert result.stages[0].input_count == 0
@@ -281,7 +343,7 @@ class TestModeFromConfig:
     def test_mode_from_config_with_pipeline_attr(
         self,
         sample_index: Index,
-        fake_results: list[RankedResult],
+        fake_candidates: list[ScoredCandidate],
     ) -> None:
         """config.pipeline.mode is used when no explicit mode."""
         from cuecard.models import PipelineConfig, ResolvedConfig
@@ -305,7 +367,10 @@ class TestModeFromConfig:
             pipeline=PipelineConfig(mode="rerank"),
         )
         with (
-            patch("cuecard.retriever.retrieve", return_value=fake_results),
+            patch(
+                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                return_value=fake_candidates,
+            ),
             patch(
                 "cuecard.reranker.rerank",
                 side_effect=RuntimeError("stub"),
@@ -320,9 +385,12 @@ class TestModeFromConfig:
         self,
         sample_index: Index,
         config: ResolvedConfig,
-        fake_results: list[RankedResult],
+        fake_candidates: list[ScoredCandidate],
     ) -> None:
-        with patch("cuecard.retriever.retrieve", return_value=fake_results):
+        with patch(
+            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            return_value=fake_candidates,
+        ):
             result = run_pipeline(
                 "test query", sample_index, config, mode=None,
             )
@@ -331,7 +399,7 @@ class TestModeFromConfig:
     def test_mode_default_bare_config(
         self,
         sample_index: Index,
-        fake_results: list[RankedResult],
+        fake_candidates: list[ScoredCandidate],
     ) -> None:
         """Config with neither pipeline nor retrieval falls back to embedding."""
 
@@ -343,9 +411,14 @@ class TestModeFromConfig:
             threshold: float = 0.30
             dedup_threshold: float = 0.95
             query_max_length: int = 500
+            sparse_enabled: bool = True
+            fusion_k: int = 60
 
         cfg = _BareConfig()
-        with patch("cuecard.retriever.retrieve", return_value=fake_results):
+        with patch(
+            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            return_value=fake_candidates,
+        ):
             result = run_pipeline(
                 "test query", sample_index, cfg, mode=None,  # type: ignore[arg-type]
             )
@@ -359,26 +432,32 @@ class TestStageTraces:
         self,
         sample_index: Index,
         config: ResolvedConfig,
-        fake_results: list[RankedResult],
+        fake_candidates: list[ScoredCandidate],
     ) -> None:
-        with patch("cuecard.retriever.retrieve", return_value=fake_results):
+        with patch(
+            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            return_value=fake_candidates,
+        ):
             result = run_pipeline(
                 "test query", sample_index, config, mode="embedding",
             )
 
         trace = result.stages[0]
-        assert trace.stage == "embedding"
+        assert trace.stage == "retrieval"
         assert trace.input_count == sample_index.size
-        assert trace.output_count == len(fake_results)
+        assert trace.output_count == len(fake_candidates)
         assert trace.error is None
 
     def test_embedding_stage_timing(
         self,
         sample_index: Index,
         config: ResolvedConfig,
-        fake_results: list[RankedResult],
+        fake_candidates: list[ScoredCandidate],
     ) -> None:
-        with patch("cuecard.retriever.retrieve", return_value=fake_results):
+        with patch(
+            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            return_value=fake_candidates,
+        ):
             result = run_pipeline(
                 "test query", sample_index, config, mode="embedding",
             )
@@ -392,13 +471,17 @@ class TestMockReranker:
         self,
         sample_index: Index,
         config: ResolvedConfig,
+        fake_candidates: list[ScoredCandidate],
         fake_results: list[RankedResult],
     ) -> None:
         reranked = fake_results[:2]
         mock_rerank = MagicMock(return_value=reranked)
 
         with (
-            patch("cuecard.retriever.retrieve", return_value=fake_results),
+            patch(
+                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                return_value=fake_candidates,
+            ),
             patch("cuecard.reranker.rerank", mock_rerank),
         ):
             result = run_pipeline(
@@ -416,21 +499,25 @@ class TestMockReranker:
         self,
         sample_index: Index,
         config: ResolvedConfig,
-        fake_results: list[RankedResult],
+        fake_candidates: list[ScoredCandidate],
     ) -> None:
         mock_rerank = MagicMock(
             side_effect=RuntimeError("model failed"),
         )
 
         with (
-            patch("cuecard.retriever.retrieve", return_value=fake_results),
+            patch(
+                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                return_value=fake_candidates,
+            ),
             patch("cuecard.reranker.rerank", mock_rerank),
         ):
             result = run_pipeline(
                 "test query", sample_index, config, mode="rerank",
             )
 
-        assert result.results == tuple(fake_results)  # degraded to Stage 1
+        # Degraded to Stage 1
+        assert len(result.results) == len(fake_candidates)
         assert result.stages[1].error == "model failed"
 
 
@@ -441,6 +528,7 @@ class TestMockLLMReranker:
         self,
         sample_index: Index,
         config: ResolvedConfig,
+        fake_candidates: list[ScoredCandidate],
         fake_results: list[RankedResult],
     ) -> None:
         llm_reranked = fake_results[:1]
@@ -448,7 +536,10 @@ class TestMockLLMReranker:
         mock_llm_rerank = MagicMock(return_value=llm_reranked)
 
         with (
-            patch("cuecard.retriever.retrieve", return_value=fake_results),
+            patch(
+                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                return_value=fake_candidates,
+            ),
             patch("cuecard.reranker.rerank", mock_rerank),
             patch("cuecard.llm_reranker.rerank_llm", mock_llm_rerank),
         ):
@@ -469,6 +560,7 @@ class TestMockLLMReranker:
         self,
         sample_index: Index,
         config: ResolvedConfig,
+        fake_candidates: list[ScoredCandidate],
         fake_results: list[RankedResult],
     ) -> None:
         mock_rerank = MagicMock(return_value=fake_results)
@@ -477,7 +569,10 @@ class TestMockLLMReranker:
         )
 
         with (
-            patch("cuecard.retriever.retrieve", return_value=fake_results),
+            patch(
+                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                return_value=fake_candidates,
+            ),
             patch("cuecard.reranker.rerank", mock_rerank),
             patch("cuecard.llm_reranker.rerank_llm", mock_llm_rerank),
         ):
@@ -485,7 +580,8 @@ class TestMockLLMReranker:
                 "test query", sample_index, config, mode="rerank-llm-haiku",
             )
 
-        assert result.results == tuple(fake_results)  # degraded
+        # Degraded to rerank stage results
+        assert result.results == tuple(fake_results)
         assert result.stages[2].error == "LLM timeout"
 
 
@@ -495,7 +591,7 @@ class TestRecallParams:
     def test_rerank_mode_uses_recall_params(
         self,
         sample_index: Index,
-        fake_results: list[RankedResult],
+        fake_candidates: list[ScoredCandidate],
     ) -> None:
         cfg = _ConfigWithRetrieval(
             retrieval=_FakeRetrieval(
@@ -503,7 +599,10 @@ class TestRecallParams:
             ),
         )
         with (
-            patch("cuecard.retriever.retrieve", return_value=fake_results) as mock_ret,
+            patch(
+                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                return_value=fake_candidates,
+            ) as mock_ret,
             patch(
                 "cuecard.reranker.rerank",
                 side_effect=RuntimeError("stub"),
@@ -514,17 +613,21 @@ class TestRecallParams:
             )
 
         call_kwargs = mock_ret.call_args
-        assert call_kwargs.kwargs["top_k"] == 30
-        assert call_kwargs.kwargs["threshold"] == 0.05
+        # LLM modes use wider recall: top_k=20, threshold=0.20
+        assert call_kwargs.kwargs["top_k"] == 20
+        assert call_kwargs.kwargs["threshold"] == 0.20
 
     def test_rerank_mode_uses_defaults_without_retrieval_attr(
         self,
         sample_index: Index,
         config: ResolvedConfig,
-        fake_results: list[RankedResult],
+        fake_candidates: list[ScoredCandidate],
     ) -> None:
         with (
-            patch("cuecard.retriever.retrieve", return_value=fake_results) as mock_ret,
+            patch(
+                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                return_value=fake_candidates,
+            ) as mock_ret,
             patch(
                 "cuecard.reranker.rerank",
                 side_effect=RuntimeError("stub"),
@@ -545,10 +648,13 @@ class TestModeOverride:
     def test_mode_override_parameter(
         self,
         sample_index: Index,
-        fake_results: list[RankedResult],
+        fake_candidates: list[ScoredCandidate],
     ) -> None:
         cfg = _ConfigWithRetrieval(retrieval=_FakeRetrieval(mode="rerank"))
-        with patch("cuecard.retriever.retrieve", return_value=fake_results):
+        with patch(
+            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            return_value=fake_candidates,
+        ):
             result = run_pipeline(
                 "test query",
                 sample_index,
@@ -557,3 +663,169 @@ class TestModeOverride:
             )
         assert result.mode == "embedding"
         assert len(result.stages) == 1  # only Stage 1
+
+
+class TestSparseRetrieverIntegration:
+    """Sparse retriever runs when bm25_corpus is available."""
+
+    def test_sparse_retriever_runs_with_bm25_corpus(
+        self,
+        config: ResolvedConfig,
+    ) -> None:
+        """Pipeline runs sparse when bm25_corpus present."""
+        import numpy as np
+
+        from cuecard.models import Index
+
+        rules = tuple(
+            Rule(
+                text=f"Rule {i}",
+                provenance=Provenance(
+                    file="/tmp/r.txt", line_start=i, line_end=i,
+                ),
+            )
+            for i in range(3)
+        )
+        emb = np.eye(3, 8, dtype=np.float32)
+        corpus = ("commit secrets", "uv packages", "validate input")
+        idx = Index(
+            embeddings=emb,
+            rules=rules,
+            model_name="test",
+            dim=8,
+            sources={},
+            bm25_corpus=corpus,
+        )
+
+        dense_cands = _make_scored_candidates(2)
+        sparse_cands = [
+            ScoredCandidate(
+                rule=rules[2],
+                score=3.0,
+                retriever="sparse",
+            ),
+        ]
+
+        with (
+            patch(
+                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                return_value=dense_cands,
+            ),
+            patch(
+                "cuecard.retrievers.sparse.SparseRetriever.retrieve",
+                return_value=sparse_cands,
+            ),
+        ):
+            result = run_pipeline(
+                "test query", idx, config, mode="embedding",
+            )
+
+        trace = result.stages[0]
+        assert isinstance(trace, RetrievalStageTrace)
+        assert len(trace.retrievers) == 2
+        assert trace.retrievers[0].name == "dense"
+        assert trace.retrievers[1].name == "sparse"
+        assert trace.fusion_latency_ms >= 0.0
+        # Results should be fused
+        assert len(result.results) > 0
+
+    def test_sparse_disabled_skips(
+        self,
+    ) -> None:
+        """sparse_enabled=False skips sparse retriever."""
+        import numpy as np
+
+        from cuecard.models import Index
+
+        @dataclass(frozen=True)
+        class _CfgSparseOff:
+            source_paths: tuple[str, ...] = ()
+            model_name: str = "test"
+            top_k: int = 5
+            threshold: float = 0.30
+            dedup_threshold: float = 0.95
+            query_max_length: int = 500
+            sparse_enabled: bool = False
+            fusion_k: int = 60
+
+        rules = tuple(
+            Rule(
+                text=f"Rule {i}",
+                provenance=Provenance(
+                    file="/tmp/r.txt", line_start=i, line_end=i,
+                ),
+            )
+            for i in range(2)
+        )
+        emb = np.eye(2, 8, dtype=np.float32)
+        idx = Index(
+            embeddings=emb,
+            rules=rules,
+            model_name="test",
+            dim=8,
+            sources={},
+            bm25_corpus=("a", "b"),
+        )
+
+        dense_cands = _make_scored_candidates(2)
+        with patch(
+            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            return_value=dense_cands,
+        ):
+            result = run_pipeline(
+                "test", idx, _CfgSparseOff(),  # type: ignore[arg-type]
+                mode="embedding",
+            )
+
+        trace = result.stages[0]
+        assert isinstance(trace, RetrievalStageTrace)
+        # Only dense retriever
+        assert len(trace.retrievers) == 1
+        assert trace.retrievers[0].name == "dense"
+
+    def test_sparse_failure_falls_back_to_dense(
+        self,
+        fake_candidates: list[ScoredCandidate],
+        config: ResolvedConfig,
+    ) -> None:
+        """Sparse retriever failure degrades gracefully to dense-only."""
+        from cuecard.models import Index as IndexClass
+
+        rules = tuple(
+            Rule(
+                text=f"Rule {i}",
+                provenance=Provenance(
+                    file="/tmp/r.txt", line_start=i, line_end=i,
+                ),
+            )
+            for i in range(2)
+        )
+        emb = np.eye(2, 8, dtype=np.float32)
+        idx = IndexClass(
+            embeddings=emb,
+            rules=rules,
+            model_name="test",
+            dim=8,
+            sources={},
+            rule_map=(0, 1),
+            bm25_corpus=("rule 0", "rule 1"),
+        )
+
+        with (
+            patch(
+                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                return_value=fake_candidates,
+            ),
+            patch(
+                "cuecard.retrievers.sparse.SparseRetriever.retrieve",
+                side_effect=RuntimeError("BM25 crashed"),
+            ),
+        ):
+            result = run_pipeline(
+                "test", idx, config, mode="embedding",
+            )
+
+        # Pipeline succeeds with dense results despite sparse failure
+        assert result.results
+        trace = result.stages[0]
+        assert isinstance(trace, RetrievalStageTrace)

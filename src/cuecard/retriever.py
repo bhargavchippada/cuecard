@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import logging
 import re
+from collections import defaultdict
 from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
 
 from cuecard._math import l2_normalize
-from cuecard.models import Index, RankedResult, Rule
+from cuecard.models import Index, RankedResult, Rule, SourceMeta
 
 if TYPE_CHECKING:
     from fastembed import TextEmbedding
@@ -85,55 +86,82 @@ def retrieve(
     query_vec = l2_normalize(query_vec)  # (1, dim)
 
     # --- dot product (== cosine because embeddings are L2-normalized) ---
-    scores: npt.NDArray[np.floating] = (
+    raw_scores: npt.NDArray[np.floating] = (
         index.embeddings @ query_vec.T
-    ).flatten()  # (N,)
+    ).flatten()  # (total_embeddings,)
 
-    # --- threshold filter ---
-    mask = scores >= threshold
+    # --- parent collapse: max score per parent rule via rule_map ---
+    num_rules = len(index.rules)
+    parent_scores = np.full(num_rules, -np.inf)
+    np.maximum.at(parent_scores, list(index.rule_map), raw_scores)
+
+    # --- threshold filter (on parent scores) ---
+    mask = parent_scores >= threshold
     candidate_idxs = np.where(mask)[0]
 
     if candidate_idxs.size == 0:
         return []
 
     # --- sort descending ---
-    order = np.argsort(-scores[candidate_idxs])
+    order = np.argsort(-parent_scores[candidate_idxs])
     sorted_idxs = candidate_idxs[order]
 
-    # --- semantic dedup ---
+    # --- precompute canonical embedding row per parent ---
+    canonical_row: dict[int, int] = {}
+    for emb_idx, parent_idx in enumerate(index.rule_map):
+        if parent_idx not in canonical_row:
+            canonical_row[parent_idx] = emb_idx
+
+    # --- semantic dedup on canonical embeddings ---
     accepted_idxs: list[int] = []
     for idx in sorted_idxs:
         idx_int: int = int(idx)
+        emb_row = canonical_row[idx_int]
         if _is_near_duplicate(
-            idx_int, accepted_idxs, index.embeddings, dedup_threshold,
+            emb_row,
+            [canonical_row[a] for a in accepted_idxs],
+            index.embeddings,
+            dedup_threshold,
         ):
             continue
         accepted_idxs.append(idx_int)
         if len(accepted_idxs) == top_k:
             break
 
-    # --- build results ---
+    # --- build results (accepted_idxs are parent rule indices) ---
     return [
-        RankedResult(rule=index.rules[i], score=float(scores[i]))
+        RankedResult(rule=index.rules[i], score=float(parent_scores[i]))
         for i in accepted_idxs
     ]
 
 
-def merge_indexes(*indexes: Index) -> tuple[npt.NDArray[np.floating], tuple[Rule, ...]]:
+def merge_indexes(*indexes: Index) -> Index:
     """Merge multiple indexes, deduplicating rules with identical text.
+
+    Returns an ``Index`` with all unique rules and their embeddings
+    (including expansion embeddings), properly remapped ``rule_map``
+    and concatenated ``bm25_corpus``.
 
     Args:
         indexes: One or more :class:`Index` instances.
 
     Returns:
-        ``(embeddings, rules)`` tuple with exact-text duplicates removed
+        Merged ``Index`` with exact-text duplicates removed
         (first occurrence wins).
 
     Raises:
         ValueError: If *model_name* or *dim* differs across indexes.
     """
     if not indexes:
-        return np.empty((0, 0), dtype=np.float32), ()
+        return Index(
+            embeddings=np.empty((0, 0), dtype=np.float32),
+            rules=(),
+            model_name="",
+            dim=0,
+            sources={},
+            rule_map=(),
+            bm25_corpus=None,
+        )
 
     # --- validate compatibility ---
     ref = indexes[0]
@@ -148,24 +176,61 @@ def merge_indexes(*indexes: Index) -> tuple[npt.NDArray[np.floating], tuple[Rule
             msg = f"Dimension mismatch: {ref.dim} vs {idx.dim}"
             raise ValueError(msg)
 
-    # --- exact-text dedup (first occurrence wins) ---
+    # --- exact-text dedup with expansion embedding support ---
+    # If ANY index lacks bm25_corpus, discard BM25 for the merged result
+    # (avoids misalignment between rule_map and bm25_corpus lengths)
+    all_have_bm25 = all(idx.bm25_corpus is not None for idx in indexes)
+
     seen_texts: set[str] = set()
-    keep_embs: list[npt.NDArray[np.floating]] = []
     keep_rules: list[Rule] = []
+    keep_embs: list[npt.NDArray[np.floating]] = []
+    keep_rule_map: list[int] = []
+    keep_bm25: list[str] = []
+    merged_sources: dict[str, SourceMeta] = {}
 
     for idx in indexes:
-        for i, rule in enumerate(idx.rules):
+        merged_sources.update(idx.sources)
+
+        # Precompute parent → embedding rows for O(E) instead of O(R×E)
+        rows_by_parent: dict[int, list[int]] = defaultdict(list)
+        for emb_idx, parent in enumerate(idx.rule_map):
+            rows_by_parent[parent].append(emb_idx)
+
+        for rule_idx, rule in enumerate(idx.rules):
             if rule.text in seen_texts:
                 continue
             seen_texts.add(rule.text)
-            keep_embs.append(idx.embeddings[i])
+            new_parent = len(keep_rules)
             keep_rules.append(rule)
 
+            # Copy ALL embedding rows for this parent rule
+            for emb_idx in rows_by_parent.get(rule_idx, []):
+                keep_embs.append(idx.embeddings[emb_idx])
+                keep_rule_map.append(new_parent)
+                if all_have_bm25 and idx.bm25_corpus is not None:
+                    keep_bm25.append(idx.bm25_corpus[emb_idx])
+
     if not keep_rules:
-        return np.empty((0, ref.dim), dtype=np.float32), ()
+        return Index(
+            embeddings=np.empty((0, ref.dim), dtype=np.float32),
+            rules=(),
+            model_name=ref.model_name,
+            dim=ref.dim,
+            sources=merged_sources,
+            rule_map=(),
+            bm25_corpus=None,
+        )
 
     embeddings = np.stack(keep_embs, axis=0)
-    return embeddings, tuple(keep_rules)
+    return Index(
+        embeddings=embeddings,
+        rules=tuple(keep_rules),
+        model_name=ref.model_name,
+        dim=ref.dim,
+        sources=merged_sources,
+        rule_map=tuple(keep_rule_map),
+        bm25_corpus=tuple(keep_bm25) if all_have_bm25 else None,
+    )
 
 
 # --- private helpers ---

@@ -19,10 +19,10 @@ Never use eval() or exec() in production code
 Always handle errors explicitly, never silently swallow exceptions
 Use type hints on all function signatures
 Keep functions under 50 lines, files under 400 lines
-Extract magic numbers and hardcoded values into named constants
+Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants
 Prefer immutable data structures over mutable ones
 Use asyncio for I/O-bound operations, not threads
-Always close file handles, database connections, network sockets, and other resources
+Always close file handles, database connections, network sockets, HTTP sessions, and other resources
 Rotate any secrets that may have been exposed
 Review all dependencies for known vulnerabilities before adding
 Never force-push to main or master branch

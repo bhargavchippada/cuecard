@@ -526,3 +526,74 @@ class TestCrossProjectIsolation:
         rule_texts = {r.text for r in result.rules}
         assert "Project A secret rule" not in rule_texts
         assert "Project B rule" in rule_texts
+
+
+class TestRulesJsonIntegration:
+    """Test that _load_or_rebuild_scope preserves expansions via rules.json."""
+
+    def test_rebuild_preserves_expansions(self, tmp_path: Path) -> None:
+        """When rebuilding, expansions from cached rules.json are preserved."""
+        cache_dir = str(tmp_path / "cache")
+        rules_txt = tmp_path / "rules.txt"
+        rules_txt.write_text("Never commit secrets\n")
+
+        # Pre-populate rules.json with expansions
+        import json
+        import os
+
+        cache_path = tmp_path / "cache"
+        cache_path.mkdir()
+        rules_json = {
+            "version": 1,
+            "rules": [
+                {
+                    "text": "Never commit secrets",
+                    "expansions": ["hardcoded API key", "AKIA in source"],
+                    "source": {
+                        "file": str(rules_txt.resolve()),
+                        "line_start": 1,
+                        "line_end": 1,
+                        "chunk_type": "rule",
+                    },
+                },
+            ],
+        }
+        json_path = cache_path / "rules.json"
+        json_path.write_text(json.dumps(rules_json))
+        os.chmod(str(json_path), 0o600)
+
+        # Mock the model + freshness to force rebuild
+        # 3 embeddings: 1 rule text + 2 expansions
+        mock_model = MagicMock()
+        rng = np.random.default_rng(42)
+        emb = rng.standard_normal((3, 384)).astype(np.float32)
+        mock_model.passage_embed.return_value = iter(emb)
+
+        with patch("cuecard.loader.check_freshness") as mock_fresh:
+            mock_fresh.return_value = FreshnessResult(
+                is_stale=False,
+                changed_files=(),
+                new_files=(),
+                removed_files=(),
+                updated_sources=MappingProxyType({
+                    str(rules_txt.resolve()): SourceMeta(
+                        mtime=1.0, content_hash="sha256:abc", rule_count=1,
+                    ),
+                }),
+            )
+
+            result = _load_or_rebuild_scope(
+                cache_dir=cache_dir,
+                source_paths=(str(rules_txt),),
+                model_name="test-model",
+                model=mock_model,
+                reindex=True,
+            )
+
+        assert result is not None
+        # Verify the rules.json was updated with preserved expansions
+        from cuecard.indexer import load_rules_json
+
+        loaded = load_rules_json(cache_dir)
+        assert loaded is not None
+        assert loaded[0].expansions == ("hardcoded API key", "AKIA in source")

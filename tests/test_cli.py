@@ -910,6 +910,28 @@ class TestRulesRemove:
         assert result.exit_code == 1
         assert "Edit the file directly" in result.output
 
+    def test_remove_outside_source_paths(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        # Rule with provenance pointing outside configured sources
+        outside_rule = Rule(
+            text="malicious rule",
+            provenance=Provenance(
+                file="/etc/important.txt",
+                line_start=1,
+                line_end=1,
+            ),
+        )
+        with patch("cuecard.parser.parse_rules", return_value=[outside_rule]):
+            result = runner.invoke(app, ["rules", "remove", "1"])
+
+        assert result.exit_code == 1
+        assert "not in configured source paths" in result.output
+
     def test_remove_line_not_found(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
@@ -1018,6 +1040,125 @@ class TestRulesSources:
         result = runner.invoke(app, ["rules", "sources"])
         assert result.exit_code == 0
         assert "No sources configured" in result.output
+
+
+# ---------------------------------------------------------------------------
+# rules expand
+# ---------------------------------------------------------------------------
+
+
+class TestRulesExpand:
+    def test_expand_dry_run(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        result = runner.invoke(app, ["rules", "expand", "--dry-run"])
+        assert result.exit_code == 0
+        assert "would expand" in result.output
+
+    def test_expand_no_rules(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        cuecard_dir = tmp_path / ".cuecard"
+        cuecard_dir.mkdir()
+        (cuecard_dir / "config.toml").write_text(
+            "[sources]\n"
+            'rules = ["rules/empty.txt"]\n\n'
+            "[embedding]\n"
+            'model = "BAAI/bge-small-en-v1.5"\n'
+        )
+        (cuecard_dir / "rules").mkdir()
+        (cuecard_dir / "rules" / "empty.txt").write_text("# no rules\n")
+        monkeypatch.chdir(tmp_path)
+        result = runner.invoke(app, ["rules", "expand"])
+        assert result.exit_code == 0
+        assert "no rules" in result.output
+
+    def test_expand_success(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        with patch(
+            "cuecard.expander.call_local",
+            return_value='{"expansions": ["expansion A"]}',
+        ):
+            result = runner.invoke(
+                app,
+                ["rules", "expand", "--endpoint", "http://localhost:8081/v1"],
+            )
+        assert result.exit_code == 0
+        assert "total expansions" in result.output
+        assert "new" in result.output
+
+    def test_expand_llm_error(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        with patch(
+            "cuecard.expander.call_local",
+            side_effect=ValueError("bad backend"),
+        ):
+            result = runner.invoke(
+                app,
+                ["rules", "expand", "--endpoint", "http://localhost:8081/v1"],
+            )
+        assert result.exit_code == 1
+        assert "failed" in result.output.lower() or "error" in result.output.lower()
+
+    def test_expand_empty_rules_json(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Rules.json exists but has zero rules."""
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        # Write an empty rules.json
+        cache_dir = tmp_path / ".cuecard" / "index"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        (cache_dir / "rules.json").write_text(
+            '{"version": 1, "rules": []}',
+        )
+
+        with patch(
+            "cuecard.indexer.load_rules_json", return_value=[],
+        ):
+            result = runner.invoke(
+                app,
+                ["rules", "expand", "--endpoint", "http://localhost:8081/v1"],
+            )
+        assert result.exit_code == 0
+        assert "no rules" in result.output
+
+    def test_expand_missing_only(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        with patch(
+            "cuecard.expander.call_local",
+            return_value='{"expansions": ["new exp"]}',
+        ):
+            result = runner.invoke(
+                app,
+                [
+                    "rules", "expand",
+                    "--missing-only",
+                    "--endpoint", "http://localhost:8081/v1",
+                ],
+            )
+        assert result.exit_code == 0
 
 
 # ---------------------------------------------------------------------------

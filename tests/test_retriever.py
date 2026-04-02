@@ -244,6 +244,113 @@ class TestRetrieve:
 
         assert "truncated" not in caplog.text.lower()
 
+    def test_parent_collapse_expansion_score_propagates(self) -> None:
+        """Expansion embedding score propagates to parent via np.maximum.at.
+
+        1 rule with 3 embedding rows (canonical + 2 expansions).
+        Query matches expansion 2 best. The returned score must equal
+        the MAX across all 3 rows, not just the canonical row.
+        """
+        dim = 8
+        # Canonical: points mostly in dim 0
+        canonical = _l2(np.array([[1.0, 0.1, 0, 0, 0, 0, 0, 0]], dtype=np.float32))
+        # Expansion 1: points mostly in dim 1
+        exp1 = _l2(np.array([[0.1, 1.0, 0, 0, 0, 0, 0, 0]], dtype=np.float32))
+        # Expansion 2: points mostly in dim 2
+        exp2 = _l2(np.array([[0, 0, 1.0, 0, 0, 0, 0, 0]], dtype=np.float32))
+
+        embs = np.vstack([canonical, exp1, exp2])
+        rules = (_rule("parent rule"),)
+        idx = Index(
+            embeddings=embs,
+            rules=rules,
+            model_name="BAAI/bge-small-en-v1.5",
+            dim=dim,
+            sources={},
+            rule_map=(0, 0, 0),  # all 3 rows map to rule 0
+        )
+
+        # Query aligned with expansion 2 (dim 2)
+        query_vec = np.zeros(dim, dtype=np.float32)
+        query_vec[2] = 1.0
+        model = _make_model(query_vec)
+
+        results = retrieve(idx, "q", model=model, threshold=0.0)
+
+        assert len(results) == 1
+        assert results[0].rule.text == "parent rule"
+        # Score should be dot(exp2, query) which is ~1.0 (both unit vectors in dim 2)
+        # NOT dot(canonical, query) which is ~0.0
+        assert results[0].score > 0.95
+
+    def test_parent_collapse_max_not_mean(self) -> None:
+        """Parent collapse uses MAX, not MEAN across expansions.
+
+        If it used mean, the score would be dragged down by low-scoring rows.
+        """
+        dim = 4
+        # Rule 0: canonical (orthogonal to query) + expansion (aligned with query)
+        row0 = _l2(np.array([[0, 1, 0, 0]], dtype=np.float32))  # score ≈ 0
+        row1 = _l2(np.array([[1, 0, 0, 0]], dtype=np.float32))  # score ≈ 1
+        embs = np.vstack([row0, row1])
+        rules = (_rule("collapsed rule"),)
+        idx = Index(
+            embeddings=embs,
+            rules=rules,
+            model_name="BAAI/bge-small-en-v1.5",
+            dim=dim,
+            sources={},
+            rule_map=(0, 0),
+        )
+
+        query_vec = np.array([1, 0, 0, 0], dtype=np.float32)
+        model = _make_model(query_vec)
+
+        results = retrieve(idx, "q", model=model, threshold=0.0)
+
+        assert len(results) == 1
+        # MAX should give ≈ 1.0, MEAN would give ≈ 0.5
+        assert results[0].score > 0.9
+
+    def test_dedup_continue_not_break_preserves_later_rules(self) -> None:
+        """Dedup 'continue' skips the dup but keeps scanning.
+
+        If 'continue' were replaced by 'break', the loop would stop
+        after the first near-duplicate and miss rule 3.
+
+        Setup: rule A and rule B are near-duplicates (cosine > 0.95).
+        rule C is distant. After dedup: A and C should be returned.
+        If 'continue' were 'break': only A would be returned.
+        """
+        base = _l2(np.array([[1.0, 0, 0, 0, 0, 0, 0, 0]], dtype=np.float32))
+        near_dup = _l2(np.array(
+            [[1.0, 0.02, 0, 0, 0, 0, 0, 0]], dtype=np.float32,
+        ))
+        distant = _l2(np.array(
+            [[0, 0, 0, 0, 0, 0, 0, 1.0]], dtype=np.float32,
+        ))
+
+        embs = np.vstack([base, near_dup, distant])
+        rules = (_rule("rule A"), _rule("rule B", 2), _rule("rule C", 3))
+        idx = _make_index(embs, rules)
+
+        # Mix query: mostly dim 0 + bit of dim 7 so all 3 pass threshold
+        query_vec = _l2(np.array(
+            [0.9, 0, 0, 0, 0, 0, 0, 0.4], dtype=np.float32,
+        )).flatten()
+        model = _make_model(query_vec)
+
+        results = retrieve(
+            idx, "q", model=model, threshold=0.0,
+            dedup_threshold=0.95, top_k=10,
+        )
+
+        result_texts = [r.rule.text for r in results]
+        assert "rule A" in result_texts
+        assert "rule B" not in result_texts  # deduped
+        assert "rule C" in result_texts  # must survive — 'continue' kept scanning
+        assert len(result_texts) == 2
+
 
 # ---------------------------------------------------------------------------
 # TestMergeIndexes
@@ -263,11 +370,11 @@ class TestMergeIndexes:
         idx1 = _make_index(emb1, rules1)
         idx2 = _make_index(emb2, rules2)
 
-        merged_embs, merged_rules = merge_indexes(idx1, idx2)
+        merged = merge_indexes(idx1, idx2)
 
-        assert merged_embs.shape == (3, dim)
-        assert len(merged_rules) == 3
-        assert [r.text for r in merged_rules] == ["rule 1", "rule 2", "rule 3"]
+        assert merged.embeddings.shape == (3, dim)
+        assert len(merged.rules) == 3
+        assert [r.text for r in merged.rules] == ["rule 1", "rule 2", "rule 3"]
 
     def test_exact_text_dedup(self) -> None:
         """Rules with identical text are deduplicated (first wins)."""
@@ -279,12 +386,12 @@ class TestMergeIndexes:
         idx1 = _make_index(emb1, rules1)
         idx2 = _make_index(emb2, rules2)
 
-        merged_embs, merged_rules = merge_indexes(idx1, idx2)
+        merged = merge_indexes(idx1, idx2)
 
-        assert len(merged_rules) == 1
-        assert merged_embs.shape == (1, dim)
+        assert len(merged.rules) == 1
+        assert merged.embeddings.shape == (1, dim)
         # First occurrence's embedding is kept
-        np.testing.assert_array_almost_equal(merged_embs[0], emb1[0])
+        np.testing.assert_array_almost_equal(merged.embeddings[0], emb1[0])
 
     def test_model_name_mismatch_raises(self) -> None:
         """ValueError on mismatched model names."""
@@ -314,29 +421,146 @@ class TestMergeIndexes:
         rules = (_rule("r1"), _rule("r2", 2))
         idx = _make_index(emb, rules)
 
-        merged_embs, merged_rules = merge_indexes(idx)
+        merged = merge_indexes(idx)
 
-        assert len(merged_rules) == 2
-        np.testing.assert_array_almost_equal(merged_embs, emb)
+        assert len(merged.rules) == 2
+        np.testing.assert_array_almost_equal(merged.embeddings, emb)
 
     def test_empty_indexes(self) -> None:
         """Merging empty indexes returns empty results."""
         emb = np.empty((0, 4), dtype=np.float32)
         idx = _make_index(emb, ())
 
-        merged_embs, merged_rules = merge_indexes(idx)
+        merged = merge_indexes(idx)
 
-        assert merged_rules == ()
-        assert merged_embs.shape[0] == 0
+        assert merged.rules == ()
+        assert merged.embeddings.shape[0] == 0
 
     def test_no_indexes(self) -> None:
         """Calling merge_indexes with no arguments returns empty."""
-        merged_embs, merged_rules = merge_indexes()
+        merged = merge_indexes()
 
-        assert merged_rules == ()
-        assert merged_embs.shape[0] == 0
+        assert merged.rules == ()
+        assert merged.embeddings.shape[0] == 0
 
+    def test_merge_with_expansion_embeddings(self) -> None:
+        """Expansion embeddings are correctly remapped during merge."""
+        dim = 4
+        # Index 1: 1 rule with 1 expansion (2 embedding rows)
+        emb1 = _l2(np.array([[1, 0, 0, 0], [0.9, 0.1, 0, 0]], dtype=np.float32))
+        rules1 = (_rule("rule 1"),)
+        idx1 = Index(
+            embeddings=emb1,
+            rules=rules1,
+            model_name="BAAI/bge-small-en-v1.5",
+            dim=dim,
+            sources={},
+            rule_map=(0, 0),
+            bm25_corpus=("rule 1", "expansion 1"),
+        )
+        # Index 2: 1 different rule (1 embedding row)
+        emb2 = _l2(np.array([[0, 0, 1, 0]], dtype=np.float32))
+        rules2 = (_rule("rule 2", 2),)
+        idx2 = _make_index(emb2, rules2)
 
+        merged = merge_indexes(idx1, idx2)
+
+        assert len(merged.rules) == 2
+        assert merged.embeddings.shape[0] == 3  # 2 from idx1 + 1 from idx2
+        assert merged.rule_map == (0, 0, 1)  # remapped
+        # bm25_corpus is None when any input index lacks it (prevents misalignment)
+        assert merged.bm25_corpus is None
+
+    def test_merge_dedup_keeps_all_expansions(self) -> None:
+        """When deduplicating, all expansion rows of the kept rule are preserved."""
+        dim = 4
+        emb1 = _l2(np.array(
+            [[1, 0, 0, 0], [0.9, 0.1, 0, 0], [0.8, 0.2, 0, 0]],
+            dtype=np.float32,
+        ))
+        rules1 = (_rule("same rule"),)
+        idx1 = Index(
+            embeddings=emb1,
+            rules=rules1,
+            model_name="BAAI/bge-small-en-v1.5",
+            dim=dim,
+            sources={},
+            rule_map=(0, 0, 0),
+            bm25_corpus=("same rule", "exp1", "exp2"),
+        )
+
+        emb2 = _l2(np.array([[0, 1, 0, 0]], dtype=np.float32))
+        rules2 = (_rule("same rule"),)
+        idx2 = _make_index(emb2, rules2)
+
+        merged = merge_indexes(idx1, idx2)
+
+        assert len(merged.rules) == 1
+        # All 3 expansion rows from first index are kept
+        assert merged.embeddings.shape[0] == 3
+        assert merged.rule_map == (0, 0, 0)
+
+    def test_merge_sources_combined(self) -> None:
+        """Sources from all indexes are merged."""
+        from cuecard.models import SourceMeta
+
+        emb1 = _l2(np.array([[1, 0, 0, 0]], dtype=np.float32))
+        idx1 = Index(
+            embeddings=emb1,
+            rules=(_rule("r1"),),
+            model_name="BAAI/bge-small-en-v1.5",
+            dim=4,
+            sources={
+                "/a.txt": SourceMeta(mtime=1.0, content_hash="sha256:a", rule_count=1),
+            },
+        )
+        emb2 = _l2(np.array([[0, 1, 0, 0]], dtype=np.float32))
+        idx2 = Index(
+            embeddings=emb2,
+            rules=(_rule("r2", 2),),
+            model_name="BAAI/bge-small-en-v1.5",
+            dim=4,
+            sources={
+                "/b.txt": SourceMeta(mtime=2.0, content_hash="sha256:b", rule_count=1),
+            },
+        )
+
+        merged = merge_indexes(idx1, idx2)
+        assert "/a.txt" in merged.sources
+        assert "/b.txt" in merged.sources
+
+    def test_merge_empty_returns_proper_index(self) -> None:
+        """Merging empty indexes returns Index with correct fields."""
+        emb = np.empty((0, 4), dtype=np.float32)
+        idx = _make_index(emb, ())
+
+        merged = merge_indexes(idx)
+
+        assert isinstance(merged, Index)
+        assert merged.rule_map == ()
+        assert merged.bm25_corpus is None
+
+    def test_merge_both_have_bm25(self) -> None:
+        """When both indexes have bm25_corpus, merged result preserves it."""
+        dim = 4
+        emb1 = _l2(np.array([[1, 0, 0, 0]], dtype=np.float32))
+        emb2 = _l2(np.array([[0, 1, 0, 0]], dtype=np.float32))
+        rules1 = (_rule("rule 1"),)
+        rules2 = (_rule("rule 2"),)
+        idx1 = Index(
+            embeddings=emb1, rules=rules1, model_name="BAAI/bge-small-en-v1.5",
+            dim=dim, sources={}, rule_map=(0,), bm25_corpus=("rule 1 text",),
+        )
+        idx2 = Index(
+            embeddings=emb2, rules=rules2, model_name="BAAI/bge-small-en-v1.5",
+            dim=dim, sources={}, rule_map=(0,), bm25_corpus=("rule 2 text",),
+        )
+
+        merged = merge_indexes(idx1, idx2)
+
+        assert merged.bm25_corpus == ("rule 1 text", "rule 2 text")
+        assert merged.rule_map == (0, 1)
+        assert len(merged.rules) == 2
 
 
 # ---------------------------------------------------------------------------

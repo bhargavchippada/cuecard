@@ -56,6 +56,34 @@ class TestRule:
         r = Rule(text="long text", provenance=sample_provenance, summary="short")
         assert r.summary == "short"
 
+    def test_expansions_default_empty(self, sample_rule: Rule) -> None:
+        assert sample_rule.expansions == ()
+
+    def test_with_expansions(self, sample_provenance: Provenance) -> None:
+        r = Rule(
+            text="Never commit secrets",
+            provenance=sample_provenance,
+            expansions=("hardcoded API key", "AKIA in source"),
+        )
+        assert r.expansions == ("hardcoded API key", "AKIA in source")
+
+    def test_expansions_frozen(self, sample_provenance: Provenance) -> None:
+        r = Rule(
+            text="test",
+            provenance=sample_provenance,
+            expansions=("one",),
+        )
+        with pytest.raises(AttributeError):
+            r.expansions = ("changed",)  # type: ignore[misc]
+
+    def test_backwards_compatible_construction(
+        self, sample_provenance: Provenance,
+    ) -> None:
+        """Old code constructing Rule(text=, provenance=) still works."""
+        r = Rule(text="old style", provenance=sample_provenance)
+        assert r.expansions == ()
+        assert r.summary is None
+
 
 class TestRankedResult:
     def test_frozen(self, sample_rule: Rule) -> None:
@@ -167,3 +195,87 @@ class TestIndex:
     def test_sources(self, sample_index: Index) -> None:
         assert "/tmp/rules.txt" in sample_index.sources
         assert sample_index.sources["/tmp/rules.txt"].rule_count == 5
+
+    def test_default_rule_map(self, sample_index: Index) -> None:
+        """Default rule_map is identity mapping."""
+        assert sample_index.rule_map == tuple(range(5))
+        assert sample_index.bm25_corpus is None
+
+    def test_explicit_rule_map(self) -> None:
+        """Explicit rule_map and bm25_corpus are preserved."""
+        rules = (
+            Rule(
+                text="rule A",
+                provenance=Provenance(file="f.txt", line_start=1, line_end=1),
+            ),
+        )
+        emb = np.zeros((3, 4), dtype=np.float32)
+        idx = Index(
+            embeddings=emb,
+            rules=rules,
+            model_name="test",
+            dim=4,
+            sources={},
+            rule_map=(0, 0, 0),
+            bm25_corpus=("rule A", "expansion 1", "expansion 2"),
+        )
+        assert idx.rule_map == (0, 0, 0)
+        assert idx.bm25_corpus == ("rule A", "expansion 1", "expansion 2")
+
+    def test_rule_map_out_of_range_raises(self) -> None:
+        """rule_map index beyond rules count raises ValueError."""
+        rules = (
+            Rule(
+                text="only rule",
+                provenance=Provenance(file="f.txt", line_start=1, line_end=1),
+            ),
+        )
+        emb = np.zeros((2, 4), dtype=np.float32)
+        with pytest.raises(ValueError, match="rule_map indices"):
+            Index(
+                embeddings=emb,
+                rules=rules,
+                model_name="test",
+                dim=4,
+                sources={},
+                rule_map=(0, 1),  # index 1 is out of range for 1 rule
+            )
+
+    def test_rule_map_length_mismatch_raises(self) -> None:
+        """rule_map length not matching embeddings raises ValueError."""
+        rules = (
+            Rule(
+                text="rule",
+                provenance=Provenance(file="f.txt", line_start=1, line_end=1),
+            ),
+        )
+        emb = np.zeros((2, 4), dtype=np.float32)
+        with pytest.raises(ValueError, match="rule_map length"):
+            Index(
+                embeddings=emb,
+                rules=rules,
+                model_name="test",
+                dim=4,
+                sources={},
+                rule_map=(0,),  # length 1 but 2 embeddings
+            )
+
+    def test_bm25_corpus_length_mismatch_raises(self) -> None:
+        """bm25_corpus length not matching rule_map raises ValueError."""
+        rules = (
+            Rule(
+                text="rule",
+                provenance=Provenance(file="f.txt", line_start=1, line_end=1),
+            ),
+        )
+        emb = np.zeros((2, 4), dtype=np.float32)
+        with pytest.raises(ValueError, match="bm25_corpus length"):
+            Index(
+                embeddings=emb,
+                rules=rules,
+                model_name="test",
+                dim=4,
+                sources={},
+                rule_map=(0, 0),
+                bm25_corpus=("only one",),  # length 1 but rule_map is 2
+            )

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import tempfile
 from pathlib import Path
 from typing import Annotated
 
@@ -81,8 +83,6 @@ def add(
     ] = False,
 ) -> None:
     """Add a rule to the rules file."""
-    import os
-
     from cuecard.security import ensure_directory
 
     if global_scope:
@@ -146,8 +146,16 @@ def remove(
         )
         raise typer.Exit(1)
 
-    # Read file, remove the line, write back
-    file_path = Path(target.provenance.file)
+    # Validate provenance file is within allowed source directories
+    file_path = Path(target.provenance.file).resolve()
+    allowed = set(cfg.global_source_paths) | set(cfg.project_source_paths)
+    if str(file_path) not in allowed:
+        err_console.print(
+            f"[red]File {file_path} is not in configured source paths. "
+            f"Edit the file directly.[/red]"
+        )
+        raise typer.Exit(1)
+
     lines = file_path.read_text().splitlines(keepends=True)
     line_idx = target.provenance.line_start - 1
 
@@ -155,16 +163,14 @@ def remove(
         removed_text = lines[line_idx].strip()
         del lines[line_idx]
         content = "".join(lines)
-        import tempfile
         with tempfile.NamedTemporaryFile(
             dir=str(file_path.parent), mode="w",
             suffix=".txt", delete=False,
         ) as tmp:
             tmp.write(content)
             tmp_path = tmp.name
-        import os as _os
-        _os.chmod(tmp_path, 0o600)
-        _os.replace(tmp_path, str(file_path))
+        os.chmod(tmp_path, 0o600)
+        os.replace(tmp_path, str(file_path))
         console.print(
             f"Removed from {file_path}:\n  [red]{removed_text}[/red]",
         )
@@ -208,6 +214,84 @@ def search(
     for num, rule, scope in matches:
         console.print(
             f"  [cyan]{num:3d}[/cyan]  {rule.text}  [dim]({scope})[/dim]",
+        )
+
+
+@rules_app.command()
+def expand(
+    backend: Annotated[
+        str, typer.Option(help="LLM backend: local or haiku")
+    ] = "local",
+    endpoint: Annotated[
+        str, typer.Option(help="Local LLM endpoint URL")
+    ] = "http://localhost:8081/v1",
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="Show what would be generated")
+    ] = False,
+    missing_only: Annotated[
+        bool,
+        typer.Option("--missing-only", help="Only expand rules without expansions"),
+    ] = False,
+) -> None:
+    """Generate LLM expansions for rules."""
+    from cuecard.expander import expand_rules
+    from cuecard.indexer import load_rules_json, save_rules_json
+    from cuecard.parser import parse_rules
+
+    cfg = _cli._load_config_or_exit(
+        project_dir=Path.cwd(), home_dir=_cli._home_dir(),
+    )
+
+    for label, cache_dir, source_paths in _cli._iter_scoped_sources(cfg):
+        # Load existing rules.json or build from source files
+        rules = load_rules_json(cache_dir)
+        if rules is None:
+            parsed = parse_rules(source_paths)
+            if not parsed:
+                console.print(f"[yellow]{label}: no rules found.[/yellow]")
+                continue
+            save_rules_json(parsed, cache_dir)
+            rules = parsed
+
+        if not rules:
+            console.print(f"[yellow]{label}: no rules found.[/yellow]")
+            continue
+
+        if dry_run:
+            skipped = sum(1 for r in rules if missing_only and r.expansions)
+            to_expand = len(rules) - skipped
+            console.print(
+                f"[bold]{label}:[/bold] would expand {to_expand} rules "
+                f"(skipping {skipped} with existing expansions)",
+            )
+            continue
+
+        console.print(
+            f"[bold]{label}:[/bold] expanding {len(rules)} rules "
+            f"via {backend}...",
+        )
+
+        try:
+            expanded = expand_rules(
+                rules,
+                backend=backend,
+                endpoint=endpoint,
+                missing_only=missing_only,
+            )
+        except Exception as exc:
+            err_console.print(f"[red]Expansion failed: {exc}[/red]")
+            raise typer.Exit(1) from None
+
+        save_rules_json(expanded, cache_dir)
+
+        new_count = sum(
+            len(r.expansions) for r in expanded
+        )
+        old_count = sum(len(r.expansions) for r in rules)
+        console.print(
+            f"[green]{label}:[/green] {new_count} total expansions "
+            f"({new_count - old_count} new). "
+            f"Run 'cuecard index' to rebuild.",
         )
 
 

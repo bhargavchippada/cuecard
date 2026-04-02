@@ -7,6 +7,8 @@ from cuecard.models import (
     PipelineResult,
     Provenance,
     RankedResult,
+    RetrievalStageTrace,
+    RetrieverTrace,
     Rule,
     StageTrace,
 )
@@ -17,6 +19,8 @@ __all__ = [
     "PipelineResult",
     "Provenance",
     "RankedResult",
+    "RetrievalStageTrace",
+    "RetrieverTrace",
     "Rule",
     "StageTrace",
     "format_rules",

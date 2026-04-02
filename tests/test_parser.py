@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import TYPE_CHECKING
 
@@ -133,6 +134,160 @@ class TestEmptyFile:
         rules = parse_rules((str(f),))
 
         assert rules == []
+
+
+class TestParseJson:
+    def test_valid_json_with_expansions(self, tmp_path: Path) -> None:
+        f = tmp_path / "rules.json"
+        data = {
+            "version": 1,
+            "rules": [
+                {
+                    "text": "Never commit secrets",
+                    "expansions": ["hardcoded API key", "AKIA in source"],
+                    "source": {
+                        "file": "/tmp/rules.txt",
+                        "line_start": 1,
+                        "line_end": 1,
+                        "chunk_type": "rule",
+                    },
+                },
+            ],
+        }
+        f.write_text(json.dumps(data))
+
+        rules = parse_rules((str(f),))
+
+        assert len(rules) == 1
+        assert rules[0].text == "Never commit secrets"
+        assert rules[0].expansions == ("hardcoded API key", "AKIA in source")
+        # provenance.file uses the JSON file's own path (not embedded source.file)
+        assert rules[0].provenance.file == str(f.resolve())
+        assert rules[0].provenance.line_start == 1
+
+    def test_empty_expansions(self, tmp_path: Path) -> None:
+        f = tmp_path / "rules.json"
+        data = {
+            "version": 1,
+            "rules": [{"text": "A rule", "expansions": [], "source": {}}],
+        }
+        f.write_text(json.dumps(data))
+
+        rules = parse_rules((str(f),))
+
+        assert len(rules) == 1
+        assert rules[0].expansions == ()
+
+    def test_expansion_truncation(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        f = tmp_path / "rules.json"
+        long_exp = "x" * 300
+        data = {
+            "version": 1,
+            "rules": [
+                {"text": "A rule", "expansions": [long_exp], "source": {}},
+            ],
+        }
+        f.write_text(json.dumps(data))
+
+        with caplog.at_level(logging.WARNING, logger="cuecard.parser"):
+            rules = parse_rules((str(f),))
+
+        assert len(rules[0].expansions) == 1
+        assert len(rules[0].expansions[0]) == 200
+        assert "exceeds 200 chars" in caplog.text
+
+    def test_max_expansions_enforced(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        f = tmp_path / "rules.json"
+        data = {
+            "version": 1,
+            "rules": [
+                {
+                    "text": "A rule",
+                    "expansions": [f"exp{i}" for i in range(15)],
+                    "source": {},
+                },
+            ],
+        }
+        f.write_text(json.dumps(data))
+
+        with caplog.at_level(logging.WARNING, logger="cuecard.parser"):
+            rules = parse_rules((str(f),))
+
+        assert len(rules[0].expansions) == 10
+        assert "dropping extras" in caplog.text
+
+    def test_empty_and_nonstring_expansions_skipped(self, tmp_path: Path) -> None:
+        f = tmp_path / "rules.json"
+        data = {
+            "version": 1,
+            "rules": [
+                {
+                    "text": "A rule",
+                    "expansions": ["", "  ", None, 42, "valid"],
+                    "source": {},
+                },
+            ],
+        }
+        f.write_text(json.dumps(data))
+
+        rules = parse_rules((str(f),))
+
+        assert rules[0].expansions == ("valid",)
+
+    def test_empty_text_skipped(self, tmp_path: Path) -> None:
+        f = tmp_path / "rules.json"
+        data = {
+            "version": 1,
+            "rules": [
+                {"text": "", "expansions": [], "source": {}},
+                {"text": "Real rule", "expansions": [], "source": {}},
+            ],
+        }
+        f.write_text(json.dumps(data))
+
+        rules = parse_rules((str(f),))
+
+        assert len(rules) == 1
+        assert rules[0].text == "Real rule"
+
+    def test_wrong_version_raises(self, tmp_path: Path) -> None:
+        f = tmp_path / "rules.json"
+        data = {"version": 99, "rules": []}
+        f.write_text(json.dumps(data))
+
+        with pytest.raises(ValueError, match="Unsupported rules.json version"):
+            parse_rules((str(f),))
+
+    def test_rule_text_truncated(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        f = tmp_path / "rules.json"
+        data = {
+            "version": 1,
+            "rules": [
+                {"text": "z" * 600, "expansions": [], "source": {}},
+            ],
+        }
+        f.write_text(json.dumps(data))
+
+        with caplog.at_level(logging.WARNING, logger="cuecard.parser"):
+            rules = parse_rules((str(f),))
+
+        assert len(rules[0].text) == 500
+
+    def test_missing_source_uses_defaults(self, tmp_path: Path) -> None:
+        f = tmp_path / "rules.json"
+        data = {"version": 1, "rules": [{"text": "A rule"}]}
+        f.write_text(json.dumps(data))
+
+        rules = parse_rules((str(f),))
+
+        assert rules[0].provenance.file == str(f.resolve())
+        assert rules[0].provenance.line_start == 0
 
 
 class TestProvenance:

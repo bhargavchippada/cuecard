@@ -60,6 +60,9 @@ _VALIDATORS: dict[str, tuple[type, float | int | None, float | int | None]] = {
     "dedup_threshold": (float, 0.0, 1.0),
     "query_max_length": (int, 50, 2000),
     "max_log_size_mb": (int, 1, 1000),
+    "fusion_k": (int, 1, 1000),
+    "expansion_max_per_rule": (int, 1, 100),
+    "expansion_max_length": (int, 10, 2000),
 }
 
 
@@ -141,6 +144,17 @@ def _extract_flat(raw: dict[str, Any]) -> dict[str, Any]:
         flat["source_rules"] = sources["rules"]
     if "allowed_dirs" in sources:
         flat["allowed_dirs"] = sources["allowed_dirs"]
+
+    # Retrieval: fusion_k, sparse_enabled
+    for key in ("fusion_k", "sparse_enabled"):
+        if key in retrieval:
+            flat[key] = retrieval[key]
+
+    # Expansion section
+    expansion = raw.get("expansion", {})
+    for key in ("max_per_rule", "max_length"):
+        if key in expansion:
+            flat[f"expansion_{key}"] = expansion[key]
 
     pipeline_section = raw.get("pipeline", {})
     if pipeline_section:
@@ -355,12 +369,12 @@ def load_config(
 
     # Validate endpoint at config load time (H1 fix)
     if pipeline_mode in ("rerank-llm-local", "llm-local"):
-        from cuecard.llm_reranker import validate_endpoint
+        from cuecard.llm_utils import validate_endpoint
         validate_endpoint(pipeline_local_endpoint)
 
     # Validate haiku model at config load time (M2 fix)
     if pipeline_mode in ("rerank-llm-haiku", "llm-haiku"):
-        from cuecard.llm_reranker import _ALLOWED_HAIKU_MODELS
+        from cuecard.llm_utils import _ALLOWED_HAIKU_MODELS
         if pipeline_haiku_model not in _ALLOWED_HAIKU_MODELS:
             msg = (
                 f"Haiku model {pipeline_haiku_model!r} not in allowlist. "
@@ -381,6 +395,27 @@ def load_config(
         thinking=pipeline_thinking,
     )
 
+    # Resolve enriched retrieval fields (project wins → global → default)
+    _enriched_defaults: dict[str, int | bool] = {
+        "fusion_k": 60,
+        "sparse_enabled": True,
+        "expansion_max_per_rule": 10,
+        "expansion_max_length": 200,
+    }
+    enriched: dict[str, Any] = {}
+    for key, default in _enriched_defaults.items():
+        if key in project_flat:
+            enriched[key] = project_flat[key]
+        elif key in global_flat:
+            enriched[key] = global_flat[key]
+        else:
+            enriched[key] = default
+
+    # Validate enriched fields
+    for key in ("fusion_k", "expansion_max_per_rule", "expansion_max_length"):
+        _validate_field(key, enriched[key])
+    _validate_bool("sparse_enabled", enriched["sparse_enabled"])
+
     return ResolvedConfig(
         source_paths=tuple(all_paths),
         global_source_paths=global_resolved,
@@ -398,4 +433,8 @@ def load_config(
         project_cache_dir=project_cache,
         allowed_dirs=all_allowed,
         pipeline=pipeline_config,
+        fusion_k=enriched["fusion_k"],
+        sparse_enabled=enriched["sparse_enabled"],
+        expansion_max_per_rule=enriched["expansion_max_per_rule"],
+        expansion_max_length=enriched["expansion_max_length"],
     )

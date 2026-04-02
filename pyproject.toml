@@ -74,8 +74,16 @@ source = ["cuecard"]
 fail_under = 100
 show_missing = true
 
+[tool.mutmut]
+paths_to_mutate = ["src/cuecard/"]
+tests_dir = ["tests/"]
+runner = "python -m pytest -x -q --tb=no"
+pytest_add_cli_args_test_selection = ["tests/", "--deselect", "tests/test_cli.py::TestAdapterMainGuard::test_main_guard"]
+do_not_mutate = ["*__pycache__*", "*test_*"]
+
 [dependency-groups]
 dev = [
+    "mutmut>=3.5.0",
     "mypy>=1.20.0",
     "pytest>=9.0.2",
     "pytest-cov>=7.1.0",

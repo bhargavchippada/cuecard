@@ -47,3 +47,6 @@ eval/results/
 
 # Ruff
 .ruff_cache/
+
+# Mutation testing
+.mutmut-cache/

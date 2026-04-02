@@ -17,7 +17,15 @@ import numpy as np
 import numpy.typing as npt
 
 from cuecard._math import l2_normalize
-from cuecard.models import Index, Provenance, Rule, SourceMeta
+from cuecard.models import (
+    MAX_EXPANSION_LENGTH,
+    MAX_EXPANSIONS_PER_RULE,
+    Index,
+    Provenance,
+    Rule,
+    SourceMeta,
+)
+from cuecard.security import scrub_secrets
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
@@ -26,6 +34,7 @@ logger = logging.getLogger(__name__)
 
 _DEFAULT_DIM = 384
 _METADATA_VERSION = 1
+_METADATA_VERSION_V2 = 2
 _FILE_PERMS = 0o600
 _DIR_PERMS = 0o700
 
@@ -48,6 +57,144 @@ def _compute_checksum(path: str) -> str:
 
 
 
+_RULES_JSON_VERSION = 1
+
+
+def save_rules_json(
+    rules: list[Rule],
+    cache_dir: str,
+) -> None:
+    """Persist rules to a canonical JSON intermediate format.
+
+    Writes ``rules.json`` with atomic write + 0o600 permissions.
+    """
+    dir_path = Path(cache_dir)
+    dir_path.mkdir(parents=True, exist_ok=True)
+    os.chmod(dir_path, _DIR_PERMS)
+
+    rules_list = [
+        {
+            "text": r.text,
+            "expansions": list(r.expansions),
+            "source": {
+                "file": r.provenance.file,
+                "line_start": r.provenance.line_start,
+                "line_end": r.provenance.line_end,
+                "chunk_type": r.provenance.chunk_type,
+            },
+        }
+        for r in rules
+    ]
+
+    data = {"version": _RULES_JSON_VERSION, "rules": rules_list}
+    json_path = dir_path / "rules.json"
+
+    with tempfile.NamedTemporaryFile(
+        dir=cache_dir, suffix=".json", mode="w", delete=False,
+    ) as tmp:
+        tmp_path = tmp.name
+        json.dump(data, tmp, indent=2)
+
+    os.chmod(tmp_path, _FILE_PERMS)
+    os.replace(tmp_path, json_path)
+
+
+def load_rules_json(cache_dir: str) -> list[Rule] | None:
+    """Load rules from the canonical JSON intermediate format.
+
+    Returns None if rules.json does not exist or is corrupt.
+    """
+    json_path = Path(cache_dir) / "rules.json"
+
+    try:
+        with open(json_path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError, OSError) as exc:
+        logger.debug("No rules.json in %s: %s", cache_dir, exc)
+        return None
+
+    version = data.get("version")
+    if version != _RULES_JSON_VERSION:
+        logger.warning(
+            "Unsupported rules.json version %s in %s",
+            version, cache_dir,
+        )
+        return None
+
+    rules: list[Rule] = []
+    for entry in data.get("rules", []):
+        text = entry.get("text", "").strip()
+        if not text:
+            continue
+
+        raw_expansions = entry.get("expansions", [])
+        expansions: list[str] = []
+        for exp in raw_expansions:
+            if not isinstance(exp, str):
+                continue
+            exp = exp.strip()
+            if not exp:
+                continue
+            if len(exp) > MAX_EXPANSION_LENGTH:
+                exp = exp[:MAX_EXPANSION_LENGTH]
+            expansions.append(exp)
+            if len(expansions) >= MAX_EXPANSIONS_PER_RULE:
+                break
+
+        source = entry.get("source", {})
+        provenance = Provenance(
+            file=source.get("file", ""),
+            line_start=source.get("line_start", 0),
+            line_end=source.get("line_end", 0),
+            chunk_type=source.get("chunk_type", "rule"),
+        )
+        rules.append(Rule(
+            text=text,
+            provenance=provenance,
+            expansions=tuple(expansions),
+        ))
+
+    return rules
+
+
+def merge_rules_json(
+    fresh_rules: list[Rule],
+    cached_rules: list[Rule],
+) -> list[Rule]:
+    """Merge fresh-parsed rules with cached rules, preserving expansions.
+
+    For rules whose canonical text hasn't changed (exact string equality),
+    expansions from the cached version are preserved. Rules with changed
+    text get empty expansions (with a warning).
+    """
+    cached_by_text = {r.text: r for r in cached_rules}
+    merged: list[Rule] = []
+
+    for rule in fresh_rules:
+        cached = cached_by_text.get(rule.text)
+        if cached is not None and cached.expansions:
+            # Preserve cached expansions
+            merged.append(Rule(
+                text=rule.text,
+                provenance=rule.provenance,
+                summary=rule.summary,
+                expansions=cached.expansions,
+            ))
+        else:
+            merged.append(rule)
+
+    # Warn about rules that lost expansions
+    fresh_texts = {r.text for r in fresh_rules}
+    for cached_rule in cached_rules:
+        if cached_rule.expansions and cached_rule.text not in fresh_texts:
+            logger.warning(
+                "Rule text changed or removed — expansions lost: %s",
+                scrub_secrets(cached_rule.text[:80]),
+            )
+
+    return merged
+
+
 def build_index(
     rules: tuple[Rule, ...],
     sources: Mapping[str, SourceMeta],
@@ -55,9 +202,13 @@ def build_index(
     model: EmbeddingModel | None = None,
     dim: int = _DEFAULT_DIM,
 ) -> Index:
-    """Embed all rule texts and return an Index.
+    """Embed all rule texts (plus expansions) and return an Index.
 
     Uses asymmetric passage_embed for indexing (never query_embed).
+    For each rule, embeds ``[rule.text] + list(rule.expansions)``,
+    building a ``rule_map`` that maps each embedding row to its parent
+    rule index and a ``bm25_corpus`` with all texts in embedding order.
+
     If rules is empty, returns an Index with a (0, dim) embedding array.
     """
     if not rules:
@@ -68,14 +219,24 @@ def build_index(
             model_name=model_name,
             dim=dim,
             sources=sources,
+            rule_map=(),
+            bm25_corpus=(),
         )
 
     if model is None:
         msg = "model is required when rules is non-empty"
         raise ValueError(msg)
 
-    texts = [r.text for r in rules]
-    raw = np.array(list(model.passage_embed(texts)), dtype=np.float32)
+    # Collect all texts and build rule_map
+    all_texts: list[str] = []
+    rule_map_list: list[int] = []
+    for i, rule in enumerate(rules):
+        texts = [rule.text, *rule.expansions]
+        for text in texts:
+            all_texts.append(text)
+            rule_map_list.append(i)
+
+    raw = np.array(list(model.passage_embed(all_texts)), dtype=np.float32)
 
     if raw.ndim == 1:
         raw = raw.reshape(1, -1)
@@ -89,6 +250,8 @@ def build_index(
         model_name=model_name,
         dim=detected_dim,
         sources=sources,
+        rule_map=tuple(rule_map_list),
+        bm25_corpus=tuple(all_texts),
     )
 
 
@@ -137,6 +300,7 @@ def save_index(index: Index, cache_dir: str) -> None:
                     "line_end": r.provenance.line_end,
                     "section_path": list(r.provenance.section_path),
                     "chunk_type": r.provenance.chunk_type,
+                    "expansions": list(r.expansions),
                 }
                 for r in index.rules
             ]
@@ -150,14 +314,18 @@ def save_index(index: Index, cache_dir: str) -> None:
                 for path, sm in index.sources.items()
             }
 
-            metadata = {
-                "version": _METADATA_VERSION,
+            metadata: dict[str, Any] = {
+                "version": _METADATA_VERSION_V2,
                 "model": index.model_name,
                 "dim": index.dim,
                 "checksum": checksum,
                 "created": datetime.now(tz=UTC).isoformat(),
                 "sources": sources_dict,
                 "rules": rules_list,
+                "rule_map": list(index.rule_map),
+                "bm25_corpus": list(index.bm25_corpus)
+                if index.bm25_corpus is not None
+                else None,
             }
 
             # Atomic write: metadata.json
@@ -219,14 +387,40 @@ def load_index(cache_dir: str) -> Index | None:
         )
         return None
 
-    # Integrity: rule count matches embedding rows
+    version = metadata.get("version", 1)
     rules_data = metadata.get("rules", [])
-    if embeddings.shape[0] != len(rules_data):
-        logger.warning(
-            "Rule count mismatch in %s: %d embeddings vs %d rules",
-            cache_dir, embeddings.shape[0], len(rules_data),
+
+    if version >= _METADATA_VERSION_V2:
+        # V2: rule_map present, embeddings match rule_map length
+        rule_map_data = metadata.get("rule_map", [])
+        if embeddings.shape[0] != len(rule_map_data):
+            logger.warning(
+                "rule_map length mismatch in %s: %d embeddings vs %d rule_map",
+                cache_dir, embeddings.shape[0], len(rule_map_data),
+            )
+            return None
+        rule_map: tuple[int, ...] = tuple(rule_map_data)
+        # Validate rule_map indices against rules count
+        n_rules = len(rules_data)
+        if rule_map and not all(0 <= i < n_rules for i in rule_map):
+            logger.warning(
+                "rule_map contains out-of-range indices in %s", cache_dir,
+            )
+            return None
+        raw_corpus = metadata.get("bm25_corpus")
+        bm25_corpus: tuple[str, ...] | None = (
+            tuple(raw_corpus) if raw_corpus is not None else None
         )
-        return None
+    else:
+        # V1: identity rule_map, no bm25_corpus
+        if embeddings.shape[0] != len(rules_data):
+            logger.warning(
+                "Rule count mismatch in %s: %d embeddings vs %d rules",
+                cache_dir, embeddings.shape[0], len(rules_data),
+            )
+            return None
+        rule_map = tuple(range(len(rules_data)))
+        bm25_corpus = None
 
     # Reconstruct Rule objects
     rules = tuple(
@@ -239,6 +433,7 @@ def load_index(cache_dir: str) -> Index | None:
                 section_path=tuple(rd.get("section_path", ())),
                 chunk_type=rd.get("chunk_type", "rule"),
             ),
+            expansions=tuple(rd.get("expansions", ())),
         )
         for rd in rules_data
     )
@@ -259,4 +454,6 @@ def load_index(cache_dir: str) -> Index | None:
         model_name=metadata["model"],
         dim=metadata["dim"],
         sources=sources,
+        rule_map=rule_map,
+        bm25_corpus=bm25_corpus,
     )

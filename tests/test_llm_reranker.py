@@ -11,13 +11,12 @@ import pytest
 
 from cuecard.llm_reranker import (
     _build_prompt,
-    _call_local,
     _compute_ordinal_scores,
     _parse_llm_response,
     _strip_thinking_tags,
     rerank_llm,
-    validate_endpoint,
 )
+from cuecard.llm_utils import call_local, validate_endpoint
 from cuecard.models import Provenance, RankedResult, Rule
 from cuecard.security import ConfigError
 
@@ -299,7 +298,7 @@ class TestCallLocal:
         mock_response.raise_for_status = MagicMock()
 
         with patch.object(httpx, "post", return_value=mock_response) as mock_post:
-            result = _call_local(
+            result = call_local(
                 "system", "user", "http://localhost:8081/v1", False
             )
             assert result == '{"rules": [1, 3]}'
@@ -312,7 +311,7 @@ class TestCallLocal:
             ),
             pytest.raises(httpx.TimeoutException),
         ):
-            _call_local(
+            call_local(
                 "system", "user", "http://localhost:8081/v1", False
             )
 
@@ -323,7 +322,7 @@ class TestCallLocal:
             ),
             pytest.raises(httpx.ConnectError),
         ):
-            _call_local(
+            call_local(
                 "system", "user", "http://localhost:8081/v1", False
             )
 
@@ -336,7 +335,7 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(httpx.HTTPStatusError),
         ):
-            _call_local(
+            call_local(
                 "system", "user", "http://localhost:8081/v1", False
             )
 
@@ -348,7 +347,7 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(ValueError, match="No choices"),
         ):
-            _call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False)
 
     def test_invalid_choice_format_raises(self) -> None:
         mock_response = MagicMock()
@@ -358,7 +357,7 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(ValueError, match="Invalid choice"),
         ):
-            _call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False)
 
     def test_invalid_message_format_raises(self) -> None:
         mock_response = MagicMock()
@@ -368,7 +367,7 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(ValueError, match="Invalid message"),
         ):
-            _call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False)
 
     def test_invalid_content_format_raises(self) -> None:
         mock_response = MagicMock()
@@ -380,59 +379,15 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(ValueError, match="Invalid content"),
         ):
-            _call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False)
 
 
 class TestCallHaiku:
-    def test_successful_call(self) -> None:
-        mock_text_block = MagicMock()
-        mock_text_block.text = '{"rules": [1, 2]}'
+    """Haiku backend tests — call_haiku now lives in llm_utils.
 
-        mock_message = MagicMock()
-        mock_message.content = [mock_text_block]
-
-        # We need to mock the entire claude_agent_sdk module
-        mock_sdk = MagicMock()
-        mock_sdk.TextBlock = type(mock_text_block)
-        mock_sdk.AssistantMessage = type(mock_message)
-
-        async def mock_query(**kwargs: object) -> list[object]:
-            """Fake async generator."""
-            return [mock_message]
-
-        # Create a proper async iterator
-        class MockAsyncIter:
-            def __init__(self) -> None:
-                self._items = [mock_message]
-                self._index = 0
-
-            def __aiter__(self) -> MockAsyncIter:
-                return self
-
-            async def __anext__(self) -> object:
-                if self._index >= len(self._items):
-                    raise StopAsyncIteration
-                item = self._items[self._index]
-                self._index += 1
-                return item
-
-        mock_sdk.query.return_value = MockAsyncIter()
-
-        with patch.dict("sys.modules", {"claude_agent_sdk": mock_sdk}):
-            from cuecard.llm_reranker import _call_haiku
-
-            result = _call_haiku("system", "user", "claude-haiku-4-5")
-            assert result == '{"rules": [1, 2]}'
-
-    def test_import_error_propagates(self) -> None:
-        """ImportError from missing SDK propagates (caught by rerank_llm)."""
-        with (
-            patch.dict("sys.modules", {"claude_agent_sdk": None}),
-            pytest.raises((ImportError, ModuleNotFoundError)),
-        ):
-            from cuecard.llm_reranker import _call_haiku
-
-            _call_haiku("system", "user", "claude-haiku-4-5")
+    See test_llm_utils.py for full coverage of call_haiku internals.
+    These tests verify rerank_llm integration with the haiku backend.
+    """
 
 
 class TestRerankLLM:
@@ -463,7 +418,7 @@ class TestRerankLLM:
         candidates = _make_candidates(3)
 
         with patch(
-            "cuecard.llm_reranker._call_haiku",
+            "cuecard.llm_reranker.call_haiku",
             return_value='{"rules": [2]}',
         ):
             result = rerank_llm(
@@ -610,7 +565,7 @@ class TestRerankLLM:
     def test_haiku_import_error_returns_fallback(self) -> None:
         candidates = _make_candidates(3)
         with patch(
-            "cuecard.llm_reranker._call_haiku",
+            "cuecard.llm_reranker.call_haiku",
             side_effect=ImportError("no claude_agent_sdk"),
         ):
             result = rerank_llm(

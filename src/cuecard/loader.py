@@ -11,7 +11,14 @@ import logging
 from typing import TYPE_CHECKING
 
 from cuecard.freshness import check_freshness
-from cuecard.indexer import build_index, load_index, save_index
+from cuecard.indexer import (
+    build_index,
+    load_index,
+    load_rules_json,
+    merge_rules_json,
+    save_index,
+    save_rules_json,
+)
 from cuecard.parser import parse_rules
 from cuecard.retriever import merge_indexes
 
@@ -63,6 +70,14 @@ def _load_or_rebuild_scope(
         logger.warning("No rules parsed from %s", source_paths)
         return None
 
+    # Merge with cached rules.json to preserve expansions
+    cached_rules = load_rules_json(cache_dir)
+    if cached_rules is not None:
+        rules = merge_rules_json(rules, cached_rules)
+
+    # Save the canonical JSON intermediate
+    save_rules_json(rules, cache_dir)
+
     if model is None:
         logger.warning("Embedding model required to build index for %s", cache_dir)
         return None
@@ -104,8 +119,6 @@ def load_or_build(
     Returns:
         A composed ``Index``, or ``None`` if no rules exist anywhere.
     """
-    from cuecard.models import Index as IndexClass
-
     indexes: list[Index] = []
 
     # Global scope
@@ -138,21 +151,8 @@ def load_or_build(
         return indexes[0]
 
     # Compose global + project (dedup by text)
-    embeddings, rules = merge_indexes(*indexes)
-    if not rules:
+    merged = merge_indexes(*indexes)
+    if not merged.rules:
         return None
 
-    # Merge source metadata from both scopes
-    from cuecard.models import SourceMeta
-
-    merged_sources: dict[str, SourceMeta] = {}
-    for idx in indexes:
-        merged_sources.update(idx.sources)
-
-    return IndexClass(
-        embeddings=embeddings,
-        rules=rules,
-        model_name=config.model_name,
-        dim=indexes[0].dim,
-        sources=merged_sources,
-    )
+    return merged

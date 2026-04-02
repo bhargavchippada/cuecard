@@ -11,6 +11,8 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
 MAX_RULE_LENGTH = 500
+MAX_EXPANSION_LENGTH = 200
+MAX_EXPANSIONS_PER_RULE = 10
 
 
 @dataclass(frozen=True)
@@ -31,6 +33,7 @@ class Rule:
     text: str
     provenance: Provenance
     summary: str | None = None
+    expansions: tuple[str, ...] = ()
 
     MAX_LENGTH: int = field(default=500, init=False, repr=False, compare=False)
 
@@ -82,17 +85,39 @@ class ResolvedConfig:
     project_cache_dir: str | None
     allowed_dirs: tuple[str, ...]
     pipeline: PipelineConfig = field(default_factory=PipelineConfig)
+    fusion_k: int = 60
+    sparse_enabled: bool = True
+    expansion_max_per_rule: int = 10
+    expansion_max_length: int = 200
 
 
 @dataclass(frozen=True)
 class StageTrace:
     """Provenance for one pipeline stage."""
 
-    stage: str  # "embedding", "rerank", "llm"
+    stage: str  # "embedding", "rerank", "llm", "retrieval"
     input_count: int
     output_count: int
     latency_ms: float
     error: str | None = None  # None if successful, error message if degraded
+
+
+@dataclass(frozen=True)
+class RetrieverTrace:
+    """Performance trace for a single retriever."""
+
+    name: str  # "dense", "sparse"
+    candidate_count: int  # results before fusion
+    latency_ms: float
+    unique_rules: int  # rules found by this retriever but NOT by others
+
+
+@dataclass(frozen=True)
+class RetrievalStageTrace(StageTrace):
+    """Extended trace for the multi-retriever stage."""
+
+    retrievers: tuple[RetrieverTrace, ...] = ()
+    fusion_latency_ms: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -117,6 +142,8 @@ class Index:
         "model_name",
         "dim",
         "sources",
+        "rule_map",
+        "bm25_corpus",
     )
 
     def __init__(
@@ -126,11 +153,28 @@ class Index:
         model_name: str,
         dim: int,
         sources: Mapping[str, SourceMeta],
+        rule_map: tuple[int, ...] | None = None,
+        bm25_corpus: tuple[str, ...] | None = None,
     ) -> None:
-        if embeddings.shape[0] != len(rules):
+        # Default rule_map: identity mapping (one embedding per rule)
+        if rule_map is None:
+            rule_map = tuple(range(len(rules)))
+
+        if embeddings.shape[0] != len(rule_map):
             msg = (
                 f"Embedding rows ({embeddings.shape[0]}) "
-                f"must match rule count ({len(rules)})"
+                f"must match rule_map length ({len(rule_map)})"
+            )
+            raise ValueError(msg)
+        if rule_map and not all(0 <= i < len(rules) for i in rule_map):
+            msg = (
+                f"All rule_map indices must be in range [0, {len(rules)})"
+            )
+            raise ValueError(msg)
+        if bm25_corpus is not None and len(bm25_corpus) != len(rule_map):
+            msg = (
+                f"bm25_corpus length ({len(bm25_corpus)}) "
+                f"must match rule_map length ({len(rule_map)})"
             )
             raise ValueError(msg)
         self.embeddings = embeddings
@@ -138,6 +182,8 @@ class Index:
         self.model_name = model_name
         self.dim = dim
         self.sources = sources
+        self.rule_map = rule_map
+        self.bm25_corpus = bm25_corpus
 
     @property
     def size(self) -> int:
