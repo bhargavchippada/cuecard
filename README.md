@@ -107,6 +107,29 @@ The LLM reranker is essential for noise filtering and negative silence. Embeddin
 
 Eval dataset: 438 curated fixtures + 149 mined from real developer sessions across 7 projects.
 
+## Writing Effective Rules
+
+Rules that explain **why** achieve compliance. Rules that just say **what** don't.
+
+```
+# BAD — agent ignores this (0/3 compliance in live testing)
+Send Enter after every tmux send-keys command
+
+# GOOD — agent follows this (2/2 compliance in live testing)
+Always append Enter after tmux send-keys text — without it the text
+is pasted into the prompt but never submitted, so the target session
+never receives or executes the message
+```
+
+**Guidelines for writing rules:**
+- Explain the **consequence of violation**, not just the action
+- Include the **failure mode** — what goes wrong if the rule is ignored
+- Keep rules under 500 characters (the enforced limit)
+- One rule per line in your rules file
+- Rules are retrieved semantically — exact wording matters less than meaning
+
+This mirrors a finding from prompt engineering: reasoning principles ("without Enter, text is pasted but never submitted") outperform command lists ("always send Enter"). The agent follows rules it understands, not rules it's told to obey.
+
 ## Local LLM Server
 
 For best quality, run a local Qwen3.5 instance:

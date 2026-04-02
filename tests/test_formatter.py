@@ -5,7 +5,10 @@ from __future__ import annotations
 from cuecard.formatter import format_rules, format_rules_verbose
 from cuecard.models import Provenance, RankedResult, Rule
 
-_BOUNDARY_LABEL = "[cuecard \u2014 user-defined guidelines relevant to this action]"
+_BOUNDARY_LABEL = (
+    "[cuecard \u2014 RULES you must follow for this action"
+    " to avoid failures]"
+)
 
 
 def _make_result(

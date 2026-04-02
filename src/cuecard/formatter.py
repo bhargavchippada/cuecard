@@ -10,7 +10,10 @@ if TYPE_CHECKING:
 
     from cuecard.models import RankedResult
 
-_BOUNDARY_LABEL = "[cuecard \u2014 user-defined guidelines relevant to this action]"
+_BOUNDARY_LABEL = (
+    "[cuecard \u2014 RULES you must follow for this action"
+    " to avoid failures]"
+)
 
 
 def format_rules(results: Sequence[RankedResult], *, scrub: bool = True) -> str:
