@@ -176,11 +176,33 @@ The LLM reranker is conservative — avg 1.1 results, almost no noise. Latency p
 | **Low noise** | llm-local | 0.30 | 25% noise, 76% neg silence |
 | **Balanced** | llm-local | 0.30 | Best overall quality |
 
+### Improved Prompt Results (357 fixtures, few-shot + guidelines)
+
+| Tier | Recall | Noise | Silence |
+|------|--------|-------|---------|
+| easy | 84.0% | **35.6%** | — |
+| medium | **62.4%** | 52.9% | — |
+| hard | **34.1%** | 51.4% | — |
+| negative | — | — | **86.3%** |
+
+**Neg silence: 86.3%** (was 24.2%) — target 80% **MET** ✅
+Few-shot examples + DO/DONT guidelines massively improved negative handling.
+
+### Ralph's Research Findings
+
+1. **CodeRankEmbed (137M)** — beats jina-code by +10.7 MRR on CodeSearchNet. Worth evaluating.
+2. **BM25 hybrid REGRESSES** — tool-call queries are hostile to keyword matching (-5% to -16% recall).
+3. **Rule augmentation (category prefix)** — only clean win: +1.7% recall, +3.5% MRR, no regressions.
+4. **False negative analysis** — 78 missed instances: 29% reasonable miss, 28% wrong fixture expectations, 23% narrow corpus rules, 19% need better embedding.
+5. **Qwen3-Reranker-0.6B** — cross-encoder, NOT instruction-following. Can't generate JSON. Use via fastembed only.
+
 ### Path Forward
 
-1. **Easy recall gap** — LLM drops easy recall from 91% to 84%. Prompt tuning could recover this.
-2. **Neg silence** — 75.9% is close to 80% target. 9 unparseable LLM responses fall back to noisy embedding results.
-3. **0.6B reranker** — Qwen3-Reranker-0.6B benchmarks pending (latency vs quality tradeoff)
+1. **Fix 22 over-expected fixtures** (free recall improvement, in progress)
+2. **Rewrite 3 narrow corpus rules** (close resources, CSRF, magic numbers)
+3. **Implement rule augmentation** (category prefix, +1.7% recall)
+4. **Evaluate CodeRankEmbed** (137M, +10.7 MRR potential)
+5. **Reduce unparseable LLM responses** (25+ failures on 357 fixtures)
 
 ## What's Next
 
