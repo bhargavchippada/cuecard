@@ -88,12 +88,12 @@ class TestBuildPrompt:
         assert "Example 5" in system
         assert "rule_data_EXAMPLE" in system
 
-    def test_system_prompt_contains_matching_guidelines(self) -> None:
+    def test_system_prompt_contains_reasoning_principles(self) -> None:
         candidates = _make_candidates(1)
         system, _ = _build_prompt(candidates, "test", "nonce1")
-        assert "MATCHING GUIDELINES:" in system
-        assert "DO match" in system
-        assert "DO NOT match" in system
+        assert "REASONING PRINCIPLES:" in system
+        assert "When in doubt, include" in system
+        assert "tangential" in system
 
     def test_system_prompt_has_empty_rules_example(self) -> None:
         """Prompt shows the model how to return empty rules array."""

@@ -505,6 +505,82 @@ class TestRunEval:
         assert tiers["custom_tier"].count == 1
 
 
+class TestRunEvalSampling:
+    """Test run_eval with sample_ratio."""
+
+    def test_sample_ratio_reduces_fixtures(self, tmp_path: object) -> None:
+        corpus_dir = str(tmp_path)  # type: ignore[arg-type]
+        corpus_file = str(tmp_path / "rules.txt")  # type: ignore[operator]
+        with open(corpus_file, "w") as f:
+            f.write("Rule A\nRule B\nRule C\n")
+
+        fixtures = [
+            Fixture(id=f"fix-{i}", query=f"q {i}", corpus="rules.txt",
+                    should_match=("Rule A",), should_not_match=(),
+                    difficulty=d)
+            for i, d in enumerate(
+                ["easy"] * 10 + ["medium"] * 10 + ["hard"] * 10 + ["negative"] * 10
+            )
+        ]
+        model = MockModel()
+        summary = run_eval(
+            fixtures, corpus_dir, "test-model",
+            model=model, top_k=5, threshold=0.0,
+            sample_ratio=0.3,
+        )
+        # Stratified: 3 per tier (30% of 10), 4 tiers = 12
+        assert summary.fixture_count == 12
+
+    def test_sample_ratio_one_uses_all(self, tmp_path: object) -> None:
+        corpus_dir = str(tmp_path)  # type: ignore[arg-type]
+        corpus_file = str(tmp_path / "rules.txt")  # type: ignore[operator]
+        with open(corpus_file, "w") as f:
+            f.write("Rule A\n")
+
+        fixtures = [
+            Fixture(id=f"fix-{i}", query=f"q {i}", corpus="rules.txt",
+                    should_match=("Rule A",), should_not_match=(),
+                    difficulty="easy")
+            for i in range(5)
+        ]
+        model = MockModel()
+        summary = run_eval(
+            fixtures, corpus_dir, "test-model",
+            model=model, top_k=5, threshold=0.0,
+            sample_ratio=1.0,
+        )
+        assert summary.fixture_count == 5
+
+    def test_tqdm_import_failure_graceful(self, tmp_path: object) -> None:
+        """Verify eval works when tqdm is not available."""
+        corpus_dir = str(tmp_path)  # type: ignore[arg-type]
+        corpus_file = str(tmp_path / "rules.txt")  # type: ignore[operator]
+        with open(corpus_file, "w") as f:
+            f.write("Rule A\n")
+
+        fixtures = [
+            Fixture(id="fix-1", query="q", corpus="rules.txt",
+                    should_match=("Rule A",), should_not_match=(),
+                    difficulty="easy"),
+        ]
+        model = MockModel()
+
+        import builtins
+        real_import = builtins.__import__
+
+        def mock_import(name: str, *args: object, **kwargs: object) -> object:
+            if name == "tqdm":
+                raise ImportError("no tqdm")
+            return real_import(name, *args, **kwargs)
+
+        with patch.object(builtins, "__import__", side_effect=mock_import):
+            summary = run_eval(
+                fixtures, corpus_dir, "test-model",
+                model=model, top_k=5, threshold=0.0,
+            )
+        assert summary.fixture_count == 1
+
+
 class TestRunEvalWithMode:
     """Test run_eval with pipeline mode parameter."""
 

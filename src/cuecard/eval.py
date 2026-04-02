@@ -298,6 +298,8 @@ def run_eval(
     mode: str | None = None,
     query_max_length: int = 500,
     corpus_override: tuple[str, ...] | None = None,
+    sample_ratio: float = 1.0,
+    seed: int = 42,
 ) -> EvalSummary:
     """Run evaluation across all fixtures and aggregate metrics.
 
@@ -325,16 +327,48 @@ def run_eval(
         corpus_override: If set, use these corpus file paths for ALL fixtures
             instead of each fixture's corpus field. Builds a single unified
             index. Useful for testing cross-domain noise.
+        sample_ratio: Fraction of fixtures to evaluate (0.0-1.0). Uses
+            stratified sampling to preserve tier distribution. Default 1.0.
+        seed: Random seed for reproducible sampling.
 
     Returns:
         EvalSummary with per-fixture and aggregate metrics.
     """
+    # Stratified sampling: preserve tier distribution
+    if sample_ratio < 1.0:
+        import random
+
+        rng = random.Random(seed)
+        by_tier: dict[str, list[Fixture]] = {}
+        for fx in fixtures:
+            by_tier.setdefault(fx.difficulty, []).append(fx)
+        sampled: list[Fixture] = []
+        for tier_fixtures in by_tier.values():
+            n = max(1, int(len(tier_fixtures) * sample_ratio))
+            sampled.extend(rng.sample(tier_fixtures, min(n, len(tier_fixtures))))
+        rng.shuffle(sampled)
+        fixtures = sampled
+        total = sum(len(v) for v in by_tier.values())
+        logger.info(
+            "Sampled %d/%d fixtures (ratio=%.2f)",
+            len(sampled), total, sample_ratio,
+        )
+
     results: list[FixtureResult] = []
 
     # Index cache: corpus key -> (rules, index)
     _index_cache: dict[tuple[str, ...], tuple[tuple[Rule, ...], Index]] = {}
 
-    for fixture in fixtures:
+    # Progress bar (tqdm if available, otherwise silent)
+    try:
+        from tqdm import tqdm
+        fixture_iter: Iterable[Fixture] = tqdm(
+            fixtures, desc=mode or "embedding", unit="fix",
+        )
+    except ImportError:
+        fixture_iter = fixtures
+
+    for fixture in fixture_iter:
         if corpus_override is not None:
             corpus_key = corpus_override
         else:

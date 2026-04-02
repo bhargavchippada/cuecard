@@ -88,4 +88,5 @@ dev = [
     "pytest>=9.0.2",
     "pytest-cov>=7.1.0",
     "ruff>=0.15.8",
+    "types-tqdm>=4.67.3.20260402",
 ]

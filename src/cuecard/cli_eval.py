@@ -40,6 +40,13 @@ def eval_cmd(
             help="Comma-separated corpus files for unified index",
         ),
     ] = None,
+    sample_ratio: Annotated[
+        float,
+        typer.Option(
+            "--sample-ratio",
+            help="Fraction of fixtures to evaluate (0.0-1.0, stratified)",
+        ),
+    ] = 1.0,
 ) -> None:
     """Run evaluation against a fixture file."""
     from cuecard.eval import format_eval_report, load_fixtures, run_eval
@@ -81,6 +88,7 @@ def eval_cmd(
             dedup_threshold=dedup_threshold,
             mode=mode if mode else None,
             corpus_override=override_paths,
+            sample_ratio=sample_ratio,
         )
     except Exception as exc:
         err_console.print(f"[red]Eval failed:[/red] {exc}")

@@ -41,10 +41,10 @@ class TestBuildExpansionPrompt:
         assert "rule_data_abc123" in system
         assert "rule_data_abc123" in user
 
-    def test_contains_do_dont_guidelines(self) -> None:
+    def test_contains_reasoning_principles(self) -> None:
         system, _ = _build_expansion_prompt("test rule", "nonce1")
-        assert "DO:" in system
-        assert "DON'T:" in system
+        assert "REASONING PRINCIPLES:" in system
+        assert "vocabulary gap" in system
 
     def test_contains_golden_examples_pretooluse(self) -> None:
         system, _ = _build_expansion_prompt("test rule", "nonce1")
@@ -75,17 +75,17 @@ class TestBuildExpansionPrompt:
 
     def test_anti_template_instruction(self) -> None:
         system, _ = _build_expansion_prompt("test rule", "nonce1")
-        assert "different sentence structure" in system
-        assert "Start two expansions with the same word" in system
+        assert "Vary the form" in system
+        assert "template repetition" in system
 
     def test_trigger_direction_instruction(self) -> None:
         system, _ = _build_expansion_prompt("test rule", "nonce1")
-        assert "violation" in system.lower()
-        assert "CORRECT/COMPLIANT behavior" in system
+        assert "TRIGGER" in system
+        assert "not the response" in system.lower()
 
     def test_indirect_trigger_instruction(self) -> None:
         system, _ = _build_expansion_prompt("test rule", "nonce1")
-        assert "INDIRECT triggers" in system
+        assert "indirect triggers" in system.lower()
 
     def test_variable_count_instruction(self) -> None:
         _, user = _build_expansion_prompt("test rule", "nonce1")
@@ -96,14 +96,15 @@ class TestBuildExpansionPrompt:
         system, _ = _build_expansion_prompt(
             "test rule", "nonce1", event_type="UserPromptSubmit",
         )
-        assert "tool commands or code patterns" in system
-        assert "false matches" in system
+        assert "DOMAIN BOUNDARY" in system
+        assert "USER MESSAGES" in system
 
     def test_pretooluse_cross_domain_dont(self) -> None:
         system, _ = _build_expansion_prompt(
             "test rule", "nonce1", event_type="PreToolUse",
         )
-        assert "process, planning, or methodology" in system
+        assert "DOMAIN BOUNDARY" in system
+        assert "TOOL CALLS" in system
 
     def test_workflow_bad_examples_show_false_positives(self) -> None:
         system, _ = _build_expansion_prompt(

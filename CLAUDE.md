@@ -193,15 +193,29 @@ Critical ones:
 - D17: Merge preserves expansions for unchanged rules
 - S1: Path validation with allowlist (prevents traversal)
 
-## Model Recommendations (from session 16 benchmarks, 587 fixtures)
+## Model Recommendations (updated session 17)
 
 | Stage | Model | Why |
 |-------|-------|-----|
 | Embedding | jina-embeddings-v2-base-code | Best PreToolUse hard recall (60%), code-specific, 22ms |
 | Embedding (workflow alt) | snowflake-arctic-embed-m | Best UserPromptSubmit hard recall (73.3%), 14ms |
 | Cross-encoder (opt-in) | Xenova/ms-marco-MiniLM-L-6-v2 | 13ms, but regressions on code — skip |
-| LLM (full) | Qwen3.5-35B-A3B via llama-server | Best quality, MoE, free |
+| LLM (GPU) | Qwen3.5-9B via llama-server | Matches 35B on basic, 4x smaller (5.3GB), v3 prompt |
+| LLM (GPU, max quality) | Qwen3.5-35B-A3B via llama-server | Best workflow recall, MoE (21GB) |
+| LLM (CPU/laptop) | Qwen3.5-4B via llama-server | 2.6GB, 856ms p50, 96% neg silence |
 | LLM (API) | Haiku via claude-agent-sdk | Fast, Max subscription |
+
+### Qwen3.5 Dense Model Comparison (v3 corpora, llm-local, 20% sample)
+
+| Model | Basic Recall | Basic Noise | Basic NegSil | p50ms | GGUF |
+|-------|-------------|-------------|--------------|-------|------|
+| 35B-MoE | 0.413 | 0.256 | 0.923 | 1083ms | 21GB |
+| 9B (v3 prompt) | 0.407 | 0.173 | 0.962 | 1608ms | 5.3GB |
+| 4B | 0.383 | 0.248 | 0.962 | 856ms | 2.6GB |
+| 2B | 0.383 | 0.404 | 0.808 | 521ms | 1.2GB |
+
+Key insight: 9B matches 35B on basic (within 0.6 pts recall, better noise/silence). 4B is viable for CPU. 2B not viable (40% noise).
+The same model must handle both expansion generation and reranking — rules out cross-encoder-only models.
 
 ### Embedding Model Comparison (enriched, embedding mode, 354 basic fixtures)
 
@@ -244,8 +258,11 @@ max_expansion_length = 200  # Max chars per expansion
 - **Unified events:** UserPromptSubmit support, reasoning-in-response prompt — COMPLETE
 - **Enriched retrieval:** JSON intermediate, expansion-aware indexing, parent collapse, BM25+RRF, expansion CLI — COMPLETE (826 tests, 100% coverage)
 - **Benchmarking:** 6 embedding models, raw vs enriched vs LLM, v1 vs v3 expansion prompts — COMPLETE
-- **Small model investigation:** Qwen3-0.6B not viable; Qwen3.5-4B/9B identified as replacements — RESEARCH COMPLETE
-- **LLM robustness:** Stop sequence, JSON extraction, retry on parse failure — COMPLETE
+- **Small model investigation:** Qwen3-0.6B not viable; Qwen3.5-4B/9B benchmarked — COMPLETE
+- **LLM robustness:** Configurable stop sequences, JSON extraction, retry on parse failure — COMPLETE
+- **Prompt engineering:** 13 few-shot examples, principle-based guidelines, loss-pattern driven — COMPLETE
+- **Model benchmarking:** Qwen3.5-9B/4B/2B vs 35B on v3 corpora with sampling — COMPLETE
+- **Eval infrastructure:** tqdm progress, stratified sampling, bench_models.py script — COMPLETE
 - **Eval dataset:** 587 fixtures (438 original + 149 mined from 7 real projects)
 - **Phase 4:** Publish — pending
 - **Phase 5:** Multi-source parsing (markdown, YAML, CLAUDE.md) — DRAFT PRD (`artifacts/phase5-multi-source-prd-draft.md`)
@@ -263,17 +280,33 @@ Both event types use the same pipeline. The adapter prefixes queries with the ev
 
 For llm-local mode (best quality):
 ```bash
-# Start Qwen3.5-35B-A3B with Jinja template support
+# Recommended: Qwen3.5-9B (matches 35B on basic, 4x smaller)
+llama-server -m ~/models/Qwen3.5-9B-Q4_K_M.gguf \
+  --port 8081 -ngl 99 -c 16384 --jinja
+
+# Alternative: Qwen3.5-35B-A3B (best workflow recall, needs 32GB GPU)
 llama-server -m ~/models/Qwen3.5-35B-A3B-Q4_K_M.gguf \
   --port 8081 -ngl 99 -c 16384 --jinja
+
+# CPU/laptop: Qwen3.5-4B (2.6GB, 856ms p50)
+llama-server -m ~/models/Qwen3.5-4B-Q4_K_M.gguf \
+  --port 8081 -ngl 0 -c 16384 --jinja
 ```
 
 Key requirements:
 - `--jinja` flag (NOT `--chat-template chatml`) — needed for `chat_template_kwargs`
-- `-c 16384` — 7 few-shot system prompt needs ~5K tokens
+- `-c 16384` — 13 few-shot system prompt needs ~8K tokens
 - Thinking disabled by default via `enable_thinking: false` for ~1s latency
 - `_MAX_TOKENS=1024` — reasoning-in-response needs room for 3-5 sentence analysis
 - Reasoning captured in `LLMParseResult.reasoning` for debugging
+- Reranker passes `stop=None` to `call_local()` — no stop sequence for JSON responses
+- Expander keeps default `stop=("\n\n",)` to prevent repetition degeneration
+
+### Prompt Engineering
+- System prompt has 13 few-shot examples (7 original + 6 from loss analysis)
+- Guidelines use reasoning principles ("does this change code/state?") not hardcoded command lists
+- "When in doubt, include" — false negatives worse than false positives
+- Loss analysis: `artifacts/llm-reranker-loss-analysis-2026-04-02.md`
 
 ## Quality Benchmarks
 

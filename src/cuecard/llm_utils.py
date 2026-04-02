@@ -42,6 +42,7 @@ def call_local(
     *,
     max_tokens: int = 1024,
     temperature: float = 0.0,
+    stop: tuple[str, ...] | None = ("\n\n",),
 ) -> str:
     """Call a local OpenAI-compatible LLM endpoint."""
     validate_endpoint(endpoint)
@@ -53,8 +54,9 @@ def call_local(
         ],
         "max_tokens": max_tokens,
         "temperature": temperature,
-        "stop": ["\n\n"],
     }
+    if stop is not None:
+        body["stop"] = list(stop)
     if not thinking:
         body["chat_template_kwargs"] = {"enable_thinking": False}
     response = httpx.post(

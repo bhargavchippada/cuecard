@@ -97,12 +97,13 @@ def _parse_json(path: str) -> list[Rule]:
                 )
                 exp = exp[:MAX_EXPANSION_LENGTH]
             expansions.append(exp)
-            if len(expansions) >= MAX_EXPANSIONS_PER_RULE:
-                logger.warning(
-                    "Rule in %s has >%d expansions, dropping extras",
-                    path, MAX_EXPANSIONS_PER_RULE,
-                )
-                break
+
+        if len(expansions) > MAX_EXPANSIONS_PER_RULE:
+            logger.warning(
+                "Rule in %s has %d expansions (max %d), dropping extras",
+                path, len(expansions), MAX_EXPANSIONS_PER_RULE,
+            )
+            expansions = expansions[:MAX_EXPANSIONS_PER_RULE]
 
         # Parse source provenance — always use the JSON file's own
         # resolved path, never trust embedded source.file from untrusted
