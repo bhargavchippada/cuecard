@@ -147,3 +147,26 @@ class TestFormatRulesVerbose:
         output = format_rules_verbose(results)
         assert "Short" in output
         assert "Long text" not in output
+
+    def test_lines_joined_with_newline(self) -> None:
+        """Lines must be joined with plain newline, not 'XX\\nXX'."""
+        results = [
+            _make_result("Rule A", 0.90, file="a.txt", line_start=1),
+            _make_result("Rule B", 0.80, file="b.txt", line_start=2),
+        ]
+        output = format_rules_verbose(results)
+        assert "XX" not in output
+        # Verify proper newline separation
+        lines = output.split("\n")
+        assert len(lines) == 4  # 2 results × 2 lines each
+
+
+class TestFormatRulesScrubDefault:
+    """Kill mutant that changes scrub default from True to False."""
+
+    def test_scrub_defaults_to_true(self) -> None:
+        """format_rules() must scrub secrets by default (no explicit scrub=)."""
+        results = [_make_result("key=AKIA1234567890ABCDEF", 0.80)]
+        output = format_rules(results)
+        assert "AKIA1234567890ABCDEF" not in output
+        assert "[REDACTED]" in output
