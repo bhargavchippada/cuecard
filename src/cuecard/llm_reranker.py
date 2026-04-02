@@ -221,6 +221,8 @@ def _call_local(
         "max_tokens": _MAX_TOKENS,
         "temperature": 0.0,
     }
+    if not thinking:
+        body["chat_template_kwargs"] = {"enable_thinking": False}
     response = httpx.post(
         f"{endpoint.rstrip('/')}/chat/completions",
         json=body,
