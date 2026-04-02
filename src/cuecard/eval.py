@@ -11,7 +11,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Sequence
+
+    from cuecard.models import RankedResult
 
 import numpy as np
 
@@ -352,7 +354,7 @@ def run_eval(
                 embedding_model=model,  # type: ignore[arg-type]
                 mode=mode,
             )
-            ranked = pipeline_result.results
+            ranked: Sequence[RankedResult] = pipeline_result.results
         else:
             ranked = retrieve(
                 index,

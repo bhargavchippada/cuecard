@@ -111,7 +111,7 @@ class TestEmbeddingOnlyMode:
 
         assert isinstance(result, PipelineResult)
         assert result.mode == "embedding"
-        assert result.results == fake_results
+        assert result.results == tuple(fake_results)
         assert len(result.stages) == 1
         assert result.stages[0].stage == "embedding"
         assert result.stages[0].error is None
@@ -147,7 +147,7 @@ class TestRerankModeGraceful:
                     cuecard.reranker = real_mod  # type: ignore[attr-defined]
 
         assert result.mode == "rerank"
-        assert result.results == fake_results
+        assert result.results == tuple(fake_results)
         assert len(result.stages) == 2
         assert result.stages[0].stage == "embedding"
         assert result.stages[0].error is None
@@ -192,7 +192,7 @@ class TestLLMModeGraceful:
                         setattr(cuecard, attr, mod)
 
         assert result.mode == "rerank-llm-local"
-        assert result.results == fake_results
+        assert result.results == tuple(fake_results)
         assert len(result.stages) == 3
         assert result.stages[1].error is not None
         assert result.stages[2].stage == "llm"
@@ -268,7 +268,7 @@ class TestEmptyIndex:
                 "test query", empty_index, config, mode="embedding",
             )
 
-        assert result.results == []
+        assert result.results == ()
         assert result.stages[0].input_count == 0
         assert result.stages[0].output_count == 0
 
@@ -401,7 +401,7 @@ class TestMockReranker:
                 "test query", sample_index, config, mode="rerank",
             )
 
-        assert result.results == reranked
+        assert result.results == tuple(reranked)
         assert len(result.stages) == 2
         assert result.stages[1].stage == "rerank"
         assert result.stages[1].error is None
@@ -426,7 +426,7 @@ class TestMockReranker:
                 "test query", sample_index, config, mode="rerank",
             )
 
-        assert result.results == fake_results  # degraded to Stage 1
+        assert result.results == tuple(fake_results)  # degraded to Stage 1
         assert result.stages[1].error == "model failed"
 
 
@@ -452,7 +452,7 @@ class TestMockLLMReranker:
                 "test query", sample_index, config, mode="rerank-llm-local",
             )
 
-        assert result.results == llm_reranked
+        assert result.results == tuple(llm_reranked)
         assert len(result.stages) == 3
         assert result.stages[2].stage == "llm"
         assert result.stages[2].error is None
@@ -481,7 +481,7 @@ class TestMockLLMReranker:
                 "test query", sample_index, config, mode="rerank-llm-haiku",
             )
 
-        assert result.results == fake_results  # degraded
+        assert result.results == tuple(fake_results)  # degraded
         assert result.stages[2].error == "LLM timeout"
 
 

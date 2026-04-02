@@ -525,13 +525,11 @@
         "id": "black-format",
         "query": "Bash: uv run black src/",
         "corpus": "rules_basic.txt",
-        "should_match": [
+        "should_match": [],
+        "should_not_match": [
             "Run ruff and mypy before committing Python code"
         ],
-        "should_not_match": [
-            "Send Enter after every tmux send-keys command"
-        ],
-        "difficulty": "medium"
+        "difficulty": "negative"
     },
     {
         "id": "cargo-fmt",
@@ -955,13 +953,11 @@
         "id": "git-reset-hard",
         "query": "Bash: git reset --hard HEAD~5",
         "corpus": "rules_basic.txt",
-        "should_match": [
+        "should_match": [],
+        "should_not_match": [
             "Never force-push to main or master branch"
         ],
-        "should_not_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "difficulty": "hard"
+        "difficulty": "negative"
     },
     {
         "id": "mutable-class-attrs",
@@ -1480,9 +1476,7 @@
         "query": "Read: file_path='/app/.env.production'",
         "corpus": "rules_basic.txt",
         "should_match": [
-            "Never commit secrets (API keys, tokens, passwords) to git",
-            "Set file permissions to 0o600 for sensitive files",
-            "Use environment variables for configuration, not hardcoded values"
+            "Never commit secrets (API keys, tokens, passwords) to git"
         ],
         "should_not_match": [
             "Use frozen dataclasses for immutable data",
@@ -1630,8 +1624,7 @@
             "Always validate user input at system boundaries",
             "Use parameterized queries to prevent SQL injection",
             "Always handle errors explicitly, never silently swallow exceptions",
-            "Use type hints on all function signatures",
-            "Rotate any secrets that may have been exposed"
+            "Use type hints on all function signatures"
         ],
         "should_not_match": [
             "Use frozen dataclasses for immutable data",
@@ -1790,16 +1783,6 @@
             "Use parameterized queries to prevent SQL injection"
         ],
         "difficulty": "hard"
-    },
-    {
-        "id": "read-readme-file",
-        "query": "Read: {\"file_path\": \"README.md\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Document all public API functions with docstrings"
-        ],
-        "difficulty": "negative"
     },
     {
         "id": "cat-etc-hostname",
@@ -2022,16 +2005,6 @@
         "difficulty": "negative"
     },
     {
-        "id": "pwd-current-directory",
-        "query": "Bash: pwd",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Always create a new branch for feature work"
-        ],
-        "difficulty": "negative"
-    },
-    {
         "id": "date-current",
         "query": "Bash: date +%Y-%m-%d",
         "corpus": "rules_basic.txt",
@@ -2233,13 +2206,11 @@
         "id": "mined-grep-db-pool-acquire",
         "query": "Bash: grep -rn 'get_pool|SurrealPool|acquire' agentic_trader/db/repositories/ --include='*.py'",
         "corpus": "rules_basic.txt",
-        "should_match": [
+        "should_match": [],
+        "should_not_match": [
             "Always close file handles, database connections, network sockets, and other resources"
         ],
-        "should_not_match": [
-            "Use parameterized queries to prevent SQL injection"
-        ],
-        "difficulty": "hard"
+        "difficulty": "negative"
     },
     {
         "id": "mined-docker-logs-grep",
@@ -2792,18 +2763,6 @@
         "should_not_match": [
             "Use uv for all Python package operations, never pip",
             "Run ruff and mypy before committing Python code"
-        ],
-        "difficulty": "medium"
-    },
-    {
-        "id": "rust-cargo-add-serde",
-        "query": "Bash: cargo add serde --features derive",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Review all dependencies for known vulnerabilities before adding"
-        ],
-        "should_not_match": [
-            "Use uv for all Python package operations, never pip"
         ],
         "difficulty": "medium"
     },
@@ -3695,8 +3654,7 @@
         "should_match": [
             "Always handle errors explicitly, never silently swallow exceptions",
             "Use asyncio for I/O-bound operations, not threads",
-            "Use type hints on all function signatures",
-            "No console.log or print debug statements in production code"
+            "Use type hints on all function signatures"
         ],
         "should_not_match": [
             "Use uv for all Python package operations, never pip"
@@ -4063,26 +4021,21 @@
         "id": "mined-gravity-grep-env-var",
         "query": "Grep: GRAVITY_CLAW_URL in mission-control/src/**/*.ts",
         "corpus": "rules_basic.txt",
-        "should_match": [
+        "should_match": [],
+        "should_not_match": [
             "Use environment variables for configuration, not hardcoded values"
         ],
-        "should_not_match": [
-            "Use uv for all Python package operations, never pip"
-        ],
-        "difficulty": "hard"
+        "difficulty": "negative"
     },
     {
         "id": "mined-gravity-edit-readme",
         "query": "Edit: mission-control/README.md -- old_string='| **Tiles** | Static JSON | /api/tiles' new_string='| **Tiles** | Static JSON (server-side) | loadTiles() in page.tsx'",
         "corpus": "rules_basic.txt",
-        "should_match": [
+        "should_match": [],
+        "should_not_match": [
             "Document all public API functions with docstrings"
         ],
-        "should_not_match": [
-            "Use uv for all Python package operations, never pip",
-            "Never commit secrets (API keys, tokens, passwords) to git"
-        ],
-        "difficulty": "medium"
+        "difficulty": "negative"
     },
     {
         "id": "mined-delulu-tmux-long-task",

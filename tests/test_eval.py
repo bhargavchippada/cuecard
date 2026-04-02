@@ -540,7 +540,7 @@ class TestRunEvalWithMode:
             ),
         ]
         fake_pipeline = PipelineResult(
-            results=fake_results,
+            results=tuple(fake_results),
             stages=(StageTrace(
                 stage="embedding", input_count=1,
                 output_count=1, latency_ms=0.5,

@@ -6,6 +6,7 @@ import hashlib
 import logging
 import os
 from dataclasses import dataclass
+from types import MappingProxyType
 
 from cuecard.models import SourceMeta
 
@@ -20,7 +21,7 @@ class FreshnessResult:
     """Outcome of a freshness check against source files."""
 
     is_stale: bool
-    updated_sources: dict[str, SourceMeta]
+    updated_sources: MappingProxyType[str, SourceMeta]
     changed_files: tuple[str, ...]
     removed_files: tuple[str, ...]
     new_files: tuple[str, ...]
@@ -103,7 +104,7 @@ def check_freshness(
 
     return FreshnessResult(
         is_stale=is_stale,
-        updated_sources=updated,
+        updated_sources=MappingProxyType(updated),
         changed_files=tuple(changed),
         removed_files=tuple(removed),
         new_files=tuple(new),

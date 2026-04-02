@@ -7,6 +7,7 @@ import time
 from typing import TYPE_CHECKING
 
 from cuecard.models import PipelineResult, StageTrace
+from cuecard.security import scrub_secrets
 
 if TYPE_CHECKING:
     from fastembed import TextEmbedding
@@ -77,7 +78,9 @@ def run_pipeline(
         results, trace = _run_llm_stage(results, query, config, backend)
         stages.append(trace)
 
-    return PipelineResult(results=results, stages=tuple(stages), mode=effective_mode)
+    return PipelineResult(
+        results=tuple(results), stages=tuple(stages), mode=effective_mode,
+    )
 
 
 def _resolve_mode(mode: str | None, config: ResolvedConfig) -> str:
@@ -177,7 +180,7 @@ def _run_rerank_stage(
             input_count=input_count,
             output_count=len(candidates),
             latency_ms=latency_ms,
-            error=str(exc),
+            error=scrub_secrets(str(exc)),
         )
 
 
@@ -227,5 +230,5 @@ def _run_llm_stage(
             input_count=input_count,
             output_count=len(candidates),
             latency_ms=latency_ms,
-            error=str(exc),
+            error=scrub_secrets(str(exc)),
         )

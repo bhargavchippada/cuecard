@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     import numpy.typing as npt
 
 MAX_RULE_LENGTH = 500
@@ -95,7 +97,7 @@ class StageTrace:
 class PipelineResult:
     """Full pipeline output with per-stage tracing."""
 
-    results: list[RankedResult]
+    results: tuple[RankedResult, ...]
     stages: tuple[StageTrace, ...]
     mode: str
 
@@ -121,7 +123,7 @@ class Index:
         rules: tuple[Rule, ...],
         model_name: str,
         dim: int,
-        sources: dict[str, SourceMeta],
+        sources: Mapping[str, SourceMeta],
     ) -> None:
         if embeddings.shape[0] != len(rules):
             msg = (

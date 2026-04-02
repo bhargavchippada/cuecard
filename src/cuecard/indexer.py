@@ -20,7 +20,7 @@ from cuecard._math import l2_normalize
 from cuecard.models import Index, Provenance, Rule, SourceMeta
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Mapping
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ def _compute_checksum(path: str) -> str:
 
 def build_index(
     rules: tuple[Rule, ...],
-    sources: dict[str, SourceMeta],
+    sources: Mapping[str, SourceMeta],
     model_name: str,
     model: EmbeddingModel | None = None,
     dim: int = _DEFAULT_DIM,

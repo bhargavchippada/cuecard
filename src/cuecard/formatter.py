@@ -6,12 +6,14 @@ from os.path import basename
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from cuecard.models import RankedResult
 
 _BOUNDARY_LABEL = "[cuecard \u2014 user-defined guidelines relevant to this action]"
 
 
-def format_rules(results: list[RankedResult], *, scrub: bool = True) -> str:
+def format_rules(results: Sequence[RankedResult], *, scrub: bool = True) -> str:
     """Format results for injection into agent context.
 
     Returns the labeled boundary prefix followed by one rule per line.
@@ -35,7 +37,7 @@ def format_rules(results: list[RankedResult], *, scrub: bool = True) -> str:
     return "\n".join(lines)
 
 
-def format_rules_verbose(results: list[RankedResult]) -> str:
+def format_rules_verbose(results: Sequence[RankedResult]) -> str:
     """Format results for CLI output with scores and provenance.
 
     Each result is numbered and shows its retrieval score plus the

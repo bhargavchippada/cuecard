@@ -20,9 +20,14 @@ from cuecard.security import (
 
 class TestScrubSecrets:
     def test_stripe_key(self) -> None:
-        text = "key is sk-live-abc123XYZ456789012345"
+        text = "key is sk_live_abc123XYZ456789012345678"
         assert "[REDACTED]" in scrub_secrets(text)
-        assert "sk-live-" not in scrub_secrets(text)
+        assert "sk_live_" not in scrub_secrets(text)
+
+    def test_stripe_test_key(self) -> None:
+        text = "key is sk_test_abc123XYZ456789012345678"
+        assert "[REDACTED]" in scrub_secrets(text)
+        assert "sk_test_" not in scrub_secrets(text)
 
     def test_aws_key(self) -> None:
         text = "aws key AKIAIOSFODNN7EXAMPLE"

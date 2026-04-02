@@ -53,7 +53,7 @@ def _parse_txt(path: str) -> list[Rule]:
     resolved = str(Path(path).resolve())
     rules: list[Rule] = []
 
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         for line_num, raw_line in enumerate(f, start=1):
             line = raw_line.strip()
 

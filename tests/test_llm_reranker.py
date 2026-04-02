@@ -108,7 +108,7 @@ class TestBuildPrompt:
         assert "1. <rule_data_nonce1>" in user
         assert "2. <rule_data_nonce1>" in user
         assert "3. <rule_data_nonce1>" in user
-        assert "ACTION: test query" in user
+        assert "test query" in user and "query_data_" in user
 
     def test_nonce_stripped_from_rule_text(self) -> None:
         """If a rule contains the nonce string, it must be removed."""
@@ -137,23 +137,27 @@ class TestBuildPrompt:
         _, user = _build_prompt(
             candidates, f"Bash: echo {nonce}", nonce,
         )
-        action_line = user.split("ACTION: ")[1]
-        assert nonce not in action_line
+        action_section = user.split("ACTION: ")[1]
+        # Nonce should only appear in the delimiter tags, not in the content
+        content_parts = action_section.split(f"query_data_{nonce}")
+        assert len(content_parts) >= 2  # delimiter present
+        inner = content_parts[1].lstrip(">").split("<")[0]
+        assert nonce not in inner
 
     def test_query_secrets_scrubbed(self) -> None:
         candidates = _make_candidates(1)
         _, user = _build_prompt(
             candidates,
-            "install sk-live-abc12345678901234567890",
+            "install sk_live_abc123456789012345678901",
             "nonce1",
         )
-        assert "sk-live-" not in user
+        assert "sk_live_" not in user
         assert "[REDACTED]" in user
 
     def test_empty_candidates(self) -> None:
         _, user = _build_prompt([], "test query", "nonce1")
         assert "RULES:\n" in user
-        assert "ACTION: test query" in user
+        assert "test query" in user and "query_data_" in user
 
 
 class TestStripThinkingTags:
@@ -265,7 +269,7 @@ class TestCallLocal:
 
         with patch.object(httpx, "post", return_value=mock_response) as mock_post:
             result = _call_local(
-                "system", "user", "http://localhost:8081/v1", False, 1024
+                "system", "user", "http://localhost:8081/v1", False
             )
             assert result == '{"rules": [1, 3]}'
             mock_post.assert_called_once()
@@ -278,7 +282,7 @@ class TestCallLocal:
             pytest.raises(httpx.TimeoutException),
         ):
             _call_local(
-                "system", "user", "http://localhost:8081/v1", False, 1024
+                "system", "user", "http://localhost:8081/v1", False
             )
 
     def test_connect_error_raises(self) -> None:
@@ -289,7 +293,7 @@ class TestCallLocal:
             pytest.raises(httpx.ConnectError),
         ):
             _call_local(
-                "system", "user", "http://localhost:8081/v1", False, 1024
+                "system", "user", "http://localhost:8081/v1", False
             )
 
     def test_http_error_raises(self) -> None:
@@ -302,7 +306,7 @@ class TestCallLocal:
             pytest.raises(httpx.HTTPStatusError),
         ):
             _call_local(
-                "system", "user", "http://localhost:8081/v1", False, 1024
+                "system", "user", "http://localhost:8081/v1", False
             )
 
     def test_no_choices_raises(self) -> None:
@@ -313,7 +317,7 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(ValueError, match="No choices"),
         ):
-            _call_local("sys", "usr", "http://localhost:8081/v1", False, 1024)
+            _call_local("sys", "usr", "http://localhost:8081/v1", False)
 
     def test_invalid_choice_format_raises(self) -> None:
         mock_response = MagicMock()
@@ -323,7 +327,7 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(ValueError, match="Invalid choice"),
         ):
-            _call_local("sys", "usr", "http://localhost:8081/v1", False, 1024)
+            _call_local("sys", "usr", "http://localhost:8081/v1", False)
 
     def test_invalid_message_format_raises(self) -> None:
         mock_response = MagicMock()
@@ -333,7 +337,7 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(ValueError, match="Invalid message"),
         ):
-            _call_local("sys", "usr", "http://localhost:8081/v1", False, 1024)
+            _call_local("sys", "usr", "http://localhost:8081/v1", False)
 
     def test_invalid_content_format_raises(self) -> None:
         mock_response = MagicMock()
@@ -345,7 +349,7 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(ValueError, match="Invalid content"),
         ):
-            _call_local("sys", "usr", "http://localhost:8081/v1", False, 1024)
+            _call_local("sys", "usr", "http://localhost:8081/v1", False)
 
 
 class TestCallHaiku:
@@ -498,14 +502,14 @@ class TestRerankLLM:
         with patch.object(httpx, "post", return_value=mock_response) as mock_post:
             rerank_llm(
                 candidates,
-                "install sk-live-abc12345678901234567890",
+                "install sk_live_abc123456789012345678901",
                 backend="local",
                 endpoint="http://localhost:8081/v1",
             )
             call_args = mock_post.call_args
             body = call_args.kwargs["json"]
             user_msg = body["messages"][1]["content"]
-            assert "sk-live-" not in user_msg
+            assert "sk_live_" not in user_msg
             assert "[REDACTED]" in user_msg
 
     def test_nonce_unique_per_call(self) -> None:

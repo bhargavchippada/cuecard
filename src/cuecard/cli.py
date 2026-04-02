@@ -10,7 +10,9 @@ from rich.console import Console
 from rich.table import Table
 
 if TYPE_CHECKING:
-    from cuecard.models import ResolvedConfig
+    from collections.abc import Sequence
+
+    from cuecard.models import RankedResult, ResolvedConfig
 
 app = typer.Typer(
     name="cuecard",
@@ -348,7 +350,7 @@ def retrieve(
         pipeline_result = run_pipeline(
             query, idx, cfg, embedding_model=model, mode=effective_mode,
         )
-        results = pipeline_result.results
+        results: Sequence[RankedResult] = pipeline_result.results
     else:
         from cuecard.retriever import retrieve as do_retrieve
 

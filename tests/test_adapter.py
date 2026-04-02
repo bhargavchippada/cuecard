@@ -255,6 +255,47 @@ class TestAdapterMain:
         assert hook_out["existingKey"] == "val"
         assert "additionalContext" in hook_out
 
+    def test_user_prompt_submit_event(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """UserPromptSubmit events use prompt field, not tool_name/tool_input."""
+        hook_input = {
+            "event": "UserPromptSubmit",
+            "prompt": "Add authentication to the API endpoints",
+        }
+        config = _make_config(tmp_path)
+        index = _make_index()
+        results = _make_results()
+
+        with (
+            patch("sys.stdin") as mock_stdin,
+            patch(f"{_MOD}.load_config", return_value=config),
+            patch(f"{_MOD}.load_index", return_value=index),
+            patch("fastembed.TextEmbedding"),
+            patch(f"{_MOD}.retrieve", return_value=results) as mock_ret,
+            patch(f"{_MOD}.log_retrieval") as mock_log,
+        ):
+            mock_stdin.read.return_value = json.dumps(hook_input)
+            main()
+
+        # Verify query has UserPromptSubmit prefix
+        call_kwargs = mock_ret.call_args
+        assert "UserPromptSubmit:" in call_kwargs[1].get(
+            "query", call_kwargs[0][1] if len(call_kwargs[0]) > 1 else "",
+        ) or "UserPromptSubmit:" in str(call_kwargs)
+
+        # Verify log uses UserPromptSubmit as tool_name
+        log_kwargs = mock_log.call_args
+        assert log_kwargs[1]["tool_name"] == "UserPromptSubmit" or \
+            log_kwargs[0][1] == "UserPromptSubmit"
+
+        captured = capsys.readouterr()
+        output = json.loads(captured.out)
+        hook_out = output["hookSpecificOutput"]
+        assert "additionalContext" in hook_out
+
     def test_with_pipeline_mode(
         self,
         tmp_path: Path,
@@ -269,7 +310,7 @@ class TestAdapterMain:
         results = _make_results()
 
         fake_pipeline = PipelineResult(
-            results=results,
+            results=tuple(results),
             stages=(
                 StageTrace(
                     stage="embedding", input_count=2,

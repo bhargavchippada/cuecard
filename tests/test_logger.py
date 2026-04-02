@@ -80,7 +80,7 @@ class TestBuildEntry:
         assert entry["query_truncated"] is False
 
     def test_redact_secrets_in_query(self) -> None:
-        secret = "sk-live-abcdefghijklmnopqrstuvwxyz"
+        secret = "sk_live_abcdefghijklmnopqrstuvwxyz"
         query = f"Bash: git commit -m '{secret}'"
         entry = _build_entry(
             "PreToolUse", "Bash", query,
@@ -90,13 +90,13 @@ class TestBuildEntry:
             redact=True, max_query_length=500,
         )
         assert "[REDACTED]" in str(entry["query"])
-        assert "sk-live-" not in str(entry["query"])
+        assert "sk_live_" not in str(entry["query"])
 
     def test_redact_secrets_in_results(self) -> None:
         prov = Provenance(
             file="/tmp/rules.txt", line_start=1, line_end=1,
         )
-        secret = "sk-live-abcdefghijklmnopqrstuvwxyz"
+        secret = "sk_live_abcdefghijklmnopqrstuvwxyz"
         rule = Rule(text=f"Use key {secret}", provenance=prov)
         results = [RankedResult(rule=rule, score=0.9)]
         entry = _build_entry(
@@ -111,7 +111,7 @@ class TestBuildEntry:
         assert "[REDACTED]" in str(r[0]["text"])  # type: ignore[index]
 
     def test_no_redact(self) -> None:
-        secret = "sk-live-abcdefghijklmnopqrstuvwxyz"
+        secret = "sk_live_abcdefghijklmnopqrstuvwxyz"
         query = f"Bash: {secret}"
         entry = _build_entry(
             "PreToolUse", "Bash", query,
@@ -120,7 +120,7 @@ class TestBuildEntry:
             latency_ms=5.0, model="test",
             redact=False, max_query_length=500,
         )
-        assert "sk-live-" in str(entry["query"])
+        assert "sk_live_" in str(entry["query"])
 
     def test_result_fields(self) -> None:
         results = _make_results(1)

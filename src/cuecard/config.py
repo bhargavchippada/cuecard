@@ -354,12 +354,12 @@ def load_config(
     )
 
     # Validate endpoint at config load time (H1 fix)
-    if pipeline_mode in ("rerank-llm-local",):
+    if pipeline_mode in ("rerank-llm-local", "llm-local"):
         from cuecard.llm_reranker import validate_endpoint
         validate_endpoint(pipeline_local_endpoint)
 
     # Validate haiku model at config load time (M2 fix)
-    if pipeline_mode in ("rerank-llm-haiku",):
+    if pipeline_mode in ("rerank-llm-haiku", "llm-haiku"):
         from cuecard.llm_reranker import _ALLOWED_HAIKU_MODELS
         if pipeline_haiku_model not in _ALLOWED_HAIKU_MODELS:
             msg = (

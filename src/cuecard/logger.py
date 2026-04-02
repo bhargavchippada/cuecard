@@ -14,6 +14,8 @@ from typing import TYPE_CHECKING
 from cuecard.security import ensure_directory, scrub_secrets
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from cuecard.models import RankedResult
 
 logger = logging.getLogger(__name__)
@@ -30,7 +32,7 @@ def _build_entry(
     event: str,
     tool_name: str,
     query: str,
-    results: list[RankedResult],
+    results: Sequence[RankedResult],
     *,
     total_rules: int,
     index_rebuilt: bool,
@@ -78,7 +80,7 @@ def log_retrieval(
     event: str,
     tool_name: str,
     query: str,
-    results: list[RankedResult],
+    results: Sequence[RankedResult],
     *,
     total_rules: int,
     index_rebuilt: bool,
@@ -117,11 +119,13 @@ def log_retrieval(
     log_path = log_dir / _LOG_FILENAME
     line = json.dumps(entry, separators=(",", ":")) + "\n"
 
-    # Append with secure permissions
+    # Append with secure permissions and flock for concurrent safety
     flags = os.O_WRONLY | os.O_CREAT | os.O_APPEND
     fd = os.open(str(log_path), flags, 0o600)
     try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
         os.write(fd, line.encode())
+        fcntl.flock(fd, fcntl.LOCK_UN)
     finally:
         os.close(fd)
 

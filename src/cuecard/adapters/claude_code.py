@@ -11,6 +11,12 @@ from __future__ import annotations
 import json
 import sys
 import time
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from cuecard.models import RankedResult
 
 from cuecard.config import load_config
 from cuecard.formatter import format_rules
@@ -45,11 +51,25 @@ def main() -> None:
     try:
         raw = sys.stdin.read(_MAX_STDIN)
         data = json.loads(raw)
-        tool_name = _sanitize_field(
-            str(data.get("tool_name", "")), _MAX_TOOL_NAME,
-        )
-        tool_input = _format_tool_input(data.get("tool_input", ""))
-        query = f"{tool_name}: {tool_input}"
+        _KNOWN_EVENTS = frozenset({
+            "PreToolUse", "UserPromptSubmit", "PostToolUse",
+            "Stop", "SessionStart", "UserPromptSubmit",
+        })
+        raw_event = str(data.get("event", "PreToolUse"))
+        event = raw_event if raw_event in _KNOWN_EVENTS else "PreToolUse"
+
+        if event == "UserPromptSubmit":
+            prompt_text = _sanitize_field(
+                str(data.get("prompt", "")), 500,
+            )
+            tool_name = "UserPromptSubmit"
+            query = f"UserPromptSubmit: {prompt_text}"
+        else:
+            tool_name = _sanitize_field(
+                str(data.get("tool_name", "")), _MAX_TOOL_NAME,
+            )
+            tool_input = _format_tool_input(data.get("tool_input", ""))
+            query = f"{tool_name}: {tool_input}"
 
         start = time.monotonic()
 
@@ -67,6 +87,7 @@ def main() -> None:
                 getattr(config, "pipeline", None), "mode", "embedding",
             )
 
+            results: Sequence[RankedResult]
             if pipeline_mode != "embedding":
                 from cuecard.pipeline import run_pipeline
 
@@ -97,7 +118,7 @@ def main() -> None:
                 hook_output["additionalContext"] = context
 
             log_retrieval(
-                event="PreToolUse",
+                event=event,
                 tool_name=tool_name,
                 query=query,
                 results=results,

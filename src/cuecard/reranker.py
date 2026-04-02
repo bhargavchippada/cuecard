@@ -77,7 +77,9 @@ def rerank(
         if isinstance(raw, (int, float)):
             scored.append((i, float(raw)))
         elif hasattr(raw, "index") and hasattr(raw, "score"):
-            scored.append((int(raw.index), float(raw.score)))
+            raw_idx = int(raw.index)
+            if 0 <= raw_idx < len(candidates):
+                scored.append((raw_idx, float(raw.score)))
         else:
             scored.append((i, float(raw)))
 

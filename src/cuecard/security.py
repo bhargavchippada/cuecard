@@ -20,8 +20,9 @@ class ConfigError(Exception):
 # --- Secrets scrubbing patterns ---
 
 _SECRET_PATTERNS: tuple[tuple[str, str], ...] = (
-    # Stripe keys
-    (r"sk-live-[A-Za-z0-9]{20,}", "[REDACTED]"),
+    # Stripe live/test keys
+    (r"sk_live_[A-Za-z0-9]{24,}", "[REDACTED]"),
+    (r"sk_test_[A-Za-z0-9]{24,}", "[REDACTED]"),
     # AWS access key IDs
     (r"AKIA[A-Z0-9]{16}", "[REDACTED]"),
     # GitHub personal access tokens
@@ -166,6 +167,6 @@ def secure_open(path: Path, mode: str) -> IO[str]:
 
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     if "a" in mode:
-        flags = os.O_WRONLY | os.O_CREAT | os.O_APPEND
+        flags = os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_EXCL
     fd = os.open(str(path), flags, _FILE_MODE)
     return os.fdopen(fd, mode)

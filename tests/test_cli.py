@@ -496,7 +496,7 @@ class TestRetrieve:
         from cuecard.models import PipelineResult, StageTrace
 
         fake_pipeline = PipelineResult(
-            results=[RankedResult(rule=idx.rules[0], score=0.9)],
+            results=(RankedResult(rule=idx.rules[0], score=0.9),),
             stages=(StageTrace(
                 stage="embedding", input_count=1,
                 output_count=1, latency_ms=1.0,
@@ -558,7 +558,7 @@ class TestRetrieve:
         from cuecard.models import PipelineResult, StageTrace
 
         fake_pipeline = PipelineResult(
-            results=[],
+            results=(),
             stages=(StageTrace(
                 stage="embedding", input_count=0,
                 output_count=0, latency_ms=0.5,
