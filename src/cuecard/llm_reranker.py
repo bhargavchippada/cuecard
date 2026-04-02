@@ -34,11 +34,12 @@ Events have a type prefix:
 - "PreToolUse:<tool>: <args>" — a tool is about to execute
 - "UserPromptSubmit: <message>" — the user just sent a request
 
-Return JSON with reasoning first, then rule numbers:
-{{"reasoning": "Brief analysis of the event and which rules apply.", "rules": [1, 5, 12]}}
-Return {{"reasoning": "No rules apply to this event.", "rules": []}} if NO rules apply.
+ALWAYS return a SINGLE JSON object — nothing else:
+{{"reasoning": "2-4 sentences analyzing the event and which rules apply.", "rules": [1, 5, 12]}}
+{{"reasoning": "No rules apply to this event.", "rules": []}}
 
-Write 3-5 sentences of reasoning BEFORE listing rules. Think through:
+Put ALL your analysis inside the "reasoning" field. Do NOT write text \
+outside the JSON. The reasoning should address:
 1. What is the event actually about?
 2. Which rules directly constrain or guide this specific event?
 3. Which rules are only tangentially related and should be excluded?
@@ -368,19 +369,8 @@ def _parse_llm_response(
     cleaned = _strip_thinking_tags(response)
     reasoning: str | None = None
 
-    # Try JSON parsing — extract first JSON object if response has trailing text
-    try:
-        parsed = json.loads(cleaned)
-    except json.JSONDecodeError:
-        # Try extracting first {...} block
-        match = re.search(r"\{.*?\}", cleaned, re.DOTALL)
-        if match:
-            try:
-                parsed = json.loads(match.group())
-            except json.JSONDecodeError:
-                parsed = None
-        else:
-            parsed = None
+    # Try JSON parsing — full response first, then extract JSON blocks
+    parsed = _try_json_parse(cleaned)
     if isinstance(parsed, dict) and "rules" in parsed:
         raw_reasoning = parsed.get("reasoning")
         if isinstance(raw_reasoning, str) and raw_reasoning.strip():
@@ -406,6 +396,14 @@ def _parse_llm_response(
             reasoning=reasoning,
         )
 
+    # Prose fallback: extract "Rule N applies" patterns from reasoning text
+    rule_refs = _extract_rule_refs_from_prose(cleaned, max_rule_id)
+    if rule_refs is not None:
+        return LLMParseResult(
+            indices=rule_refs,
+            reasoning=cleaned[:500],
+        )
+
     return LLMParseResult(indices=None, reasoning=reasoning)
 
 
@@ -418,6 +416,77 @@ def _validate_indices(indices: list[int], max_rule_id: int) -> list[int]:
             seen.add(idx)
             result.append(idx)
     return result[:max_rule_id]
+
+
+def _try_json_parse(text: str) -> dict[str, object] | None:
+    """Try to parse JSON from response text, tolerant of surrounding prose.
+
+    Attempts in order:
+    1. Full text as JSON
+    2. Last {...} block (greedy — handles nested braces in reasoning)
+    3. First {...} block (non-greedy fallback)
+    """
+    try:
+        parsed = json.loads(text)
+        if isinstance(parsed, dict):
+            return parsed
+    except (json.JSONDecodeError, ValueError):
+        pass
+
+    # Find all { positions and try from last to first (model often
+    # writes reasoning prose, then JSON at the end)
+    brace_positions = [i for i, c in enumerate(text) if c == "{"]
+    for pos in reversed(brace_positions):
+        candidate = text[pos:]
+        try:
+            parsed = json.loads(candidate)
+            if isinstance(parsed, dict):
+                return parsed
+        except (json.JSONDecodeError, ValueError):
+            # Try to find closing brace
+            depth = 0
+            for j, c in enumerate(candidate):
+                if c == "{":
+                    depth += 1
+                elif c == "}":
+                    depth -= 1
+                    if depth == 0:
+                        try:
+                            result = json.loads(candidate[: j + 1])
+                        except (json.JSONDecodeError, ValueError):
+                            break
+                        # JSON {…} always yields dict in Python
+                        return result  # type: ignore[no-any-return]
+
+    return None
+
+
+# Pattern: "Rule 2 applies", "Rule 1 directly applies", "Rules 1 and 3"
+_RULE_REF_PATTERN = re.compile(
+    r"[Rr]ule\s+(\d+)\s+(?:applies|directly|also|is relevant)",
+)
+
+
+def _extract_rule_refs_from_prose(
+    text: str, max_rule_id: int,
+) -> list[int] | None:
+    """Extract rule indices from prose reasoning when JSON parsing fails.
+
+    Looks for patterns like "Rule 2 applies" or "Rule 1 directly applies".
+    Returns None if no clear rule references found (avoids false extractions).
+    Requires at least one "Rule N applies" pattern to trigger.
+    """
+    matches = _RULE_REF_PATTERN.findall(text)
+    if not matches:
+        return None
+
+    indices = [int(m) for m in matches]
+    validated = _validate_indices(indices, max_rule_id)
+    logger.debug(
+        "Extracted %d rule refs from prose fallback: %s",
+        len(validated), validated,
+    )
+    return validated
 
 
 def _compute_ordinal_scores(

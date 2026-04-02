@@ -12,8 +12,10 @@ import pytest
 from cuecard.llm_reranker import (
     _build_prompt,
     _compute_ordinal_scores,
+    _extract_rule_refs_from_prose,
     _parse_llm_response,
     _strip_thinking_tags,
+    _try_json_parse,
     rerank_llm,
 )
 from cuecard.llm_utils import call_local, validate_endpoint
@@ -865,5 +867,103 @@ class TestParseJsonExtraction:
         response = "I cannot help with that request."
         result = _parse_llm_response(response, 5)
         assert result.indices is None
+
+    def test_prose_then_json_at_end(self) -> None:
+        """Model writes reasoning prose then JSON — extracts JSON."""
+        response = (
+            "The action uploads a file. Rule 2 applies because "
+            "it validates input. Rule 3 applies for permissions.\n"
+            '{"reasoning": "upload", "rules": [2, 3]}'
+        )
+        result = _parse_llm_response(response, 5)
+        assert result.indices == [2, 3]
+
+    def test_prose_only_extracts_rule_refs(self) -> None:
+        """Model writes only prose — falls back to rule ref extraction."""
+        response = (
+            "The action edits code. Rule 2 applies because "
+            "it mandates type hints. Rule 5 also applies for "
+            "resource cleanup. Rule 1 is unrelated."
+        )
+        result = _parse_llm_response(response, 5)
+        assert result.indices == [2, 5]
+        assert result.reasoning is not None
+
+
+class TestTryJsonParse:
+    def test_full_json(self) -> None:
+        result = _try_json_parse('{"rules": [1, 2]}')
+        assert result == {"rules": [1, 2]}
+
+    def test_json_after_prose(self) -> None:
+        text = 'Some reasoning text.\n{"reasoning": "ok", "rules": [3]}'
+        result = _try_json_parse(text)
+        assert result is not None
+        assert result["rules"] == [3]
+
+    def test_json_between_prose(self) -> None:
+        text = 'Start text {"rules": [1]} end text'
+        result = _try_json_parse(text)
+        assert result is not None
+        assert result["rules"] == [1]
+
+    def test_no_json(self) -> None:
+        assert _try_json_parse("no json here") is None
+
+    def test_invalid_json_in_braces(self) -> None:
+        assert _try_json_parse("{not valid json}") is None
+
+    def test_nested_braces_in_reasoning(self) -> None:
+        text = '{"reasoning": "code has {braces}", "rules": [2]}'
+        result = _try_json_parse(text)
+        assert result is not None
+        assert result["rules"] == [2]
+
+    def test_returns_none_for_list(self) -> None:
+        assert _try_json_parse("[1, 2, 3]") is None
+
+    def test_brace_matched_but_inner_json_is_list(self) -> None:
+        """Braces found at position, balanced, but json.loads gives a list."""
+        text = 'Some text {wrong} more text {"rules": [1]}'
+        result = _try_json_parse(text)
+        assert result is not None
+        assert result["rules"] == [1]
+
+    def test_brace_matched_invalid_json_inside(self) -> None:
+        """Balanced braces but invalid JSON content — falls through."""
+        text = "prose {invalid json} more text"
+        result = _try_json_parse(text)
+        assert result is None
+
+
+class TestExtractRuleRefsFromProse:
+    def test_basic_extraction(self) -> None:
+        text = "Rule 2 applies because X. Rule 5 also applies for Y."
+        result = _extract_rule_refs_from_prose(text, 10)
+        assert result == [2, 5]
+
+    def test_directly_applies(self) -> None:
+        text = "Rule 1 directly applies here."
+        result = _extract_rule_refs_from_prose(text, 5)
+        assert result == [1]
+
+    def test_no_rule_refs(self) -> None:
+        text = "This is just general text about nothing."
+        assert _extract_rule_refs_from_prose(text, 5) is None
+
+    def test_filters_out_of_range(self) -> None:
+        text = "Rule 1 applies. Rule 99 applies."
+        result = _extract_rule_refs_from_prose(text, 5)
+        assert result == [1]
+
+    def test_deduplicates(self) -> None:
+        text = "Rule 2 applies first. Rule 2 also applies here."
+        result = _extract_rule_refs_from_prose(text, 5)
+        assert result == [2]
+
+    def test_is_relevant_pattern(self) -> None:
+        text = "Rule 3 is relevant to this action."
+        result = _extract_rule_refs_from_prose(text, 5)
+        assert result == [3]
 
 
