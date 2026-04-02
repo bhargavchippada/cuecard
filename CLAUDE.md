@@ -159,9 +159,34 @@ Merge: scalars = project wins, sources = union, model = project wins (must match
 - **Phase 1:** Core pipeline — COMPLETE
 - **Phase 2:** Adapter + logging — COMPLETE
 - **Phase 3:** Eval framework + notebook — COMPLETE
-- **Multi-stage:** Pipeline orchestrator + reranker + LLM reranker — COMPLETE (494 tests, 100% coverage)
-- **Eval metrics:** Precision/context efficiency metrics — COMPLETE (noise ratio, context waste, per-tier breakdown, negative silence rate)
+- **Multi-stage:** Pipeline + reranker + LLM reranker — COMPLETE (534 tests, 100% coverage)
+- **Eval metrics:** noise ratio, context waste, per-tier breakdown, negative silence — COMPLETE
+- **Quality iteration:** 357 fixtures, benchmarked all modes — COMPLETE
 - **Phase 4:** Publish — pending
+
+## LLM Reranker Setup
+
+For llm-local mode (best quality):
+```bash
+# Start Qwen3.5-35B-A3B with Jinja template support
+llama-server -m ~/models/Qwen3.5-35B-A3B-Q4_K_M.gguf \
+  --port 8081 -ngl 99 -c 16384 --jinja
+```
+
+Key requirements:
+- `--jinja` flag (NOT `--chat-template chatml`) — needed for `chat_template_kwargs`
+- `-c 16384` — 5 few-shot system prompt needs ~4K tokens
+- Thinking disabled by default via `enable_thinking: false` for <1s latency
+- `_MAX_TOKENS=512` — enough for response, server context handles the rest
+
+## Quality Benchmarks (357 fixtures, jina-code + Qwen3.5-35B)
+
+| Mode | Noise | NegSilence | Recall | p50 Latency |
+|------|-------|------------|--------|-------------|
+| embedding (t=0.30) | 64.0% | 24.2% | 40.9% | 15ms |
+| **llm-local (thinking=OFF)** | **14.2%** | **96.0%** | 38.9% | 889ms |
+
+Cross-encoder (MiniLM) is a regression on code — skip it. Use llm-local or llm-haiku.
 - **Phase 4:** Publish (PyPI, GitHub, CI)
 
 ## When in Doubt
