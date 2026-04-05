@@ -1,6 +1,6 @@
 # Session 19 Progress State
 
-> Date: 2026-04-02
+> Date: 2026-04-02 through 2026-04-04
 > For resumption in next session
 
 ## What Was Accomplished
@@ -19,30 +19,40 @@
 - UserPromptSubmit must NOT include `permissionDecision`
 - Input field is `hook_event_name` (not `event`) — fixed adapter detection
 - Stderr causes "hook error" display — suppressed with `2>/dev/null`
-- "PreToolUse hook error" was caused by missing format fields, not actual errors
+- Before fix: every tool call showed "PreToolUse hook error"
+- After fix: hooks fire cleanly as "additional context"
 
 ### 3. Live Compliance Testing
-- Installed cuecard globally, set up 23 rules, verified hooks fire
+- Installed cuecard globally via `uv tool install`
+- Set up 30 rules, verified hooks fire for both events
 - Tested with separate Claude Code agent (Cody) in tmux
 
 **Compliance results:**
 | Rule | Phrasing | Complied? |
 |------|----------|-----------|
-| Use uv not pip | Command style | Yes (via UserPromptSubmit) |
-| Use uv not pip | Command style | Yes (via UserPromptSubmit) |
+| Use uv not pip | Command style | Yes (UserPromptSubmit) |
+| Use uv not pip | Command style | Yes (UserPromptSubmit) |
 | Send Enter after tmux | Command style | No |
 | Send Enter after tmux | Command style | No |
 | Send Enter after tmux | Stronger framing only | No |
-| Append Enter...without it text is pasted but never submitted | Explains WHY | **Yes** |
-| Append Enter...without it text is pasted but never submitted | Explains WHY | **Yes** |
+| Append Enter...without it text is pasted but never submitted | WHY format | **Yes** |
+| Append Enter...without it text is pasted but never submitted | WHY format | **Yes** |
 
-### 4. Landmark Finding: Rules That Explain WHY Work
-- Command-style rules ("Send Enter after tmux send-keys"): 0/3 compliance
-- Explanatory rules ("...without it text is pasted but never submitted"): 2/2 compliance
-- Agent follows rules it understands, not rules it's told to obey
-- This mirrors the reranker prompt finding: reasoning principles > command lists
+### 4. Landmark Finding: Rules That Explain WHY Achieve Compliance
+- Command-style rules: 0/3 compliance
+- Explanatory rules (with consequence): 2/2 compliance
+- Agent even parroted back the reasoning: "without the trailing Enter, the text only gets pasted but never submitted"
+- **Consequences beat commands for rule writing** — same lesson as reasoning principles vs command lists in reranker prompts
 
-### 5. Full Dataset Benchmark (35B)
+### 5. Curated 30 Global Rules in WHY Format
+Organized by category (Security, Testing, Code Quality, Git, Orchestration, Methodology, Search):
+- Mined from SOUL.md (19 arcs), 587 eval fixtures, ~/.claude/rules/, and instincts
+- Reviewed one-by-one with Bhargav, 1 removed (SQL parameterized queries — not applicable)
+- Each rule explains the CONSEQUENCE of violation, not just the action
+- 30 rules, 250 expansions (avg 8.3/rule)
+- Location: `/home/turiya/.cuecard/rules/global.txt`
+
+### 6. Full Dataset Benchmark (35B)
 | Event Type | Quality (F2) | Pos Recall | Noise | Neg Silence |
 |-----------|-------------|-----------|-------|-------------|
 | Basic (354) | 0.782 | 76.4% | 20.0% | 87.6% |
@@ -52,39 +62,54 @@
 
 ## Key Findings
 
-### Hook Timing
+### Hook Timing (Fundamental Architecture)
 - **UserPromptSubmit** fires before agent plans → high influence on behavior
 - **PreToolUse** fires after tool call is decided → can't change current call
 - `additionalContext` is advisory, not blocking — `permissionDecision: "deny"` would block
 - Advisory mode is correct default (12.4% false positive rate too high for enforcement)
 
-### Rule Writing Best Practice
+### Rule Writing Best Practice (Documented in README)
 - Explain the **consequence of violation**, not just the action
 - Include the **failure mode** — what goes wrong if ignored
 - Reasoning principles outperform command lists
 - The agent internalizes explanatory rules (Cody parroted the WHY back)
 
+### Boundary Label
+- Changed from "user-defined guidelines relevant to this action"
+- To "RULES you must follow for this action to avoid failures"
+- Stronger framing alone didn't change compliance (0/3 still)
+- Only when combined with explanatory rules did compliance jump to 2/2
+
 ## Current State
-- Branch: master, commit 8ee1093 pushed
+- Branch: master, commits cf63db0 + ed62e07 pushed
 - 946 tests, 100% coverage, ruff clean, mypy strict
 - cuecard installed globally via `uv tool install`
-- 23 global rules with 173 expansions
+- 30 curated global rules with 250 expansions
 - Both PreToolUse + UserPromptSubmit hooks registered
 - Boundary label: "RULES you must follow for this action to avoid failures"
-- 35B llama-server running on port 8081
+- 35B llama-server running on port 8081 (or may need restart)
 
-## What's Next
-1. Expand rules with updated text (`cuecard rules expand`)
-2. Rewrite all global rules to explain WHY (not just WHAT)
-3. Compliance test suite — automated A/B testing with/without cuecard
-4. `cuecard serve` daemon testing in production
+## What's Next (Priority Order)
+
+### Near-term
+1. More compliance A/B testing with Cody (automate it?)
+2. Test rule retrieval on your real day-to-day tasks
+3. Add rules as they're needed from real workflows
+
+### Medium-term
+4. `cuecard compliance-test` command — automated A/B with/without cuecard
 5. Phase 4: PyPI publish
 6. Phase 5.1: Markdown parser for CLAUDE.md ingestion
 
+### Future
+7. Async hooks (if Claude Code supports) to reduce blocking latency
+8. Confidence-based enforcement mode (deny only at score > 0.95)
+9. Production daemon (`cuecard serve`) reliability testing
+
 ## Files Changed This Session
 
-### Source Code
-- `src/cuecard/cli.py` — configure command, serve command, hook command, config display
+### Source Code (cuecard)
+- `src/cuecard/cli.py` — configure, serve, hook commands, config display
 - `src/cuecard/cli_hooks.py` — both events, nested hook format, entry_has_cuecard
 - `src/cuecard/cli_rules.py` — expand progress bar, auto-index after expand
 - `src/cuecard/adapters/claude_code.py` — hook format fix, hook_event_name, daemon fast path
@@ -101,6 +126,16 @@
 - `tests/test_expander.py` — progress callback tests
 - `tests/test_formatter.py` — boundary label update
 
-### Docs
+### Docs & Artifacts
 - `README.md` — CLI reference, configure, serve, benchmarks, rule writing guide
 - `CLAUDE.md` — hook format docs, serve daemon, implementation status
+- `artifacts/session-19-progress.md` — this file
+- `artifacts/global-rules-extraction.md` — mined from claude rules
+- `artifacts/soul-rules-extraction.md` — mined from SOUL.md
+- `.gitignore` — mutants/, enriched corpora, .claude/
+
+### User Environment
+- `~/.cuecard/rules/global.txt` — 30 curated rules in WHY format
+- `~/.cuecard/config.toml` — llm-local mode configured
+- `~/.cuecard/index/` — rebuilt with 30 rules + 250 expansions
+- `~/.claude/settings.json` — cuecard hooks registered (both events)
