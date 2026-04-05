@@ -50,3 +50,10 @@ eval/results/
 
 # Mutation testing
 .mutmut-cache/
+mutants/
+
+# Generated evaluation corpora
+eval/corpora/enriched_*/
+
+# Claude Code local state
+.claude/
