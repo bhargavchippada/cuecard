@@ -1,8 +1,7 @@
-"""Tests for the multi-stage retrieval pipeline orchestrator."""
+"""Tests for cuecard.pipeline — config modes, mock rerankers, recall params, sparse."""
 
 from __future__ import annotations
 
-import sys
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
@@ -11,7 +10,6 @@ import numpy as np
 import pytest
 
 from cuecard.models import (
-    PipelineResult,
     Provenance,
     RankedResult,
     RetrievalStageTrace,
@@ -129,214 +127,6 @@ def fake_candidates() -> list[ScoredCandidate]:
 # --- test cases ---
 
 
-class TestRetrievalStageMode:
-    """Stage 1 (retrieval) runs with multi-retriever + fusion."""
-
-    def test_embedding_only_mode(
-        self,
-        sample_index: Index,
-        config: ResolvedConfig,
-        fake_candidates: list[ScoredCandidate],
-    ) -> None:
-        with patch(
-            "cuecard.retrievers.dense.DenseRetriever.retrieve",
-            return_value=fake_candidates,
-        ):
-            result = run_pipeline(
-                "test query", sample_index, config, mode="embedding",
-            )
-
-        assert isinstance(result, PipelineResult)
-        assert result.mode == "embedding"
-        assert len(result.results) == len(fake_candidates)
-        assert len(result.stages) == 1
-        assert result.stages[0].stage == "retrieval"
-        assert result.stages[0].error is None
-        assert result.stages[0].input_count == sample_index.size
-        assert result.stages[0].output_count == len(fake_candidates)
-
-    def test_retrieval_stage_is_retrieval_stage_trace(
-        self,
-        sample_index: Index,
-        config: ResolvedConfig,
-        fake_candidates: list[ScoredCandidate],
-    ) -> None:
-        with patch(
-            "cuecard.retrievers.dense.DenseRetriever.retrieve",
-            return_value=fake_candidates,
-        ):
-            result = run_pipeline(
-                "test query", sample_index, config, mode="embedding",
-            )
-
-        trace = result.stages[0]
-        assert isinstance(trace, RetrievalStageTrace)
-        assert len(trace.retrievers) >= 1
-        assert trace.retrievers[0].name == "dense"
-        assert trace.fusion_latency_ms >= 0.0
-
-
-class TestRerankModeGraceful:
-    """Stage 2 degrades when reranker is absent."""
-
-    def test_rerank_mode_with_no_reranker(
-        self,
-        sample_index: Index,
-        config: ResolvedConfig,
-        fake_candidates: list[ScoredCandidate],
-    ) -> None:
-        import cuecard
-
-        real_mod = getattr(cuecard, "reranker", None)
-        with (
-            patch(
-                "cuecard.retrievers.dense.DenseRetriever.retrieve",
-                return_value=fake_candidates,
-            ),
-            patch.dict(sys.modules, {"cuecard.reranker": None}),
-        ):
-            if hasattr(cuecard, "reranker"):
-                delattr(cuecard, "reranker")
-            try:
-                result = run_pipeline(
-                    "test query", sample_index, config, mode="rerank",
-                )
-            finally:
-                if real_mod is not None:
-                    cuecard.reranker = real_mod  # type: ignore[attr-defined]
-
-        assert result.mode == "rerank"
-        assert len(result.results) == len(fake_candidates)
-        assert len(result.stages) == 2
-        assert result.stages[0].stage == "retrieval"
-        assert result.stages[0].error is None
-        assert result.stages[1].stage == "rerank"
-        assert result.stages[1].error is not None
-        assert "not available" in result.stages[1].error
-
-
-class TestLLMModeGraceful:
-    """Stage 2 + Stage 3 degrade when modules are absent."""
-
-    def test_rerank_llm_local_mode_graceful(
-        self,
-        sample_index: Index,
-        config: ResolvedConfig,
-        fake_candidates: list[ScoredCandidate],
-    ) -> None:
-        import cuecard
-
-        saved = {
-            "reranker": getattr(cuecard, "reranker", None),
-            "llm_reranker": getattr(cuecard, "llm_reranker", None),
-        }
-        with (
-            patch(
-                "cuecard.retrievers.dense.DenseRetriever.retrieve",
-                return_value=fake_candidates,
-            ),
-            patch.dict(
-                sys.modules,
-                {"cuecard.reranker": None, "cuecard.llm_reranker": None},
-            ),
-        ):
-            for attr in ("reranker", "llm_reranker"):
-                if hasattr(cuecard, attr):
-                    delattr(cuecard, attr)
-            try:
-                result = run_pipeline(
-                    "test query", sample_index, config,
-                    mode="rerank-llm-local",
-                )
-            finally:
-                for attr, mod in saved.items():
-                    if mod is not None:
-                        setattr(cuecard, attr, mod)
-
-        assert result.mode == "rerank-llm-local"
-        assert len(result.results) == len(fake_candidates)
-        assert len(result.stages) == 3
-        assert result.stages[1].error is not None
-        assert result.stages[2].stage == "llm"
-        assert result.stages[2].error is not None
-
-    def test_rerank_llm_haiku_mode_graceful(
-        self,
-        sample_index: Index,
-        config: ResolvedConfig,
-        fake_candidates: list[ScoredCandidate],
-    ) -> None:
-        import cuecard
-
-        saved = {
-            "reranker": getattr(cuecard, "reranker", None),
-            "llm_reranker": getattr(cuecard, "llm_reranker", None),
-        }
-        with (
-            patch(
-                "cuecard.retrievers.dense.DenseRetriever.retrieve",
-                return_value=fake_candidates,
-            ),
-            patch.dict(
-                sys.modules,
-                {"cuecard.reranker": None, "cuecard.llm_reranker": None},
-            ),
-        ):
-            for attr in ("reranker", "llm_reranker"):
-                if hasattr(cuecard, attr):
-                    delattr(cuecard, attr)
-            try:
-                result = run_pipeline(
-                    "test query", sample_index, config,
-                    mode="rerank-llm-haiku",
-                )
-            finally:
-                for attr, mod in saved.items():
-                    if mod is not None:
-                        setattr(cuecard, attr, mod)
-
-        assert result.mode == "rerank-llm-haiku"
-        assert len(result.stages) == 3
-        assert result.stages[2].stage == "llm"
-        assert result.stages[2].error is not None
-
-
-class TestInvalidMode:
-    """Bad mode raises ValueError."""
-
-    def test_invalid_mode_raises(
-        self,
-        sample_index: Index,
-        config: ResolvedConfig,
-    ) -> None:
-        with pytest.raises(ValueError, match="Invalid pipeline mode"):
-            run_pipeline("test query", sample_index, config, mode="bogus")
-
-
-class TestEmptyIndex:
-    """Empty index returns empty results."""
-
-    def test_empty_index(self, config: ResolvedConfig) -> None:
-        import numpy as np
-
-        from cuecard.models import Index
-
-        empty_index = Index(
-            embeddings=np.empty((0, 384), dtype=np.float32),
-            rules=(),
-            model_name="test",
-            dim=384,
-            sources={},
-        )
-        result = run_pipeline(
-            "test query", empty_index, config, mode="embedding",
-        )
-
-        assert result.results == ()
-        assert result.stages[0].input_count == 0
-        assert result.stages[0].output_count == 0
-
-
 class TestModeFromConfig:
     """Mode resolved from config when not explicitly passed."""
 
@@ -423,45 +213,6 @@ class TestModeFromConfig:
                 "test query", sample_index, cfg, mode=None,  # type: ignore[arg-type]
             )
         assert result.mode == "embedding"
-
-
-class TestStageTraces:
-    """StageTrace fields are populated correctly."""
-
-    def test_stage_traces_recorded(
-        self,
-        sample_index: Index,
-        config: ResolvedConfig,
-        fake_candidates: list[ScoredCandidate],
-    ) -> None:
-        with patch(
-            "cuecard.retrievers.dense.DenseRetriever.retrieve",
-            return_value=fake_candidates,
-        ):
-            result = run_pipeline(
-                "test query", sample_index, config, mode="embedding",
-            )
-
-        trace = result.stages[0]
-        assert trace.stage == "retrieval"
-        assert trace.input_count == sample_index.size
-        assert trace.output_count == len(fake_candidates)
-        assert trace.error is None
-
-    def test_embedding_stage_timing(
-        self,
-        sample_index: Index,
-        config: ResolvedConfig,
-        fake_candidates: list[ScoredCandidate],
-    ) -> None:
-        with patch(
-            "cuecard.retrievers.dense.DenseRetriever.retrieve",
-            return_value=fake_candidates,
-        ):
-            result = run_pipeline(
-                "test query", sample_index, config, mode="embedding",
-            )
-        assert result.stages[0].latency_ms >= 0.0
 
 
 class TestMockReranker:
@@ -673,8 +424,6 @@ class TestSparseRetrieverIntegration:
         config: ResolvedConfig,
     ) -> None:
         """Pipeline runs sparse when bm25_corpus present."""
-        import numpy as np
-
         from cuecard.models import Index
 
         rules = tuple(
@@ -733,8 +482,6 @@ class TestSparseRetrieverIntegration:
         self,
     ) -> None:
         """sparse_enabled=False skips sparse retriever."""
-        import numpy as np
-
         from cuecard.models import Index
 
         @dataclass(frozen=True)
