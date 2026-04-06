@@ -11,9 +11,12 @@ cuecard/
 ├── CLAUDE.md               # This file
 ├── README.md               # Public-facing readme
 ├── .gitignore
-├── artifacts/              # Design docs
+├── artifacts/              # Design docs & session state
 │   ├── prd-v1.md           # PRD v1.2 — core pipeline (converged)
-│   └── multi-stage-retrieval-prd.md  # Multi-stage PRD v1.1 (converged)
+│   ├── enriched-retrieval-prd.md     # Enriched retrieval design
+│   ├── multi-stage-retrieval-prd.md  # Multi-stage PRD v1.1 (converged)
+│   ├── paper-design-rule-rationale.md # Compliance paper design
+│   └── session-20-progress.md        # Current session state
 ├── src/cuecard/            # Core library (agent-agnostic)
 │   ├── __init__.py         # Public API: load_config, retrieve, format_rules
 │   ├── loader.py           # Unified index loading with freshness + scope composition
@@ -46,6 +49,7 @@ cuecard/
 │       ├── __init__.py
 │       └── claude_code.py  # Claude Code PreToolUse hook
 ├── tools/
+│   ├── bench_e2e.py        # E2E benchmark (default — model generates own expansions + reranks)
 │   └── notebook.ipynb      # Step-by-step visualization (Phase 3)
 ├── eval/                   # Evaluation framework (Phase 3)
 │   ├── corpora/
@@ -194,28 +198,53 @@ Critical ones:
 - D17: Merge preserves expansions for unchanged rules
 - S1: Path validation with allowlist (prevents traversal)
 
-## Model Recommendations (updated session 17)
+## Model Recommendations (updated session 20)
 
 | Stage | Model | Why |
 |-------|-------|-----|
 | Embedding | jina-embeddings-v2-base-code | Best PreToolUse hard recall (60%), code-specific, 22ms |
 | Embedding (workflow alt) | snowflake-arctic-embed-m | Best UserPromptSubmit hard recall (73.3%), 14ms |
 | Cross-encoder (opt-in) | Xenova/ms-marco-MiniLM-L-6-v2 | 13ms, but regressions on code — skip |
-| LLM (GPU) | Qwen3.5-9B via llama-server | Matches 35B on basic, 4x smaller (5.3GB), v3 prompt |
-| LLM (GPU, max quality) | Qwen3.5-35B-A3B via llama-server | Best workflow recall, MoE (21GB) |
-| LLM (CPU/laptop) | Qwen3.5-4B via llama-server | 2.6GB, 856ms p50, 96% neg silence |
+| **LLM (GPU, default)** | **Gemma-4-E4B via llama-server** | **Best PosRecall (+39% vs 9B), best workflow F2=0.820, perfect workflow NegSil, 1204ms (8.2GB Q8_0)** |
+| LLM (GPU, best basic F2) | Qwen3.5-9B via llama-server | Best basic F2=0.797, best basic NegSil=0.962, but lower PosRecall (5.3GB) |
+| LLM (GPU, low noise) | Qwen3.5-35B-A3B via llama-server | Lowest noise (0.217), highest basic NegSil (0.926), MoE (21GB) |
+| LLM (CPU/laptop) | Qwen3.5-4B via llama-server | 2.6GB, 917ms p50, F2=0.736, viable for laptop |
 | LLM (API) | Haiku via claude-agent-sdk | Fast, Max subscription |
 
-### Qwen3.5 Dense Model Comparison (v3 corpora, llm-local, 20% sample)
+### E2E Model Comparison (each model generates own expansions + reranks, 20% sample, seed=42)
 
-| Model | Basic Recall | Basic Noise | Basic NegSil | p50ms | GGUF |
-|-------|-------------|-------------|--------------|-------|------|
-| 35B-MoE | 0.413 | 0.256 | 0.923 | 1083ms | 21GB |
-| 9B (v3 prompt) | 0.407 | 0.173 | 0.962 | 1608ms | 5.3GB |
-| 4B | 0.383 | 0.248 | 0.962 | 856ms | 2.6GB |
-| 2B | 0.383 | 0.404 | 0.808 | 521ms | 1.2GB |
+**IMPORTANT**: Always use `tools/bench_e2e.py` for model comparison. Each model must
+generate its own expansions — shared-corpus benchmarks unfairly bias toward the
+expansion-generator model. `bench_models.py` is deprecated.
 
-Key insight: 9B matches 35B on basic (within 0.6 pts recall, better noise/silence). 4B is viable for CPU. 2B not viable (40% noise).
+| Model | Basic F2 | Basic PosRecall | Basic Noise | Basic NegSil | Workflow F2 | Workflow NegSil | p50ms | GGUF |
+|-------|---------|----------------|-------------|--------------|------------|-----------------|-------|------|
+| **Gemma-4-E4B** | 0.774 | **0.778** | 0.266 | 0.852 | **0.820** | **1.000** | **1204ms** | 8.2GB |
+| Qwen3.5-9B | **0.797** | 0.560 | 0.259 | **0.962** | 0.725 | 0.750 | 1259ms | 5.3GB |
+| Qwen3.5-35B | 0.785 | — | **0.217** | 0.926 | 0.680 | 0.750 | 1294ms | 21GB |
+| Qwen3.5-4B | 0.736 | — | 0.243 | 0.852 | 0.577 | 0.750 | 917ms | 2.6GB |
+
+**Key insights**:
+- **Gemma E4B wins on recall and workflow.** 39% more relevant rules found (PosRecall 0.778
+  vs 0.560), workflow F2 +9.5 pts, perfect workflow silence. Best all-rounder for production.
+- **Qwen 9B wins basic F2 and NegSil.** Best for use cases where false positives are expensive.
+- **E2E methodology matters.** Shared-corpus benchmarks showed Qwen 35B winning. E2E (each
+  model generates own expansions) flips rankings — Gemma and 9B both beat 35B.
+
+**Prompt tuning on both models (5 variants total) was reverted** — every variant overcorrected.
+Gemma is hypersensitive to negative few-shot examples (even one crashes PosRecall by 30+ pts).
+The prompt is at a local optimum for both models.
+
+### Gemma 4 E4B Setup
+
+```bash
+# Recommended: Gemma 4 E4B Q8_0 (default, best all-rounder)
+llama-server -m ~/models/gemma-4-E4B-it-Q8_0.gguf \
+  --port 8081 -ngl 99 -c 16384 --jinja
+```
+
+Requires llama.cpp build ≥8672 (gemma4 architecture support added after b8235).
+
 The same model must handle both expansion generation and reranking — rules out cross-encoder-only models.
 
 ### Embedding Model Comparison (enriched, embedding mode, 354 basic fixtures)
@@ -264,6 +293,7 @@ max_expansion_length = 200  # Max chars per expansion
 - **Prompt engineering:** 13 few-shot examples, principle-based guidelines, loss-pattern driven — COMPLETE
 - **Model benchmarking:** Qwen3.5-9B/4B/2B vs 35B on v3 corpora with sampling — COMPLETE
 - **Eval infrastructure:** tqdm progress, stratified sampling, bench_models.py script — COMPLETE
+- **E2E benchmarking:** `tools/bench_e2e.py` — each model generates its own expansions AND reranks. Default mode going forward. `bench_models.py` deprecated (shared-corpus comparisons are unfair). Corpora cached at `eval/corpora/enriched_{tier}_{label}/` per model.
 - **Expansion prompt v5:** Reasoning-field prompt for expansions (structured CoT before generating) — COMPLETE
 - **Eval dataset:** 587 fixtures (438 original + 149 mined from 7 real projects)
 - **CLI UX:** `cuecard configure` interactive setup, `cuecard serve` daemon, expand progress bar — COMPLETE
@@ -364,21 +394,35 @@ Note: `mean_recall` still includes negatives as 0.0 for backwards compatibility.
 
 ## Quality Benchmarks
 
-### With v5 Expansions (reasoning-field prompt, 20% sample, jina-code + LLM)
+### With v5 Expansions (reasoning-field prompt, 20% sample, seed=42, jina-code + LLM, 2026-04-04)
 
-| Model | Basic Quality | Basic PosRecall | Basic Noise | Basic NegSil | p50ms |
-|-------|-------------|-----------------|-------------|--------------|-------|
-| **35B** | **0.750** | **0.630** | **0.184** | **0.962** | 1324ms |
-| 9B | 0.682 | 0.560 | 0.171 | 0.962 | 1593ms |
-| 4B | 0.620 | 0.573 | 0.321 | 0.885 | 1028ms |
+| Model | Basic F2 | Basic PosRecall | Basic Noise | Basic NegSil | p50ms | p95ms |
+|-------|---------|-----------------|-------------|--------------|-------|-------|
+| **35B** | **0.808** | 0.808 | **0.205** | **0.889** | 1274ms | **1718ms** |
+| 9B | 0.762 | **0.832** | 0.316 | 0.815 | 1350ms | 3440ms |
 
-| Model | Workflow Quality | Workflow PosRecall | Workflow Noise | Workflow NegSil |
-|-------|----------------|-------------------|----------------|-----------------|
-| **35B** | **0.763** | **0.697** | 0.256 | **1.000** |
-| 9B | 0.636 | 0.600 | **0.260** | 0.750 |
-| 4B | 0.632 | 0.667 | 0.391 | 0.750 |
+| Model | Workflow F2 | Workflow PosRecall | Workflow Noise | Workflow NegSil |
+|-------|-------------|-------------------|----------------|-----------------|
+| **35B** | **0.632** | **0.621** | **0.406** | 0.750 |
+| 9B | 0.604 | 0.576 | 0.439 | 0.750 |
+
+**Per-tier basic (seed=42):**
+| Tier | 9B F2 | 35B F2 | Gap |
+|------|------:|-------:|----:|
+| Easy | 0.880 | 0.888 | tie |
+| Medium | 0.707 | **0.817** | 35B +11 |
+| Hard | **0.581** | 0.438 | **9B +14** |
+| Negative | 0.815 | **0.889** | 35B +7 |
+
+**Key findings (apples-to-apples, same corpus + seed)**:
+- Real gap is ~5 pts F2 on basic, ~3 pts on workflow — much smaller than older cached numbers suggested
+- **The gap is noise, not recall.** 9B actually beats 35B on PosRecall; 35B wins via discrimination
+- **9B wins hard-tier (+14 pts)**, 35B wins medium-tier (+11 pts). 35B is conservative; that helps medium, hurts hard
+- 9B p95 latency is 2x worse (tail risk). 35B more predictable
 
 Cross-encoder (MiniLM) is a regression on code — skip it. Use llm-local or llm-haiku.
+
+**Historical (stale — different corpus, pre-v5 expansions)**: 35B basic 0.750, 9B basic 0.682, etc. See session 19 notes.
 
 ### Expansion Validation (hand-crafted, 8 hard fixtures)
 

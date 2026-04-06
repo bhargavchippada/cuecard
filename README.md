@@ -10,7 +10,7 @@ Contextual rule enforcement for AI coding agents. cuecard retrieves your most re
 2. **cuecard indexes** them using semantic embeddings (jina-code, ~15ms)
 3. **Optionally, expand rules** with LLM-generated paraphrases for better matching on hard cases
 4. **On every agent action**, cuecard retrieves the most relevant rules via dense + BM25 hybrid retrieval
-5. **An LLM reranker** (optional, Qwen3.5-35B) filters noise and selects truly relevant rules (~1s)
+5. **An LLM reranker** (optional, Gemma-4-E4B or Qwen3.5-9B) filters noise and selects truly relevant rules (~1.2s)
 
 ## Supported Events
 
@@ -56,7 +56,7 @@ You can re-run `cuecard configure` at any time to change settings.
 ```
 Query → Multi-retriever (dense + BM25 sparse, ~20ms)
       → RRF fusion
-      → LLM re-ranking (Qwen3.5-35B, reasoning-in-response, ~1s)
+      → LLM re-ranking (Gemma-4-E4B or Qwen3.5-9B, reasoning-in-response, ~1.2s)
       → Inject relevant rules into agent context
 ```
 
@@ -94,16 +94,18 @@ Each rule gets 5-10 trigger phrases like "docker build with untrusted base image
 | Medium | 76.8% | — |
 | Hard | 60.0% | — |
 
-**With LLM reranker (Qwen3.5-35B, llm-local mode, full dataset):**
+**With LLM reranker (E2E, each model generates own expansions + reranks, 20% sample, seed=42):**
 
-| Event Type | Quality (F2) | Pos Recall | Noise | Neg Silence | Latency |
-|-----------|-------------|-----------|-------|-------------|---------|
-| PreToolUse (354 fixtures) | 0.782 | 76.4% | 20.0% | 87.6% | 1.5s |
-| UserPromptSubmit (84 fixtures) | 0.776 | 74.4% | 24.8% | 95.8% | 1.5s |
+| Model | Basic F2 | PosRecall | Noise | NegSil | Workflow F2 | GGUF |
+|-------|---------|-----------|-------|--------|------------|------|
+| **Gemma-4-E4B** | 0.774 | **77.8%** | 26.6% | 85.2% | **0.820** | 8.2GB |
+| Qwen3.5-9B | **0.797** | 56.0% | 25.9% | **96.2%** | 0.725 | 5.3GB |
+| Qwen3.5-35B | 0.785 | — | **21.7%** | 92.6% | 0.680 | 21GB |
+| Qwen3.5-4B | 0.736 | — | 24.3% | 85.2% | 0.577 | 2.6GB |
 
-The LLM reranker is essential for noise filtering and negative silence. Embedding mode alone achieves high recall but cannot reject irrelevant queries.
+Gemma E4B finds 39% more relevant rules than Qwen 9B and dominates workflow. Qwen 9B has better negative silence (fewer false positives). See CLAUDE.md for full comparison.
 
-6 embedding models benchmarked. See CLAUDE.md for full comparison.
+The LLM reranker is essential for noise filtering and negative silence. Embedding mode alone cannot reject irrelevant queries.
 
 Eval dataset: 438 curated fixtures + 149 mined from real developer sessions across 7 projects.
 
@@ -132,21 +134,25 @@ This mirrors a finding from prompt engineering: reasoning principles ("without E
 
 ## Local LLM Server
 
-For best quality, run a local Qwen3.5 instance:
+For best quality, run a local LLM via llama-server (requires llama.cpp build ≥8672):
 
 ```bash
-# Recommended: 9B (matches 35B quality, 4x smaller)
+# Recommended: Gemma 4 E4B Q8 (best recall + workflow, 8.2GB)
+llama-server -m ~/models/gemma-4-E4B-it-Q8_0.gguf \
+  --port 8081 -ngl 99 -c 16384 --jinja
+
+# Alternative: Qwen3.5-9B (best basic F2 + NegSil, 5.3GB)
 llama-server -m ~/models/Qwen3.5-9B-Q4_K_M.gguf \
-  --port 8081 -ngl 99 -c 16384 --jinja
+  --port 8081 -ngl 99 -c 16384 --jinja --reasoning-budget 0
 
-# CPU/laptop: 4B (2.6GB, ~850ms per query)
+# CPU/laptop: Qwen3.5-4B (2.6GB, ~900ms per query)
 llama-server -m ~/models/Qwen3.5-4B-Q4_K_M.gguf \
-  --port 8081 -ngl 0 -c 16384 --jinja
-
-# Max quality: 35B MoE (needs 32GB GPU)
-llama-server -m ~/models/Qwen3.5-35B-A3B-Q4_K_M.gguf \
-  --port 8081 -ngl 99 -c 16384 --jinja
+  --port 8081 -ngl 0 -c 16384 --jinja --reasoning-budget 0
 ```
+
+Download models from HuggingFace:
+- Gemma 4 E4B: `unsloth/gemma-4-E4B-it-GGUF` (Q8_0)
+- Qwen3.5: `unsloth/Qwen3.5-*-GGUF` (Q4_K_M)
 
 ## Configuration
 
