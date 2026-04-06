@@ -132,6 +132,7 @@ class TestAdapterMain:
         results = _make_results()
 
         with (
+            patch(f"{_MOD}._try_daemon", return_value=None),
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
@@ -162,6 +163,7 @@ class TestAdapterMain:
         index = _make_index()
 
         with (
+            patch(f"{_MOD}._try_daemon", return_value=None),
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
@@ -187,6 +189,7 @@ class TestAdapterMain:
         config = _make_config(tmp_path)
 
         with (
+            patch(f"{_MOD}._try_daemon", return_value=None),
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
@@ -215,6 +218,7 @@ class TestAdapterMain:
         )
 
         with (
+            patch(f"{_MOD}._try_daemon", return_value=None),
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
@@ -234,6 +238,7 @@ class TestAdapterMain:
         hook_input = {"tool_name": "Bash", "tool_input": "ls"}
 
         with (
+            patch(f"{_MOD}._try_daemon", return_value=None),
             patch("sys.stdin") as mock_stdin,
             patch(
                 f"{_MOD}.load_config",
@@ -263,6 +268,7 @@ class TestAdapterMain:
         results = _make_results()
 
         with (
+            patch(f"{_MOD}._try_daemon", return_value=None),
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
@@ -294,6 +300,7 @@ class TestAdapterMain:
         results = _make_results()
 
         with (
+            patch(f"{_MOD}._try_daemon", return_value=None),
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
@@ -334,6 +341,7 @@ class TestAdapterMain:
         results = _make_results()
 
         with (
+            patch(f"{_MOD}._try_daemon", return_value=None),
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
@@ -367,6 +375,7 @@ class TestAdapterMain:
         index = _make_index()
 
         with (
+            patch(f"{_MOD}._try_daemon", return_value=None),
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
@@ -441,6 +450,7 @@ class TestMainGuard:
         hook_input = {"tool_name": "Bash", "tool_input": "ls"}
 
         with (
+            patch(f"{_MOD}._try_daemon", return_value=None),
             patch("sys.stdin") as mock_stdin,
             patch(
                 f"{_MOD}.load_config",
@@ -456,3 +466,39 @@ class TestMainGuard:
         captured = capsys.readouterr()
         output = json.loads(captured.out)
         assert output["tool_name"] == "Bash"
+
+
+class TestEntryPoint:
+    """Tests for cuecard._entry fast dispatch."""
+
+    def test_hook_dispatches_to_adapter(self) -> None:
+        with (
+            patch("sys.argv", ["cuecard", "hook"]),
+            patch(
+                "cuecard.adapters.claude_code.main",
+            ) as mock_hook,
+        ):
+            from cuecard._entry import main as entry_main
+
+            entry_main()
+        mock_hook.assert_called_once()
+
+    def test_non_hook_dispatches_to_typer(self) -> None:
+        with (
+            patch("sys.argv", ["cuecard", "status"]),
+            patch("cuecard.cli.app") as mock_app,
+        ):
+            from cuecard._entry import main as entry_main
+
+            entry_main()
+        mock_app.assert_called_once()
+
+    def test_no_args_dispatches_to_typer(self) -> None:
+        with (
+            patch("sys.argv", ["cuecard"]),
+            patch("cuecard.cli.app") as mock_app,
+        ):
+            from cuecard._entry import main as entry_main
+
+            entry_main()
+        mock_app.assert_called_once()

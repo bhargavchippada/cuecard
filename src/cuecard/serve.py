@@ -30,6 +30,12 @@ _PID_FILE = "serve.pid"
 _LOG_FILE = "serve.log"
 
 
+class _ReuseHTTPServer(HTTPServer):
+    """HTTPServer with SO_REUSEADDR set before bind."""
+
+    allow_reuse_address = True
+
+
 # -- PID file management --
 
 
@@ -120,10 +126,18 @@ class _Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         """Process a hook JSON payload and return results."""
+        if self.path != "/retrieve":
+            self._send_error(404, "Not found")
+            return
+
         content_length_raw = self.headers.get("Content-Length", "0")
         try:
             content_length = int(content_length_raw)
         except ValueError:
+            self._send_error(400, "Invalid Content-Length")
+            return
+
+        if content_length < 0:
             self._send_error(400, "Invalid Content-Length")
             return
 
@@ -209,7 +223,9 @@ def _process_request(
     from cuecard.formatter import format_rules
     from cuecard.pipeline import run_pipeline
 
-    raw_event = str(data.get("event", "PreToolUse"))
+    raw_event = str(
+        data.get("hook_event_name", data.get("event", "PreToolUse")),
+    )
     event = raw_event if raw_event in _KNOWN_HOOK_EVENTS else "PreToolUse"
 
     if event == "UserPromptSubmit":
@@ -238,15 +254,19 @@ def _process_request(
     # Build a fresh output dict (don't mutate the input)
     output: dict[str, object] = dict(data)
 
+    raw_hook_output = data.get("hookSpecificOutput")
+    hook_output: dict[str, object] = (
+        dict(raw_hook_output) if isinstance(raw_hook_output, dict) else {}
+    )
+    hook_output["hookEventName"] = event
+    if event == "PreToolUse":
+        hook_output["permissionDecision"] = "allow"
+
     if results:
         context = format_rules(results)
-        raw_hook_output = data.get("hookSpecificOutput")
-        hook_output = (
-            {} if not isinstance(raw_hook_output, dict)
-            else dict(raw_hook_output)
-        )
         hook_output["additionalContext"] = context
-        output["hookSpecificOutput"] = hook_output
+
+    output["hookSpecificOutput"] = hook_output
 
     logger.info(
         "Served query in %.1fms: %d results for %s",
@@ -296,7 +316,7 @@ def start_server(
         raise RuntimeError(msg)
 
     handler_cls = _make_handler(index, config, embedding_model)
-    server = HTTPServer(("127.0.0.1", port), handler_cls)
+    server = _ReuseHTTPServer(("127.0.0.1", port), handler_cls)
 
     # Write PID file
     write_pid(os.getpid(), effective_home)
@@ -318,6 +338,18 @@ def stop_server(home: Path | None = None) -> bool:
         return False
     with contextlib.suppress(ProcessLookupError):
         os.kill(pid, signal.SIGTERM)
+    # Wait for process to actually exit (up to 5s)
+    for _ in range(50):
+        try:
+            os.kill(pid, 0)  # Check if alive
+        except (ProcessLookupError, PermissionError):
+            break
+        time.sleep(0.1)
+    else:
+        # Still alive — force kill
+        with contextlib.suppress(ProcessLookupError, PermissionError):
+            os.kill(pid, signal.SIGKILL)
+        time.sleep(0.2)
     remove_pid(home)
     return True
 
@@ -370,16 +402,27 @@ def run_server(
 def query_daemon(
     payload: dict[str, object],
     port: int = DEFAULT_PORT,
-    timeout: float = 0.5,
+    timeout: float | None = None,
 ) -> dict[str, object] | None:
     """Send a hook payload to the running daemon.
 
     Returns the response dict on success, or None if the daemon is
-    unreachable or times out.
+    unreachable or times out.  Timeout defaults to 5s for LLM modes
+    (llm-local/llm-haiku) and 0.5s for embedding mode.
     """
     import http.client
 
+    if timeout is None:
+        from cuecard.config import load_config
+
+        cfg = load_config(project_dir=Path.cwd())
+        mode = getattr(
+            getattr(cfg, "pipeline", None), "mode", "embedding",
+        )
+        timeout = 5.0 if mode in {"llm-local", "llm-haiku"} else 0.5
+
     body = json.dumps(payload).encode()
+    conn: http.client.HTTPConnection | None = None
     try:
         conn = http.client.HTTPConnection(
             "127.0.0.1", port, timeout=timeout,
@@ -400,12 +443,12 @@ def query_daemon(
         return result
     except (
         OSError,
-        ConnectionRefusedError,
         TimeoutError,
         http.client.HTTPException,
         json.JSONDecodeError,
     ):
         return None
     finally:
-        with contextlib.suppress(Exception):
-            conn.close()
+        if conn is not None:
+            with contextlib.suppress(OSError):
+                conn.close()

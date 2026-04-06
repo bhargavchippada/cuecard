@@ -28,7 +28,7 @@ dependencies = [
 ]
 
 [project.scripts]
-cuecard = "cuecard.cli:app"
+cuecard = "cuecard._entry:main"
 
 [project.urls]
 Homepage = "https://github.com/bhargavpatel/cuecard"

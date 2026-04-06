@@ -214,8 +214,11 @@ class TestProcessRequest:
                 index, config, model,
             )
 
-        # No results, so no hookSpecificOutput added
-        assert "hookSpecificOutput" not in result
+        # hookEventName always set, no additionalContext when no results
+        hook_out = result["hookSpecificOutput"]
+        assert hook_out["hookEventName"] == "UserPromptSubmit"
+        assert "permissionDecision" not in hook_out
+        assert "additionalContext" not in hook_out
 
     def test_does_not_mutate_input(self) -> None:
         index = _make_index()
@@ -374,10 +377,16 @@ class TestStopServer:
         original_kill = os.kill
         kill_calls: list[tuple[int, int]] = []
 
+        terminated = False
+
         def _tracking_kill(pid: int, sig: int) -> None:
+            nonlocal terminated
             if sig == signal.SIGTERM:
                 kill_calls.append((pid, sig))
+                terminated = True
                 return  # Don't actually send SIGTERM to ourselves
+            if sig == 0 and terminated:
+                raise ProcessLookupError  # Simulate process exited
             original_kill(pid, sig)
 
         with patch("os.kill", side_effect=_tracking_kill):
@@ -392,16 +401,17 @@ class TestStopServer:
 
     def test_stop_process_gone_during_kill(self, tmp_path: Path) -> None:
         write_pid(os.getpid(), tmp_path)
-        original_kill = os.kill
-        call_count = 0
+        sig0_calls = 0
 
         def _kill_side_effect(pid: int, sig: int) -> None:
-            nonlocal call_count
-            call_count += 1
+            nonlocal sig0_calls
             if sig == signal.SIGTERM:
                 raise ProcessLookupError
-            # Let signal 0 (alive check) pass through
-            original_kill(pid, sig)
+            if sig == 0:
+                sig0_calls += 1
+                if sig0_calls > 1:
+                    raise ProcessLookupError  # Gone after SIGTERM
+                return  # First call: daemon_status alive check
 
         with patch("os.kill", side_effect=_kill_side_effect):
             result = stop_server(tmp_path)
@@ -597,6 +607,46 @@ class TestHTTPIntegration:
             server.server_close()
             remove_pid(tmp_path)
 
+    def test_post_wrong_path(self, tmp_path: Path) -> None:
+        server, port = self._start_test_server(tmp_path)
+
+        import http.client
+
+        try:
+            conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5.0)
+            conn.request("POST", "/admin", body=b"{}", headers={
+                "Content-Type": "application/json",
+                "Content-Length": "2",
+            })
+            resp = conn.getresponse()
+            assert resp.status == 404
+            conn.close()
+        finally:
+            server.shutdown()
+            server.server_close()
+            remove_pid(tmp_path)
+
+    def test_post_negative_content_length(self, tmp_path: Path) -> None:
+        server, port = self._start_test_server(tmp_path)
+
+        import http.client
+
+        try:
+            conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5.0)
+            conn.request("POST", "/retrieve", body=b"", headers={
+                "Content-Type": "application/json",
+                "Content-Length": "-1",
+            })
+            resp = conn.getresponse()
+            assert resp.status == 400
+            data = json.loads(resp.read())
+            assert "Invalid Content-Length" in data["error"]
+            conn.close()
+        finally:
+            server.shutdown()
+            server.server_close()
+            remove_pid(tmp_path)
+
 
 # ---------------------------------------------------------------------------
 # Client (query_daemon)
@@ -645,7 +695,7 @@ class TestQueryDaemon:
         with patch("http.client.HTTPConnection") as mock_conn_cls:
             mock_conn = MagicMock()
             mock_conn.request.side_effect = OSError("connection failed")
-            mock_conn.close.side_effect = RuntimeError("close failed")
+            mock_conn.close.side_effect = OSError("close failed")
             mock_conn_cls.return_value = mock_conn
             result = query_daemon({"tool_name": "Bash"})
         assert result is None
