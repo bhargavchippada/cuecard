@@ -31,7 +31,13 @@ import requests
 # Add project to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from cuecard.eval import EvalSummary, load_fixtures, run_eval
+from cuecard.eval import (
+    EvalSummary,
+    evaluate_per_event,
+    format_per_event_report,
+    load_fixtures,
+    run_eval,
+)
 from cuecard.expander import expand_rules
 from cuecard.indexer import save_rules_json
 from cuecard.parser import parse_rules
@@ -51,6 +57,21 @@ SOURCE_FILES = {
         "event_type": "UserPromptSubmit",
         "fixtures": EVAL_DIR / "fixtures" / "workflow.json",
     },
+    "post_tool_use": {
+        "rules_txt": CORPORA_DIR / "rules_basic.txt",
+        "event_type": "PostToolUse",
+        "fixtures": EVAL_DIR / "fixtures" / "post_tool_use.json",
+    },
+    "stop": {
+        "rules_txt": CORPORA_DIR / "rules_basic.txt",
+        "event_type": "Stop",
+        "fixtures": EVAL_DIR / "fixtures" / "stop.json",
+    },
+    "subagent_start": {
+        "rules_txt": CORPORA_DIR / "rules_basic.txt",
+        "event_type": "SubagentStart",
+        "fixtures": EVAL_DIR / "fixtures" / "subagent_start.json",
+    },
 }
 
 EMBEDDING_MODEL = "jinaai/jina-embeddings-v2-base-code"
@@ -60,18 +81,15 @@ ENDPOINT = f"http://localhost:{PORT}/v1"
 
 def start_server(model_path: str, *, ngl: int = 99) -> subprocess.Popen[bytes]:
     """Start llama-server and wait for health."""
-    # Workaround for llama.cpp b8235 bug: embedded Qwen3.5 multimodal Jinja
-    # template fails "Failed to parse input at pos 20" when the request sets
-    # chat_template_kwargs. Adding --reasoning-budget 0 disables thinking
-    # server-side and bypasses the buggy template code path.
     cmd = [
         "llama-server",
         "-m", model_path,
         "--port", str(PORT),
         "-ngl", str(ngl),
-        "-c", "16384",
+        "-c", "98304",
         "--jinja",
-        "--reasoning-budget", "0",
+        "-np", "5",
+        "--reasoning", "off",
     ]
     print(f"Starting llama-server: {' '.join(cmd)}")
     proc = subprocess.Popen(
@@ -80,7 +98,7 @@ def start_server(model_path: str, *, ngl: int = 99) -> subprocess.Popen[bytes]:
         stderr=subprocess.DEVNULL,
     )
 
-    for i in range(120):
+    for i in range(180):
         try:
             r = requests.get(f"http://localhost:{PORT}/health", timeout=2)
             if r.status_code == 200:
@@ -91,7 +109,7 @@ def start_server(model_path: str, *, ngl: int = 99) -> subprocess.Popen[bytes]:
         time.sleep(1)
 
     proc.kill()
-    msg = "Server failed to start within 120s"
+    msg = "Server failed to start within 180s"
     raise RuntimeError(msg)
 
 
@@ -216,6 +234,11 @@ def run_benchmark(label: str, *, sample_ratio: float = 0.2, seed: int = 42) -> d
             f"neg_sil={summary.negative_silence_rate:.3f}  "
             f"p50={summary.latency_p50_ms:.0f}ms"
         )
+
+        # Per-event breakdown
+        per_event = evaluate_per_event(summary.per_fixture, fixtures)
+        if per_event:
+            print(format_per_event_report(per_event))
 
     return results
 
