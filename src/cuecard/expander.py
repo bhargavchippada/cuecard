@@ -17,6 +17,7 @@ from cuecard.llm_utils import (
     call_local,
     validate_endpoint,
 )
+from cuecard.models import KNOWN_HOOK_EVENTS
 from cuecard.security import ConfigError, scrub_secrets
 
 if TYPE_CHECKING:
@@ -32,7 +33,7 @@ logger = logging.getLogger(__name__)
 DEDUP_COSINE_THRESHOLD = 0.85
 
 # Valid event types for expansion prompt targeting
-_VALID_EVENT_TYPES = frozenset({"PreToolUse", "UserPromptSubmit"})
+_VALID_EVENT_TYPES = KNOWN_HOOK_EVENTS
 
 
 def _build_expansion_prompt(
