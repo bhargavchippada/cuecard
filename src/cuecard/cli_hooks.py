@@ -10,11 +10,13 @@ from rich.table import Table
 
 import cuecard.cli as _cli
 from cuecard.cli import app, console, err_console
+from cuecard.models import KNOWN_HOOK_EVENTS
 
 # --- hook helpers ---
 
 _HOOK_COMMAND = "cuecard hook 2>/dev/null"
 _HOOK_MARKER = "cuecard"
+_HOOK_EVENTS: tuple[str, ...] = tuple(sorted(KNOWN_HOOK_EVENTS))
 
 
 def _claude_settings_path() -> Path:
@@ -72,7 +74,7 @@ def _has_cuecard_hook(settings: dict[str, object]) -> bool:
     hooks = settings.get("hooks", {})
     if not isinstance(hooks, dict):
         return False
-    for event in ("PreToolUse", "UserPromptSubmit"):
+    for event in _HOOK_EVENTS:
         event_hooks = hooks.get(event, [])
         if not isinstance(event_hooks, list):
             continue
@@ -115,7 +117,7 @@ def install(
         "hooks": [{"type": "command", "command": _HOOK_COMMAND}],
     }
 
-    for event in ("PreToolUse", "UserPromptSubmit"):
+    for event in _HOOK_EVENTS:
         event_hooks = hooks.get(event)
         if not isinstance(event_hooks, list):
             event_hooks = []
@@ -124,9 +126,10 @@ def install(
 
     _save_claude_settings(settings_path, settings)
 
+    event_list = " + ".join(_HOOK_EVENTS)
     console.print(
         "[green]Installed[/green] cuecard hooks"
-        " (PreToolUse + UserPromptSubmit)"
+        f" ({event_list})"
         f" in {settings_path}"
     )
 
@@ -157,7 +160,7 @@ def uninstall(
 
     hooks = settings.get("hooks", {})
     if isinstance(hooks, dict):
-        for event in ("PreToolUse", "UserPromptSubmit"):
+        for event in _HOOK_EVENTS:
             event_hooks = hooks.get(event, [])
             if isinstance(event_hooks, list):
                 hooks[event] = [

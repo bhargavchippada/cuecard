@@ -133,7 +133,9 @@ class TestInstall:
         assert result.exit_code == 0
         assert "Installed" in result.output
         settings = json.loads((claude_dir / "settings.json").read_text())
-        for event in ("PreToolUse", "UserPromptSubmit"):
+        from cuecard.models import KNOWN_HOOK_EVENTS
+
+        for event in sorted(KNOWN_HOOK_EVENTS):
             hooks = settings["hooks"][event]
             assert any(
                 "cuecard" in str(h.get("hooks", []))
