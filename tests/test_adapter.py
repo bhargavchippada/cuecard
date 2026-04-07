@@ -1,4 +1,4 @@
-"""Tests for cuecard.adapters.claude_code — PreToolUse hook."""
+"""Tests for cuecard.adapters.claude_code — all hook events."""
 
 from __future__ import annotations
 
@@ -8,7 +8,22 @@ from unittest.mock import patch
 
 import numpy as np
 
-from cuecard.adapters.claude_code import _format_tool_input, main
+from cuecard.adapters.claude_code import (
+    _EVENT_HANDLERS,
+    _EVENT_LABELS,
+    _LABEL_AUDIT,
+    _LABEL_PREVENT,
+    _LABEL_PROPAGATE,
+    _LABEL_VERIFY,
+    _detect_event,
+    _format_tool_input,
+    _handle_post_tool_use,
+    _handle_pre_tool_use,
+    _handle_stop,
+    _handle_subagent_start,
+    _handle_user_prompt_submit,
+    main,
+)
 from cuecard.models import (
     Index,
     PipelineConfig,
@@ -409,6 +424,478 @@ class TestFormatToolInput:
 
     def test_empty_string(self) -> None:
         assert _format_tool_input("") == ""
+
+
+class TestHandlePreToolUse:
+    def test_basic_query(self) -> None:
+        data: dict[str, object] = {
+            "tool_name": "Bash",
+            "tool_input": "git commit -m 'fix'",
+        }
+        query, tool_name, event = _handle_pre_tool_use(data)
+        assert query == "Bash: git commit -m 'fix'"
+        assert tool_name == "Bash"
+        assert event == "PreToolUse"
+
+    def test_dict_tool_input(self) -> None:
+        data: dict[str, object] = {
+            "tool_name": "Edit",
+            "tool_input": {"file": "a.py", "content": "x"},
+        }
+        query, tool_name, event = _handle_pre_tool_use(data)
+        assert "Edit:" in query
+        assert '"file": "a.py"' in query
+        assert tool_name == "Edit"
+        assert event == "PreToolUse"
+
+    def test_missing_fields(self) -> None:
+        query, tool_name, event = _handle_pre_tool_use({})
+        assert query == ": "
+        assert tool_name == ""
+        assert event == "PreToolUse"
+
+
+class TestHandlePostToolUse:
+    def test_basic_query(self) -> None:
+        data: dict[str, object] = {
+            "tool_name": "Bash",
+            "tool_input": "git status",
+            "tool_output": "On branch master\nnothing to commit",
+        }
+        query, tool_name, event = _handle_post_tool_use(data)
+        assert query.startswith("PostToolUse:Bash:")
+        assert "git status" in query
+        assert "\u2192" in query
+        assert "On branch master" in query
+        assert tool_name == "Bash"
+        assert event == "PostToolUse"
+
+    def test_scrubs_secrets_in_output(self) -> None:
+        data: dict[str, object] = {
+            "tool_name": "Bash",
+            "tool_input": "cat .env",
+            "tool_output": "API_KEY=sk-ant-abcdefghijklmnopqrstuvwxyz",
+        }
+        query, _, _ = _handle_post_tool_use(data)
+        assert "sk-ant-" not in query
+        assert "[REDACTED]" in query
+
+    def test_large_output_truncated_at_2000_then_500(self) -> None:
+        big_output = "x" * 5000
+        data: dict[str, object] = {
+            "tool_name": "Bash",
+            "tool_input": "cat big.log",
+            "tool_output": big_output,
+        }
+        query, _, _ = _handle_post_tool_use(data)
+        # The output portion should be at most 500 chars
+        # Total query has prefix + tool_input + arrow + output
+        arrow_idx = query.index("\u2192")
+        output_part = query[arrow_idx + 2:]  # skip "→ "
+        assert len(output_part) <= 500
+
+    def test_non_string_output(self) -> None:
+        data: dict[str, object] = {
+            "tool_name": "Read",
+            "tool_input": "/tmp/f.txt",
+            "tool_output": 12345,
+        }
+        query, _, _ = _handle_post_tool_use(data)
+        assert "12345" in query
+
+    def test_tool_input_truncated_at_200(self) -> None:
+        long_input = "a" * 400
+        data: dict[str, object] = {
+            "tool_name": "Bash",
+            "tool_input": long_input,
+            "tool_output": "ok",
+        }
+        query, _, _ = _handle_post_tool_use(data)
+        # tool_input should be truncated to 200
+        prefix = "PostToolUse:Bash: "
+        arrow_idx = query.index(" \u2192 ")
+        input_part = query[len(prefix):arrow_idx]
+        assert len(input_part) <= 200
+
+    def test_missing_output(self) -> None:
+        data: dict[str, object] = {"tool_name": "Bash", "tool_input": "ls"}
+        query, _, _ = _handle_post_tool_use(data)
+        assert "PostToolUse:Bash:" in query
+
+    def test_newlines_stripped_from_output(self) -> None:
+        data: dict[str, object] = {
+            "tool_name": "Bash",
+            "tool_input": "ls",
+            "tool_output": "line1\nline2\rline3",
+        }
+        query, _, _ = _handle_post_tool_use(data)
+        assert "\n" not in query
+        assert "\r" not in query
+
+
+class TestHandleUserPromptSubmit:
+    def test_basic_query(self) -> None:
+        data: dict[str, object] = {
+            "prompt": "Add authentication to the API",
+        }
+        query, tool_name, event = _handle_user_prompt_submit(data)
+        assert query == "UserPromptSubmit: Add authentication to the API"
+        assert tool_name == "UserPromptSubmit"
+        assert event == "UserPromptSubmit"
+
+    def test_missing_prompt(self) -> None:
+        query, tool_name, event = _handle_user_prompt_submit({})
+        assert query == "UserPromptSubmit: "
+        assert tool_name == "UserPromptSubmit"
+
+    def test_prompt_truncated(self) -> None:
+        long_prompt = "z" * 1000
+        data: dict[str, object] = {"prompt": long_prompt}
+        query, _, _ = _handle_user_prompt_submit(data)
+        # "UserPromptSubmit: " + 500 chars max
+        assert len(query) <= len("UserPromptSubmit: ") + 500
+
+
+class TestHandleSubagentStart:
+    def test_basic_query(self) -> None:
+        data: dict[str, object] = {
+            "agent_type": "security-reviewer",
+            "tool_input": {"prompt": "Review auth module for vulnerabilities"},
+        }
+        query, tool_name, event = _handle_subagent_start(data)
+        assert query.startswith("SubagentStart:security-reviewer:")
+        assert "Review auth module" in query
+        assert tool_name == ""
+        assert event == "SubagentStart"
+
+    def test_agent_type_sanitized(self) -> None:
+        data: dict[str, object] = {
+            "agent_type": "bad<script>type&foo",
+            "tool_input": {"prompt": "test"},
+        }
+        query, _, _ = _handle_subagent_start(data)
+        assert "SubagentStart:badscripttypefoo:" in query
+        assert "<" not in query
+        assert "&" not in query
+
+    def test_agent_type_truncated(self) -> None:
+        data: dict[str, object] = {
+            "agent_type": "a" * 200,
+            "tool_input": {"prompt": "test"},
+        }
+        query, _, _ = _handle_subagent_start(data)
+        # agent_type capped at 100
+        prefix = "SubagentStart:"
+        colon_idx = query.index(":", len(prefix))
+        agent_part = query[len(prefix):colon_idx]
+        assert len(agent_part) <= 100
+
+    def test_missing_agent_type(self) -> None:
+        data: dict[str, object] = {
+            "tool_input": {"prompt": "do something"},
+        }
+        query, _, _ = _handle_subagent_start(data)
+        assert query.startswith("SubagentStart::")
+
+    def test_prompt_scrubbed(self) -> None:
+        data: dict[str, object] = {
+            "agent_type": "reviewer",
+            "tool_input": {
+                "prompt": "Check sk-ant-abcdefghijklmnopqrstuvwxyz in code",
+            },
+        }
+        query, _, _ = _handle_subagent_start(data)
+        assert "sk-ant-" not in query
+        assert "[REDACTED]" in query
+
+    def test_non_dict_tool_input(self) -> None:
+        """When tool_input is not a dict, prompt should be empty."""
+        data: dict[str, object] = {
+            "agent_type": "reviewer",
+            "tool_input": "not a dict",
+        }
+        query, _, _ = _handle_subagent_start(data)
+        assert query == "SubagentStart:reviewer: "
+
+    def test_large_prompt_truncated(self) -> None:
+        data: dict[str, object] = {
+            "agent_type": "reviewer",
+            "tool_input": {"prompt": "x" * 5000},
+        }
+        query, _, _ = _handle_subagent_start(data)
+        # After "SubagentStart:reviewer: ", prompt part <= 500
+        prefix = "SubagentStart:reviewer: "
+        prompt_part = query[len(prefix):]
+        assert len(prompt_part) <= 500
+
+
+class TestHandleStop:
+    def test_basic_query(self) -> None:
+        data: dict[str, object] = {"stop_reason": "user_interrupt"}
+        query, tool_name, event = _handle_stop(data)
+        assert query == "Stop: user_interrupt"
+        assert tool_name == ""
+        assert event == "Stop"
+
+    def test_fallback_to_turn_completed(self) -> None:
+        query, _, _ = _handle_stop({})
+        assert query == "Stop: turn completed"
+
+    def test_stop_reason_scrubbed(self) -> None:
+        data: dict[str, object] = {
+            "stop_reason": "leaked sk-ant-abcdefghijklmnopqrstuvwxyz",
+        }
+        query, _, _ = _handle_stop(data)
+        assert "sk-ant-" not in query
+        assert "[REDACTED]" in query
+
+    def test_large_stop_reason_truncated(self) -> None:
+        data: dict[str, object] = {"stop_reason": "r" * 5000}
+        query, _, _ = _handle_stop(data)
+        # "Stop: " + max 500 chars
+        assert len(query) <= len("Stop: ") + 500
+
+
+class TestDetectEvent:
+    def test_known_events(self) -> None:
+        for event_name in (
+            "PreToolUse", "PostToolUse", "UserPromptSubmit",
+            "SubagentStart", "Stop",
+        ):
+            data: dict[str, object] = {"hook_event_name": event_name}
+            assert _detect_event(data) == event_name
+
+    def test_fallback_to_pre_tool_use(self) -> None:
+        assert _detect_event({"hook_event_name": "Unknown"}) == "PreToolUse"
+        assert _detect_event({}) == "PreToolUse"
+
+    def test_legacy_event_field(self) -> None:
+        data: dict[str, object] = {"event": "UserPromptSubmit"}
+        assert _detect_event(data) == "UserPromptSubmit"
+
+    def test_hook_event_name_takes_priority(self) -> None:
+        data: dict[str, object] = {
+            "hook_event_name": "PostToolUse",
+            "event": "PreToolUse",
+        }
+        assert _detect_event(data) == "PostToolUse"
+
+
+class TestEventHandlersDict:
+    def test_all_five_events_registered(self) -> None:
+        expected = {"PreToolUse", "PostToolUse", "UserPromptSubmit",
+                    "SubagentStart", "Stop"}
+        assert set(_EVENT_HANDLERS.keys()) == expected
+
+    def test_handlers_callable(self) -> None:
+        for handler in _EVENT_HANDLERS.values():
+            assert callable(handler)
+
+
+class TestEventLabels:
+    def test_pre_tool_use_label(self) -> None:
+        assert _EVENT_LABELS["PreToolUse"] == _LABEL_PREVENT
+
+    def test_post_tool_use_label(self) -> None:
+        assert _EVENT_LABELS["PostToolUse"] == _LABEL_VERIFY
+
+    def test_user_prompt_submit_label(self) -> None:
+        assert _EVENT_LABELS["UserPromptSubmit"] == _LABEL_PREVENT
+
+    def test_subagent_start_label(self) -> None:
+        assert _EVENT_LABELS["SubagentStart"] == _LABEL_PROPAGATE
+
+    def test_stop_label(self) -> None:
+        assert _EVENT_LABELS["Stop"] == _LABEL_AUDIT
+
+    def test_label_contents(self) -> None:
+        assert "VERIFY compliance" in _LABEL_VERIFY
+        assert "RULES this agent" in _LABEL_PROPAGATE
+        assert "AUDIT" in _LABEL_AUDIT
+        assert "RULES you must follow" in _LABEL_PREVENT
+
+
+class TestInjectionLabelInOutput:
+    """Verify that each event type uses its correct injection label."""
+
+    def _run_main_with_event(
+        self,
+        hook_input: dict[str, object],
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> dict[str, object]:
+        config = _make_config(tmp_path)
+        index = _make_index()
+        results = _make_results()
+
+        with (
+            patch(f"{_MOD}._try_daemon", return_value=None),
+            patch("sys.stdin") as mock_stdin,
+            patch(f"{_MOD}.load_config", return_value=config),
+            patch("fastembed.TextEmbedding"),
+            patch(f"{_MOD}.load_or_build", return_value=index),
+            patch(_PIPELINE, return_value=_make_pipeline_result(results)),
+            patch(f"{_MOD}.log_retrieval"),
+        ):
+            mock_stdin.read.return_value = json.dumps(hook_input)
+            main()
+
+        captured = capsys.readouterr()
+        return json.loads(captured.out)
+
+    def test_pre_tool_use_label(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        output = self._run_main_with_event(
+            {"tool_name": "Bash", "tool_input": "ls"},
+            tmp_path, capsys,
+        )
+        ctx = output["hookSpecificOutput"]["additionalContext"]
+        assert ctx.startswith(_LABEL_PREVENT)
+
+    def test_post_tool_use_label(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        output = self._run_main_with_event(
+            {
+                "hook_event_name": "PostToolUse",
+                "tool_name": "Bash",
+                "tool_input": "ls",
+                "tool_output": "file.txt",
+            },
+            tmp_path, capsys,
+        )
+        ctx = output["hookSpecificOutput"]["additionalContext"]
+        assert ctx.startswith(_LABEL_VERIFY)
+
+    def test_user_prompt_submit_label(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        output = self._run_main_with_event(
+            {
+                "hook_event_name": "UserPromptSubmit",
+                "prompt": "add auth",
+            },
+            tmp_path, capsys,
+        )
+        ctx = output["hookSpecificOutput"]["additionalContext"]
+        assert ctx.startswith(_LABEL_PREVENT)
+
+    def test_subagent_start_label(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        output = self._run_main_with_event(
+            {
+                "hook_event_name": "SubagentStart",
+                "agent_type": "reviewer",
+                "tool_input": {"prompt": "review code"},
+            },
+            tmp_path, capsys,
+        )
+        ctx = output["hookSpecificOutput"]["additionalContext"]
+        assert ctx.startswith(_LABEL_PROPAGATE)
+
+    def test_stop_label(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        output = self._run_main_with_event(
+            {"hook_event_name": "Stop", "stop_reason": "done"},
+            tmp_path, capsys,
+        )
+        ctx = output["hookSpecificOutput"]["additionalContext"]
+        assert ctx.startswith(_LABEL_AUDIT)
+
+
+class TestHookOutputFormat:
+    """Verify permissionDecision is only set for PreToolUse."""
+
+    def _run_event(
+        self,
+        hook_input: dict[str, object],
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> dict[str, object]:
+        config = _make_config(tmp_path)
+        index = _make_index()
+
+        with (
+            patch(f"{_MOD}._try_daemon", return_value=None),
+            patch("sys.stdin") as mock_stdin,
+            patch(f"{_MOD}.load_config", return_value=config),
+            patch("fastembed.TextEmbedding"),
+            patch(f"{_MOD}.load_or_build", return_value=index),
+            patch(_PIPELINE, return_value=_make_pipeline_result([])),
+            patch(f"{_MOD}.log_retrieval"),
+        ):
+            mock_stdin.read.return_value = json.dumps(hook_input)
+            main()
+
+        captured = capsys.readouterr()
+        return json.loads(captured.out)
+
+    def test_pre_tool_use_has_permission_decision(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        output = self._run_event(
+            {"tool_name": "Bash", "tool_input": "ls"},
+            tmp_path, capsys,
+        )
+        hook_out = output["hookSpecificOutput"]
+        assert hook_out["hookEventName"] == "PreToolUse"
+        assert hook_out["permissionDecision"] == "allow"
+
+    def test_post_tool_use_no_permission_decision(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        output = self._run_event(
+            {
+                "hook_event_name": "PostToolUse",
+                "tool_name": "Bash",
+                "tool_input": "ls",
+                "tool_output": "ok",
+            },
+            tmp_path, capsys,
+        )
+        hook_out = output["hookSpecificOutput"]
+        assert hook_out["hookEventName"] == "PostToolUse"
+        assert "permissionDecision" not in hook_out
+
+    def test_user_prompt_submit_no_permission_decision(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        output = self._run_event(
+            {"hook_event_name": "UserPromptSubmit", "prompt": "hello"},
+            tmp_path, capsys,
+        )
+        hook_out = output["hookSpecificOutput"]
+        assert hook_out["hookEventName"] == "UserPromptSubmit"
+        assert "permissionDecision" not in hook_out
+
+    def test_subagent_start_no_permission_decision(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        output = self._run_event(
+            {
+                "hook_event_name": "SubagentStart",
+                "agent_type": "reviewer",
+                "tool_input": {"prompt": "review"},
+            },
+            tmp_path, capsys,
+        )
+        hook_out = output["hookSpecificOutput"]
+        assert hook_out["hookEventName"] == "SubagentStart"
+        assert "permissionDecision" not in hook_out
+
+    def test_stop_no_permission_decision(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        output = self._run_event(
+            {"hook_event_name": "Stop"},
+            tmp_path, capsys,
+        )
+        hook_out = output["hookSpecificOutput"]
+        assert hook_out["hookEventName"] == "Stop"
+        assert "permissionDecision" not in hook_out
 
 
 class TestMalformedStdin:

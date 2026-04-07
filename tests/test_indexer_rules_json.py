@@ -246,3 +246,104 @@ class TestMergeRulesJson:
         assert merged[0].provenance.file == "/tmp/new.txt"
         assert merged[0].provenance.line_start == 5
         assert merged[0].expansions == ("exp1",)
+
+
+class TestRulesJsonV2:
+    def test_round_trip_with_events_tools(self, tmp_path: Path) -> None:
+        rules = [
+            Rule(
+                text="Never commit secrets",
+                provenance=Provenance(
+                    file="/tmp/rules.toml", line_start=1, line_end=1,
+                    chunk_type="toml_rule",
+                ),
+                events=frozenset({"PreToolUse", "PostToolUse"}),
+                tools=frozenset({"Bash"}),
+            ),
+            Rule(
+                text="Use uv not pip",
+                provenance=Provenance(
+                    file="/tmp/rules.toml", line_start=2, line_end=2,
+                    chunk_type="toml_rule",
+                ),
+            ),
+        ]
+
+        save_rules_json(rules, str(tmp_path))
+        loaded = load_rules_json(str(tmp_path))
+
+        assert loaded is not None
+        assert len(loaded) == 2
+        assert loaded[0].events == frozenset({"PreToolUse", "PostToolUse"})
+        assert loaded[0].tools == frozenset({"Bash"})
+        assert loaded[1].events == frozenset()
+        assert loaded[1].tools == frozenset()
+
+    def test_v2_json_has_events_tools_keys(self, tmp_path: Path) -> None:
+        rules = [
+            Rule(
+                text="A rule",
+                provenance=Provenance(
+                    file="/tmp/r.txt", line_start=1, line_end=1,
+                ),
+                events=frozenset({"Stop"}),
+                tools=frozenset({"Edit", "Write"}),
+            ),
+        ]
+
+        save_rules_json(rules, str(tmp_path))
+
+        import json
+        raw = json.loads((tmp_path / "rules.json").read_text())
+        assert raw["version"] == 2
+        assert raw["rules"][0]["events"] == ["Stop"]
+        assert sorted(raw["rules"][0]["tools"]) == ["Edit", "Write"]
+
+    def test_load_v1_gets_empty_events_tools(self, tmp_path: Path) -> None:
+        """V1 rules.json without events/tools defaults to empty."""
+        import json
+        data = {
+            "version": 1,
+            "rules": [
+                {
+                    "text": "Old rule",
+                    "expansions": [],
+                    "source": {
+                        "file": "/tmp/r.txt",
+                        "line_start": 1,
+                        "line_end": 1,
+                    },
+                },
+            ],
+        }
+        (tmp_path / "rules.json").write_text(json.dumps(data))
+
+        loaded = load_rules_json(str(tmp_path))
+
+        assert loaded is not None
+        assert loaded[0].events == frozenset()
+        assert loaded[0].tools == frozenset()
+
+    def test_merge_preserves_fresh_events_tools(self) -> None:
+        prov = Provenance(file="/tmp/r.txt", line_start=1, line_end=1)
+        fresh = [
+            Rule(
+                text="Rule A",
+                provenance=prov,
+                events=frozenset({"PreToolUse"}),
+                tools=frozenset({"Bash"}),
+            ),
+        ]
+        cached = [
+            Rule(
+                text="Rule A",
+                provenance=prov,
+                expansions=("exp1", "exp2"),
+            ),
+        ]
+
+        merged = merge_rules_json(fresh, cached)
+
+        assert merged[0].expansions == ("exp1", "exp2")
+        assert merged[0].events == frozenset({"PreToolUse"})
+        assert merged[0].tools == frozenset({"Bash"})

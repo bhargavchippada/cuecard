@@ -1,0 +1,456 @@
+[
+  {
+    "id": "post-bash-git-commit-env",
+    "query": "PostToolUse:Bash: git commit -a → [master abc1234] fix: update config\n 3 files changed\n .env | 1 +",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-bash-git-commit-clean",
+    "query": "PostToolUse:Bash: git commit -m 'feat: add search' → [feature abc5678] feat: add search\n 2 files changed, 45 insertions(+)",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-eval-usage",
+    "query": "PostToolUse:Edit: src/handler.py → def process(data):\n    result = eval(data['expression'])\n    return result",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Never use eval() or exec() in production code"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-bash-pip-install",
+    "query": "PostToolUse:Bash: pip install requests → Successfully installed requests-2.31.0",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "should_not_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-write-no-type-hints",
+    "query": "PostToolUse:Write: src/utils.py → def calculate(x, y):\n    return x + y\n\ndef transform(data):\n    return [item for item in data if item]",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use type hints on all function signatures"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-bash-test-failures",
+    "query": "PostToolUse:Bash: uv run pytest → FAILED tests/test_api.py::test_create - AssertionError\n3 failed, 12 passed, 2 warnings",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "100% test coverage on all new code"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-bash-test-low-coverage",
+    "query": "PostToolUse:Bash: uv run pytest --cov=src → 15 passed\nName          Stmts   Miss  Cover\nsrc/api.py       80     25    69%\nTOTAL           200     40    80%",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "100% test coverage on all new code"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-console-log",
+    "query": "PostToolUse:Edit: src/service.py → def fetch_data(url):\n    print(f'DEBUG: fetching {url}')\n    response = requests.get(url)\n    print(f'DEBUG: status={response.status_code}')\n    return response.json()",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "No console.log or print debug statements in production code"
+    ],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-sql-injection",
+    "query": "PostToolUse:Edit: src/db.py → def get_user(name):\n    query = f\"SELECT * FROM users WHERE name = '{name}'\"\n    return db.execute(query)",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-write-xss-vector",
+    "query": "PostToolUse:Write: templates/profile.html → <div>Welcome, {{ user.name | safe }}!</div>\n<script>var bio = '{{ user.bio }}';</script>",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Sanitize all HTML output to prevent XSS"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-hardcoded-config",
+    "query": "PostToolUse:Edit: src/client.py → API_URL = 'https://api.prod.example.com'\nTIMEOUT = 30\nMAX_RETRIES = 3\ndb_host = 'prod-db.internal'",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use environment variables for configuration, not hardcoded values"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-mutable-dataclass",
+    "query": "PostToolUse:Edit: src/models.py → @dataclass\nclass Config:\n    host: str\n    port: int\n    items: list[str]",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-swallowed-exception",
+    "query": "PostToolUse:Edit: src/api.py → try:\n    result = process(data)\nexcept Exception:\n    pass",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Always handle errors explicitly, never silently swallow exceptions"
+    ],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-bash-force-push-master",
+    "query": "PostToolUse:Bash: git push --force origin master → To github.com:user/repo.git\n + abc1234...def5678 master -> master (forced update)",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Never force-push to main or master branch"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-magic-numbers",
+    "query": "PostToolUse:Edit: src/retry.py → def retry_request(url):\n    for i in range(5):\n        resp = requests.get(url, timeout=30)\n        if resp.status_code == 200:\n            return resp\n        time.sleep(2)",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
+    ],
+    "should_not_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-write-no-docstring",
+    "query": "PostToolUse:Write: src/public_api.py → def calculate_metrics(data: list[float], weights: list[float]) -> dict[str, float]:\n    total = sum(d * w for d, w in zip(data, weights))\n    return {'weighted_sum': total}",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Document all public API functions with docstrings"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-unclosed-resource",
+    "query": "PostToolUse:Edit: src/loader.py → def load_data(path):\n    f = open(path)\n    data = json.load(f)\n    return data",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
+    ],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-no-input-validation",
+    "query": "PostToolUse:Edit: src/api.py → @app.post('/users')\ndef create_user(request):\n    name = request.json['name']\n    email = request.json['email']\n    db.insert(name, email)\n    return {'status': 'ok'}",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Always validate user input at system boundaries"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-bash-ruff-errors",
+    "query": "PostToolUse:Bash: uv run ruff check src/ → src/api.py:12:1: F841 local variable 'x' is assigned to but never used\nsrc/utils.py:5:1: E401 multiple imports on one line\nFound 2 errors.",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Run ruff and mypy before committing Python code"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-csrf-missing",
+    "query": "PostToolUse:Edit: src/views.py → @app.route('/transfer', methods=['POST'])\ndef transfer_funds():\n    amount = request.form['amount']\n    to_account = request.form['to']\n    do_transfer(amount, to_account)\n    return redirect('/dashboard')",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Enable CSRF protection on all forms and state-changing endpoints"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-write-sensitive-file-perms",
+    "query": "PostToolUse:Write: config/secrets.yaml → api_key: sk-abc123\ndb_password: hunter2\naws_secret: AKIA...",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Set file permissions to 0o600 for sensitive files",
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-bash-pip-audit-vuln",
+    "query": "PostToolUse:Bash: pip install pyjwt==1.7.0 → Successfully installed pyjwt-1.7.0",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Review all dependencies for known vulnerabilities before adding",
+      "Use uv for all Python package operations, never pip"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-thread-for-io",
+    "query": "PostToolUse:Edit: src/fetcher.py → import threading\ndef fetch_all(urls):\n    threads = []\n    for url in urls:\n        t = threading.Thread(target=fetch, args=(url,))\n        threads.append(t)\n        t.start()",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use asyncio for I/O-bound operations, not threads"
+    ],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-bash-git-commit-no-conventional",
+    "query": "PostToolUse:Bash: git commit -m 'updated stuff' → [feature def4567] updated stuff\n 5 files changed",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-long-function",
+    "query": "PostToolUse:Edit: src/processor.py → def process_all(items):\n    # ... 85 lines of nested logic with 6 levels of indentation\n    for item in items:\n        if item.valid:\n            for sub in item.children:\n                if sub.active:\n                    for dep in sub.deps:\n                        if dep.ready:\n                            result = compute(dep)",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Keep functions under 50 lines, files under 400 lines"
+    ],
+    "should_not_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-write-gitignore-missing",
+    "query": "PostToolUse:Write: build/output.js → // generated bundle\nvar app = function() { ... }",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Add .gitignore entries for generated files and build artifacts"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-secret-rotation",
+    "query": "PostToolUse:Edit: src/auth.py → # Accidentally logged the API key\nlogger.info(f'Using key: {api_key}')\n# Key was visible in the CI logs",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Rotate any secrets that may have been exposed"
+    ],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-bash-branch-on-main",
+    "query": "PostToolUse:Bash: git branch → * main\n  feature/auth\n  feature/search",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Always create a new branch for feature work"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-read-config",
+    "query": "PostToolUse:Read: pyproject.toml → [project]\nname = \"myapp\"\nversion = \"0.1.0\"\n[tool.ruff]\nline-length = 88",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-glob-listing",
+    "query": "PostToolUse:Glob: src/**/*.py → src/api.py\nsrc/models.py\nsrc/utils.py\nsrc/config.py",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run ruff and mypy before committing Python code"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-grep-search",
+    "query": "PostToolUse:Grep: 'def test_' src/ → src/tests/test_api.py:10:def test_create_user\nsrc/tests/test_api.py:25:def test_delete_user",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "100% test coverage on all new code"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-read-readme",
+    "query": "PostToolUse:Read: README.md → # MyApp\nA simple web application.\n## Setup\nRun `uv sync` to install.",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Document all public API functions with docstrings"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-ls",
+    "query": "PostToolUse:Bash: ls -la src/ → total 48\ndrwxr-xr-x 2 user user 4096 Apr 7 10:00 .\n-rw-r--r-- 1 user user 1200 Apr 7 10:00 api.py",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Set file permissions to 0o600 for sensitive files"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-git-status",
+    "query": "PostToolUse:Bash: git status → On branch feature/auth\nnothing to commit, working tree clean",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run quality checks before every commit"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-uv-run-pytest-pass",
+    "query": "PostToolUse:Bash: uv run pytest → 42 passed in 3.21s\n\n---------- coverage: 100% ----------",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "100% test coverage on all new code"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-read-test-file",
+    "query": "PostToolUse:Read: tests/test_models.py → import pytest\nfrom myapp.models import User\n\ndef test_user_creation():\n    user = User(name='Alice')\n    assert user.name == 'Alice'",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Write tests before implementation (TDD red-green-refactor)"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  }
+]

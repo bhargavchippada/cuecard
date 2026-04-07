@@ -774,6 +774,70 @@ def configure() -> None:
     console.print("  3. cuecard install   — install Claude Code hook")
 
 
+# --- migrate ---
+
+
+@app.command()
+def migrate(
+    input_file: Annotated[
+        str, typer.Argument(help="Input .txt rule file")
+    ],
+    output: Annotated[
+        str, typer.Option("--output", "-o", help="Output .toml file path")
+    ] = "",
+) -> None:
+    """Convert a .txt rule file to .toml format.
+
+    Comments are NOT preserved (tomllib has no comment API).
+    The original .txt file is NOT deleted — switch when ready.
+    """
+    from cuecard.parser import _parse_txt
+
+    input_path = Path(input_file)
+    if not input_path.exists():
+        err_console.print(f"[red]File not found:[/red] {input_file}")
+        raise typer.Exit(1)
+
+    if input_path.suffix.lower() != ".txt":
+        err_console.print(
+            f"[red]Expected a .txt file, got {input_path.suffix!r}[/red]",
+        )
+        raise typer.Exit(1)
+
+    output_path = Path(output) if output else input_path.with_suffix(".toml")
+    if output_path.exists():
+        err_console.print(
+            f"[red]Output file already exists:[/red] {output_path}\n"
+            "Remove it first or choose a different --output path.",
+        )
+        raise typer.Exit(1)
+
+    rules = _parse_txt(str(input_path))
+    if not rules:
+        err_console.print("[yellow]No rules found in input file.[/yellow]")
+        raise typer.Exit(1)
+
+    lines: list[str] = [
+        "# Converted from: " + input_path.name,
+        "# Events and tools are empty — use 'cuecard index' to infer them.",
+        "",
+    ]
+    for rule in rules:
+        lines.append("[[rules]]")
+        # Escape backslashes and quotes for TOML string
+        escaped = rule.text.replace("\\", "\\\\").replace('"', '\\"')
+        lines.append(f'text = "{escaped}"')
+        lines.append("events = []")
+        lines.append("tools = []")
+        lines.append("")
+
+    output_path.write_text("\n".join(lines))
+    console.print(
+        f"[green]Migrated {len(rules)} rules[/green] → {output_path}\n"
+        f"[dim]Original .txt file preserved: {input_path}[/dim]",
+    )
+
+
 # --- Register commands from submodules ---
 # These imports MUST be at the bottom so that app/rules_app are defined first.
 # Each submodule registers its commands on app or rules_app at import time.

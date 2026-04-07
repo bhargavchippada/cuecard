@@ -10,7 +10,8 @@
     "should_not_match": [
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-run-reviews",
@@ -18,12 +19,13 @@
     "corpus": "rules_workflow.txt",
     "should_match": [
       "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
-      "Keep running review rounds until two consecutive rounds produce zero CRITICAL, HIGH, or MEDIUM findings \u2014 never use a fixed round count"
+      "Keep running review rounds until two consecutive rounds produce zero CRITICAL, HIGH, or MEDIUM findings — never use a fixed round count"
     ],
     "should_not_match": [
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test can save hours"
+      "Always benchmark a single LLM call before launching a full pipeline run — a 2-second PING test can save hours"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-write-tests-first",
@@ -31,12 +33,13 @@
     "corpus": "rules_workflow.txt",
     "should_match": [
       "Write tests before implementation following TDD red-green-refactor cycle",
-      "Require 100 percent test coverage on all new code \u2014 not 80 percent, not 90 percent, always 100 percent"
+      "Require 100 percent test coverage on all new code — not 80 percent, not 90 percent, always 100 percent"
     ],
     "should_not_match": [
       "Fix the pipeline stage that produces bad output, do not patch the output with manual rules downstream"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-commit-push",
@@ -44,12 +47,13 @@
     "corpus": "rules_workflow.txt",
     "should_match": [
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci",
-      "Run security review before every commit \u2014 check for hardcoded secrets, SQL injection, XSS, missing input validation"
+      "Run security review before every commit — check for hardcoded secrets, SQL injection, XSS, missing input validation"
     ],
     "should_not_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-update-docs",
@@ -62,7 +66,8 @@
     "should_not_match": [
       "Write tests before implementation following TDD red-green-refactor cycle"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-compact",
@@ -72,58 +77,63 @@
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
     ],
     "should_not_match": [
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test can save hours"
+      "Always benchmark a single LLM call before launching a full pipeline run — a 2-second PING test can save hours"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-parallel-agents",
     "query": "UserPromptSubmit: launch the review agents in parallel",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Launch parallel subagents for independent review tasks \u2014 never run them sequentially when they can run simultaneously"
+      "Launch parallel subagents for independent review tasks — never run them sequentially when they can run simultaneously"
     ],
     "should_not_match": [
       "Use lightweight deterministic approaches first, add LLM stages only when they demonstrably improve quality"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-benchmark-first",
     "query": "UserPromptSubmit: run a quick benchmark before the full pipeline",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test can save hours",
+      "Always benchmark a single LLM call before launching a full pipeline run — a 2-second PING test can save hours",
       "If a single LLM call takes more than 5 seconds for a trivial prompt, investigate SDK overhead before proceeding"
     ],
     "should_not_match": [
-      "Manually inspect LLM output after every classification wave \u2014 read actual output, do not trust confidence scores"
+      "Manually inspect LLM output after every classification wave — read actual output, do not trust confidence scores"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-check-context",
     "query": "UserPromptSubmit: check ralphs context usage",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Monitor agent context usage in tmux \u2014 compact when context remaining drops below 67 percent"
+      "Monitor agent context usage in tmux — compact when context remaining drops below 67 percent"
     ],
     "should_not_match": [
-      "Establish baseline metrics before implementing any improvement \u2014 you cannot claim X is better without before/after numbers"
+      "Establish baseline metrics before implementing any improvement — you cannot claim X is better without before/after numbers"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-security-review",
     "query": "UserPromptSubmit: do a security review before I commit",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Run security review before every commit \u2014 check for hardcoded secrets, SQL injection, XSS, missing input validation"
+      "Run security review before every commit — check for hardcoded secrets, SQL injection, XSS, missing input validation"
     ],
     "should_not_match": [
-      "Use semantic similarity (embeddings or LLMs) for text deduplication \u2014 never use lexical or word-based matching"
+      "Use semantic similarity (embeddings or LLMs) for text deduplication — never use lexical or word-based matching"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-search-existing",
@@ -133,9 +143,10 @@
       "Search GitHub for existing implementations and proven patterns before writing anything from scratch"
     ],
     "should_not_match": [
-      "Run iterative PRD reviews until a round comes back clean \u2014 typical convergence is 4 rounds"
+      "Run iterative PRD reviews until a round comes back clean — typical convergence is 4 rounds"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-look-at-patterns",
@@ -147,7 +158,8 @@
     "should_not_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-prd-review",
@@ -155,48 +167,52 @@
     "corpus": "rules_workflow.txt",
     "should_match": [
       "Review PRDs with multiple specialist subagents (architect, security, database, code quality) in parallel before implementing",
-      "Run iterative PRD reviews until a round comes back clean \u2014 typical convergence is 4 rounds"
+      "Run iterative PRD reviews until a round comes back clean — typical convergence is 4 rounds"
     ],
     "should_not_match": [
       "Write tests before implementation following TDD red-green-refactor cycle"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-inspect-output",
     "query": "UserPromptSubmit: check the classification output manually",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Manually inspect LLM output after every classification wave \u2014 read actual output, do not trust confidence scores"
+      "Manually inspect LLM output after every classification wave — read actual output, do not trust confidence scores"
     ],
     "should_not_match": [
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-real-data",
     "query": "UserPromptSubmit: test this against real data not just fixtures",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Validate every phase against real data before moving to the next phase \u2014 synthetic tests alone are insufficient"
+      "Validate every phase against real data before moving to the next phase — synthetic tests alone are insufficient"
     ],
     "should_not_match": [
-      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting \u2014 never destroy a baseline during experiments"
+      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting — never destroy a baseline during experiments"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-save-artifacts",
     "query": "UserPromptSubmit: save the baseline pickle before we rebuild",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting \u2014 never destroy a baseline during experiments"
+      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting — never destroy a baseline during experiments"
     ],
     "should_not_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-lookup-docs",
@@ -208,43 +224,47 @@
     "should_not_match": [
       "When schema or cardinality changes, audit every consumer (views, queries, CLI, exports, tests) before implementing"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-store-predictions",
     "query": "UserPromptSubmit: make sure we store the full predictions not just scores",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Store all predictions, reasoning, and grounding in benchmark results for later reanalysis \u2014 not just numeric scores"
+      "Store all predictions, reasoning, and grounding in benchmark results for later reanalysis — not just numeric scores"
     ],
     "should_not_match": [
       "Write tests before implementation following TDD red-green-refactor cycle"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-convergence",
     "query": "UserPromptSubmit: dont stop at 3 rounds, keep going until its clean",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Keep running review rounds until two consecutive rounds produce zero CRITICAL, HIGH, or MEDIUM findings \u2014 never use a fixed round count"
+      "Keep running review rounds until two consecutive rounds produce zero CRITICAL, HIGH, or MEDIUM findings — never use a fixed round count"
     ],
     "should_not_match": [
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test can save hours"
+      "Always benchmark a single LLM call before launching a full pipeline run — a 2-second PING test can save hours"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-complexity-assess",
     "query": "UserPromptSubmit: is this a simple or complex task",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
     ],
     "should_not_match": [
       "Fix the pipeline stage that produces bad output, do not patch the output with manual rules downstream"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-schema-audit",
@@ -256,19 +276,21 @@
     "should_not_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-easy-full-dataset",
     "query": "UserPromptSubmit: run the full dataset not just 10 samples",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions"
+      "Never trust small sample benchmark results — run the full dataset before drawing conclusions"
     ],
     "should_not_match": [
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-plan-feature",
@@ -277,39 +299,42 @@
     "should_match": [
       "COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins",
       "Use the planner agent for complex features, architect agent for system design decisions, tdd-guide agent for new features and bug fixes",
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
     ],
     "should_not_match": [
-      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan \u2014 just implement and verify"
+      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan — just implement and verify"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-new-feature",
     "query": "UserPromptSubmit: lets build the new session export feature",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
       "Never implement a feature without reading 2-3 similar files in the codebase first to understand existing patterns",
       "Write tests before implementation following TDD red-green-refactor cycle"
     ],
     "should_not_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-iterate-quality",
     "query": "UserPromptSubmit: run the benchmarks and iterate until quality is above 90 percent",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Validate every phase against real data before moving to the next phase \u2014 synthetic tests alone are insufficient",
-      "Establish baseline metrics before implementing any improvement \u2014 you cannot claim X is better without before/after numbers"
+      "Validate every phase against real data before moving to the next phase — synthetic tests alone are insufficient",
+      "Establish baseline metrics before implementing any improvement — you cannot claim X is better without before/after numbers"
     ],
     "should_not_match": [
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-add-new-library",
@@ -322,35 +347,38 @@
     "should_not_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-classification-pipeline",
     "query": "UserPromptSubmit: run the full classification pipeline on all sessions",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test can save hours",
-      "Manually inspect LLM output after every classification wave \u2014 read actual output, do not trust confidence scores",
+      "Always benchmark a single LLM call before launching a full pipeline run — a 2-second PING test can save hours",
+      "Manually inspect LLM output after every classification wave — read actual output, do not trust confidence scores",
       "After every batch LLM response, diff sent IDs against returned IDs to detect silently dropped items"
     ],
     "should_not_match": [
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-refactor-arch",
     "query": "UserPromptSubmit: lets refactor the database layer, its getting messy",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
       "When schema or cardinality changes, audit every consumer (views, queries, CLI, exports, tests) before implementing",
       "Write tests before implementation following TDD red-green-refactor cycle"
     ],
     "should_not_match": [
       "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-agent-stalled",
@@ -358,26 +386,28 @@
     "corpus": "rules_workflow.txt",
     "should_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling",
-      "Monitor agent context usage in tmux \u2014 compact when context remaining drops below 67 percent",
+      "Monitor agent context usage in tmux — compact when context remaining drops below 67 percent",
       "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion"
     ],
     "should_not_match": [
       "Write tests before implementation following TDD red-green-refactor cycle"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-implement-improvement",
     "query": "UserPromptSubmit: lets try temporal CDT to improve accuracy",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Establish baseline metrics before implementing any improvement \u2014 you cannot claim X is better without before/after numbers",
-      "Never build infrastructure around unproven techniques \u2014 test hypotheses in controlled experiments first, implement only winners"
+      "Establish baseline metrics before implementing any improvement — you cannot claim X is better without before/after numbers",
+      "Never build infrastructure around unproven techniques — test hypotheses in controlled experiments first, implement only winners"
     ],
     "should_not_match": [
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-fix-pipeline-bug",
@@ -385,37 +415,40 @@
     "corpus": "rules_workflow.txt",
     "should_match": [
       "Fix the pipeline stage that produces bad output, do not patch the output with manual rules downstream",
-      "Each pipeline stage must be independently high quality \u2014 do not rely on downstream stages to rescue upstream failures"
+      "Each pipeline stage must be independently high quality — do not rely on downstream stages to rescue upstream failures"
     ],
     "should_not_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-dedup-text",
     "query": "UserPromptSubmit: deduplicate these hypothesis statements",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Use semantic similarity (embeddings or LLMs) for text deduplication \u2014 never use lexical or word-based matching"
+      "Use semantic similarity (embeddings or LLMs) for text deduplication — never use lexical or word-based matching"
     ],
     "should_not_match": [
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-quick-fix",
     "query": "UserPromptSubmit: fix the typo in the config file",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan \u2014 just implement and verify",
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan — just implement and verify",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
     ],
     "should_not_match": [
       "COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-multi-file-feature",
@@ -424,51 +457,55 @@
     "should_match": [
       "MEDIUM tasks (3-10 files) require an inline plan, research, tests alongside code, and agent review after implementation",
       "Write tests before implementation following TDD red-green-refactor cycle",
-      "Require 100 percent test coverage on all new code \u2014 not 80 percent, not 90 percent, always 100 percent"
+      "Require 100 percent test coverage on all new code — not 80 percent, not 90 percent, always 100 percent"
     ],
     "should_not_match": [
-      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting \u2014 never destroy a baseline during experiments"
+      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting — never destroy a baseline during experiments"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-cdt-rebuild",
     "query": "UserPromptSubmit: rebuild the CDT with the new prompt and compare",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting \u2014 never destroy a baseline during experiments",
+      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting — never destroy a baseline during experiments",
       "When running A/B benchmark comparisons on LLM artifacts, use the same pre-built artifact and change only one variable"
     ],
     "should_not_match": [
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-reproduce-paper",
     "query": "UserPromptSubmit: the paper claims 85 percent but we only get 70, figure out why",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Run the original paper code first when reproducing published results \u2014 do not theorize about score gaps without evidence",
+      "Run the original paper code first when reproducing published results — do not theorize about score gaps without evidence",
       "Score gaps between models on routine tasks usually indicate code or config differences, not model quality differences"
     ],
     "should_not_match": [
       "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-phase-transition",
     "query": "UserPromptSubmit: phase 1 is done, lets move to phase 2",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Validate every phase against real data before moving to the next phase \u2014 synthetic tests alone are insufficient",
-      "Require 100 percent test coverage on all new code \u2014 not 80 percent, not 90 percent, always 100 percent"
+      "Validate every phase against real data before moving to the next phase — synthetic tests alone are insufficient",
+      "Require 100 percent test coverage on all new code — not 80 percent, not 90 percent, always 100 percent"
     ],
     "should_not_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-retry-failed",
@@ -481,20 +518,22 @@
     "should_not_match": [
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-noise-filtering",
     "query": "UserPromptSubmit: theres too much noise in the extracted sessions",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Filter pipeline noise at multiple independent stages with configurable thresholds \u2014 no single filter point",
-      "Each pipeline stage must be independently high quality \u2014 do not rely on downstream stages to rescue upstream failures"
+      "Filter pipeline noise at multiple independent stages with configurable thresholds — no single filter point",
+      "Each pipeline stage must be independently high quality — do not rely on downstream stages to rescue upstream failures"
     ],
     "should_not_match": [
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-research-approach",
@@ -505,21 +544,23 @@
       "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search"
     ],
     "should_not_match": [
-      "Monitor agent context usage in tmux \u2014 compact when context remaining drops below 67 percent"
+      "Monitor agent context usage in tmux — compact when context remaining drops below 67 percent"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-early-results",
     "query": "UserPromptSubmit: the first 10 results look amazing, 92 percent accuracy",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions"
+      "Never trust small sample benchmark results — run the full dataset before drawing conclusions"
     ],
     "should_not_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-slow-pipeline",
@@ -527,12 +568,13 @@
     "corpus": "rules_workflow.txt",
     "should_match": [
       "If a single LLM call takes more than 5 seconds for a trivial prompt, investigate SDK overhead before proceeding",
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test can save hours"
+      "Always benchmark a single LLM call before launching a full pipeline run — a 2-second PING test can save hours"
     ],
     "should_not_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-add-reranking",
@@ -545,7 +587,8 @@
     "should_not_match": [
       "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-save-state",
@@ -558,7 +601,8 @@
     "should_not_match": [
       "Write tests before implementation following TDD red-green-refactor cycle"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-medium-full-review-after-code",
@@ -566,26 +610,28 @@
     "corpus": "rules_workflow.txt",
     "should_match": [
       "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
-      "Keep running review rounds until two consecutive rounds produce zero CRITICAL, HIGH, or MEDIUM findings \u2014 never use a fixed round count",
-      "Run security review before every commit \u2014 check for hardcoded secrets, SQL injection, XSS, missing input validation"
+      "Keep running review rounds until two consecutive rounds produce zero CRITICAL, HIGH, or MEDIUM findings — never use a fixed round count",
+      "Run security review before every commit — check for hardcoded secrets, SQL injection, XSS, missing input validation"
     ],
     "should_not_match": [
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test can save hours"
+      "Always benchmark a single LLM call before launching a full pipeline run — a 2-second PING test can save hours"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-hard-error-loop",
     "query": "UserPromptSubmit: I keep getting the same error over and over",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "When a tool or command fails, read the full error message and search project docs before retrying \u2014 never retry blindly",
+      "When a tool or command fails, read the full error message and search project docs before retrying — never retry blindly",
       "After 2 failed fix attempts on the same error, stop and ask the user for guidance instead of spiraling"
     ],
     "should_not_match": [
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-hard-scores-differ",
@@ -598,20 +644,22 @@
     "should_not_match": [
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-hard-new-approach-untested",
     "query": "UserPromptSubmit: lets build the ensemble generation system for phase 3",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Never build infrastructure around unproven techniques \u2014 test hypotheses in controlled experiments first, implement only winners",
-      "Establish baseline metrics before implementing any improvement \u2014 you cannot claim X is better without before/after numbers"
+      "Never build infrastructure around unproven techniques — test hypotheses in controlled experiments first, implement only winners",
+      "Establish baseline metrics before implementing any improvement — you cannot claim X is better without before/after numbers"
     ],
     "should_not_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-hard-low-quality-output",
@@ -619,13 +667,14 @@
     "corpus": "rules_workflow.txt",
     "should_match": [
       "Fix the pipeline stage that produces bad output, do not patch the output with manual rules downstream",
-      "Each pipeline stage must be independently high quality \u2014 do not rely on downstream stages to rescue upstream failures",
-      "Manually inspect LLM output after every classification wave \u2014 read actual output, do not trust confidence scores"
+      "Each pipeline stage must be independently high quality — do not rely on downstream stages to rescue upstream failures",
+      "Manually inspect LLM output after every classification wave — read actual output, do not trust confidence scores"
     ],
     "should_not_match": [
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-hard-context-running-low",
@@ -633,37 +682,40 @@
     "corpus": "rules_workflow.txt",
     "should_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
-      "Monitor agent context usage in tmux \u2014 compact when context remaining drops below 67 percent"
+      "Monitor agent context usage in tmux — compact when context remaining drops below 67 percent"
     ],
     "should_not_match": [
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test can save hours"
+      "Always benchmark a single LLM call before launching a full pipeline run — a 2-second PING test can save hours"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-hard-lexical-dedup-failing",
     "query": "UserPromptSubmit: the trigram matching isnt catching duplicates that mean the same thing",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Use semantic similarity (embeddings or LLMs) for text deduplication \u2014 never use lexical or word-based matching"
+      "Use semantic similarity (embeddings or LLMs) for text deduplication — never use lexical or word-based matching"
     ],
     "should_not_match": [
       "Write tests before implementation following TDD red-green-refactor cycle"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-hard-nondeterministic-results",
     "query": "UserPromptSubmit: I rebuilt the CDT and got completely different results, same config",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting \u2014 never destroy a baseline during experiments",
+      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting — never destroy a baseline during experiments",
       "When running A/B benchmark comparisons on LLM artifacts, use the same pre-built artifact and change only one variable"
     ],
     "should_not_match": [
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-hard-items-silently-missing",
@@ -671,25 +723,27 @@
     "corpus": "rules_workflow.txt",
     "should_match": [
       "After every batch LLM response, diff sent IDs against returned IDs to detect silently dropped items",
-      "Filter pipeline noise at multiple independent stages with configurable thresholds \u2014 no single filter point"
+      "Filter pipeline noise at multiple independent stages with configurable thresholds — no single filter point"
     ],
     "should_not_match": [
       "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-hard-pilot-looks-great",
     "query": "UserPromptSubmit: pilot scored 95 percent on 10 samples, ship it",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions",
-      "Validate every phase against real data before moving to the next phase \u2014 synthetic tests alone are insufficient"
+      "Never trust small sample benchmark results — run the full dataset before drawing conclusions",
+      "Validate every phase against real data before moving to the next phase — synthetic tests alone are insufficient"
     ],
     "should_not_match": [
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-hard-wrong-tool-for-search",
@@ -701,32 +755,35 @@
     "should_not_match": [
       "After the parallel LLM phase, retry failed items sequentially one at a time to avoid rate limiting contention"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-hard-coverage-not-enough",
     "query": "UserPromptSubmit: tests pass at 82 percent coverage, good enough right",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Require 100 percent test coverage on all new code \u2014 not 80 percent, not 90 percent, always 100 percent"
+      "Require 100 percent test coverage on all new code — not 80 percent, not 90 percent, always 100 percent"
     ],
     "should_not_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-hard-adding-more-stages",
     "query": "UserPromptSubmit: retrieval is bad, lets add three more reranking stages to fix it",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Each pipeline stage must be independently high quality \u2014 do not rely on downstream stages to rescue upstream failures",
+      "Each pipeline stage must be independently high quality — do not rely on downstream stages to rescue upstream failures",
       "Use lightweight deterministic approaches first, add LLM stages only when they demonstrably improve quality"
     ],
     "should_not_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-hard-schema-change-subtle",
@@ -736,34 +793,37 @@
       "When schema or cardinality changes, audit every consumer (views, queries, CLI, exports, tests) before implementing"
     ],
     "should_not_match": [
-      "Use semantic similarity (embeddings or LLMs) for text deduplication \u2014 never use lexical or word-based matching"
+      "Use semantic similarity (embeddings or LLMs) for text deduplication — never use lexical or word-based matching"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-hard-skipped-error-reading",
     "query": "UserPromptSubmit: the command failed, let me just try a different approach",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "When a tool or command fails, read the full error message and search project docs before retrying \u2014 never retry blindly"
+      "When a tool or command fails, read the full error message and search project docs before retrying — never retry blindly"
     ],
     "should_not_match": [
-      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting \u2014 never destroy a baseline during experiments"
+      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting — never destroy a baseline during experiments"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-hard-paper-code-vs-ours",
     "query": "UserPromptSubmit: our implementation scores way lower than what they claim in the paper",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Run the original paper code first when reproducing published results \u2014 do not theorize about score gaps without evidence",
+      "Run the original paper code first when reproducing published results — do not theorize about score gaps without evidence",
       "Score gaps between models on routine tasks usually indicate code or config differences, not model quality differences"
     ],
     "should_not_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-greeting",
@@ -771,10 +831,11 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
       "Write tests before implementation following TDD red-green-refactor cycle"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-what-time",
@@ -782,10 +843,11 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test can save hours",
+      "Always benchmark a single LLM call before launching a full pipeline run — a 2-second PING test can save hours",
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-explain-function",
@@ -793,10 +855,11 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
       "Never implement a feature without reading 2-3 similar files in the codebase first to understand existing patterns"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-weather",
@@ -805,9 +868,10 @@
     "should_match": [],
     "should_not_match": [
       "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search",
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test can save hours"
+      "Always benchmark a single LLM call before launching a full pipeline run — a 2-second PING test can save hours"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-read-file",
@@ -815,10 +879,11 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
       "Write tests before implementation following TDD red-green-refactor cycle"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-whats-status",
@@ -826,10 +891,11 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-git-log",
@@ -838,9 +904,10 @@
     "should_match": [],
     "should_not_match": [
       "Use conventional commit format with types feat, fix, refactor, docs, test, chore, perf, ci",
-      "Run security review before every commit \u2014 check for hardcoded secrets, SQL injection, XSS, missing input validation"
+      "Run security review before every commit — check for hardcoded secrets, SQL injection, XSS, missing input validation"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-count-lines",
@@ -848,10 +915,11 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
-      "Require 100 percent test coverage on all new code \u2014 not 80 percent, not 90 percent, always 100 percent"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
+      "Require 100 percent test coverage on all new code — not 80 percent, not 90 percent, always 100 percent"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-thanks",
@@ -862,7 +930,8 @@
       "Write tests before implementation following TDD red-green-refactor cycle",
       "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-what-is-python",
@@ -873,7 +942,8 @@
       "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search",
       "Never implement a feature without reading 2-3 similar files in the codebase first to understand existing patterns"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-diff",
@@ -882,9 +952,10 @@
     "should_match": [],
     "should_not_match": [
       "When running A/B benchmark comparisons on LLM artifacts, use the same pre-built artifact and change only one variable",
-      "Use semantic similarity (embeddings or LLMs) for text deduplication \u2014 never use lexical or word-based matching"
+      "Use semantic similarity (embeddings or LLMs) for text deduplication — never use lexical or word-based matching"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-translate",
@@ -892,10 +963,11 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "When a tool or command fails, read the full error message and search project docs before retrying \u2014 never retry blindly",
+      "When a tool or command fails, read the full error message and search project docs before retrying — never retry blindly",
       "After 2 failed fix attempts on the same error, stop and ask the user for guidance instead of spiraling"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-rename-variable",
@@ -903,10 +975,11 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
       "Write tests before implementation following TDD red-green-refactor cycle"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-list-files",
@@ -917,7 +990,8 @@
       "Search GitHub for existing implementations and proven patterns before writing anything from scratch",
       "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-explain-error",
@@ -925,10 +999,11 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "When a tool or command fails, read the full error message and search project docs before retrying \u2014 never retry blindly",
+      "When a tool or command fails, read the full error message and search project docs before retrying — never retry blindly",
       "After 2 failed fix attempts on the same error, stop and ask the user for guidance instead of spiraling"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-print-env",
@@ -937,9 +1012,10 @@
     "should_match": [],
     "should_not_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
-      "Run security review before every commit \u2014 check for hardcoded secrets, SQL injection, XSS, missing input validation"
+      "Run security review before every commit — check for hardcoded secrets, SQL injection, XSS, missing input validation"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-help",
@@ -947,10 +1023,11 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
       "Use the planner agent for complex features, architect agent for system design decisions, tdd-guide agent for new features and bug fixes"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-summarize",
@@ -961,7 +1038,8 @@
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
       "Update CLAUDE.md when project structure, architecture, or conventions change during a session"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-generate-uuid",
@@ -969,10 +1047,11 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "Use semantic similarity (embeddings or LLMs) for text deduplication \u2014 never use lexical or word-based matching",
-      "Establish baseline metrics before implementing any improvement \u2014 you cannot claim X is better without before/after numbers"
+      "Use semantic similarity (embeddings or LLMs) for text deduplication — never use lexical or word-based matching",
+      "Establish baseline metrics before implementing any improvement — you cannot claim X is better without before/after numbers"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-format-json",
@@ -980,10 +1059,11 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
-      "Store all predictions, reasoning, and grounding in benchmark results for later reanalysis \u2014 not just numeric scores"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
+      "Store all predictions, reasoning, and grounding in benchmark results for later reanalysis — not just numeric scores"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-open-url",
@@ -994,7 +1074,8 @@
       "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search",
       "Search GitHub for existing implementations and proven patterns before writing anything from scratch"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-math",
@@ -1002,10 +1083,11 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions",
-      "Establish baseline metrics before implementing any improvement \u2014 you cannot claim X is better without before/after numbers"
+      "Never trust small sample benchmark results — run the full dataset before drawing conclusions",
+      "Establish baseline metrics before implementing any improvement — you cannot claim X is better without before/after numbers"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-debug-print",
@@ -1014,9 +1096,10 @@
     "should_match": [],
     "should_not_match": [
       "Write tests before implementation following TDD red-green-refactor cycle",
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "wf-neg-copy-paste",
@@ -1024,9 +1107,10 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting \u2014 never destroy a baseline during experiments",
+      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting — never destroy a baseline during experiments",
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   }
 ]

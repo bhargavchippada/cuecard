@@ -9,7 +9,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from cuecard.models import PipelineConfig, ResolvedConfig
+from cuecard.models import KNOWN_HOOK_EVENTS, PipelineConfig, ResolvedConfig
 from cuecard.security import ConfigError, validate_source_path
 
 logger = logging.getLogger(__name__)
@@ -27,15 +27,11 @@ _ALLOWED_MODELS: frozenset[str] = frozenset({
     "BAAI/bge-large-en-v1.5",
 })
 
-# --- Valid hook events ---
+# --- Valid hook events (canonical set from models.py + SessionStart) ---
 
-_VALID_HOOK_EVENTS: frozenset[str] = frozenset({
-    "PreToolUse",
-    "UserPromptSubmit",
-    "PostToolUse",
-    "Stop",
-    "SessionStart",
-})
+_VALID_HOOK_EVENTS: frozenset[str] = (
+    KNOWN_HOOK_EVENTS | {"SessionStart"}
+)
 
 # --- Defaults ---
 

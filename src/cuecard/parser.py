@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import json
 import logging
+import tomllib
 from pathlib import Path
 
 from cuecard.models import (
+    KNOWN_HOOK_EVENTS,
     MAX_EXPANSION_LENGTH,
     MAX_EXPANSIONS_PER_RULE,
     MAX_RULE_LENGTH,
@@ -15,6 +17,8 @@ from cuecard.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+_MAX_RULES_PER_FILE = 500
 
 
 def parse_rules(paths: tuple[str, ...]) -> list[Rule]:
@@ -39,6 +43,8 @@ def parse_rules(paths: tuple[str, ...]) -> list[Rule]:
             rules.extend(_parse_txt(path_str))
         elif suffix == ".json":
             rules.extend(_parse_json(path_str))
+        elif suffix == ".toml":
+            rules.extend(_parse_toml(path_str))
         elif suffix == ".md":
             msg = "Markdown parsing not yet implemented (v0.2)"
             raise NotImplementedError(msg)
@@ -62,7 +68,7 @@ def _parse_json(path: str) -> list[Rule]:
         data = json.load(f)
 
     version = data.get("version")
-    if version != 1:
+    if version not in (1, 2):
         msg = f"Unsupported rules.json version: {version} in {path}"
         raise ValueError(msg)
 
@@ -119,10 +125,17 @@ def _parse_json(path: str) -> list[Rule]:
             line_end=line_end,
             chunk_type=chunk_type,
         )
+
+        # V2: read events/tools if present
+        events = frozenset(entry.get("events", ()))
+        tools = frozenset(entry.get("tools", ()))
+
         rules.append(Rule(
             text=text,
             provenance=provenance,
             expansions=tuple(expansions),
+            events=events,
+            tools=tools,
         ))
 
     return rules
@@ -169,5 +182,74 @@ def _parse_txt(path: str) -> list[Rule]:
                 chunk_type="rule",
             )
             rules.append(Rule(text=line, provenance=provenance))
+
+    return rules
+
+
+def _parse_toml(path: str) -> list[Rule]:
+    """Parse TOML rule file with event/tool annotations.
+
+    Expected schema::
+
+        [[rules]]
+        text = "Rule text"
+        events = ["PreToolUse", "PostToolUse"]
+        tools = ["Bash"]
+
+    Uses ``chunk_type="toml_rule"`` — line_start is the rule ordinal
+    (1-based), not the actual file line number (tomllib doesn't expose lines).
+    """
+    resolved = str(Path(path).resolve())
+
+    try:
+        with open(path, "rb") as f:
+            data = tomllib.load(f)
+    except tomllib.TOMLDecodeError as exc:
+        msg = f"Malformed TOML rule file {path!r}: {exc}"
+        raise ValueError(msg) from exc
+
+    rules_data = data.get("rules", [])
+    if len(rules_data) > _MAX_RULES_PER_FILE:
+        logger.warning(
+            "Rule file %s has %d rules, capped at %d",
+            path, len(rules_data), _MAX_RULES_PER_FILE,
+        )
+        rules_data = rules_data[:_MAX_RULES_PER_FILE]
+
+    rules: list[Rule] = []
+    for i, entry in enumerate(rules_data):
+        text = entry.get("text", "").strip()
+        if not text:
+            continue
+
+        if len(text) > MAX_RULE_LENGTH:
+            logger.warning(
+                "Rule %d in %s exceeds %d chars (%d), truncating",
+                i + 1, path, MAX_RULE_LENGTH, len(text),
+            )
+            text = text[:MAX_RULE_LENGTH]
+
+        events = frozenset(entry.get("events", ()))
+        tools = frozenset(entry.get("tools", ()))
+
+        # Validate event names (warn, don't error — forward compat)
+        for ev in events:
+            if ev not in KNOWN_HOOK_EVENTS:
+                logger.warning(
+                    "Unknown event %r in rule %d of %s", ev, i + 1, path,
+                )
+
+        provenance = Provenance(
+            file=resolved,
+            line_start=i + 1,
+            line_end=i + 1,
+            chunk_type="toml_rule",
+        )
+        rules.append(Rule(
+            text=text,
+            provenance=provenance,
+            events=events,
+            tools=tools,
+        ))
 
     return rules

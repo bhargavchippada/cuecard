@@ -16,13 +16,24 @@ _BOUNDARY_LABEL = (
 )
 
 
-def format_rules(results: Sequence[RankedResult], *, scrub: bool = True) -> str:
+def format_rules(
+    results: Sequence[RankedResult],
+    *,
+    scrub: bool = True,
+    label: str | None = None,
+) -> str:
     """Format results for injection into agent context.
 
     Returns the labeled boundary prefix followed by one rule per line.
     Uses rule.summary when available, otherwise rule.text.
     Scrubs secrets from rule text before injection (defense-in-depth).
     No scores, no provenance — clean and directive.
+
+    Parameters
+    ----------
+    label:
+        Override the default boundary label.  When *None* (default),
+        uses ``_BOUNDARY_LABEL``.
 
     Returns empty string when *results* is empty.
     """
@@ -31,7 +42,7 @@ def format_rules(results: Sequence[RankedResult], *, scrub: bool = True) -> str:
 
     from cuecard.security import scrub_secrets
 
-    lines: list[str] = [_BOUNDARY_LABEL]
+    lines: list[str] = [label if label is not None else _BOUNDARY_LABEL]
     for r in results:
         text = r.rule.summary if r.rule.summary is not None else r.rule.text
         if scrub:

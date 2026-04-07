@@ -7,7 +7,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-docker-ps",
@@ -17,7 +18,8 @@
     "should_not_match": [
       "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-docker-inspect",
@@ -27,7 +29,8 @@
     "should_not_match": [
       "Use environment variables for configuration, not hardcoded values"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-nvidia-smi",
@@ -37,7 +40,8 @@
     "should_not_match": [
       "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-pactl-audio-sources",
@@ -47,7 +51,8 @@
     "should_not_match": [
       "Run quality checks before every commit"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-arecord-test-mic",
@@ -57,7 +62,8 @@
     "should_not_match": [
       "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-wpctl-inspect-audio",
@@ -67,7 +73,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-systemctl-list-services",
@@ -77,7 +84,8 @@
     "should_not_match": [
       "Set file permissions to 0o600 for sensitive files"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-crontab-list",
@@ -87,7 +95,8 @@
     "should_not_match": [
       "Run quality checks before every commit"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-curl-health-with-auth",
@@ -99,7 +108,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-docker-exec-curl",
@@ -111,7 +121,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-find-docker-compose-files",
@@ -121,7 +132,8 @@
     "should_not_match": [
       "Add .gitignore entries for generated files and build artifacts"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-docker-update-restart-no",
@@ -131,7 +143,8 @@
     "should_not_match": [
       "Use environment variables for configuration, not hardcoded values"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-crontab-sed-comment",
@@ -141,7 +154,8 @@
     "should_not_match": [
       "Use conventional commit format (feat:, fix:, refactor:, etc.)"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-kill-restart-process",
@@ -151,7 +165,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-uv-run-validate-cdt",
@@ -161,7 +176,8 @@
     "should_not_match": [
       "Write tests before implementation (TDD red-green-refactor)"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-uv-run-build-tree",
@@ -171,7 +187,8 @@
     "should_not_match": [
       "100% test coverage on all new code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-tmux-capture-pane",
@@ -181,7 +198,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-tmux-send-long-report",
@@ -193,7 +211,8 @@
     "should_not_match": [
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-git-add-commit-push",
@@ -207,7 +226,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-gh-pr-merge",
@@ -219,7 +239,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-gh-release-create",
@@ -229,7 +250,8 @@
     "should_not_match": [
       "Use conventional commit format (feat:, fix:, refactor:, etc.)"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-uv-build",
@@ -241,7 +263,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-uv-tool-install",
@@ -253,7 +276,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-uv-pip-install-ruff",
@@ -265,7 +289,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-ruff-check-and-pytest",
@@ -278,7 +303,8 @@
     "should_not_match": [
       "Never force-push to main or master branch"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-miniconda-ruff-pytest",
@@ -290,7 +316,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-git-pull-rebase-push",
@@ -302,7 +329,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-git-log-oneline-branch",
@@ -312,7 +340,8 @@
     "should_not_match": [
       "Use conventional commit format (feat:, fix:, refactor:, etc.)"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-gh-run-watch",
@@ -322,7 +351,8 @@
     "should_not_match": [
       "Run quality checks before every commit"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-pgrep-process",
@@ -332,7 +362,8 @@
     "should_not_match": [
       "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-claude-version-check",
@@ -342,7 +373,8 @@
     "should_not_match": [
       "Review all dependencies for known vulnerabilities before adding"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-npm-show-version",
@@ -352,7 +384,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-edit-whisper-engine-race-condition",
@@ -362,7 +395,8 @@
     "should_not_match": [
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-edit-daemon-thread-lock",
@@ -374,7 +408,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-edit-timer-cancel-cleanup",
@@ -386,7 +421,8 @@
     "should_not_match": [
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-edit-time-monotonic-guard",
@@ -396,7 +432,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-edit-test-oversized-text",
@@ -408,7 +445,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-edit-test-cancel-timer",
@@ -421,7 +459,8 @@
     "should_not_match": [
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-edit-forceatlas2-new-test",
@@ -433,7 +472,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-edit-numpy-stress-test",
@@ -445,7 +485,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-edit-readme-streaming-docs",
@@ -455,7 +496,8 @@
     "should_not_match": [
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-edit-claude-md-convention",
@@ -465,7 +507,8 @@
     "should_not_match": [
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-edit-pyproject-version-bump",
@@ -475,7 +518,8 @@
     "should_not_match": [
       "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-edit-prd-security-nonce",
@@ -487,7 +531,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-edit-float-cast-fix",
@@ -497,7 +542,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-write-claude-md-forceatlas2",
@@ -507,7 +553,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-read-docker-compose-yml",
@@ -517,7 +564,8 @@
     "should_not_match": [
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-read-service-health-ts",
@@ -527,7 +575,8 @@
     "should_not_match": [
       "Use type hints on all function signatures"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-read-whisperlivekit-engine",
@@ -537,7 +586,8 @@
     "should_not_match": [
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-read-hotkey-listener",
@@ -547,7 +597,8 @@
     "should_not_match": [
       "Use asyncio for I/O-bound operations, not threads"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-read-canopy-core-py",
@@ -557,7 +608,8 @@
     "should_not_match": [
       "Document all public API functions with docstrings"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-read-todo-md-mc",
@@ -567,7 +619,8 @@
     "should_not_match": [
       "100% test coverage on all new code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-grep-whisper-stt",
@@ -577,7 +630,8 @@
     "should_not_match": [
       "Use type hints on all function signatures"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-grep-import-threading",
@@ -589,7 +643,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-grep-restart-policy-compose",
@@ -599,7 +654,8 @@
     "should_not_match": [
       "Use environment variables for configuration, not hardcoded values"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-grep-experimental-wip",
@@ -609,7 +665,8 @@
     "should_not_match": [
       "Document all public API functions with docstrings"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-grep-pip-references-readme",
@@ -621,7 +678,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-grep-contrastive-merge-prompts",
@@ -631,7 +689,8 @@
     "should_not_match": [
       "Use type hints on all function signatures"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-glob-test-files-whisper",
@@ -641,7 +700,8 @@
     "should_not_match": [
       "Write tests before implementation (TDD red-green-refactor)"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-glob-docker-compose-files",
@@ -651,7 +711,8 @@
     "should_not_match": [
       "Add .gitignore entries for generated files and build artifacts"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-edit-todo-mark-done",
@@ -661,7 +722,8 @@
     "should_not_match": [
       "Write tests before implementation (TDD red-green-refactor)"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-bash-git-commit-no-verify-coauthor",
@@ -674,56 +736,61 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "v2-wf-stop-docker-free-resources",
     "query": "UserPromptSubmit: stop all docker containers and free up VRAM for the LLM server",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
     ],
     "should_not_match": [
       "Write tests before implementation following TDD red-green-refactor cycle"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "v2-wf-restart-cgr-watcher",
     "query": "UserPromptSubmit: the code graph watcher crashed, restart it and verify it's logging",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "When a tool or command fails, read the full error message and search project docs before retrying \u2014 never retry blindly"
+      "When a tool or command fails, read the full error message and search project docs before retrying — never retry blindly"
     ],
     "should_not_match": [
       "COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "v2-wf-merge-pr-release",
     "query": "UserPromptSubmit: merge the WebSocket streaming PR and create a release for v0.2.0",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
     ],
     "should_not_match": [
       "Write tests before implementation following TDD red-green-refactor cycle"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "v2-wf-fix-hotkey-hold-mode",
     "query": "UserPromptSubmit: the hold-to-talk hotkey stops working after 10 seconds on X11, debug and fix the timer debounce",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "When a tool or command fails, read the full error message and search project docs before retrying \u2014 never retry blindly",
+      "When a tool or command fails, read the full error message and search project docs before retrying — never retry blindly",
       "Fix the pipeline stage that produces bad output, do not patch the output with manual rules downstream"
     ],
     "should_not_match": [
       "COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "v2-wf-update-readme-streaming-docs",
@@ -735,7 +802,8 @@
     "should_not_match": [
       "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "v2-wf-review-code-security-parallel",
@@ -743,12 +811,13 @@
     "corpus": "rules_workflow.txt",
     "should_match": [
       "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
-      "Launch parallel subagents for independent review tasks \u2014 never run them sequentially when they can run simultaneously"
+      "Launch parallel subagents for independent review tasks — never run them sequentially when they can run simultaneously"
     ],
     "should_not_match": [
-      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan \u2014 just implement and verify"
+      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan — just implement and verify"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "v2-wf-send-ralph-findings",
@@ -759,9 +828,10 @@
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
     ],
     "should_not_match": [
-      "Establish baseline metrics before implementing any improvement \u2014 you cannot claim X is better without before/after numbers"
+      "Establish baseline metrics before implementing any improvement — you cannot claim X is better without before/after numbers"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "v2-wf-build-cdt-three-variants",
@@ -769,12 +839,13 @@
     "corpus": "rules_workflow.txt",
     "should_match": [
       "When running A/B benchmark comparisons on LLM artifacts, use the same pre-built artifact and change only one variable",
-      "Establish baseline metrics before implementing any improvement \u2014 you cannot claim X is better without before/after numbers"
+      "Establish baseline metrics before implementing any improvement — you cannot claim X is better without before/after numbers"
     ],
     "should_not_match": [
-      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan \u2014 just implement and verify"
+      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan — just implement and verify"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "v2-wf-publish-pypi-release",
@@ -786,7 +857,8 @@
     "should_not_match": [
       "COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "v2-wf-audit-docs-stale-content",
@@ -797,9 +869,10 @@
       "Update CLAUDE.md when project structure, architecture, or conventions change during a session"
     ],
     "should_not_match": [
-      "Run iterative PRD reviews until a round comes back clean \u2014 typical convergence is 4 rounds"
+      "Run iterative PRD reviews until a round comes back clean — typical convergence is 4 rounds"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "v2-wf-check-service-health-mc",
@@ -809,7 +882,8 @@
     "should_not_match": [
       "Write tests before implementation following TDD red-green-refactor cycle"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "v2-wf-setup-audio-dictation",
@@ -821,19 +895,21 @@
     "should_not_match": [
       "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "v2-wf-fix-test-coverage-gap",
     "query": "UserPromptSubmit: the coverage report shows 99% on hotkey/listener.py, find and cover the missing lines",
     "corpus": "rules_workflow.txt",
     "should_match": [
-      "Require 100 percent test coverage on all new code \u2014 not 80 percent, not 90 percent, always 100 percent"
+      "Require 100 percent test coverage on all new code — not 80 percent, not 90 percent, always 100 percent"
     ],
     "should_not_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "v2-wf-neg-check-gpu-vram",
@@ -841,9 +917,10 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "v2-wf-neg-list-containers",
@@ -851,9 +928,10 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "v2-wf-neg-read-crontab",
@@ -861,9 +939,10 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan \u2014 just implement and verify"
+      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan — just implement and verify"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   },
   {
     "id": "v2-wf-neg-check-ci-status",
@@ -871,8 +950,9 @@
     "corpus": "rules_workflow.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
   }
 ]

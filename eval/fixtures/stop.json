@@ -1,0 +1,389 @@
+[
+  {
+    "id": "stop-git-commit-made",
+    "query": "Stop: Committed changes with git commit -m 'fix: resolve auth bug' and pushed to feature branch",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Run quality checks before every commit",
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-git-commit-secrets-risk",
+    "query": "Stop: Edited .env file and committed all changes with git add -A && git commit",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git",
+      "Run quality checks before every commit"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-file-edits-python",
+    "query": "Stop: Edited src/api.py and src/models.py to add new user creation endpoint",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use type hints on all function signatures",
+      "Always validate user input at system boundaries"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-wrote-new-module",
+    "query": "Stop: Created new file src/cache.py with CacheManager class and helper functions",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use type hints on all function signatures",
+      "Document all public API functions with docstrings",
+      "100% test coverage on all new code"
+    ],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-tests-written",
+    "query": "Stop: Wrote test_api.py with 15 test cases covering the new endpoint, all passing with 95% coverage",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "100% test coverage on all new code",
+      "Write tests before implementation (TDD red-green-refactor)"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-pip-install-used",
+    "query": "Stop: Installed httpx and pydantic using pip install, added them to requirements.txt",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use uv for all Python package operations, never pip",
+      "Review all dependencies for known vulnerabilities before adding"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-database-query-added",
+    "query": "Stop: Added database queries in src/db.py using string formatting for SQL queries",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-html-template-created",
+    "query": "Stop: Created HTML templates for user profile page with dynamic content rendering",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Sanitize all HTML output to prevent XSS"
+    ],
+    "should_not_match": [
+      "Use asyncio for I/O-bound operations, not threads"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-force-pushed-main",
+    "query": "Stop: Force pushed to main branch to fix a bad merge commit",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Never force-push to main or master branch"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-refactored-dataclasses",
+    "query": "Stop: Refactored models.py to use dataclasses instead of plain dicts for data transfer objects",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use frozen dataclasses for immutable data",
+      "Prefer immutable data structures over mutable ones"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-form-endpoint-added",
+    "query": "Stop: Added POST /settings endpoint that processes form data to update user preferences",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Enable CSRF protection on all forms and state-changing endpoints",
+      "Always validate user input at system boundaries"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-env-vars-hardcoded",
+    "query": "Stop: Configured the API client with hardcoded URL and timeout values in src/client.py",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use environment variables for configuration, not hardcoded values",
+      "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-error-handling-added",
+    "query": "Stop: Added try/except blocks around API calls in src/service.py with empty except clauses",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Always handle errors explicitly, never silently swallow exceptions"
+    ],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-tmux-delegation",
+    "query": "Stop: Sent commands to cody via tmux send-keys to run the test suite",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-sensitive-file-created",
+    "query": "Stop: Created config/credentials.yaml with database passwords and API keys for deployment",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Set file permissions to 0o600 for sensitive files",
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-async-network-calls",
+    "query": "Stop: Implemented concurrent HTTP fetcher using threading.Thread to download multiple URLs in parallel",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Use asyncio for I/O-bound operations, not threads"
+    ],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-linting-skipped",
+    "query": "Stop: Committed Python changes without running linter or type checker",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Run ruff and mypy before committing Python code",
+      "Run quality checks before every commit"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-branch-not-created",
+    "query": "Stop: Implemented feature directly on main branch without creating a feature branch",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Always create a new branch for feature work"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-dependency-added-no-audit",
+    "query": "Stop: Added pyjwt and cryptography packages to the project for authentication",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Review all dependencies for known vulnerabilities before adding"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-resource-leak",
+    "query": "Stop: Wrote file processing code that opens files without using context managers or closing them",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
+    ],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-gitignore-missing",
+    "query": "Stop: Generated build artifacts in dist/ and compiled .pyc files but did not update .gitignore",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Add .gitignore entries for generated files and build artifacts"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-secret-exposed-in-logs",
+    "query": "Stop: Logged the full request including Authorization header to debug an API issue",
+    "corpus": "rules_basic.txt",
+    "should_match": [
+      "Rotate any secrets that may have been exposed",
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "should_not_match": [
+      "Use asyncio for I/O-bound operations, not threads"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-read-only",
+    "query": "Stop: Read several configuration files and source code to understand the project structure",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run quality checks before every commit"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-grep-search",
+    "query": "Stop: Searched for all usages of the deprecated function across the codebase using grep",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use type hints on all function signatures"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-listed-files",
+    "query": "Stop: Listed directory contents and checked git log to understand recent changes",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "100% test coverage on all new code"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-git-status-check",
+    "query": "Stop: Checked git status and git diff to review uncommitted changes",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run quality checks before every commit"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-read-docs",
+    "query": "Stop: Read the README.md and CLAUDE.md documentation files to understand project conventions",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Document all public API functions with docstrings"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-answered-question",
+    "query": "Stop: Answered user's question about how the retrieval pipeline works based on reading the source code",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Write tests before implementation (TDD red-green-refactor)"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-browsed-tests",
+    "query": "Stop: Read through test files to understand existing test patterns and coverage",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "100% test coverage on all new code"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-git-log-review",
+    "query": "Stop: Reviewed git log history and commit messages to understand the development timeline",
+    "corpus": "rules_basic.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  }
+]

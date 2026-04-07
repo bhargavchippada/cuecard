@@ -83,6 +83,47 @@ class TestRule:
         r = Rule(text="old style", provenance=sample_provenance)
         assert r.expansions == ()
         assert r.summary is None
+        assert r.events == frozenset()
+        assert r.tools == frozenset()
+
+    def test_events_and_tools(self, sample_provenance: Provenance) -> None:
+        r = Rule(
+            text="Use uv",
+            provenance=sample_provenance,
+            events=frozenset({"PreToolUse", "PostToolUse"}),
+            tools=frozenset({"Bash"}),
+        )
+        assert r.events == frozenset({"PreToolUse", "PostToolUse"})
+        assert r.tools == frozenset({"Bash"})
+
+    def test_events_tools_frozen(
+        self, sample_provenance: Provenance,
+    ) -> None:
+        r = Rule(
+            text="test",
+            provenance=sample_provenance,
+            events=frozenset({"PreToolUse"}),
+        )
+        with pytest.raises(AttributeError):
+            r.events = frozenset()  # type: ignore[misc]
+        with pytest.raises(AttributeError):
+            r.tools = frozenset()  # type: ignore[misc]
+
+
+class TestKnownHookEvents:
+    def test_contains_all_five_events(self) -> None:
+        from cuecard.models import KNOWN_HOOK_EVENTS
+
+        expected = {
+            "PreToolUse", "PostToolUse", "UserPromptSubmit",
+            "SubagentStart", "Stop",
+        }
+        assert expected == KNOWN_HOOK_EVENTS
+
+    def test_is_frozenset(self) -> None:
+        from cuecard.models import KNOWN_HOOK_EVENTS
+
+        assert isinstance(KNOWN_HOOK_EVENTS, frozenset)
 
 
 class TestRankedResult:

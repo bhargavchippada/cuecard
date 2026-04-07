@@ -28,6 +28,9 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
+_DEFAULT_EVENT = "PreToolUse"
+
+
 @dataclass(frozen=True)
 class Fixture:
     """A single golden test case for retrieval evaluation."""
@@ -38,6 +41,7 @@ class Fixture:
     should_match: tuple[str, ...]
     should_not_match: tuple[str, ...]
     difficulty: str
+    event: str = _DEFAULT_EVENT
 
 
 @dataclass(frozen=True)
@@ -98,6 +102,18 @@ class EvalSummary:
     latency_p99_ms: float
     per_fixture: tuple[FixtureResult, ...]
     per_tier: tuple[TierSummary, ...]
+
+
+@dataclass(frozen=True)
+class PerEventMetrics:
+    """Quality metrics broken down by event type."""
+
+    event: str
+    fixture_count: int
+    quality: float
+    positive_recall: float
+    noise_ratio: float
+    negative_silence: float
 
 
 # ---------------------------------------------------------------------------
@@ -295,6 +311,11 @@ def load_fixtures(path: str) -> list[Fixture]:
             msg = f"Fixture {entry['id']!r}: difficulty must be a string"
             raise ValueError(msg)
 
+        event = entry.get("event", _DEFAULT_EVENT)
+        if not isinstance(event, str):
+            msg = f"Fixture {entry['id']!r}: event must be a string"
+            raise ValueError(msg)
+
         fixtures.append(
             Fixture(
                 id=entry["id"],
@@ -303,6 +324,7 @@ def load_fixtures(path: str) -> list[Fixture]:
                 should_match=tuple(should_match),
                 should_not_match=tuple(should_not_match),
                 difficulty=difficulty,
+                event=event,
             ),
         )
 
@@ -626,6 +648,80 @@ def _make_tier_summary(
 
 
 # ---------------------------------------------------------------------------
+# Per-event metrics
+# ---------------------------------------------------------------------------
+
+_EVENT_ORDER = (
+    "PreToolUse", "PostToolUse", "UserPromptSubmit",
+    "SubagentStart", "Stop",
+)
+
+
+def evaluate_per_event(
+    results: list[FixtureResult],
+    fixtures: list[Fixture],
+) -> list[PerEventMetrics]:
+    """Group fixtures by event and compute quality metrics per group.
+
+    Fixtures without an event field are treated as PreToolUse (backwards compat).
+    Returns metrics sorted by _EVENT_ORDER, then alphabetically for unknowns.
+    """
+    from collections import defaultdict
+
+    # Build fixture lookup: id -> Fixture
+    fixture_by_id: dict[str, Fixture] = {f.id: f for f in fixtures}
+
+    # Group results by event
+    by_event: dict[str, list[tuple[FixtureResult, Fixture]]] = defaultdict(list)
+    for r in results:
+        fx = fixture_by_id.get(r.fixture_id)
+        event = fx.event if fx is not None else _DEFAULT_EVENT
+        by_event[event].append((r, fx or Fixture(
+            id=r.fixture_id, query=r.query, corpus="",
+            should_match=(), should_not_match=(),
+            difficulty=r.difficulty, event=event,
+        )))
+
+    metrics: list[PerEventMetrics] = []
+    # Process in canonical order first
+    for event in _EVENT_ORDER:
+        if event in by_event:
+            metrics.append(_make_event_metrics(event, by_event[event]))
+    # Then any unknown events alphabetically
+    for event in sorted(by_event.keys()):
+        if event not in _EVENT_ORDER:
+            metrics.append(_make_event_metrics(event, by_event[event]))
+
+    return metrics
+
+
+def _make_event_metrics(
+    event: str,
+    pairs: list[tuple[FixtureResult, Fixture]],
+) -> PerEventMetrics:
+    """Build PerEventMetrics for a single event type."""
+    results_only = [r for r, _ in pairs]
+    positives = [r for r, fx in pairs if fx.difficulty != "negative"]
+    negatives = [r for r, fx in pairs if fx.difficulty == "negative"]
+
+    neg_silent = sum(1 for r in negatives if r.retrieved_count == 0)
+    neg_silence = neg_silent / len(negatives) if negatives else 1.0
+
+    pos_recall = (
+        _mean(r.recall_at_k for r in positives) if positives else 0.0
+    )
+
+    return PerEventMetrics(
+        event=event,
+        fixture_count=len(results_only),
+        quality=_mean(r.quality_score for r in results_only),
+        positive_recall=pos_recall,
+        noise_ratio=_mean(r.noise_ratio for r in results_only),
+        negative_silence=neg_silence,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Report formatting
 # ---------------------------------------------------------------------------
 
@@ -730,4 +826,37 @@ def format_eval_report(summary: EvalSummary) -> str:
     lines.append(f"  Latency p99:          {summary.latency_p99_ms:.1f} ms")
     lines.append("")
 
+    return "\n".join(lines)
+
+
+_EVENT_HEADER_FMT = (
+    "{:<20s} {:>5s} {:>6s} {:>8s} {:>6s} {:>6s}"
+)
+_EVENT_ROW_FMT = (
+    "{:<20s} {:>5d} {:>6.3f} {:>8.3f} {:>6.3f} {:>6.3f}"
+)
+
+
+def format_per_event_report(
+    per_event: list[PerEventMetrics],
+) -> str:
+    """Format per-event metrics into a human-readable text table."""
+    lines: list[str] = []
+    lines.append("Per-Event Breakdown")
+    header = _EVENT_HEADER_FMT.format(
+        "Event", "N", "F2", "PosRecal", "Noise", "NegSil",
+    )
+    lines.append(header)
+    lines.append("-" * 58)
+    for em in per_event:
+        row = _EVENT_ROW_FMT.format(
+            em.event[:20],
+            em.fixture_count,
+            em.quality,
+            em.positive_recall,
+            em.noise_ratio,
+            em.negative_silence,
+        )
+        lines.append(row)
+    lines.append("")
     return "\n".join(lines)

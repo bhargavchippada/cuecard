@@ -1,0 +1,148 @@
+# TOML version of rules_basic.txt with event/tool annotations
+
+[[rules]]
+text = "Never commit secrets (API keys, tokens, passwords) to git"
+events = ["PreToolUse", "PostToolUse", "Stop"]
+tools = ["Bash"]
+
+[[rules]]
+text = "Use uv for all Python package operations, never pip"
+events = ["PreToolUse", "PostToolUse", "Stop"]
+tools = ["Bash"]
+
+[[rules]]
+text = "Send Enter after every tmux send-keys command"
+events = ["PreToolUse", "PostToolUse"]
+tools = ["Bash"]
+
+[[rules]]
+text = "Always validate user input at system boundaries"
+events = ["PreToolUse", "PostToolUse", "SubagentStart", "Stop"]
+tools = ["Edit", "Write"]
+
+[[rules]]
+text = "Run quality checks before every commit"
+events = ["PreToolUse", "Stop"]
+tools = ["Bash"]
+
+[[rules]]
+text = "Use frozen dataclasses for immutable data"
+events = ["PreToolUse", "PostToolUse", "SubagentStart"]
+tools = ["Edit", "Write"]
+
+[[rules]]
+text = "100% test coverage on all new code"
+events = ["PreToolUse", "PostToolUse", "SubagentStart", "Stop"]
+
+[[rules]]
+text = "No console.log or print debug statements in production code"
+events = ["PreToolUse", "PostToolUse", "SubagentStart"]
+tools = ["Edit", "Write"]
+
+[[rules]]
+text = "Use parameterized queries to prevent SQL injection"
+events = ["PreToolUse", "PostToolUse", "SubagentStart"]
+tools = ["Edit", "Write"]
+
+[[rules]]
+text = "Sanitize all HTML output to prevent XSS"
+events = ["PreToolUse", "PostToolUse", "SubagentStart"]
+tools = ["Edit", "Write"]
+
+[[rules]]
+text = "Enable CSRF protection on all forms and state-changing endpoints"
+events = ["PreToolUse", "PostToolUse", "SubagentStart", "Stop"]
+tools = ["Edit", "Write"]
+
+[[rules]]
+text = "Set file permissions to 0o600 for sensitive files"
+events = ["PreToolUse", "PostToolUse", "SubagentStart"]
+tools = ["Write", "Bash"]
+
+[[rules]]
+text = "Use environment variables for configuration, not hardcoded values"
+events = ["PreToolUse", "PostToolUse", "SubagentStart", "Stop"]
+tools = ["Edit", "Write"]
+
+[[rules]]
+text = "Run ruff and mypy before committing Python code"
+events = ["PreToolUse", "PostToolUse", "Stop"]
+tools = ["Bash"]
+
+[[rules]]
+text = "Write tests before implementation (TDD red-green-refactor)"
+events = ["PreToolUse", "UserPromptSubmit", "SubagentStart", "Stop"]
+
+[[rules]]
+text = "Never use eval() or exec() in production code"
+events = ["PreToolUse", "PostToolUse", "SubagentStart"]
+tools = ["Edit", "Write"]
+
+[[rules]]
+text = "Always handle errors explicitly, never silently swallow exceptions"
+events = ["PreToolUse", "PostToolUse", "SubagentStart"]
+tools = ["Edit", "Write"]
+
+[[rules]]
+text = "Use type hints on all function signatures"
+events = ["PreToolUse", "PostToolUse", "SubagentStart"]
+tools = ["Edit", "Write"]
+
+[[rules]]
+text = "Keep functions under 50 lines, files under 400 lines"
+events = ["PreToolUse", "PostToolUse", "SubagentStart"]
+tools = ["Edit", "Write"]
+
+[[rules]]
+text = "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
+events = ["PreToolUse", "PostToolUse", "SubagentStart", "Stop"]
+tools = ["Edit", "Write"]
+
+[[rules]]
+text = "Prefer immutable data structures over mutable ones"
+events = ["PreToolUse", "PostToolUse", "SubagentStart"]
+tools = ["Edit", "Write"]
+
+[[rules]]
+text = "Use asyncio for I/O-bound operations, not threads"
+events = ["PreToolUse", "PostToolUse", "SubagentStart", "Stop"]
+tools = ["Edit", "Write"]
+
+[[rules]]
+text = "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
+events = ["PreToolUse", "PostToolUse", "SubagentStart"]
+tools = ["Edit", "Write"]
+
+[[rules]]
+text = "Rotate any secrets that may have been exposed"
+events = ["PostToolUse", "SubagentStart", "Stop"]
+
+[[rules]]
+text = "Review all dependencies for known vulnerabilities before adding"
+events = ["PreToolUse", "PostToolUse", "SubagentStart", "Stop"]
+tools = ["Bash"]
+
+[[rules]]
+text = "Never force-push to main or master branch"
+events = ["PreToolUse", "PostToolUse", "SubagentStart", "Stop"]
+tools = ["Bash"]
+
+[[rules]]
+text = "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+events = ["PreToolUse", "PostToolUse", "Stop"]
+tools = ["Bash"]
+
+[[rules]]
+text = "Always create a new branch for feature work"
+events = ["PreToolUse", "SubagentStart", "Stop"]
+tools = ["Bash"]
+
+[[rules]]
+text = "Add .gitignore entries for generated files and build artifacts"
+events = ["PreToolUse", "PostToolUse", "SubagentStart", "Stop"]
+tools = ["Write", "Edit"]
+
+[[rules]]
+text = "Document all public API functions with docstrings"
+events = ["PreToolUse", "PostToolUse", "SubagentStart"]
+tools = ["Edit", "Write"]

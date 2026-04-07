@@ -57,7 +57,7 @@ def _compute_checksum(path: str) -> str:
 
 
 
-_RULES_JSON_VERSION = 1
+_RULES_JSON_VERSION = 2
 
 
 def save_rules_json(
@@ -76,6 +76,8 @@ def save_rules_json(
         {
             "text": r.text,
             "expansions": list(r.expansions),
+            "events": sorted(r.events),
+            "tools": sorted(r.tools),
             "source": {
                 "file": r.provenance.file,
                 "line_start": r.provenance.line_start,
@@ -114,7 +116,7 @@ def load_rules_json(cache_dir: str) -> list[Rule] | None:
         return None
 
     version = data.get("version")
-    if version != _RULES_JSON_VERSION:
+    if version not in (1, _RULES_JSON_VERSION):
         logger.warning(
             "Unsupported rules.json version %s in %s",
             version, cache_dir,
@@ -148,10 +150,17 @@ def load_rules_json(cache_dir: str) -> list[Rule] | None:
             line_end=source.get("line_end", 0),
             chunk_type=source.get("chunk_type", "rule"),
         )
+
+        # V2: read events/tools (default to empty for v1)
+        events = frozenset(entry.get("events", ()))
+        tools = frozenset(entry.get("tools", ()))
+
         rules.append(Rule(
             text=text,
             provenance=provenance,
             expansions=tuple(expansions),
+            events=events,
+            tools=tools,
         ))
 
     return rules
@@ -173,12 +182,14 @@ def merge_rules_json(
     for rule in fresh_rules:
         cached = cached_by_text.get(rule.text)
         if cached is not None and cached.expansions:
-            # Preserve cached expansions
+            # Preserve cached expansions, use fresh events/tools
             merged.append(Rule(
                 text=rule.text,
                 provenance=rule.provenance,
                 summary=rule.summary,
                 expansions=cached.expansions,
+                events=rule.events,
+                tools=rule.tools,
             ))
         else:
             merged.append(rule)

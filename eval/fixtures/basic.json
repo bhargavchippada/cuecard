@@ -9,7 +9,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "git-commit-quality",
@@ -22,7 +23,8 @@
     "should_not_match": [
       "Use asyncio for I/O-bound operations, not threads"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "tmux-sendkeys",
@@ -34,7 +36,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "pip-install",
@@ -46,7 +49,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "write-env-file",
@@ -59,7 +63,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "edit-python-file",
@@ -69,7 +74,8 @@
     "should_not_match": [
       "Never force-push to main or master branch"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "bash-eval",
@@ -81,7 +87,8 @@
     "should_not_match": [
       "Use conventional commit format (feat:, fix:, refactor:, etc.)"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "sql-query",
@@ -93,7 +100,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "git-push-force",
@@ -105,7 +113,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "run-tests",
@@ -117,7 +126,8 @@
     "should_not_match": [
       "Never force-push to main or master branch"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "write-html",
@@ -129,7 +139,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "chmod-file",
@@ -141,7 +152,8 @@
     "should_not_match": [
       "Use asyncio for I/O-bound operations, not threads"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "print-debug",
@@ -153,7 +165,8 @@
     "should_not_match": [
       "Never force-push to main or master branch"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "new-branch",
@@ -165,7 +178,8 @@
     "should_not_match": [
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "ruff-check",
@@ -177,7 +191,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "npm-audit",
@@ -189,7 +204,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "dataclass-creation",
@@ -201,7 +217,8 @@
     "should_not_match": [
       "Never force-push to main or master branch"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "try-except-pass",
@@ -213,7 +230,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "magic-number",
@@ -225,7 +243,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "long-function",
@@ -237,7 +256,8 @@
     "should_not_match": [
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "read-python-file",
@@ -247,7 +267,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "write-typescript-file",
@@ -259,7 +280,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "edit-json-config",
@@ -271,7 +293,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "write-yaml-secrets",
@@ -283,7 +306,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "edit-env-example",
@@ -295,7 +319,8 @@
     "should_not_match": [
       "Use asyncio for I/O-bound operations, not threads"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "write-markdown-docs",
@@ -305,7 +330,8 @@
     "should_not_match": [
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "git-add-all",
@@ -318,7 +344,8 @@
     "should_not_match": [
       "Use asyncio for I/O-bound operations, not threads"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "git-stash",
@@ -328,7 +355,8 @@
     "should_not_match": [
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "git-rebase-main",
@@ -338,7 +366,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "git-cherry-pick",
@@ -348,7 +377,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "git-tag",
@@ -358,7 +388,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "git-diff",
@@ -368,7 +399,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "git-blame",
@@ -378,7 +410,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "docker-build",
@@ -390,7 +423,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "docker-run",
@@ -402,7 +436,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "docker-compose-up",
@@ -414,7 +449,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "npm-install-package",
@@ -426,7 +462,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "cargo-add",
@@ -438,7 +475,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "go-get",
@@ -450,7 +488,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "jest-test",
@@ -462,7 +501,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "vitest-run",
@@ -474,7 +514,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "cargo-test",
@@ -486,7 +527,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "eslint-check",
@@ -498,7 +540,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "prettier-format",
@@ -510,7 +553,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "black-format",
@@ -520,7 +564,8 @@
     "should_not_match": [
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "cargo-fmt",
@@ -532,7 +577,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "short-query-ls",
@@ -542,7 +588,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "short-query-pwd",
@@ -552,7 +599,8 @@
     "should_not_match": [
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "no-relevant-rules",
@@ -562,7 +610,8 @@
     "should_not_match": [
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "multi-match-git-commit-with-secrets",
@@ -576,7 +625,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "special-chars-pipe",
@@ -586,7 +636,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "special-chars-redirect",
@@ -596,7 +647,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "chown-system-file",
@@ -606,7 +658,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "curl-with-auth",
@@ -619,7 +672,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "docker-privileged",
@@ -629,7 +683,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "write-to-etc",
@@ -641,7 +696,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "pip-install-global",
@@ -653,7 +709,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "git-force-push-master",
@@ -665,7 +722,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "mypy-check",
@@ -678,7 +736,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "async-code",
@@ -691,7 +750,8 @@
     "should_not_match": [
       "Never force-push to main or master branch"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "db-connection-no-close",
@@ -703,7 +763,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "csrf-form",
@@ -716,7 +777,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "gitignore-update",
@@ -728,7 +790,8 @@
     "should_not_match": [
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "exec-usage",
@@ -740,7 +803,8 @@
     "should_not_match": [
       "Use conventional commit format (feat:, fix:, refactor:, etc.)"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "console-log-debug",
@@ -752,7 +816,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "immutable-pattern",
@@ -764,7 +829,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "secret-rotation",
@@ -777,7 +843,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "docstring-missing",
@@ -789,7 +856,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "file-handle-leak",
@@ -801,7 +869,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "thread-usage-io",
@@ -813,7 +882,8 @@
     "should_not_match": [
       "Never force-push to main or master branch"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "proper-except-handling",
@@ -823,7 +893,8 @@
     "should_not_match": [
       "Always handle errors explicitly, never silently swallow exceptions"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "env-var-read",
@@ -833,7 +904,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "git-merge-feature",
@@ -845,7 +917,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "write-dockerfile",
@@ -857,7 +930,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "socket-no-close",
@@ -869,7 +943,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "inline-sql-fstring",
@@ -881,7 +956,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "subprocess-shell-true",
@@ -893,7 +969,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "password-in-code",
@@ -905,7 +982,8 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "rm-rf-system",
@@ -915,7 +993,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "write-test-file",
@@ -928,7 +1007,8 @@
     "should_not_match": [
       "Never force-push to main or master branch"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "git-reset-hard",
@@ -938,7 +1018,8 @@
     "should_not_match": [
       "Never force-push to main or master branch"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mutable-class-attrs",
@@ -951,79 +1032,88 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "negative-weather-query",
     "query": "Bash: curl wttr.in/London",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Weather check \u2014 no coding rules apply",
+    "notes": "Weather check — no coding rules apply",
     "corpus": "rules_basic.txt",
-    "should_not_match": []
+    "should_not_match": [],
+    "event": "PreToolUse"
   },
   {
     "id": "negative-calculator",
     "query": "Bash: python3 -c \"print(2 + 2)\"",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Simple arithmetic \u2014 no coding rules apply",
+    "notes": "Simple arithmetic — no coding rules apply",
     "corpus": "rules_basic.txt",
-    "should_not_match": []
+    "should_not_match": [],
+    "event": "PreToolUse"
   },
   {
     "id": "negative-disk-usage",
     "query": "Bash: df -h",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "System info \u2014 no coding rules apply",
+    "notes": "System info — no coding rules apply",
     "corpus": "rules_basic.txt",
-    "should_not_match": []
+    "should_not_match": [],
+    "event": "PreToolUse"
   },
   {
     "id": "negative-read-logs",
     "query": "Bash: journalctl -u nginx --since today",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Reading logs \u2014 no coding rules apply",
+    "notes": "Reading logs — no coding rules apply",
     "corpus": "rules_basic.txt",
-    "should_not_match": []
+    "should_not_match": [],
+    "event": "PreToolUse"
   },
   {
     "id": "negative-ssh-connect",
     "query": "Bash: ssh user@dev-server",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "SSH connection \u2014 no coding rules apply",
+    "notes": "SSH connection — no coding rules apply",
     "corpus": "rules_basic.txt",
-    "should_not_match": []
+    "should_not_match": [],
+    "event": "PreToolUse"
   },
   {
     "id": "negative-read-readme",
     "query": "Read: {\"file_path\": \"README.md\"}",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Reading README \u2014 no coding rules apply",
+    "notes": "Reading README — no coding rules apply",
     "corpus": "rules_basic.txt",
-    "should_not_match": []
+    "should_not_match": [],
+    "event": "PreToolUse"
   },
   {
     "id": "negative-list-branches",
     "query": "Bash: git branch -a",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Listing branches is read-only \u2014 no coding rules apply",
+    "notes": "Listing branches is read-only — no coding rules apply",
     "corpus": "rules_basic.txt",
-    "should_not_match": []
+    "should_not_match": [],
+    "event": "PreToolUse"
   },
   {
     "id": "negative-grep-search",
     "query": "Bash: grep -r 'TODO' src/",
     "should_match": [],
     "difficulty": "negative",
-    "notes": "Code search \u2014 no coding rules apply",
+    "notes": "Code search — no coding rules apply",
     "corpus": "rules_basic.txt",
-    "should_not_match": []
+    "should_not_match": [],
+    "event": "PreToolUse"
   },
   {
     "id": "multi-tool-git-add-commit",
@@ -1038,7 +1128,8 @@
       "Use uv for all Python package operations, never pip",
       "Use asyncio for I/O-bound operations, not threads"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "multi-tool-pip-install-pytest",
@@ -1053,7 +1144,8 @@
       "Use parameterized queries to prevent SQL injection",
       "Enable CSRF protection on all forms and state-changing endpoints"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "multi-tool-docker-build-push",
@@ -1067,7 +1159,8 @@
       "Send Enter after every tmux send-keys command",
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "multi-tool-ruff-mypy-commit",
@@ -1082,7 +1175,8 @@
       "Use uv for all Python package operations, never pip",
       "Write tests before implementation (TDD red-green-refactor)"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "multi-tool-git-checkout-pip-install",
@@ -1097,7 +1191,8 @@
       "Never force-push to main or master branch",
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "multi-tool-tmux-send-keys-chain",
@@ -1110,7 +1205,8 @@
       "Use uv for all Python package operations, never pip",
       "Run quality checks before every commit"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "multi-tool-sed-pipe-grep",
@@ -1125,7 +1221,8 @@
       "Use frozen dataclasses for immutable data",
       "Use asyncio for I/O-bound operations, not threads"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "multi-tool-force-push-main",
@@ -1139,7 +1236,8 @@
       "Always create a new branch for feature work",
       "Use conventional commit format (feat:, fix:, refactor:, etc.)"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "multi-tool-install-test-lint-commit",
@@ -1155,7 +1253,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "multi-tool-eval-or-fallback",
@@ -1169,7 +1268,8 @@
       "Use frozen dataclasses for immutable data",
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "long-edit-flask-route",
@@ -1183,7 +1283,8 @@
       "Use uv for all Python package operations, never pip",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "long-edit-async-db-handler",
@@ -1198,7 +1299,8 @@
       "Use frozen dataclasses for immutable data",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "long-write-config-module",
@@ -1213,7 +1315,8 @@
       "Use asyncio for I/O-bound operations, not threads",
       "Write tests before implementation (TDD red-green-refactor)"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "long-bash-complex-flags",
@@ -1226,7 +1329,8 @@
       "Use uv for all Python package operations, never pip",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "long-edit-class-definition",
@@ -1242,7 +1346,8 @@
       "Use asyncio for I/O-bound operations, not threads",
       "Use conventional commit format (feat:, fix:, refactor:, etc.)"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "long-write-django-settings",
@@ -1256,7 +1361,8 @@
       "Use uv for all Python package operations, never pip",
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "long-bash-curl-pipeline",
@@ -1271,7 +1377,8 @@
       "Send Enter after every tmux send-keys command",
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "long-edit-error-handling-rewrite",
@@ -1285,7 +1392,8 @@
       "Use parameterized queries to prevent SQL injection",
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "embedded-code-python-class",
@@ -1299,7 +1407,8 @@
       "Use parameterized queries to prevent SQL injection",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "embedded-code-flask-app",
@@ -1315,7 +1424,8 @@
       "Use uv for all Python package operations, never pip",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "embedded-code-inline-python",
@@ -1328,7 +1438,8 @@
       "Use uv for all Python package operations, never pip",
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "embedded-code-test-module",
@@ -1342,7 +1453,8 @@
       "Use parameterized queries to prevent SQL injection",
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "embedded-code-bash-heredoc",
@@ -1356,7 +1468,8 @@
       "Send Enter after every tmux send-keys command",
       "Use asyncio for I/O-bound operations, not threads"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "embedded-code-decorator-pattern",
@@ -1370,7 +1483,8 @@
       "Use frozen dataclasses for immutable data",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "embedded-code-celery-task",
@@ -1386,7 +1500,8 @@
       "Use uv for all Python package operations, never pip",
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "embedded-code-fastapi-endpoint",
@@ -1401,7 +1516,8 @@
       "Use frozen dataclasses for immutable data",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "embedded-code-env-file-write",
@@ -1416,7 +1532,8 @@
       "Use frozen dataclasses for immutable data",
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "embedded-code-subprocess-exec",
@@ -1430,7 +1547,8 @@
       "Use uv for all Python package operations, never pip",
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "special-chars-space-path",
@@ -1443,7 +1561,8 @@
       "Use parameterized queries to prevent SQL injection",
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "special-chars-dotenv-path",
@@ -1456,11 +1575,12 @@
       "Use frozen dataclasses for immutable data",
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "special-chars-unicode-comment",
-    "query": "Edit: old_string='# TODO: fix later' new_string='# \u2705 Fixed: validate input before processing\ndef process(data: dict) -> dict:\n    if not isinstance(data, dict):\n        raise ValueError(\"Expected dict\")\n    return {k: sanitize(v) for k, v in data.items()}'",
+    "query": "Edit: old_string='# TODO: fix later' new_string='# ✅ Fixed: validate input before processing\ndef process(data: dict) -> dict:\n    if not isinstance(data, dict):\n        raise ValueError(\"Expected dict\")\n    return {k: sanitize(v) for k, v in data.items()}'",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Always validate user input at system boundaries"
@@ -1469,7 +1589,8 @@
       "Send Enter after every tmux send-keys command",
       "Use asyncio for I/O-bound operations, not threads"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "special-chars-json-escaped-quotes",
@@ -1483,7 +1604,8 @@
       "Use frozen dataclasses for immutable data",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "special-chars-pycache-gitignore",
@@ -1496,7 +1618,8 @@
       "Use frozen dataclasses for immutable data",
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "ambiguous-new-api-function",
@@ -1511,7 +1634,8 @@
       "Use frozen dataclasses for immutable data",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "ambiguous-new-test-file",
@@ -1525,7 +1649,8 @@
       "Use parameterized queries to prevent SQL injection",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "ambiguous-git-commit-login",
@@ -1540,7 +1665,8 @@
       "Use uv for all Python package operations, never pip",
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "ambiguous-async-db-connections",
@@ -1554,7 +1680,8 @@
       "Use frozen dataclasses for immutable data",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "ambiguous-auth-middleware",
@@ -1570,7 +1697,8 @@
       "Use frozen dataclasses for immutable data",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "ambiguous-form-handler",
@@ -1586,7 +1714,8 @@
       "Use frozen dataclasses for immutable data",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "ambiguous-password-reset",
@@ -1600,7 +1729,8 @@
       "Use frozen dataclasses for immutable data",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "ambiguous-mutable-config",
@@ -1614,7 +1744,8 @@
       "Use parameterized queries to prevent SQL injection",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "ambiguous-file-upload",
@@ -1629,7 +1760,8 @@
       "Use frozen dataclasses for immutable data",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "hard-curl-stripe-api",
@@ -1643,7 +1775,8 @@
       "Use frozen dataclasses for immutable data",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "hard-cron-job-setup",
@@ -1657,7 +1790,8 @@
       "Send Enter after every tmux send-keys command",
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "hard-makefile-creation",
@@ -1673,7 +1807,8 @@
       "Use frozen dataclasses for immutable data",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "hard-read-package-lock",
@@ -1686,7 +1821,8 @@
       "Use uv for all Python package operations, never pip",
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "hard-ssh-key-generation",
@@ -1700,7 +1836,8 @@
       "Use frozen dataclasses for immutable data",
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "hard-migration-script",
@@ -1714,7 +1851,8 @@
       "Use frozen dataclasses for immutable data",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "hard-github-actions-workflow",
@@ -1731,7 +1869,8 @@
       "Use frozen dataclasses for immutable data",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "hard-logging-config-with-secrets",
@@ -1745,7 +1884,8 @@
       "Use frozen dataclasses for immutable data",
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "cat-etc-hostname",
@@ -1755,7 +1895,8 @@
     "should_not_match": [
       "Use environment variables for configuration, not hardcoded values"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "wc-lines-python-files",
@@ -1765,7 +1906,8 @@
     "should_not_match": [
       "Keep functions under 50 lines, files under 400 lines"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "head-output-log",
@@ -1775,7 +1917,8 @@
     "should_not_match": [
       "No console.log or print debug statements in production code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "file-type-check-image",
@@ -1785,7 +1928,8 @@
     "should_not_match": [
       "Set file permissions to 0o600 for sensitive files"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "stat-build-output",
@@ -1795,7 +1939,8 @@
     "should_not_match": [
       "Add .gitignore entries for generated files and build artifacts"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "diff-two-text-files",
@@ -1805,7 +1950,8 @@
     "should_not_match": [
       "Run quality checks before every commit"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "xxd-hex-dump-binary",
@@ -1815,7 +1961,8 @@
     "should_not_match": [
       "Never use eval() or exec() in production code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "top-process-monitor",
@@ -1825,7 +1972,8 @@
     "should_not_match": [
       "Use asyncio for I/O-bound operations, not threads"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "free-memory-check",
@@ -1835,7 +1983,8 @@
     "should_not_match": [
       "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "df-disk-space",
@@ -1845,7 +1994,8 @@
     "should_not_match": [
       "Set file permissions to 0o600 for sensitive files"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "lsof-port-check",
@@ -1855,7 +2005,8 @@
     "should_not_match": [
       "Enable CSRF protection on all forms and state-changing endpoints"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "nvidia-smi-gpu-status",
@@ -1865,7 +2016,8 @@
     "should_not_match": [
       "Use asyncio for I/O-bound operations, not threads"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "uptime-system-check",
@@ -1875,7 +2027,8 @@
     "should_not_match": [
       "Always handle errors explicitly, never silently swallow exceptions"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "ping-google",
@@ -1885,7 +2038,8 @@
     "should_not_match": [
       "Review all dependencies for known vulnerabilities before adding"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "traceroute-dns",
@@ -1895,7 +2049,8 @@
     "should_not_match": [
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "nslookup-domain",
@@ -1905,7 +2060,8 @@
     "should_not_match": [
       "Sanitize all HTML output to prevent XSS"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "ss-listening-ports",
@@ -1915,7 +2071,8 @@
     "should_not_match": [
       "Enable CSRF protection on all forms and state-changing endpoints"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "ls-components-dir",
@@ -1925,7 +2082,8 @@
     "should_not_match": [
       "Keep functions under 50 lines, files under 400 lines"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "find-pyc-files",
@@ -1935,7 +2093,8 @@
     "should_not_match": [
       "Add .gitignore entries for generated files and build artifacts"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "du-node-modules-size",
@@ -1945,7 +2104,8 @@
     "should_not_match": [
       "Review all dependencies for known vulnerabilities before adding"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "tree-src-directory",
@@ -1955,7 +2115,8 @@
     "should_not_match": [
       "Keep functions under 50 lines, files under 400 lines"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "glob-markdown-files",
@@ -1965,7 +2126,8 @@
     "should_not_match": [
       "Document all public API functions with docstrings"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "date-current",
@@ -1975,7 +2137,8 @@
     "should_not_match": [
       "Use conventional commit format (feat:, fix:, refactor:, etc.)"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "whoami-user",
@@ -1985,7 +2148,8 @@
     "should_not_match": [
       "Set file permissions to 0o600 for sensitive files"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "which-python3",
@@ -1995,7 +2159,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "uname-system-info",
@@ -2005,7 +2170,8 @@
     "should_not_match": [
       "Use environment variables for configuration, not hardcoded values"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "env-count-variables",
@@ -2015,7 +2181,8 @@
     "should_not_match": [
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "cal-calendar-2026",
@@ -2025,7 +2192,8 @@
     "should_not_match": [
       "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-git-checkout-new-branch",
@@ -2037,7 +2205,8 @@
     "should_not_match": [
       "Never force-push to main or master branch"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-gh-run-view-logs",
@@ -2047,7 +2216,8 @@
     "should_not_match": [
       "100% test coverage on all new code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-cat-daemon-log-ps-aux",
@@ -2057,7 +2227,8 @@
     "should_not_match": [
       "No console.log or print debug statements in production code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-git-commit-and-push-feat",
@@ -2071,7 +2242,8 @@
     "should_not_match": [
       "Never force-push to main or master branch"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-uv-run-ruff-check",
@@ -2083,7 +2255,8 @@
     "should_not_match": [
       "100% test coverage on all new code"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-node-bcrypt-compare",
@@ -2095,7 +2268,8 @@
     "should_not_match": [
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-git-diff-head",
@@ -2105,7 +2279,8 @@
     "should_not_match": [
       "Run quality checks before every commit"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-curl-localhost",
@@ -2115,7 +2290,8 @@
     "should_not_match": [
       "Always validate user input at system boundaries"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-poetry-run-pytest",
@@ -2127,7 +2303,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-git-add-commit-no-verify",
@@ -2140,7 +2317,8 @@
     "should_not_match": [
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-grep-node-modules",
@@ -2150,7 +2328,8 @@
     "should_not_match": [
       "Review all dependencies for known vulnerabilities before adding"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-npx-vitest-run",
@@ -2162,7 +2341,8 @@
     "should_not_match": [
       "Write tests before implementation (TDD red-green-refactor)"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-grep-db-pool-acquire",
@@ -2172,7 +2352,8 @@
     "should_not_match": [
       "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-docker-logs-grep",
@@ -2182,7 +2363,8 @@
     "should_not_match": [
       "No console.log or print debug statements in production code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-tmux-send-keys-task",
@@ -2194,7 +2376,8 @@
     "should_not_match": [
       "Always validate user input at system boundaries"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-ls-pkl-packages",
@@ -2204,7 +2387,8 @@
     "should_not_match": [
       "Add .gitignore entries for generated files and build artifacts"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-uv-run-classify",
@@ -2216,7 +2400,8 @@
     "should_not_match": [
       "Always handle errors explicitly, never silently swallow exceptions"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-mkdir-patches",
@@ -2226,21 +2411,23 @@
     "should_not_match": [
       "Add .gitignore entries for generated files and build artifacts"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-edit-fa2util-attraction",
-    "query": "Edit: fa2/fa2util.py \u2014 modifying attraction function comments",
+    "query": "Edit: fa2/fa2util.py — modifying attraction function comments",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
       "Document all public API functions with docstrings"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-edit-test-file-python",
-    "query": "Edit: tests/test_notifier.py \u2014 fixing backslash escaping assertions",
+    "query": "Edit: tests/test_notifier.py — fixing backslash escaping assertions",
     "corpus": "rules_basic.txt",
     "should_match": [
       "100% test coverage on all new code"
@@ -2248,21 +2435,23 @@
     "should_not_match": [
       "Write tests before implementation (TDD red-green-refactor)"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-edit-coding-style-rules",
-    "query": "Edit: ~/.claude/rules/common/coding-style.md \u2014 adding surgical changes section",
+    "query": "Edit: ~/.claude/rules/common/coding-style.md — adding surgical changes section",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
       "Keep functions under 50 lines, files under 400 lines"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-edit-cluster-input-validation",
-    "query": "Edit: src/canopy/cluster.py \u2014 adding empty embeddings guard in fit_predict",
+    "query": "Edit: src/canopy/cluster.py — adding empty embeddings guard in fit_predict",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Always validate user input at system boundaries"
@@ -2270,31 +2459,34 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-edit-benchmark-device-setup",
-    "query": "Edit: benchmark_papercompat.py \u2014 modifying device setup and imports",
+    "query": "Edit: benchmark_papercompat.py — modifying device setup and imports",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
       "Use environment variables for configuration, not hardcoded values"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-edit-agents-md-version",
-    "query": "Edit: AGENTS.md \u2014 updating version v3.4 to v3.5",
+    "query": "Edit: AGENTS.md — updating version v3.4 to v3.5",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
       "Document all public API functions with docstrings"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-edit-http-server-timeout",
-    "query": "Edit: mcp-nexus-rag/http_server.py \u2014 changing timeout constant from 90 to 120",
+    "query": "Edit: mcp-nexus-rag/http_server.py — changing timeout constant from 90 to 120",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
@@ -2302,11 +2494,12 @@
     "should_not_match": [
       "Use environment variables for configuration, not hardcoded values"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-edit-store-test-version",
-    "query": "Edit: gravity-claw/tests/agents/store.test.ts \u2014 adding orphaned tmp cleanup tests",
+    "query": "Edit: gravity-claw/tests/agents/store.test.ts — adding orphaned tmp cleanup tests",
     "corpus": "rules_basic.txt",
     "should_match": [
       "100% test coverage on all new code"
@@ -2314,21 +2507,23 @@
     "should_not_match": [
       "Write tests before implementation (TDD red-green-refactor)"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-edit-workflow-engine",
-    "query": "Edit: gravity-claw/src/workflows/engine.ts \u2014 fixing workflow stall bug",
+    "query": "Edit: gravity-claw/src/workflows/engine.ts — fixing workflow stall bug",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-edit-docker-compose-model",
-    "query": "Edit: mcp-nexus-rag/docker-compose.yml \u2014 changing llama model tag",
+    "query": "Edit: mcp-nexus-rag/docker-compose.yml — changing llama model tag",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Review all dependencies for known vulnerabilities before adding"
@@ -2336,41 +2531,45 @@
     "should_not_match": [
       "Use environment variables for configuration, not hardcoded values"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-edit-claude-md-db-config",
-    "query": "Edit: antigravity/CLAUDE.md \u2014 updating database connection info (Neo4j to Memgraph)",
+    "query": "Edit: antigravity/CLAUDE.md — updating database connection info (Neo4j to Memgraph)",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
       "Use environment variables for configuration, not hardcoded values"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-edit-auth-ts",
-    "query": "Edit: mission-control/src/lib/auth.ts \u2014 adding requireSession() helper for per-route API auth",
+    "query": "Edit: mission-control/src/lib/auth.ts — adding requireSession() helper for per-route API auth",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
       "Enable CSRF protection on all forms and state-changing endpoints"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-edit-soul-md",
-    "query": "Edit: ~/.claude/rules/SOUL.md \u2014 minor text edit",
+    "query": "Edit: ~/.claude/rules/SOUL.md — minor text edit",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
       "Document all public API functions with docstrings"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-edit-cuecard-test-indexer",
-    "query": "Edit: cuecard/tests/test_indexer.py \u2014 extracting RNG into variable",
+    "query": "Edit: cuecard/tests/test_indexer.py — extracting RNG into variable",
     "corpus": "rules_basic.txt",
     "should_match": [
       "100% test coverage on all new code"
@@ -2378,11 +2577,12 @@
     "should_not_match": [
       "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-edit-delulu-loader-remove-commit",
-    "query": "Edit: delulu/src/delulu/classify/loader.py \u2014 removing conn.commit() call",
+    "query": "Edit: delulu/src/delulu/classify/loader.py — removing conn.commit() call",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
@@ -2390,11 +2590,12 @@
     "should_not_match": [
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-write-forceatlas2-claude-md",
-    "query": "Write: /home/user/projects/forceatlas2/CLAUDE.md \u2014 creating project documentation",
+    "query": "Write: /home/user/projects/forceatlas2/CLAUDE.md — creating project documentation",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Document all public API functions with docstrings"
@@ -2402,11 +2603,12 @@
     "should_not_match": [
       "Keep functions under 50 lines, files under 400 lines"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-write-advanced-docs",
-    "query": "Write: forceatlas2/docs/advanced.md \u2014 creating advanced usage documentation",
+    "query": "Write: forceatlas2/docs/advanced.md — creating advanced usage documentation",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Document all public API functions with docstrings"
@@ -2414,21 +2616,23 @@
     "should_not_match": [
       "Keep functions under 50 lines, files under 400 lines"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-write-pypi-skill",
-    "query": "Write: ~/.claude/skills/learned/pypi-name-availability-check.md \u2014 creating learned skill",
+    "query": "Write: ~/.claude/skills/learned/pypi-name-availability-check.md — creating learned skill",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
       "Document all public API functions with docstrings"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-write-postgres-ts-connection",
-    "query": "Write: mission-control/src/lib/postgres.ts \u2014 database connection module with env var check",
+    "query": "Write: mission-control/src/lib/postgres.ts — database connection module with env var check",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Use environment variables for configuration, not hardcoded values",
@@ -2438,21 +2642,23 @@
     "should_not_match": [
       "Use parameterized queries to prevent SQL injection"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-write-mcp-client-stub",
-    "query": "Write: gravity-claw/src/mcp/client.ts \u2014 stubbed MCP client (SurrealDB migration step 1)",
+    "query": "Write: gravity-claw/src/mcp/client.ts — stubbed MCP client (SurrealDB migration step 1)",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
       "Never use eval() or exec() in production code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-write-signal-engine-tests",
-    "query": "Write: agentic-trader/tests/test_signal_engine_models.py \u2014 tests for Pydantic models",
+    "query": "Write: agentic-trader/tests/test_signal_engine_models.py — tests for Pydantic models",
     "corpus": "rules_basic.txt",
     "should_match": [
       "100% test coverage on all new code",
@@ -2461,11 +2667,12 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-write-embeddings-test",
-    "query": "Write: canopy-ai/tests/test_embeddings.py \u2014 guard check unit tests",
+    "query": "Write: canopy-ai/tests/test_embeddings.py — guard check unit tests",
     "corpus": "rules_basic.txt",
     "should_match": [
       "100% test coverage on all new code",
@@ -2474,11 +2681,12 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-write-delulu-extract-loader",
-    "query": "Write: delulu/src/delulu/extract/loader.py \u2014 SQLite loader for extracted session data",
+    "query": "Write: delulu/src/delulu/extract/loader.py — SQLite loader for extracted session data",
     "corpus": "rules_basic.txt",
     "should_match": [
       "Always close file handles, database connections, network sockets, HTTP sessions, and other resources",
@@ -2488,17 +2696,19 @@
     "should_not_match": [
       "Use frozen dataclasses for immutable data"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-write-cuecard-prd",
-    "query": "Write: cuecard/artifacts/prd-v1.md \u2014 creating product requirements doc",
+    "query": "Write: cuecard/artifacts/prd-v1.md — creating product requirements doc",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
       "Document all public API functions with docstrings"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-read-setup-py",
@@ -2508,7 +2718,8 @@
     "should_not_match": [
       "Review all dependencies for known vulnerabilities before adding"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-read-mcp-json",
@@ -2518,7 +2729,8 @@
     "should_not_match": [
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-read-prd-md",
@@ -2528,7 +2740,8 @@
     "should_not_match": [
       "Document all public API functions with docstrings"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-read-cache-py",
@@ -2538,7 +2751,8 @@
     "should_not_match": [
       "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-glob-dashboard-stats",
@@ -2548,7 +2762,8 @@
     "should_not_match": [
       "Keep functions under 50 lines, files under 400 lines"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-glob-tsx-components",
@@ -2558,7 +2773,8 @@
     "should_not_match": [
       "Sanitize all HTML output to prevent XSS"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-grep-strong-gravity-readme",
@@ -2568,7 +2784,8 @@
     "should_not_match": [
       "Document all public API functions with docstrings"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-grep-critical-high-output",
@@ -2578,7 +2795,8 @@
     "should_not_match": [
       "Run quality checks before every commit"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-grep-template-id",
@@ -2588,37 +2806,41 @@
     "should_not_match": [
       "Use type hints on all function signatures"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-write-hookify-task-intake",
-    "query": "Write: ~/.claude/hookify.task-intake.local.md \u2014 creating hook rule for task intake",
+    "query": "Write: ~/.claude/hookify.task-intake.local.md — creating hook rule for task intake",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
       "Run quality checks before every commit"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-edit-benchmark-prd-resolved",
-    "query": "Edit: canopy-ai/artifacts/benchmark-prd.md \u2014 changing open questions to resolved",
+    "query": "Edit: canopy-ai/artifacts/benchmark-prd.md — changing open questions to resolved",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
       "Document all public API functions with docstrings"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-edit-memory-md",
-    "query": "Edit: antigravity/MEMORY.md \u2014 renumbering section headers",
+    "query": "Edit: antigravity/MEMORY.md — renumbering section headers",
     "corpus": "rules_basic.txt",
     "should_match": [],
     "should_not_match": [
       "Document all public API functions with docstrings"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-grep-conference-message-events",
@@ -2628,7 +2850,8 @@
     "should_not_match": [
       "Always validate user input at system boundaries"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-read-pyproject-toml",
@@ -2638,7 +2861,8 @@
     "should_not_match": [
       "Review all dependencies for known vulnerabilities before adding"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "rust-cargo-build",
@@ -2649,7 +2873,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "rust-cargo-test-nocapture",
@@ -2662,7 +2887,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "rust-cargo-clippy",
@@ -2673,7 +2899,8 @@
       "Run ruff and mypy before committing Python code",
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "rust-edit-unsafe-block",
@@ -2687,7 +2914,8 @@
       "Run ruff and mypy before committing Python code",
       "Use type hints on all function signatures"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "rust-edit-impl-display",
@@ -2701,7 +2929,8 @@
       "Use uv for all Python package operations, never pip",
       "Use type hints on all function signatures"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "rust-write-main",
@@ -2715,7 +2944,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "rust-cargo-add-tokio",
@@ -2728,7 +2958,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "rust-edit-unwrap-chain",
@@ -2741,7 +2972,8 @@
       "Use uv for all Python package operations, never pip",
       "Use type hints on all function signatures"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "rust-write-test-module",
@@ -2755,7 +2987,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "rust-read-cargo-toml",
@@ -2767,7 +3000,8 @@
       "Run ruff and mypy before committing Python code",
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "go-run-tests",
@@ -2780,7 +3014,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "go-build",
@@ -2791,7 +3026,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "go-vet",
@@ -2802,7 +3038,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "go-mod-tidy",
@@ -2812,7 +3049,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "go-edit-handler-no-error",
@@ -2826,7 +3064,8 @@
       "Use uv for all Python package operations, never pip",
       "Use type hints on all function signatures"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "go-write-main",
@@ -2841,7 +3080,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "go-edit-sql-query",
@@ -2853,7 +3093,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "go-get-gin",
@@ -2865,7 +3106,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "go-test-coverage",
@@ -2879,7 +3121,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "go-read-go-mod",
@@ -2890,7 +3133,8 @@
       "Use uv for all Python package operations, never pip",
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "ts-edit-console-log-debug",
@@ -2903,7 +3147,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "ts-edit-any-type",
@@ -2916,7 +3161,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "ts-write-react-component",
@@ -2929,7 +3175,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "ts-edit-innerhtml-xss",
@@ -2941,7 +3188,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "ts-npm-install-express",
@@ -2953,7 +3201,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "ts-npx-eslint-fix",
@@ -2964,7 +3213,8 @@
       "Run ruff and mypy before committing Python code",
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "ts-jest-coverage",
@@ -2977,7 +3227,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "ts-edit-form-no-csrf",
@@ -2989,7 +3240,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "ts-edit-eval-template",
@@ -3001,7 +3253,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "ts-vitest-run-verbose",
@@ -3014,7 +3267,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "ts-read-tsconfig",
@@ -3025,7 +3279,8 @@
       "Use uv for all Python package operations, never pip",
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "ts-read-package-json",
@@ -3036,7 +3291,8 @@
       "Use uv for all Python package operations, never pip",
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "ts-glob-test-files",
@@ -3047,7 +3303,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "ts-edit-fetch-no-error",
@@ -3059,7 +3316,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "ts-write-express-route",
@@ -3074,7 +3332,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "read-env-production",
@@ -3086,7 +3345,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "read-source-code",
@@ -3096,7 +3356,8 @@
     "should_not_match": [
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "read-test-file",
@@ -3107,7 +3368,8 @@
       "Use uv for all Python package operations, never pip",
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "read-gitignore",
@@ -3118,7 +3380,8 @@
       "Never commit secrets (API keys, tokens, passwords) to git",
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "read-dockerfile",
@@ -3128,7 +3391,8 @@
     "should_not_match": [
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "glob-python-files",
@@ -3139,7 +3403,8 @@
       "Never commit secrets (API keys, tokens, passwords) to git",
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "glob-env-files",
@@ -3151,7 +3416,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "glob-test-patterns",
@@ -3162,7 +3428,8 @@
       "Use uv for all Python package operations, never pip",
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "grep-todo-comments",
@@ -3173,7 +3440,8 @@
       "Use uv for all Python package operations, never pip",
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "grep-api-key-in-code",
@@ -3186,7 +3454,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "grep-print-statements",
@@ -3198,7 +3467,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "grep-eval-usage",
@@ -3210,7 +3480,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "grep-sql-fstring",
@@ -3222,7 +3493,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "grep-import-threading",
@@ -3234,7 +3506,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "bash-psql-raw-query",
@@ -3246,7 +3519,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "bash-mysql-backup",
@@ -3259,7 +3533,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "bash-redis-cli",
@@ -3271,7 +3546,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "bash-mongo-shell",
@@ -3282,7 +3558,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "edit-django-model-no-close",
@@ -3295,7 +3572,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "write-alembic-migration",
@@ -3308,7 +3586,8 @@
     "should_not_match": [
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "docker-compose-build",
@@ -3319,7 +3598,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "docker-exec-bash",
@@ -3329,7 +3609,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "docker-build-with-env",
@@ -3341,7 +3622,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "docker-run-env-file",
@@ -3354,7 +3636,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "docker-logs-check",
@@ -3365,7 +3648,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "write-docker-compose-secrets",
@@ -3378,7 +3662,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "write-github-actions-ci",
@@ -3391,7 +3676,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "edit-ci-add-secrets-scan",
@@ -3405,7 +3691,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "bash-gh-pr-create",
@@ -3418,7 +3705,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "bash-gh-run-view",
@@ -3429,7 +3717,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "bash-chmod-sensitive-644",
@@ -3441,7 +3730,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "bash-curl-with-token-inline",
@@ -3453,7 +3743,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "edit-hardcoded-db-url",
@@ -3466,7 +3757,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "write-env-with-real-keys",
@@ -3479,7 +3771,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "bash-wget-pipe-shell",
@@ -3492,7 +3785,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "edit-password-comparison",
@@ -3505,7 +3799,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "multi-tool-go-test-commit",
@@ -3520,7 +3815,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "multi-tool-npm-audit-fix-commit",
@@ -3535,7 +3831,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "multi-tool-cargo-test-push",
@@ -3548,7 +3845,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "multi-tool-read-edit-test",
@@ -3563,7 +3861,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "multi-tool-uv-ruff-mypy-pytest",
@@ -3577,7 +3876,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "large-edit-refactor-class",
@@ -3595,7 +3895,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "large-edit-error-handling",
@@ -3609,7 +3910,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "large-write-fastapi-app",
@@ -3626,7 +3928,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "neg-read-changelog",
@@ -3638,7 +3941,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "neg-read-license",
@@ -3649,7 +3953,8 @@
       "Never commit secrets (API keys, tokens, passwords) to git",
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "neg-bash-wc",
@@ -3661,7 +3966,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "neg-bash-git-log",
@@ -3673,7 +3979,8 @@
       "Use uv for all Python package operations, never pip",
       "Never force-push to main or master branch"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "neg-bash-git-status",
@@ -3684,7 +3991,8 @@
       "Never commit secrets (API keys, tokens, passwords) to git",
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "neg-bash-cat-readme",
@@ -3695,7 +4003,8 @@
       "Never commit secrets (API keys, tokens, passwords) to git",
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "neg-bash-ls-recursive",
@@ -3706,7 +4015,8 @@
       "Never commit secrets (API keys, tokens, passwords) to git",
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "neg-bash-echo-hello",
@@ -3717,7 +4027,8 @@
       "Never commit secrets (API keys, tokens, passwords) to git",
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "neg-bash-python-calc",
@@ -3728,7 +4039,8 @@
       "Never commit secrets (API keys, tokens, passwords) to git",
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "neg-glob-markdown",
@@ -3739,7 +4051,8 @@
       "Never commit secrets (API keys, tokens, passwords) to git",
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "neg-grep-function-def",
@@ -3750,7 +4063,8 @@
       "Never commit secrets (API keys, tokens, passwords) to git",
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "neg-read-ci-config",
@@ -3761,7 +4075,8 @@
       "Never commit secrets (API keys, tokens, passwords) to git",
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "neg-bash-git-branch-list",
@@ -3772,7 +4087,8 @@
       "Never commit secrets (API keys, tokens, passwords) to git",
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "neg-bash-tree-directory",
@@ -3783,7 +4099,8 @@
       "Never commit secrets (API keys, tokens, passwords) to git",
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "neg-read-makefile",
@@ -3794,7 +4111,8 @@
       "Never commit secrets (API keys, tokens, passwords) to git",
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "neg-bash-jq-parse",
@@ -3805,7 +4123,8 @@
       "Never commit secrets (API keys, tokens, passwords) to git",
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "borderline-git-commit-no-tests",
@@ -3821,7 +4140,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "borderline-write-config-with-defaults",
@@ -3836,7 +4156,8 @@
     "should_not_match": [
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "borderline-edit-thread-pool",
@@ -3850,7 +4171,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "borderline-edit-logging-secrets",
@@ -3863,7 +4185,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "borderline-subprocess-run",
@@ -3876,7 +4199,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-fa2-python-c-benchmark",
@@ -3887,7 +4211,8 @@
       "Use uv for all Python package operations, never pip",
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-fa2-write-ci-yaml",
@@ -3900,7 +4225,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-fa2-edit-gitignore",
@@ -3913,7 +4239,8 @@
       "Use uv for all Python package operations, never pip",
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-whisper-edit-test",
@@ -3926,7 +4253,8 @@
     "should_not_match": [
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-whisper-write-websocket",
@@ -3940,7 +4268,8 @@
     "should_not_match": [
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-gravity-edit-test-ts",
@@ -3954,7 +4283,8 @@
       "Use uv for all Python package operations, never pip",
       "Run ruff and mypy before committing Python code"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-gravity-glob-api-routes",
@@ -3965,7 +4295,8 @@
       "Use uv for all Python package operations, never pip",
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-gravity-grep-env-var",
@@ -3975,7 +4306,8 @@
     "should_not_match": [
       "Use environment variables for configuration, not hardcoded values"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-gravity-edit-readme",
@@ -3985,7 +4317,8 @@
     "should_not_match": [
       "Document all public API functions with docstrings"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-delulu-tmux-long-task",
@@ -3997,7 +4330,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-delulu-kill-process",
@@ -4008,7 +4342,8 @@
       "Use uv for all Python package operations, never pip",
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-delulu-uv-pytest-cov",
@@ -4021,7 +4356,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-delulu-tmux-ralph-fix",
@@ -4034,7 +4370,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-canopy-uv-ruff-multi",
@@ -4047,7 +4384,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-canopy-sleep-monitor",
@@ -4058,7 +4396,8 @@
       "Use uv for all Python package operations, never pip",
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-blog-git-add-commit-push",
@@ -4072,7 +4411,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-blog-write-hookify",
@@ -4083,7 +4423,8 @@
       "Never commit secrets (API keys, tokens, passwords) to git",
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "mined-blog-find-tsx-files",
@@ -4094,7 +4435,8 @@
       "Use uv for all Python package operations, never pip",
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "negative"
+    "difficulty": "negative",
+    "event": "PreToolUse"
   },
   {
     "id": "edge-git-commit-with-env-ref",
@@ -4108,7 +4450,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "edge-pip-install-in-ci",
@@ -4121,7 +4464,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "edge-sudo-pip",
@@ -4133,7 +4477,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "edge-python-open-no-with",
@@ -4145,7 +4490,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "edge-write-py-no-types",
@@ -4158,7 +4504,8 @@
     "should_not_match": [
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "edge-edit-catch-all-exception",
@@ -4170,7 +4517,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "edge-write-dataclass-mutable",
@@ -4183,7 +4531,8 @@
     "should_not_match": [
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "edge-edit-magic-number-sleep",
@@ -4195,7 +4544,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "event": "PreToolUse"
   },
   {
     "id": "edge-git-force-push-feature",
@@ -4205,7 +4555,8 @@
     "should_not_match": [
       "Never force-push to main or master branch"
     ],
-    "difficulty": "hard"
+    "difficulty": "hard",
+    "event": "PreToolUse"
   },
   {
     "id": "edge-git-push-force-lease-main",
@@ -4217,7 +4568,8 @@
     "should_not_match": [
       "Send Enter after every tmux send-keys command"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "edge-write-html-user-input",
@@ -4229,7 +4581,8 @@
     "should_not_match": [
       "Use uv for all Python package operations, never pip"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   },
   {
     "id": "edge-edit-500-line-file",
@@ -4241,6 +4594,7 @@
     "should_not_match": [
       "Never commit secrets (API keys, tokens, passwords) to git"
     ],
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "event": "PreToolUse"
   }
 ]

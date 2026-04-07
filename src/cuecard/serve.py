@@ -215,28 +215,18 @@ def _process_request(
 ) -> dict[str, object]:
     """Process a hook payload and return the modified data dict."""
     from cuecard.adapters.claude_code import (
-        _KNOWN_HOOK_EVENTS,
-        _MAX_TOOL_NAME,
-        _format_tool_input,
-        _sanitize_field,
+        _EVENT_HANDLERS,
+        _EVENT_LABELS,
+        _LABEL_PREVENT,
+        _detect_event,
+        _handle_pre_tool_use,
     )
     from cuecard.formatter import format_rules
     from cuecard.pipeline import run_pipeline
 
-    raw_event = str(
-        data.get("hook_event_name", data.get("event", "PreToolUse")),
-    )
-    event = raw_event if raw_event in _KNOWN_HOOK_EVENTS else "PreToolUse"
-
-    if event == "UserPromptSubmit":
-        prompt_text = _sanitize_field(str(data.get("prompt", "")), 500)
-        query = f"UserPromptSubmit: {prompt_text}"
-    else:
-        tool_name = _sanitize_field(
-            str(data.get("tool_name", "")), _MAX_TOOL_NAME,
-        )
-        tool_input = _format_tool_input(data.get("tool_input", ""))
-        query = f"{tool_name}: {tool_input}"
+    event = _detect_event(data)
+    handler = _EVENT_HANDLERS.get(event, _handle_pre_tool_use)
+    query, _, event = handler(data)
 
     pipeline_mode = getattr(
         getattr(config, "pipeline", None), "mode", "embedding",
@@ -263,7 +253,8 @@ def _process_request(
         hook_output["permissionDecision"] = "allow"
 
     if results:
-        context = format_rules(results)
+        label = _EVENT_LABELS.get(event, _LABEL_PREVENT)
+        context = format_rules(results, label=label)
         hook_output["additionalContext"] = context
 
     output["hookSpecificOutput"] = hook_output

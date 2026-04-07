@@ -7,7 +7,8 @@
         "should_not_match": [
             "Run ruff and mypy before committing Python code"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-read-soul-md",
@@ -17,7 +18,8 @@
         "should_not_match": [
             "Document all public API functions with docstrings"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-read-eval-py",
@@ -27,7 +29,8 @@
         "should_not_match": [
             "Use uv for all Python package operations, never pip"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-read-conftest-py",
@@ -37,7 +40,8 @@
         "should_not_match": [
             "Never force-push to main or master branch"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-read-models-py",
@@ -47,7 +51,8 @@
         "should_not_match": [
             "Send Enter after every tmux send-keys command"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-read-security-py",
@@ -57,7 +62,8 @@
         "should_not_match": [
             "Use asyncio for I/O-bound operations, not threads"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-read-indexer-py",
@@ -67,7 +73,8 @@
         "should_not_match": [
             "Never commit secrets (API keys, tokens, passwords) to git"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-read-strategy-md",
@@ -77,7 +84,8 @@
         "should_not_match": [
             "Run quality checks before every commit"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-glob-soul-md",
@@ -87,7 +95,8 @@
         "should_not_match": [
             "Use frozen dataclasses for immutable data"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-glob-artifacts-md",
@@ -97,7 +106,8 @@
         "should_not_match": [
             "100% test coverage on all new code"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-glob-eval-corpora",
@@ -107,7 +117,8 @@
         "should_not_match": [
             "Always validate user input at system boundaries"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-glob-eval-fixtures",
@@ -117,7 +128,8 @@
         "should_not_match": [
             "Use parameterized queries to prevent SQL injection"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-glob-delulu-sessions",
@@ -127,7 +139,8 @@
         "should_not_match": [
             "Use type hints on all function signatures"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-grep-eval-class",
@@ -137,7 +150,8 @@
         "should_not_match": [
             "Never use eval() or exec() in production code"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-grep-scrub-secrets",
@@ -147,7 +161,8 @@
         "should_not_match": [
             "Sanitize all HTML output to prevent XSS"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-grep-ranked-result",
@@ -157,7 +172,8 @@
         "should_not_match": [
             "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-uv-run-pytest",
@@ -169,7 +185,8 @@
         "should_not_match": [
             "Never commit secrets (API keys, tokens, passwords) to git"
         ],
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-uv-run-pytest-cov",
@@ -181,7 +198,8 @@
         "should_not_match": [
             "Send Enter after every tmux send-keys command"
         ],
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-uv-run-ruff-check",
@@ -193,7 +211,8 @@
         "should_not_match": [
             "Use parameterized queries to prevent SQL injection"
         ],
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-uv-run-mypy",
@@ -206,7 +225,8 @@
         "should_not_match": [
             "Send Enter after every tmux send-keys command"
         ],
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-coverage-run",
@@ -219,7 +239,8 @@
         "should_not_match": [
             "Never force-push to main or master branch"
         ],
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-curl-localhost-health",
@@ -229,7 +250,8 @@
         "should_not_match": [
             "Always validate user input at system boundaries"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-llama-server-start",
@@ -239,7 +261,8 @@
         "should_not_match": [
             "Use uv for all Python package operations, never pip"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-pgrep-llama",
@@ -249,7 +272,8 @@
         "should_not_match": [
             "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-ls-claude-sessions",
@@ -259,7 +283,8 @@
         "should_not_match": [
             "Add .gitignore entries for generated files and build artifacts"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-ls-projects",
@@ -269,7 +294,8 @@
         "should_not_match": [
             "Use frozen dataclasses for immutable data"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-uv-sync",
@@ -282,7 +308,8 @@
         "should_not_match": [
             "Send Enter after every tmux send-keys command"
         ],
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-python-json-load",
@@ -292,7 +319,8 @@
         "should_not_match": [
             "Never use eval() or exec() in production code"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-tmux-send-keys-report",
@@ -304,7 +332,8 @@
         "should_not_match": [
             "Use uv for all Python package operations, never pip"
         ],
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-tmux-send-keys-fixtures",
@@ -316,7 +345,8 @@
         "should_not_match": [
             "Run quality checks before every commit"
         ],
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-edit-settings-hooks",
@@ -326,7 +356,8 @@
         "should_not_match": [
             "Never commit secrets (API keys, tokens, passwords) to git"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-edit-parser-imports",
@@ -336,7 +367,8 @@
         "should_not_match": [
             "Use frozen dataclasses for immutable data"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-edit-prd-add-bm25-criteria",
@@ -349,7 +381,8 @@
         "should_not_match": [
             "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
         ],
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-write-expansion-validation",
@@ -361,7 +394,8 @@
         "should_not_match": [
             "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
         ],
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-uv-run-expansion",
@@ -373,7 +407,8 @@
         "should_not_match": [
             "Run iterative PRD reviews until a round comes back clean — typical convergence is 4 rounds"
         ],
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-read-false-negative-analysis",
@@ -383,7 +418,8 @@
         "should_not_match": [
             "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-tail-session-jsonl",
@@ -393,7 +429,8 @@
         "should_not_match": [
             "Always handle errors explicitly, never silently swallow exceptions"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-cat-daemon-log",
@@ -403,7 +440,8 @@
         "should_not_match": [
             "No console.log or print debug statements in production code"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-curl-v1-models",
@@ -413,7 +451,8 @@
         "should_not_match": [
             "Use uv for all Python package operations, never pip"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-grep-eval-cmd-cli",
@@ -423,7 +462,8 @@
         "should_not_match": [
             "Never use eval() or exec() in production code"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-glob-py-files-in-src",
@@ -433,7 +473,8 @@
         "should_not_match": [
             "Use type hints on all function signatures"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-edit-models-add-field",
@@ -445,7 +486,8 @@
         "should_not_match": [
             "Never commit secrets (API keys, tokens, passwords) to git"
         ],
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-uv-run-pytest-test-models",
@@ -457,7 +499,8 @@
         "should_not_match": [
             "Use parameterized queries to prevent SQL injection"
         ],
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-write-session-progress",
@@ -469,7 +512,8 @@
         "should_not_match": [
             "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
         ],
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "event": "PreToolUse"
     },
     {
         "id": "wf-mined-add-bm25-retrieval",
@@ -483,7 +527,8 @@
         "should_not_match": [
             "SIMPLE tasks (1-2 files, low risk) can proceed without a plan — just implement and verify"
         ],
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "event": "UserPromptSubmit"
     },
     {
         "id": "wf-mined-run-eval-benchmark",
@@ -496,7 +541,8 @@
         "should_not_match": [
             "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
         ],
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "event": "UserPromptSubmit"
     },
     {
         "id": "wf-mined-mine-sessions-fixtures",
@@ -508,7 +554,8 @@
         "should_not_match": [
             "Use the planner agent for complex features, architect agent for system design decisions, tdd-guide agent for new features and bug fixes"
         ],
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "event": "UserPromptSubmit"
     },
     {
         "id": "wf-mined-implement-query-expansion",
@@ -522,7 +569,8 @@
         "should_not_match": [
             "SIMPLE tasks (1-2 files, low risk) can proceed without a plan — just implement and verify"
         ],
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "event": "UserPromptSubmit"
     },
     {
         "id": "wf-mined-review-prd-enriched-retrieval",
@@ -535,7 +583,8 @@
         "should_not_match": [
             "Write tests before implementation following TDD red-green-refactor cycle"
         ],
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "event": "UserPromptSubmit"
     },
     {
         "id": "wf-mined-fix-llm-reranker-regression",
@@ -549,7 +598,8 @@
         "should_not_match": [
             "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
         ],
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "event": "UserPromptSubmit"
     },
     {
         "id": "wf-mined-delegate-to-ralph",
@@ -563,7 +613,8 @@
         "should_not_match": [
             "Write tests before implementation following TDD red-green-refactor cycle"
         ],
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "event": "UserPromptSubmit"
     },
     {
         "id": "wf-mined-compare-embedding-models",
@@ -577,7 +628,8 @@
         "should_not_match": [
             "SIMPLE tasks (1-2 files, low risk) can proceed without a plan — just implement and verify"
         ],
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "event": "UserPromptSubmit"
     },
     {
         "id": "wf-mined-save-progress-compaction",
@@ -590,7 +642,8 @@
         "should_not_match": [
             "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
         ],
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "event": "UserPromptSubmit"
     },
     {
         "id": "wf-mined-check-test-coverage-gaps",
@@ -602,7 +655,8 @@
         "should_not_match": [
             "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
         ],
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "event": "UserPromptSubmit"
     },
     {
         "id": "wf-mined-start-security-review",
@@ -615,7 +669,8 @@
         "should_not_match": [
             "SIMPLE tasks (1-2 files, low risk) can proceed without a plan — just implement and verify"
         ],
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "event": "UserPromptSubmit"
     },
     {
         "id": "mined-bash-wc-lines-eval",
@@ -627,7 +682,8 @@
         "should_not_match": [
             "Use uv for all Python package operations, never pip"
         ],
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-bash-ls-lt-session-files",
@@ -637,7 +693,8 @@
         "should_not_match": [
             "Set file permissions to 0o600 for sensitive files"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-read-llm-reranker-py",
@@ -647,7 +704,8 @@
         "should_not_match": [
             "Run ruff and mypy before committing Python code"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-read-benchmark-results",
@@ -657,7 +715,8 @@
         "should_not_match": [
             "Use conventional commit format (feat:, fix:, refactor:, etc.)"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-grep-import-threading-cuecard",
@@ -669,7 +728,8 @@
         "should_not_match": [
             "Send Enter after every tmux send-keys command"
         ],
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-grep-print-debug",
@@ -681,7 +741,8 @@
         "should_not_match": [
             "Use frozen dataclasses for immutable data"
         ],
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-grep-any-type",
@@ -693,7 +754,8 @@
         "should_not_match": [
             "Never force-push to main or master branch"
         ],
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-grep-magic-numbers",
@@ -705,7 +767,8 @@
         "should_not_match": [
             "Use asyncio for I/O-bound operations, not threads"
         ],
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-glob-test-files",
@@ -715,7 +778,8 @@
         "should_not_match": [
             "Write tests before implementation (TDD red-green-refactor)"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-edit-expansion-fix-score",
@@ -725,7 +789,8 @@
         "should_not_match": [
             "Never use eval() or exec() in production code"
         ],
-        "difficulty": "negative"
+        "difficulty": "negative",
+        "event": "PreToolUse"
     },
     {
         "id": "mined-write-expansion-prompt-iter",
@@ -737,7 +802,8 @@
         "should_not_match": [
             "Use the planner agent for complex features, architect agent for system design decisions, tdd-guide agent for new features and bug fixes"
         ],
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "event": "PreToolUse"
     },
     {
         "id": "wf-mined-update-claude-md",
@@ -749,7 +815,8 @@
         "should_not_match": [
             "Never trust small sample benchmark results — run the full dataset before drawing conclusions"
         ],
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "event": "UserPromptSubmit"
     },
     {
         "id": "wf-mined-search-github-codex",
@@ -762,7 +829,8 @@
         "should_not_match": [
             "Write tests before implementation following TDD red-green-refactor cycle"
         ],
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "event": "UserPromptSubmit"
     },
     {
         "id": "wf-mined-what-failed-n10",
@@ -775,6 +843,7 @@
         "should_not_match": [
             "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
         ],
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "event": "UserPromptSubmit"
     }
 ]

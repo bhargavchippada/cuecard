@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -13,6 +13,12 @@ if TYPE_CHECKING:
 MAX_RULE_LENGTH = 500
 MAX_EXPANSION_LENGTH = 200
 MAX_EXPANSIONS_PER_RULE = 10
+
+KNOWN_HOOK_EVENTS: frozenset[str] = frozenset({
+    "PreToolUse", "PostToolUse", "UserPromptSubmit", "SubagentStart", "Stop",
+})
+
+AffinitySource = Literal["explicit", "inferred", "explicit+inferred", "default"]
 
 
 @dataclass(frozen=True)
@@ -34,6 +40,8 @@ class Rule:
     provenance: Provenance
     summary: str | None = None
     expansions: tuple[str, ...] = ()
+    events: frozenset[str] = field(default_factory=frozenset)
+    tools: frozenset[str] = field(default_factory=frozenset)
 
     MAX_LENGTH: int = field(default=500, init=False, repr=False, compare=False)
 
