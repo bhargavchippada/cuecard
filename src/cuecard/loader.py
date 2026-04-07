@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from cuecard.affinity import load_affinity
 from cuecard.freshness import check_freshness
 from cuecard.indexer import (
     build_index,
@@ -19,6 +20,7 @@ from cuecard.indexer import (
     save_index,
     save_rules_json,
 )
+from cuecard.models import AffinityIndex, LoadedIndex, RuleAffinity
 from cuecard.parser import parse_rules
 from cuecard.retriever import merge_indexes
 
@@ -94,12 +96,44 @@ def _load_or_rebuild_scope(
     return new_index
 
 
+def _load_and_merge_affinity(
+    global_cache_dir: str,
+    project_cache_dir: str | None,
+) -> AffinityIndex | None:
+    """Load and merge affinity from both scopes. Project wins on duplicates."""
+    global_aff = load_affinity(global_cache_dir)
+    project_aff: AffinityIndex | None = None
+    if project_cache_dir:
+        project_aff = load_affinity(project_cache_dir)
+
+    if global_aff is None and project_aff is None:
+        return None
+    if global_aff is None:
+        return project_aff
+    if project_aff is None:
+        return global_aff
+
+    # Merge: project scope wins on duplicate text_hash
+    merged: dict[str, RuleAffinity] = {}
+    for text_hash, ra in global_aff.items:
+        merged[text_hash] = ra
+    for text_hash, ra in project_aff.items:
+        merged[text_hash] = ra  # project wins
+
+    return AffinityIndex(
+        version=global_aff.version,
+        mode=project_aff.mode or global_aff.mode,
+        model=project_aff.model or global_aff.model,
+        affinities=tuple(merged.items()),
+    )
+
+
 def load_or_build(
     config: ResolvedConfig,
     model: EmbeddingModel | None = None,
     *,
     reindex: bool = True,
-) -> Index | None:
+) -> LoadedIndex | None:
     """Load a ready-to-query index, rebuilding stale scopes as needed.
 
     This is the primary entry point for both the adapter and CLI
@@ -109,6 +143,7 @@ def load_or_build(
     2. Loads/rebuilds the **project** index from ``project_source_paths``
        (if a project scope exists).
     3. Composes them via ``merge_indexes`` so retrieval sees both.
+    4. Loads and merges affinity from both scopes.
 
     Args:
         config: Resolved configuration with scoped source paths.
@@ -117,7 +152,8 @@ def load_or_build(
         reindex: If False, skip freshness checks (low-latency mode).
 
     Returns:
-        A composed ``Index``, or ``None`` if no rules exist anywhere.
+        A ``LoadedIndex`` (index + optional affinity), or ``None``
+        if no rules exist anywhere.
     """
     indexes: list[Index] = []
 
@@ -133,9 +169,10 @@ def load_or_build(
         indexes.append(global_idx)
 
     # Project scope
-    if config.project_cache_dir and config.project_source_paths:
+    project_cache = config.project_cache_dir
+    if project_cache and config.project_source_paths:
         project_idx = _load_or_rebuild_scope(
-            config.project_cache_dir,
+            project_cache,
             config.project_source_paths,
             config.model_name,
             model,
@@ -148,11 +185,16 @@ def load_or_build(
         return None
 
     if len(indexes) == 1:
-        return indexes[0]
+        index = indexes[0]
+    else:
+        # Compose global + project (dedup by text)
+        index = merge_indexes(*indexes)
+        if not index.rules:
+            return None
 
-    # Compose global + project (dedup by text)
-    merged = merge_indexes(*indexes)
-    if not merged.rules:
-        return None
+    # Load and merge affinity from both scopes
+    affinity = _load_and_merge_affinity(
+        config.global_cache_dir, project_cache,
+    )
 
-    return merged
+    return LoadedIndex(index=index, affinity=affinity)

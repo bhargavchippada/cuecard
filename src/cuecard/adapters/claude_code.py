@@ -199,7 +199,7 @@ def main() -> None:
         from fastembed import TextEmbedding
 
         model = TextEmbedding(model_name=config.model_name)
-        index = load_or_build(config, model)  # type: ignore[arg-type]
+        loaded = load_or_build(config, model)  # type: ignore[arg-type]
 
         # Always set hook output fields (even if no rules indexed)
         raw_hook_output = data.get("hookSpecificOutput")
@@ -213,6 +213,8 @@ def main() -> None:
         data = {**data, "hookSpecificOutput": hook_output}
 
         results: Sequence[RankedResult] = []
+        index = loaded.index if loaded is not None else None
+        affinity = loaded.affinity if loaded is not None else None
 
         if index is not None and index.size > 0:
             pipeline_mode = getattr(
@@ -226,6 +228,8 @@ def main() -> None:
             pipeline_result = run_pipeline(
                 query, index, config,
                 embedding_model=model, mode=pipeline_mode,
+                event=event, tool_name=tool_name,
+                affinity=affinity,
             )
             results = pipeline_result.results
 

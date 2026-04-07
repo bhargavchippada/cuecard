@@ -15,6 +15,7 @@ import pytest
 
 from cuecard.models import (
     Index,
+    LoadedIndex,
     PipelineConfig,
     Provenance,
     ResolvedConfig,
@@ -158,7 +159,10 @@ class TestStartServer:
         with (
             patch("cuecard.config.load_config", return_value=config),
             patch("fastembed.TextEmbedding", return_value=model),
-            patch("cuecard.loader.load_or_build", return_value=index),
+            patch(
+                "cuecard.loader.load_or_build",
+                return_value=LoadedIndex(index=index),
+            ),
         ):
             server = start_server(port=0, home=tmp_path)
         try:

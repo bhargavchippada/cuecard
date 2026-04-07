@@ -12,6 +12,7 @@ from cuecard.freshness import FreshnessResult
 from cuecard.loader import _load_or_rebuild_scope, load_or_build
 from cuecard.models import (
     Index,
+    LoadedIndex,
     PipelineConfig,
     Provenance,
     ResolvedConfig,
@@ -303,7 +304,8 @@ class TestLoadOrBuild:
             return_value=index,
         ):
             result = load_or_build(cfg)
-        assert result is index
+        assert isinstance(result, LoadedIndex)
+        assert result.index is index
 
     def test_global_plus_project_composes(self, tmp_path: Path) -> None:
         global_idx = _make_index(n=2)
@@ -342,15 +344,16 @@ class TestLoadOrBuild:
             result = load_or_build(cfg)
 
         assert result is not None
+        idx = result.index
         # Should have 3 rules (2 global + 1 project)
-        assert result.size == 3
-        rule_texts = {r.text for r in result.rules}
+        assert idx.size == 3
+        rule_texts = {r.text for r in idx.rules}
         assert "Rule 1" in rule_texts
         assert "Rule 2" in rule_texts
         assert "Project rule" in rule_texts
         # Sources should be merged
-        assert "/tmp/rules.txt" in result.sources
-        assert "/proj/rules.txt" in result.sources
+        assert "/tmp/rules.txt" in idx.sources
+        assert "/proj/rules.txt" in idx.sources
 
     def test_project_scope_skipped_when_no_project_cache(
         self, tmp_path: Path,
@@ -370,7 +373,8 @@ class TestLoadOrBuild:
 
         # Only called once (for global)
         assert mock_scope.call_count == 1
-        assert result is index
+        assert isinstance(result, LoadedIndex)
+        assert result.index is index
 
     def test_project_scope_skipped_when_no_project_sources(
         self, tmp_path: Path,
@@ -389,7 +393,8 @@ class TestLoadOrBuild:
             result = load_or_build(cfg)
 
         assert mock_scope.call_count == 1
-        assert result is index
+        assert isinstance(result, LoadedIndex)
+        assert result.index is index
 
     def test_both_scopes_empty_returns_none(
         self, tmp_path: Path,
@@ -451,7 +456,7 @@ class TestLoadOrBuild:
             result = load_or_build(cfg)
 
         assert result is not None
-        assert result.size == 1  # Deduped
+        assert result.index.size == 1  # Deduped
 
     def test_merge_empty_rules_returns_none(self, tmp_path: Path) -> None:
         """If merge produces zero rules, return None."""
@@ -523,7 +528,7 @@ class TestCrossProjectIsolation:
             result = load_or_build(cfg_b)
 
         assert result is not None
-        rule_texts = {r.text for r in result.rules}
+        rule_texts = {r.text for r in result.index.rules}
         assert "Project A secret rule" not in rule_texts
         assert "Project B rule" in rule_texts
 

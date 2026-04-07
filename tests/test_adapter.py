@@ -26,6 +26,7 @@ from cuecard.adapters.claude_code import (
 )
 from cuecard.models import (
     Index,
+    LoadedIndex,
     PipelineConfig,
     PipelineResult,
     Provenance,
@@ -151,7 +152,7 @@ class TestAdapterMain:
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
-            patch(f"{_MOD}.load_or_build", return_value=index),
+            patch(f"{_MOD}.load_or_build", return_value=LoadedIndex(index=index)),
             patch(_PIPELINE, return_value=_make_pipeline_result(results)),
             patch(f"{_MOD}.log_retrieval") as mock_log,
         ):
@@ -182,7 +183,7 @@ class TestAdapterMain:
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
-            patch(f"{_MOD}.load_or_build", return_value=index),
+            patch(f"{_MOD}.load_or_build", return_value=LoadedIndex(index=index)),
             patch(_PIPELINE, return_value=_make_pipeline_result([])),
             patch(f"{_MOD}.log_retrieval"),
         ):
@@ -237,7 +238,7 @@ class TestAdapterMain:
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
-            patch(f"{_MOD}.load_or_build", return_value=empty_index),
+            patch(f"{_MOD}.load_or_build", return_value=LoadedIndex(index=empty_index)),
         ):
             mock_stdin.read.return_value = json.dumps(hook_input)
             main()
@@ -287,7 +288,7 @@ class TestAdapterMain:
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
-            patch(f"{_MOD}.load_or_build", return_value=index),
+            patch(f"{_MOD}.load_or_build", return_value=LoadedIndex(index=index)),
             patch(_PIPELINE, return_value=_make_pipeline_result(results)),
             patch(f"{_MOD}.log_retrieval"),
         ):
@@ -319,7 +320,7 @@ class TestAdapterMain:
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
-            patch(f"{_MOD}.load_or_build", return_value=index),
+            patch(f"{_MOD}.load_or_build", return_value=LoadedIndex(index=index)),
             patch(
                 _PIPELINE, return_value=_make_pipeline_result(results),
             ) as mock_pipe,
@@ -360,7 +361,7 @@ class TestAdapterMain:
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
-            patch(f"{_MOD}.load_or_build", return_value=index),
+            patch(f"{_MOD}.load_or_build", return_value=LoadedIndex(index=index)),
             patch(
                 _PIPELINE,
                 return_value=_make_pipeline_result(results, mode="rerank"),
@@ -394,7 +395,7 @@ class TestAdapterMain:
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
-            patch(f"{_MOD}.load_or_build", return_value=index),
+            patch(f"{_MOD}.load_or_build", return_value=LoadedIndex(index=index)),
             patch(_PIPELINE, return_value=_make_pipeline_result([])),
             patch(f"{_MOD}.log_retrieval"),
         ):
@@ -733,7 +734,7 @@ class TestInjectionLabelInOutput:
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
-            patch(f"{_MOD}.load_or_build", return_value=index),
+            patch(f"{_MOD}.load_or_build", return_value=LoadedIndex(index=index)),
             patch(_PIPELINE, return_value=_make_pipeline_result(results)),
             patch(f"{_MOD}.log_retrieval"),
         ):
@@ -823,7 +824,7 @@ class TestHookOutputFormat:
             patch("sys.stdin") as mock_stdin,
             patch(f"{_MOD}.load_config", return_value=config),
             patch("fastembed.TextEmbedding"),
-            patch(f"{_MOD}.load_or_build", return_value=index),
+            patch(f"{_MOD}.load_or_build", return_value=LoadedIndex(index=index)),
             patch(_PIPELINE, return_value=_make_pipeline_result([])),
             patch(f"{_MOD}.log_retrieval"),
         ):

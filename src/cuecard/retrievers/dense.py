@@ -12,6 +12,7 @@ from cuecard.retriever import normalize_query
 from cuecard.retrievers import ScoredCandidate
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
     from fastembed import TextEmbedding
 
     from cuecard.models import Index
@@ -45,6 +46,7 @@ class DenseRetriever:
         *,
         top_k: int = 5,
         threshold: float = 0.30,
+        mask: npt.NDArray[np.bool_] | None = None,
     ) -> list[ScoredCandidate]:
         """Retrieve top-k rules via dense cosine similarity.
 
@@ -76,6 +78,11 @@ class DenseRetriever:
 
         # Dot product == cosine (embeddings are L2-normalized)
         scores = (index.embeddings @ query_vec.T).flatten()
+
+        # Event mask: zero out non-matching embeddings (post-scoring)
+        if mask is not None:
+            scores = scores.copy()
+            scores[~mask] = -np.inf
 
         # Parent collapse: max score per parent rule via rule_map
         num_rules = len(index.rules)

@@ -7,6 +7,9 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
+    import numpy as np
+    import numpy.typing as npt
+
     from cuecard.models import Index, Rule
 
 
@@ -30,6 +33,7 @@ class Retriever(Protocol):
         *,
         top_k: int,
         threshold: float,
+        mask: npt.NDArray[np.bool_] | None = None,
     ) -> list[ScoredCandidate]: ...
 
 

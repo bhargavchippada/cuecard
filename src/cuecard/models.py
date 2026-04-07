@@ -218,6 +218,9 @@ class PipelineResult:
     results: tuple[RankedResult, ...]
     stages: tuple[StageTrace, ...]
     mode: str
+    event: str = ""
+    event_mask_applied: bool = False
+    rules_masked: int = 0
 
 
 class Index:

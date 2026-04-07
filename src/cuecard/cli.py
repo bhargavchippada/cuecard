@@ -400,8 +400,8 @@ def retrieve(
     from cuecard.loader import load_or_build
 
     model = TextEmbedding(model_name=cfg.model_name)
-    idx = load_or_build(cfg, model)  # type: ignore[arg-type]
-    if idx is None:
+    loaded = load_or_build(cfg, model)  # type: ignore[arg-type]
+    if loaded is None:
         err_console.print(_SETUP_NOT_DONE)
         raise typer.Exit(1)
 
@@ -419,7 +419,9 @@ def retrieve(
     from cuecard.pipeline import run_pipeline
 
     pipeline_result = run_pipeline(
-        query, idx, cfg, embedding_model=model, mode=effective_mode,
+        query, loaded.index, cfg,
+        embedding_model=model, mode=effective_mode,
+        affinity=loaded.affinity,
     )
     results: Sequence[RankedResult] = pipeline_result.results
 
@@ -443,13 +445,15 @@ def format_cmd(
     from cuecard.pipeline import run_pipeline
 
     model = TextEmbedding(model_name=cfg.model_name)
-    idx = load_or_build(cfg, model)  # type: ignore[arg-type]
-    if idx is None:
+    loaded = load_or_build(cfg, model)  # type: ignore[arg-type]
+    if loaded is None:
         err_console.print(_SETUP_NOT_DONE)
         raise typer.Exit(1)
 
     pipeline_result = run_pipeline(
-        query, idx, cfg, embedding_model=model, mode=cfg.pipeline.mode,
+        query, loaded.index, cfg,
+        embedding_model=model, mode=cfg.pipeline.mode,
+        affinity=loaded.affinity,
     )
     output = format_rules(pipeline_result.results)
     if output:

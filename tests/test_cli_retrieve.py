@@ -13,6 +13,7 @@ import cuecard.security as security_module
 from cuecard.cli import app
 from cuecard.models import (
     Index,
+    LoadedIndex,
     Provenance,
     RankedResult,
     Rule,
@@ -139,7 +140,7 @@ class TestRetrieve:
 
         mock_model = MagicMock()
         with (
-            patch("cuecard.loader.load_or_build", return_value=idx),
+            patch("cuecard.loader.load_or_build", return_value=LoadedIndex(index=idx)),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch("cuecard.pipeline.run_pipeline", return_value=fake_pipeline),
         ):
@@ -169,7 +170,7 @@ class TestRetrieve:
         )
 
         with (
-            patch("cuecard.loader.load_or_build", return_value=idx),
+            patch("cuecard.loader.load_or_build", return_value=LoadedIndex(index=idx)),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch(
                 "cuecard.pipeline.run_pipeline",
@@ -219,7 +220,7 @@ class TestRetrieve:
         )
 
         with (
-            patch("cuecard.loader.load_or_build", return_value=idx),
+            patch("cuecard.loader.load_or_build", return_value=LoadedIndex(index=idx)),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch(
                 "cuecard.pipeline.run_pipeline",
@@ -244,7 +245,7 @@ class TestRetrieve:
         mock_model = MagicMock()
 
         with (
-            patch("cuecard.loader.load_or_build", return_value=idx),
+            patch("cuecard.loader.load_or_build", return_value=LoadedIndex(index=idx)),
             patch("fastembed.TextEmbedding", return_value=mock_model),
         ):
             result = runner.invoke(
@@ -281,7 +282,7 @@ class TestRetrieve:
         )
 
         with (
-            patch("cuecard.loader.load_or_build", return_value=idx),
+            patch("cuecard.loader.load_or_build", return_value=LoadedIndex(index=idx)),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch(
                 "cuecard.pipeline.run_pipeline",
@@ -323,7 +324,7 @@ class TestFormat:
         )
 
         with (
-            patch("cuecard.loader.load_or_build", return_value=idx),
+            patch("cuecard.loader.load_or_build", return_value=LoadedIndex(index=idx)),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch("cuecard.pipeline.run_pipeline", return_value=fake_pipeline),
         ):
@@ -353,7 +354,7 @@ class TestFormat:
         )
 
         with (
-            patch("cuecard.loader.load_or_build", return_value=idx),
+            patch("cuecard.loader.load_or_build", return_value=LoadedIndex(index=idx)),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch("cuecard.pipeline.run_pipeline", return_value=fake_pipeline),
         ):

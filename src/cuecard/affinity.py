@@ -20,11 +20,15 @@ from cuecard.models import (
 from cuecard.security import ConfigError, scrub_secrets
 
 if TYPE_CHECKING:
-    from cuecard.models import AffinitySource, ResolvedConfig, Rule
+    import numpy as np
+    import numpy.typing as npt
+
+    from cuecard.models import AffinitySource, Index, ResolvedConfig, Rule
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "build_event_mask",
     "build_strict_affinity",
     "infer_affinities",
     "load_affinity",
@@ -33,6 +37,41 @@ __all__ = [
 
 _AFFINITY_VERSION = 1
 _AFFINITY_FILENAME = "affinity.json"
+
+
+def build_event_mask(
+    index: Index,
+    affinity: AffinityIndex,
+    event: str,
+    tool_name: str | None = None,
+) -> npt.NDArray[np.bool_]:
+    """Build boolean mask: True for embeddings whose parent rule matches the event.
+
+    Uses rule_map to map embedding rows -> parent rules -> affinity.
+    O(num_rules) with O(1) affinity lookups via AffinityIndex._lookup dict.
+    Unclassified rules (no affinity entry) pass through unconditionally.
+    """
+    import numpy as np
+
+    rule_mask = np.zeros(len(index.rules), dtype=bool)
+    for i, rule in enumerate(index.rules):
+        rule_affinity = affinity.get(rule)
+        if rule_affinity is None:
+            rule_mask[i] = True
+            continue
+        if event not in rule_affinity.events:
+            continue
+        if (
+            tool_name is None
+            or not rule_affinity.tools
+            or tool_name in rule_affinity.tools
+        ):
+            rule_mask[i] = True
+
+    # Expand rule mask to embedding mask via numpy advanced indexing
+    rule_map_arr = np.array(index.rule_map, dtype=np.intp)
+    emb_mask: npt.NDArray[np.bool_] = rule_mask[rule_map_arr]
+    return emb_mask
 
 
 def _build_affinity_prompt(

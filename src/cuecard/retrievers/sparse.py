@@ -12,6 +12,8 @@ from cuecard.retriever import normalize_query
 from cuecard.retrievers import ScoredCandidate
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from cuecard.models import Index
 
 # Tokenizer: whitespace split + lowercasing + dot/paren/bracket splitting
@@ -105,6 +107,7 @@ class SparseRetriever:
         *,
         top_k: int = 5,
         threshold: float = 0.0,
+        mask: npt.NDArray[np.bool_] | None = None,
     ) -> list[ScoredCandidate]:
         """Retrieve top-k rules via BM25 scoring with parent collapse."""
         if index.size == 0 or index.bm25_corpus is None:
@@ -119,6 +122,12 @@ class SparseRetriever:
             self._corpus_id = corpus_id
         bm25 = self._bm25
         doc_scores = bm25.score(query)
+
+        # Event mask: zero out non-matching entries (post-scoring)
+        if mask is not None:
+            doc_scores_arr = np.array(doc_scores, dtype=np.float64)
+            doc_scores_arr[~mask] = -np.inf
+            doc_scores = doc_scores_arr.tolist()
 
         # Parent collapse: max score per parent rule via rule_map
         num_rules = len(index.rules)

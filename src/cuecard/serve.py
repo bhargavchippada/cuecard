@@ -300,7 +300,8 @@ def start_server(
 
     if index is None:
         from cuecard.loader import load_or_build
-        index = load_or_build(config, embedding_model)  # type: ignore[arg-type]
+        loaded = load_or_build(config, embedding_model)  # type: ignore[arg-type]
+        index = loaded.index if loaded is not None else None
 
     if index is None or index.size == 0:
         msg = "No rules indexed. Run 'cuecard setup' first."

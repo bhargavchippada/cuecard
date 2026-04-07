@@ -15,9 +15,11 @@ from cuecard.models import (
 from cuecard.security import scrub_secrets
 
 if TYPE_CHECKING:
+    import numpy as np
+    import numpy.typing as npt
     from fastembed import TextEmbedding
 
-    from cuecard.models import Index, RankedResult, ResolvedConfig
+    from cuecard.models import AffinityIndex, Index, RankedResult, ResolvedConfig
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +41,9 @@ def run_pipeline(
     *,
     embedding_model: TextEmbedding | None = None,
     mode: str | None = None,
+    event: str = "",
+    tool_name: str = "",
+    affinity: AffinityIndex | None = None,
 ) -> PipelineResult:
     """Execute the multi-stage retrieval pipeline.
 
@@ -48,6 +53,9 @@ def run_pipeline(
         config: Resolved configuration.
         embedding_model: fastembed TextEmbedding for Stage 1.
         mode: Override config mode. If None, uses config.
+        event: Hook event name (e.g. "PreToolUse"). Used for event mask.
+        tool_name: Tool name for event mask filtering.
+        affinity: Affinity index for event mask. If None, no mask applied.
 
     Returns:
         PipelineResult with final results and per-stage traces.
@@ -64,11 +72,26 @@ def run_pipeline(
     """
     effective_mode = _resolve_mode(mode, config)
 
+    # Build event mask if affinity is available and event is specified
+    event_mask: npt.NDArray[np.bool_] | None = None
+    event_mask_applied = False
+    rules_masked = 0
+    if affinity is not None and event:
+        from cuecard.affinity import build_event_mask
+
+        event_mask = build_event_mask(
+            index, affinity, event,
+            tool_name=tool_name if tool_name else None,
+        )
+        event_mask_applied = True
+        rules_masked = int((~event_mask).sum())
+
     stages: list[StageTrace] = []
 
     # Stage 1: always (multi-retriever + fusion)
     results, trace = _run_retrieval_stage(
         query, index, config, effective_mode, embedding_model,
+        mask=event_mask,
     )
     stages.append(trace)
 
@@ -84,7 +107,12 @@ def run_pipeline(
         stages.append(trace)
 
     return PipelineResult(
-        results=tuple(results), stages=tuple(stages), mode=effective_mode,
+        results=tuple(results),
+        stages=tuple(stages),
+        mode=effective_mode,
+        event=event,
+        event_mask_applied=event_mask_applied,
+        rules_masked=rules_masked,
     )
 
 
@@ -111,6 +139,8 @@ def _run_retrieval_stage(
     config: ResolvedConfig,
     effective_mode: str,
     embedding_model: TextEmbedding | None,
+    *,
+    mask: npt.NDArray[np.bool_] | None = None,
 ) -> tuple[list[RankedResult], StageTrace]:
     """Stage 1: multi-retriever + RRF fusion (always runs).
 
@@ -143,7 +173,9 @@ def _run_retrieval_stage(
         max_query_length=config.query_max_length,
     )
     t_dense_start = time.monotonic()
-    dense_results = dense.retrieve(query, index, top_k=top_k, threshold=threshold)
+    dense_results = dense.retrieve(
+        query, index, top_k=top_k, threshold=threshold, mask=mask,
+    )
     t_dense_ms = (time.monotonic() - t_dense_start) * 1000.0
 
     retriever_traces: list[RetrieverTrace] = []
@@ -159,7 +191,7 @@ def _run_retrieval_stage(
             sparse = SparseRetriever()
             t_sparse_start = time.monotonic()
             sparse_results = sparse.retrieve(
-                query, index, top_k=top_k, threshold=0.0,
+                query, index, top_k=top_k, threshold=0.0, mask=mask,
             )
             t_sparse_ms = (time.monotonic() - t_sparse_start) * 1000.0
             all_results.append(sparse_results)
