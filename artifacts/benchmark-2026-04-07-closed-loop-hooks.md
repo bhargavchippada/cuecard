@@ -77,6 +77,24 @@ exceeds 3276 tokens. Fixed by restarting with `-np 1`.
 4. **Noise dropped 33-72%** across all events via LLM reranker
 5. **Latency ~1-1.4s** — acceptable for daemon mode
 
+## E2E Results (Gemma E4B, with expansions, 20% sample, seed=42)
+
+Full pipeline: expansion generation + enriched index + jina-code embeddings + LLM reranker.
+Run via `tools/bench_e2e.py --label gemma-e4b --no-server --sample-ratio 0.2`.
+
+| Event | F2 | PosRecall | Noise | NegSil | p50ms |
+|-------|------|-----------|-------|--------|-------|
+| PreToolUse | 0.780 | 0.789 | 0.247 | 0.852 | 1076 |
+| UserPromptSubmit | 0.722 | 0.636 | 0.289 | 1.000 | 1108 |
+| PostToolUse | 0.597 | 1.000 | 0.627 | 0.000 | 1087 |
+| Stop | 0.844 | 0.875 | 0.260 | 1.000 | 1174 |
+| SubagentStart | 0.667 | 0.625 | 0.400 | 1.000 | 1200 |
+
+**Expansion stats:** 725 total expansions across 166 rules (avg 4.4/rule), generated in 185s.
+
+**Key finding:** UserPromptSubmit NegSil improved from 0.750 (no expansions) to 1.000
+(with expansions) — enriched index helps the LLM reranker discriminate better.
+
 ## Next Steps
 
 1. **Benchmark with event mask** — build affinity index, measure additional noise reduction
