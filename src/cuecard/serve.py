@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from cuecard.models import Index, ResolvedConfig
+    from cuecard.models import AffinityIndex, Index, ResolvedConfig
 
 logger = logging.getLogger(__name__)
 
@@ -158,6 +158,7 @@ class _Handler(BaseHTTPRequestHandler):
 
         result = _process_request(
             data, self._index, self._config, self._embedding_model,
+            affinity=getattr(self, "_affinity", None),
         )
         body = json.dumps(result).encode()
         self.send_response(200)
@@ -191,8 +192,9 @@ def _make_handler(
     index: Index,
     config: ResolvedConfig,
     embedding_model: object,
+    affinity: AffinityIndex | None = None,
 ) -> type[_Handler]:
-    """Create a handler class with the index/config/model bound."""
+    """Create a handler class with the index/config/model/affinity bound."""
     return type(
         "_BoundHandler",
         (_Handler,),
@@ -200,6 +202,7 @@ def _make_handler(
             "_index": index,
             "_config": config,
             "_embedding_model": embedding_model,
+            "_affinity": affinity,
         },
     )
 
@@ -212,6 +215,7 @@ def _process_request(
     index: Index,
     config: ResolvedConfig,
     embedding_model: object,
+    affinity: AffinityIndex | None = None,
 ) -> dict[str, object]:
     """Process a hook payload and return the modified data dict."""
     from cuecard.adapters.claude_code import (
@@ -226,7 +230,7 @@ def _process_request(
 
     event = _detect_event(data)
     handler = _EVENT_HANDLERS.get(event, _handle_pre_tool_use)
-    query, _, event = handler(data)
+    query, tool_name, event = handler(data)
 
     pipeline_mode = getattr(
         getattr(config, "pipeline", None), "mode", "embedding",
@@ -237,6 +241,9 @@ def _process_request(
         query, index, config,
         embedding_model=embedding_model,  # type: ignore[arg-type]
         mode=pipeline_mode,
+        event=event,
+        tool_name=tool_name,
+        affinity=affinity,
     )
     results = pipeline_result.results
     latency_ms = (time.monotonic() - start) * 1000
@@ -298,16 +305,18 @@ def start_server(
         from fastembed import TextEmbedding
         embedding_model = TextEmbedding(model_name=config.model_name)
 
+    affinity: AffinityIndex | None = None
     if index is None:
         from cuecard.loader import load_or_build
         loaded = load_or_build(config, embedding_model)  # type: ignore[arg-type]
         index = loaded.index if loaded is not None else None
+        affinity = loaded.affinity if loaded is not None else None
 
     if index is None or index.size == 0:
         msg = "No rules indexed. Run 'cuecard setup' first."
         raise RuntimeError(msg)
 
-    handler_cls = _make_handler(index, config, embedding_model)
+    handler_cls = _make_handler(index, config, embedding_model, affinity=affinity)
     server = _ReuseHTTPServer(("127.0.0.1", port), handler_cls)
 
     # Write PID file

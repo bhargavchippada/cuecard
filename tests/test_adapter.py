@@ -333,10 +333,9 @@ class TestAdapterMain:
         pipe_args = mock_pipe.call_args
         assert "UserPromptSubmit:" in pipe_args[0][0]
 
-        # Verify log uses UserPromptSubmit as tool_name
+        # Verify log uses empty tool_name for UserPromptSubmit (not a tool)
         log_kwargs = mock_log.call_args
-        assert log_kwargs[1]["tool_name"] == "UserPromptSubmit" or \
-            log_kwargs[0][1] == "UserPromptSubmit"
+        assert log_kwargs[1].get("tool_name", "") == ""
 
         captured = capsys.readouterr()
         output = json.loads(captured.out)
@@ -541,13 +540,13 @@ class TestHandleUserPromptSubmit:
         }
         query, tool_name, event = _handle_user_prompt_submit(data)
         assert query == "UserPromptSubmit: Add authentication to the API"
-        assert tool_name == "UserPromptSubmit"
+        assert tool_name == ""
         assert event == "UserPromptSubmit"
 
     def test_missing_prompt(self) -> None:
         query, tool_name, event = _handle_user_prompt_submit({})
         assert query == "UserPromptSubmit: "
-        assert tool_name == "UserPromptSubmit"
+        assert tool_name == ""
 
     def test_prompt_truncated(self) -> None:
         long_prompt = "z" * 1000

@@ -184,8 +184,16 @@ def _parse_affinity_response(
             if isinstance(tool, str) and tool.strip():
                 inferred_tools.add(tool.strip())
 
-    # Extend explicit annotations (never remove)
-    merged_events = frozenset(inferred_events | explicit_events)
+    # Validate explicit events too (catch TOML typos like "PreToolUes")
+    valid_explicit_events = set()
+    for ev in explicit_events:
+        if ev in KNOWN_HOOK_EVENTS:
+            valid_explicit_events.add(ev)
+        else:
+            logger.warning("Explicit event %r not in KNOWN_HOOK_EVENTS, dropping", ev)
+
+    # Extend explicit annotations (never remove valid ones)
+    merged_events = frozenset(inferred_events | valid_explicit_events)
     merged_tools = frozenset(inferred_tools | explicit_tools)
 
     return merged_events, merged_tools, reasoning
@@ -240,7 +248,7 @@ def infer_affinities(
     """
     backend = "local" if "local" in config.pipeline.mode else "haiku"
     endpoint = config.pipeline.local_endpoint
-    model_name = "local"
+    model_name = "local" if backend == "local" else config.pipeline.haiku_model
 
     if backend == "local":
         try:

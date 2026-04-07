@@ -135,8 +135,8 @@ class SparseRetriever:
         np.maximum.at(parent_scores, list(index.rule_map), doc_scores)
 
         # Threshold filter
-        mask = parent_scores > threshold
-        candidate_parent_idxs = np.where(mask)[0]
+        above_threshold = parent_scores > threshold
+        candidate_parent_idxs = np.where(above_threshold)[0]
 
         if candidate_parent_idxs.size == 0:
             return []

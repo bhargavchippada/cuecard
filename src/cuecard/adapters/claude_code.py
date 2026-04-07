@@ -117,7 +117,7 @@ def _handle_user_prompt_submit(
     prompt_text = _sanitize_field(
         str(data.get("prompt", "")), 500,
     )
-    return f"UserPromptSubmit: {prompt_text}", "UserPromptSubmit", "UserPromptSubmit"
+    return f"UserPromptSubmit: {prompt_text}", "", "UserPromptSubmit"
 
 
 def _handle_subagent_start(

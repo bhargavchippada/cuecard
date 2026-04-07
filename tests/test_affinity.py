@@ -316,6 +316,22 @@ class TestParseAffinityResponse:
         )
         assert tools == frozenset({"Bash"})
 
+    def test_invalid_explicit_event_dropped(self) -> None:
+        """Typo'd explicit event is stripped before merge."""
+        response = json.dumps({
+            "events": ["PreToolUse"],
+            "tools": [],
+            "reasoning": "",
+        })
+        events, _, _ = _parse_affinity_response(
+            response,
+            frozenset({"PreToolUes"}),  # typo in explicit
+            frozenset(),
+        )
+        # Typo is dropped, only valid inferred event survives
+        assert events == frozenset({"PreToolUse"})
+        assert "PreToolUes" not in events
+
 
 # --- _strict_affinity ---
 
