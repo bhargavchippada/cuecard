@@ -2,7 +2,7 @@
 
 > The right rule, at the right moment.
 
-Contextual rule enforcement for AI coding agents. Retrieves relevant user-defined rules via semantic similarity and injects them before every tool call.
+Contextual rule enforcement for AI coding agents. Retrieves relevant user-defined rules via semantic similarity and injects them at every stage — before actions (PreToolUse), after actions (PostToolUse), on user messages (UserPromptSubmit), when spawning subagents (SubagentStart), and at turn end (Stop).
 
 ## Project Structure
 
@@ -15,6 +15,7 @@ cuecard/
 │   ├── prd-v1.md           # PRD v1.2 — core pipeline (converged)
 │   ├── enriched-retrieval-prd.md     # Enriched retrieval design
 │   ├── multi-stage-retrieval-prd.md  # Multi-stage PRD v1.1 (converged)
+│   ├── phase4-closed-loop-hooks-prd.md # Closed-loop hooks PRD v1.2 (converged)
 │   ├── paper-design-rule-rationale.md # Compliance paper design
 │   └── session-20-progress.md        # Current session state
 ├── src/cuecard/            # Core library (agent-agnostic)
@@ -23,7 +24,8 @@ cuecard/
 │   ├── models.py           # Frozen dataclasses (Rule, Provenance, Index, etc.)
 │   ├── config.py           # Load/merge/validate cuecard.toml configs
 │   ├── security.py         # Path validation, secrets scrubbing, permissions
-│   ├── parser.py           # Parse rule files → list[Rule] (dispatch by .txt/.json)
+│   ├── affinity.py         # Event/tool affinity inference, storage, event mask
+│   ├── parser.py           # Parse rule files → list[Rule] (dispatch by .txt/.json/.toml)
 │   ├── indexer.py          # Embed rules via fastembed, build index, rules.json I/O
 │   ├── freshness.py        # mtime + hash checking, full rebuild on change
 │   ├── retriever.py        # query_embed → parent collapse → top-k → dedup
@@ -174,6 +176,19 @@ mutmut verifies that tests actually detect code changes (mutations). 100% line c
 - Metadata v2: stores `rule_map`, `bm25_corpus`, per-rule `expansions` alongside embeddings
 - Backwards compat: v1 metadata auto-synthesizes identity rule_map, bm25_corpus=None
 
+### Affinity Design
+- Rules have event/tool affinity — which hook events and tools they apply to
+- Two modes: `infer` (LLM classifies at index time, default) and `strict` (explicit annotations only)
+- `AffinityIndex` uses O(1) dict lookup (not frozen dataclass — follows `Index` pattern)
+- `LoadedIndex` composite return type wraps `(Index, AffinityIndex | None)`
+- `load_or_build()` returns `LoadedIndex | None` — all call sites destructure
+- Event mask: boolean numpy array applied post-scoring in both dense and sparse retrievers
+- BM25 IDF stats preserved (mask is post-scoring, not pre-filtering)
+- `affinity.json` sidecar with SHA-256 checksum integrity validation
+- `KNOWN_HOOK_EVENTS` canonical constant in `models.py` — single source of truth
+- TOML rule format: `[[rules]]` with optional `events` and `tools` frozenset fields
+- `cuecard migrate` converts .txt → .toml (comments NOT preserved)
+
 ### Expansion Design
 - Rules can have 0-10 expansions (paraphrases, trigger phrases, code patterns)
 - Generated via `cuecard rules expand` using local LLM or Haiku
@@ -295,22 +310,40 @@ max_expansion_length = 200  # Max chars per expansion
 - **Eval infrastructure:** tqdm progress, stratified sampling, bench_models.py script — COMPLETE
 - **E2E benchmarking:** `tools/bench_e2e.py` — each model generates its own expansions AND reranks. Default mode going forward. `bench_models.py` deprecated (shared-corpus comparisons are unfair). Corpora cached at `eval/corpora/enriched_{tier}_{label}/` per model.
 - **Expansion prompt v5:** Reasoning-field prompt for expansions (structured CoT before generating) — COMPLETE
-- **Eval dataset:** 587 fixtures (438 original + 149 mined from 7 real projects)
+- **Eval dataset:** 1121 fixtures (438 original + 149 mined + 36 PostToolUse + 30 Stop + 30 SubagentStart + all migrated with event field)
 - **CLI UX:** `cuecard configure` interactive setup, `cuecard serve` daemon, expand progress bar — COMPLETE
 - **Hook format:** Correct `hookEventName` + `permissionDecision` for PreToolUse, `hook_event_name` input field detection — COMPLETE
 - **Global install:** `uv tool install` support, `cuecard hook` CLI entry point — COMPLETE
 - **Live validation:** Verified agent compliance in real Claude Code sessions — COMPLETE
-- **Phase 4:** Publish — pending
-- **Phase 5:** Multi-source parsing (markdown, YAML, CLAUDE.md) — DRAFT PRD (`artifacts/phase5-multi-source-prd-draft.md`)
+- **Closed-loop hooks (Phase 4):** TOML rule format, event/tool affinity inference, event mask retrieval, 5 hook adapters (PreToolUse/PostToolUse/UserPromptSubmit/SubagentStart/Stop), per-event eval metrics — COMPLETE (1148 tests, 100% coverage)
+  - Phase 1: TOML parser + Rule.events/tools + migrate CLI + KNOWN_HOOK_EVENTS
+  - Phase 2: Affinity inference + storage (AffinityIndex O(1) lookup, LLM fallback to strict)
+  - Phase 3: Event mask in retrieval + LoadedIndex return type + numpy advanced indexing
+  - Phase 4a: Multi-event adapter with scrub_secrets on PostToolUse/SubagentStart/Stop
+  - Phase 4b: Hook registration for all 5 events
+  - Phase 5: Eval corpus migration + new fixtures (PostToolUse/Stop/SubagentStart)
+  - Phase 6: Benchmark with Gemma — pending
+- **Publish:** pending
+- **Multi-source parsing (markdown, YAML, CLAUDE.md):** DRAFT PRD (`artifacts/phase5-multi-source-prd-draft.md`)
 
 ## Event Types
 
-cuecard supports two Claude Code hook events:
+cuecard supports five Claude Code hook events (closed-loop enforcement):
 
-- **PreToolUse**: Triggered before each tool call (Bash, Read, Edit, etc.). Retrieves coding rules.
-- **UserPromptSubmit**: Triggered when the user sends a message. Retrieves workflow/process rules.
+- **PreToolUse**: Before each tool call. PREVENT — inject action constraints.
+- **PostToolUse**: After each tool call. VERIFY — check compliance against output.
+- **UserPromptSubmit**: When user sends a message. GUIDE — process/methodology rules.
+- **SubagentStart**: When a subagent spawns. PROPAGATE — rules for delegated work.
+- **Stop**: When a turn ends. AUDIT — verify rules were followed.
 
-Both event types use the same pipeline. The adapter prefixes queries with the event type (`Bash: git commit` or `UserPromptSubmit: add auth to the API`). The LLM reranker uses event context to discriminate between coding and workflow rules.
+All event types use the same pipeline. The adapter dispatches to per-event handlers that construct queries:
+- PreToolUse: `"{tool_name}: {tool_input[:500]}"`
+- PostToolUse: `"PostToolUse:{tool_name}: {tool_input[:200]} → {scrub_secrets(tool_output[:500])}"`
+- UserPromptSubmit: `"UserPromptSubmit: {prompt[:500]}"`
+- SubagentStart: `"SubagentStart:{agent_type}: {prompt[:500]}"`
+- Stop: `"Stop: {stop_reason[:500]}"` (fallback: "turn completed")
+
+PostToolUse, SubagentStart, and Stop all apply `scrub_secrets()` before query construction.
 
 ### Hook Output Format (CRITICAL)
 
