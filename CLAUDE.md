@@ -254,11 +254,17 @@ The prompt is at a local optimum for both models.
 
 ```bash
 # Recommended: Gemma 4 E4B Q8_0 (default, best all-rounder)
-llama-server -m ~/models/gemma-4-E4B-it-Q8_0.gguf \
-  --port 8081 -ngl 99 -c 16384 --jinja
+llama-server -m /home/turiya/models/gemma-4-E4B-it-Q8_0.gguf \
+  --port 8081 -ngl 99 -c 16384 --jinja -np 5 --reasoning off
 ```
 
 Requires llama.cpp build ≥8672 (gemma4 architecture support added after b8235).
+
+**Key flags:**
+- `--reasoning off` — disables thinking server-side; no need for `chat_template_kwargs` in client code
+- `-np 5` — 5 parallel slots (context split: 16384/5 = 3276 tokens per slot); works with `--reasoning off` because it eliminates the thinking token overhead
+- `-c 16384` — total context; the 13 few-shot reranker system prompt fits within 3276 tokens per slot when reasoning is disabled
+- `--jinja` — required for Gemma's chat template
 
 The same model must handle both expansion generation and reranking — rules out cross-encoder-only models.
 
@@ -385,9 +391,10 @@ llama-server -m ~/models/Qwen3.5-4B-Q4_K_M.gguf \
 ```
 
 Key requirements:
-- `--jinja` flag (NOT `--chat-template chatml`) — needed for `chat_template_kwargs`
-- `-c 16384` — 13 few-shot system prompt needs ~8K tokens
-- Thinking disabled by default via `enable_thinking: false` for ~1s latency
+- `--jinja` flag — required for Gemma's chat template
+- `--reasoning off` — disables thinking server-side, eliminates `chat_template_kwargs` overhead
+- `-np 5` — 5 parallel slots; works with `--reasoning off` (3276 tokens/slot is sufficient)
+- `-c 16384` — 13 few-shot system prompt needs ~4K tokens
 - `_MAX_TOKENS=1024` — reasoning-in-response needs room for 3-5 sentence analysis
 - Reasoning captured in `LLMParseResult.reasoning` for debugging
 - Reranker passes `stop=None` to `call_local()` — no stop sequence for JSON responses
