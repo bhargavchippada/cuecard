@@ -623,3 +623,38 @@ class TestEnrichedRetrievalConfig:
         )
         with pytest.raises(ConfigError, match="sparse_enabled"):
             load_config(home_dir=home)
+
+    def test_affinity_mode_default(self, tmp_path: Path) -> None:
+        """affinity_mode defaults to 'infer'."""
+        home = tmp_path / "home"
+        (home / ".cuecard").mkdir(parents=True)
+        config = load_config(home_dir=home)
+        assert config.affinity_mode == "infer"
+
+    def test_affinity_mode_strict(self, tmp_path: Path) -> None:
+        """affinity_mode can be set to 'strict'."""
+        home = tmp_path / "home"
+        (home / ".cuecard").mkdir(parents=True)
+        (home / ".cuecard" / "config.toml").write_text(
+            '[retrieval]\naffinity_mode = "strict"\n',
+        )
+        config = load_config(home_dir=home)
+        assert config.affinity_mode == "strict"
+
+    def test_affinity_mode_invalid_raises(
+        self, tmp_path: Path,
+    ) -> None:
+        """Invalid affinity_mode raises ConfigError."""
+        home = tmp_path / "home"
+        (home / ".cuecard").mkdir(parents=True)
+        (home / ".cuecard" / "config.toml").write_text(
+            '[retrieval]\naffinity_mode = "bogus"\n',
+        )
+        with pytest.raises(ConfigError, match="affinity_mode"):
+            load_config(home_dir=home)
+
+    def test_extract_flat_affinity_mode(self) -> None:
+        """_extract_flat reads affinity_mode from [retrieval]."""
+        raw = {"retrieval": {"affinity_mode": "strict"}}
+        flat = _extract_flat(raw)
+        assert flat["affinity_mode"] == "strict"

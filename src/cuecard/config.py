@@ -141,8 +141,8 @@ def _extract_flat(raw: dict[str, Any]) -> dict[str, Any]:
     if "allowed_dirs" in sources:
         flat["allowed_dirs"] = sources["allowed_dirs"]
 
-    # Retrieval: fusion_k, sparse_enabled
-    for key in ("fusion_k", "sparse_enabled"):
+    # Retrieval: fusion_k, sparse_enabled, affinity_mode
+    for key in ("fusion_k", "sparse_enabled", "affinity_mode"):
         if key in retrieval:
             flat[key] = retrieval[key]
 
@@ -392,11 +392,12 @@ def load_config(
     )
 
     # Resolve enriched retrieval fields (project wins → global → default)
-    _enriched_defaults: dict[str, int | bool] = {
+    _enriched_defaults: dict[str, int | bool | str] = {
         "fusion_k": 60,
         "sparse_enabled": True,
         "expansion_max_per_rule": 10,
         "expansion_max_length": 200,
+        "affinity_mode": "infer",
     }
     enriched: dict[str, Any] = {}
     for key, default in _enriched_defaults.items():
@@ -411,6 +412,19 @@ def load_config(
     for key in ("fusion_k", "expansion_max_per_rule", "expansion_max_length"):
         _validate_field(key, enriched[key])
     _validate_bool("sparse_enabled", enriched["sparse_enabled"])
+
+    # Validate affinity_mode
+    valid_affinity_modes = ("infer", "strict")
+    affinity_mode = enriched["affinity_mode"]
+    if (
+        not isinstance(affinity_mode, str)
+        or affinity_mode not in valid_affinity_modes
+    ):
+        msg = (
+            f"Config field 'affinity_mode' must be one of"
+            f" {valid_affinity_modes}, got {affinity_mode!r}"
+        )
+        raise ConfigError(msg)
 
     return ResolvedConfig(
         source_paths=tuple(all_paths),
@@ -433,4 +447,5 @@ def load_config(
         sparse_enabled=enriched["sparse_enabled"],
         expansion_max_per_rule=enriched["expansion_max_per_rule"],
         expansion_max_length=enriched["expansion_max_length"],
+        affinity_mode=enriched["affinity_mode"],
     )

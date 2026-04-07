@@ -6,12 +6,16 @@ import numpy as np
 import pytest
 
 from cuecard.models import (
+    AffinityIndex,
     Index,
+    LoadedIndex,
     Provenance,
     RankedResult,
     ResolvedConfig,
     Rule,
+    RuleAffinity,
     SourceMeta,
+    _hash_rule_text,
 )
 
 
@@ -320,3 +324,141 @@ class TestIndex:
                 rule_map=(0, 0),
                 bm25_corpus=("only one",),  # length 1 but rule_map is 2
             )
+
+
+class TestRuleAffinity:
+    def test_frozen(self) -> None:
+        ra = RuleAffinity(
+            events=frozenset({"PreToolUse"}),
+            tools=frozenset({"Bash"}),
+            source="explicit",
+        )
+        with pytest.raises(AttributeError):
+            ra.events = frozenset()  # type: ignore[misc]
+
+    def test_fields(self) -> None:
+        ra = RuleAffinity(
+            events=frozenset({"PreToolUse", "Stop"}),
+            tools=frozenset({"Bash", "Edit"}),
+            source="explicit+inferred",
+            explicit_events=frozenset({"PreToolUse"}),
+            explicit_tools=frozenset({"Bash"}),
+            reasoning="Git operations",
+        )
+        assert ra.events == frozenset({"PreToolUse", "Stop"})
+        assert ra.tools == frozenset({"Bash", "Edit"})
+        assert ra.source == "explicit+inferred"
+        assert ra.explicit_events == frozenset({"PreToolUse"})
+        assert ra.explicit_tools == frozenset({"Bash"})
+        assert ra.reasoning == "Git operations"
+
+    def test_defaults(self) -> None:
+        ra = RuleAffinity(
+            events=frozenset(),
+            tools=frozenset(),
+            source="default",
+        )
+        assert ra.explicit_events == frozenset()
+        assert ra.explicit_tools == frozenset()
+        assert ra.reasoning == ""
+
+    def test_events_tools_are_frozenset(self) -> None:
+        ra = RuleAffinity(
+            events=frozenset({"PreToolUse"}),
+            tools=frozenset({"Bash"}),
+            source="explicit",
+        )
+        assert isinstance(ra.events, frozenset)
+        assert isinstance(ra.tools, frozenset)
+
+
+class TestAffinityIndex:
+    def _make_index(self) -> AffinityIndex:
+        ra = RuleAffinity(
+            events=frozenset({"PreToolUse"}),
+            tools=frozenset({"Bash"}),
+            source="explicit",
+        )
+        text_hash = _hash_rule_text("Never commit secrets")
+        return AffinityIndex(
+            version=1,
+            mode="infer",
+            model="local",
+            affinities=((text_hash, ra),),
+        )
+
+    def test_get_returns_correct_affinity(
+        self, sample_provenance: Provenance,
+    ) -> None:
+        idx = self._make_index()
+        rule = Rule(
+            text="Never commit secrets",
+            provenance=sample_provenance,
+        )
+        result = idx.get(rule)
+        assert result is not None
+        assert result.events == frozenset({"PreToolUse"})
+
+    def test_get_returns_none_for_unknown(
+        self, sample_provenance: Provenance,
+    ) -> None:
+        idx = self._make_index()
+        rule = Rule(
+            text="Unknown rule text",
+            provenance=sample_provenance,
+        )
+        assert idx.get(rule) is None
+
+    def test_get_by_hash(self) -> None:
+        idx = self._make_index()
+        text_hash = _hash_rule_text("Never commit secrets")
+        result = idx.get_by_hash(text_hash)
+        assert result is not None
+        assert result.source == "explicit"
+
+    def test_get_by_hash_unknown(self) -> None:
+        idx = self._make_index()
+        assert idx.get_by_hash("nonexistent") is None
+
+    def test_not_hashable(self) -> None:
+        idx = self._make_index()
+        with pytest.raises(TypeError):
+            hash(idx)
+
+    def test_items_property(self) -> None:
+        idx = self._make_index()
+        items = idx.items
+        assert isinstance(items, tuple)
+        assert len(items) == 1
+
+    def test_repr(self) -> None:
+        idx = self._make_index()
+        r = repr(idx)
+        assert "infer" in r
+        assert "rules=1" in r
+
+    def test_fields(self) -> None:
+        idx = self._make_index()
+        assert idx.version == 1
+        assert idx.mode == "infer"
+        assert idx.model == "local"
+
+
+class TestLoadedIndex:
+    def test_frozen(self, sample_index: Index) -> None:
+        li = LoadedIndex(index=sample_index)
+        with pytest.raises(AttributeError):
+            li.index = sample_index  # type: ignore[misc]
+
+    def test_default_affinity_none(self, sample_index: Index) -> None:
+        li = LoadedIndex(index=sample_index)
+        assert li.affinity is None
+
+    def test_with_affinity(self, sample_index: Index) -> None:
+        aff_idx = AffinityIndex(
+            version=1, mode="strict", model="",
+            affinities=(),
+        )
+        li = LoadedIndex(index=sample_index, affinity=aff_idx)
+        assert li.index is sample_index
+        assert li.affinity is aff_idx

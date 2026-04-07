@@ -21,6 +21,77 @@ KNOWN_HOOK_EVENTS: frozenset[str] = frozenset({
 AffinitySource = Literal["explicit", "inferred", "explicit+inferred", "default"]
 
 
+def _hash_rule_text(text: str) -> str:
+    """Canonical SHA-256 hash of rule text for affinity lookup.
+
+    Uses UTF-8 encoding, lowercase hex, no prefix.
+    Stored in affinity.json as bare hex string (NOT "sha256:..." prefixed).
+    """
+    import hashlib
+
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+@dataclass(frozen=True)
+class RuleAffinity:
+    """Event and tool affinity for a single rule."""
+
+    events: frozenset[str]
+    tools: frozenset[str]
+    source: AffinitySource
+    explicit_events: frozenset[str] = field(default_factory=frozenset)
+    explicit_tools: frozenset[str] = field(default_factory=frozenset)
+    reasoning: str = ""
+
+
+class AffinityIndex:
+    """Per-rule affinity metadata with O(1) lookup by rule text hash.
+
+    Not a frozen dataclass — holds a dict for O(1) lookup.
+    Treated as immutable after construction (same pattern as Index).
+    """
+
+    __slots__ = ("version", "mode", "model", "_lookup", "_items")
+    __hash__ = None  # type: ignore[assignment]
+
+    def __init__(
+        self,
+        version: int,
+        mode: str,
+        model: str,
+        affinities: tuple[tuple[str, RuleAffinity], ...],
+    ) -> None:
+        self.version = version
+        self.mode = mode
+        self.model = model
+        self._items = affinities
+        self._lookup: dict[str, RuleAffinity] = dict(affinities)
+
+    def get(self, rule: Rule) -> RuleAffinity | None:
+        """Look up affinity by rule text hash. O(1)."""
+        return self._lookup.get(_hash_rule_text(rule.text))
+
+    def get_by_hash(self, text_hash: str) -> RuleAffinity | None:
+        """Direct hash lookup (avoids re-hashing when hash is pre-computed)."""
+        return self._lookup.get(text_hash)
+
+    @property
+    def items(self) -> tuple[tuple[str, RuleAffinity], ...]:
+        """Serializable representation."""
+        return self._items
+
+    def __repr__(self) -> str:
+        return f"AffinityIndex(mode={self.mode!r}, rules={len(self._lookup)})"
+
+
+@dataclass(frozen=True)
+class LoadedIndex:
+    """Composite return from load_or_build() — index + optional affinity."""
+
+    index: Index
+    affinity: AffinityIndex | None = None
+
+
 @dataclass(frozen=True)
 class Provenance:
     """Traces a rule back to its source file and location."""
@@ -108,6 +179,7 @@ class ResolvedConfig:
     sparse_enabled: bool = True
     expansion_max_per_rule: int = 10
     expansion_max_length: int = 200
+    affinity_mode: str = "infer"
 
 
 @dataclass(frozen=True)
