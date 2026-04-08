@@ -147,7 +147,7 @@ class TestBuildAffinityPrompt:
         )
         assert "tool_use" in system
         assert "workflow" in system
-        assert "categories" in system
+        assert "category" in system
 
 
 # --- _parse_affinity_response ---
@@ -316,6 +316,53 @@ class TestParseAffinityResponse:
             response, frozenset(), frozenset(),
         )
         assert tools == frozenset({"Bash"})
+
+    def test_singular_category_tool_use(self) -> None:
+        """New prompt format: singular 'category' field."""
+        response = json.dumps({
+            "reasoning": "Constrains Bash commands",
+            "category": "tool_use",
+        })
+        events, _, reasoning = _parse_affinity_response(
+            response, frozenset(), frozenset(),
+        )
+        assert events == frozenset({"PreToolUse", "PostToolUse"})
+        assert "Constrains" in reasoning
+
+    def test_singular_category_workflow(self) -> None:
+        response = json.dumps({
+            "reasoning": "Process decision",
+            "category": "workflow",
+        })
+        events, _, _ = _parse_affinity_response(
+            response, frozenset(), frozenset(),
+        )
+        assert events == frozenset({"UserPromptSubmit", "SubagentStart", "Stop"})
+
+    def test_singular_category_both(self) -> None:
+        response = json.dumps({
+            "reasoning": "Both moments",
+            "category": "both",
+        })
+        events, _, _ = _parse_affinity_response(
+            response, frozenset(), frozenset(),
+        )
+        assert events == frozenset({
+            "PreToolUse", "PostToolUse",
+            "UserPromptSubmit", "SubagentStart", "Stop",
+        })
+
+    def test_singular_category_overrides_categories_list(self) -> None:
+        """Singular 'category' takes precedence over legacy 'categories' list."""
+        response = json.dumps({
+            "reasoning": "",
+            "category": "tool_use",
+            "categories": ["workflow"],
+        })
+        events, _, _ = _parse_affinity_response(
+            response, frozenset(), frozenset(),
+        )
+        assert events == frozenset({"PreToolUse", "PostToolUse"})
 
     def test_invalid_explicit_event_dropped(self) -> None:
         """Typo'd explicit event is stripped before merge."""

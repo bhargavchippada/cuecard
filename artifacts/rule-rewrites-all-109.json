@@ -1,0 +1,656 @@
+[
+  {
+    "original": "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
+    "rewritten": "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Always validate user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source",
+    "rewritten": "When writing API endpoints, form handlers, or CLI parsers: validate all user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source",
+    "action": "rewrite",
+    "category": "both"
+  },
+  {
+    "original": "Never use eval(), exec(), or shell=True in production code \u2014 these execute arbitrary input as code, enabling remote code execution attacks",
+    "rewritten": "When writing code that executes strings as commands: never use eval(), exec(), or shell=True \u2014 these execute arbitrary input as code, enabling remote code execution attacks",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Set file permissions to 0o600 for sensitive files (keys, configs, tokens) \u2014 world-readable secrets are the most common cloud breach vector",
+    "rewritten": "When creating or writing sensitive files (keys, configs, tokens, .env, credentials) via Bash or Write: set file permissions to 0o600 \u2014 world-readable secrets are the most common cloud breach vector",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production",
+    "rewritten": "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow",
+    "rewritten": "Before running a batch LLM pipeline: benchmark a single call first \u2014 a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
+    "rewritten": "When running pip, pip install, pip freeze, or any Python package command (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Run ruff and mypy before committing Python code \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
+    "rewritten": "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Always handle errors explicitly at every level, never silently swallow exceptions \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
+    "rewritten": "When writing or editing try/except, catch, .catch(), or error handling code (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service",
+    "rewritten": "When writing code that opens files, database connections, or HTTP sessions (Edit, Write): always close them after use with context managers (with/async with) \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Use environment variables for configuration, not hardcoded values \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
+    "rewritten": "When writing code with hardcoded URLs, ports, API endpoints, database strings, or feature flags (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Never mutate function arguments or shared state \u2014 mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere",
+    "rewritten": "When writing or editing functions that receive objects, dicts, or lists as arguments (Edit, Write): never mutate function arguments or shared state \u2014 mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless",
+    "rewritten": "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Never force-push to main or master branch \u2014 force-push overwrites other developers' commits with no recovery path",
+    "rewritten": "Never force-push to main or master branch \u2014 force-push overwrites other developers' commits with no recovery path",
+    "action": "keep",
+    "category": "both"
+  },
+  {
+    "original": "Update README when user-facing behavior, setup steps, or dependencies change \u2014 outdated README causes every new contributor to fail on setup",
+    "rewritten": "When editing code that changes CLI commands, API endpoints, setup steps, or adding new dependencies (Edit, Write): update README to match \u2014 outdated README causes every new contributor to fail on setup",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Add .gitignore entries for generated files and build artifacts \u2014 committed build artifacts bloat the repo and cause merge conflicts on every build",
+    "rewritten": "When running build commands (Bash: npm run build, cargo build, python setup.py) or adding new generated output directories: add .gitignore entries for generated files and build artifacts \u2014 committed artifacts bloat the repo and cause merge conflicts on every build",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message",
+    "rewritten": "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message",
+    "action": "keep",
+    "category": "tool_use"
+  },
+  {
+    "original": "Read 2-3 similar files in the codebase before writing new code \u2014 introducing a second pattern where one exists creates permanent inconsistency that confuses every future reader",
+    "rewritten": "Before creating a new file or writing a new module (Write, Edit): read 2-3 similar files in the codebase first \u2014 introducing a second pattern where one exists creates permanent inconsistency that confuses every future reader",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search \u2014 wrong search tool returns irrelevant results and wastes time on false leads",
+    "rewritten": "When searching for library docs, API usage, or code patterns (WebSearch, Bash: grep, mgrep): use Context7 for library docs, Exa for web research, mgrep for semantic code search \u2014 wrong search tool returns irrelevant results and wastes time on false leads",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "When a tool fails, read the full error and search docs before retrying \u2014 blind retries waste time and hide the root cause, while the fix is usually in the error message",
+    "rewritten": "When a tool fails, read the full error and search docs before retrying \u2014 blind retries waste time and hide the root cause, while the fix is usually in the error message",
+    "action": "keep",
+    "category": "both"
+  },
+  {
+    "original": "Keep functions under 50 lines and source files under 800 lines (400 preferred) \u2014 large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes",
+    "rewritten": "When writing or editing functions (Edit, Write): keep functions under 50 lines and source files under 800 lines (400 preferred) \u2014 large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Never use silent fallbacks \u2014 if a pipeline stage falls back to an alternative (backup data source, simpler model, cached result), log it loudly and surface it in the output so the user knows the result is degraded, not just different",
+    "rewritten": "When writing error handling, try/except, or fallback logic (Edit, Write): never use silent fallbacks \u2014 if a pipeline stage falls back to an alternative, log it loudly and surface it in the output so the user knows the result is degraded, not just different",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Log every external API call with latency, status code, and response size \u2014 without observability on external dependencies, production debugging becomes guesswork and intermittent failures go undetected",
+    "rewritten": "When calling external APIs: log every call with latency, status code, and response size \u2014 without observability, production debugging becomes guesswork and intermittent failures go undetected",
+    "action": "rewrite",
+    "category": "both"
+  },
+  {
+    "original": "Cache expensive external data with explicit TTL \u2014 stale cache is a silent data bug that corrupts downstream analysis, and no cache is a performance bug that makes the system unusably slow",
+    "rewritten": "When fetching external data: cache expensive results with explicit TTL \u2014 stale cache corrupts downstream analysis, and no cache makes the system unusably slow",
+    "action": "rewrite",
+    "category": "both"
+  },
+  {
+    "original": "Design module interfaces as Protocols \u2014 concrete implementations can be swapped without refactoring callers, enabling testing with fakes and future provider changes without cascading code changes",
+    "rewritten": "When writing new classes or module interfaces (Edit, Write): design interfaces as Protocols \u2014 concrete implementations can be swapped without refactoring callers, enabling testing with fakes and future provider changes without cascading code changes",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "When composing scores from multiple signals, separate direction from magnitude \u2014 multiplying direction \u00d7 confidence double-counts the signal and produces near-zero results for uncertain inputs",
+    "rewritten": "When composing scores from multiple signals, separate direction from magnitude \u2014 multiplying direction \u00d7 confidence double-counts the signal and produces near-zero results for uncertain inputs",
+    "action": "keep",
+    "category": "both"
+  },
+  {
+    "original": "Use a fallback chain with NaN-safe extraction for external data fields \u2014 API column names are unstable across providers, and float(NaN) is truthy so `value or default` silently passes NaN through",
+    "rewritten": "When writing code that parses API responses or external data (Edit, Write): use a fallback chain with NaN-safe extraction \u2014 API column names are unstable across providers, and float(NaN) is truthy so `value or default` silently passes NaN through",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Make data models accept defaults for optional data sources \u2014 crypto has no income statements, new companies have no history, some providers lack certain fields \u2014 hardcoded required fields silently exclude valid use cases",
+    "rewritten": "When writing data models, schemas, or dataclasses (Edit, Write): make them accept defaults for optional data sources \u2014 crypto has no income statements, new companies have no history \u2014 hardcoded required fields silently exclude valid use cases",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Commit after each implementation phase completes \u2014 atomic tested commits prevent compound debt, enable bisection for regressions, and give reviewers digestible chunks instead of monolithic diffs",
+    "rewritten": "When finishing an implementation phase or milestone (Bash: git commit): commit after each phase \u2014 atomic tested commits prevent compound debt, enable bisection for regressions, and give reviewers digestible chunks instead of monolithic diffs",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Always mock external calls (LLM, APIs, network, subprocesses) in unit tests \u2014 real calls make tests slow, flaky, and non-deterministic; a test suite that takes 18 minutes instead of 1 second because background tasks run real LLM calls is a test suite nobody runs",
+    "rewritten": "When writing unit tests that involve LLM calls, HTTP requests, or subprocesses (Edit, Write test files): always mock external calls \u2014 real calls make tests slow, flaky, and non-deterministic; 18-minute test suites get skipped",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Never let a test trigger a real background task, HTTP request, or subprocess \u2014 mock at the boundary so the test exercises YOUR code, not the external service; if the mock is wrong, that's what integration tests are for",
+    "rewritten": "When writing test functions that call code with background tasks or HTTP clients (Edit, Write test files): never let a test trigger a real background task or HTTP request \u2014 mock at the boundary so the test exercises YOUR code, not the external service",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "The full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests because slow tests get skipped and skipped tests hide bugs",
+    "rewritten": "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Mark tests that require real services with @pytest.mark.slow or @pytest.mark.e2e and exclude them from the default test run \u2014 the default `pytest` invocation must always be fast, deterministic, and offline",
+    "rewritten": "Mark tests that require real services with @pytest.mark.slow or @pytest.mark.e2e and exclude them from the default test run \u2014 the default `pytest` invocation must always be fast, deterministic, and offline",
+    "action": "keep",
+    "category": "tool_use"
+  },
+  {
+    "original": "If a single test takes more than 1 second, it is either testing too much or hitting a real service \u2014 split it or mock the slow dependency",
+    "rewritten": "If a single test takes more than 1 second, it is either testing too much or hitting a real service \u2014 split it or mock the slow dependency",
+    "action": "keep",
+    "category": "both"
+  },
+  {
+    "original": "Never use time.sleep() in tests to wait for async operations \u2014 use mock clocks, manual event triggers, or synchronous test helpers instead, because sleep-based tests are both slow and flaky",
+    "rewritten": "When writing test code with async operations or waits (Edit, Write test files): never use time.sleep() \u2014 use mock clocks, manual event triggers, or synchronous test helpers instead, because sleep-based tests are both slow and flaky",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "When using llama-server with -np N parallel slots, total context is divided by N \u2014 ensure every prompt fits within (total_ctx / np) tokens per slot, because exceeding it returns a cryptic 400 error with no useful diagnostic",
+    "rewritten": "When using llama-server with -np N parallel slots, total context is divided by N \u2014 ensure every prompt fits within (total_ctx / np) tokens per slot, because exceeding it returns a cryptic 400 error with no useful diagnostic",
+    "action": "keep",
+    "category": "both"
+  },
+  {
+    "original": "Verify the daemon/fast path exercises the same code paths as the inline/slow path \u2014 daemon shortcuts silently bypass features (event masks, affinity filtering, tool_name routing) that work perfectly in direct mode, making the core feature inoperative in production",
+    "rewritten": "When writing or modifying daemon/server code that provides a fast path (Edit, Write serve.py, daemon code): verify the fast path exercises the same code paths as the inline path \u2014 daemon shortcuts silently bypass features that work in direct mode, making core features inoperative in production",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "When extending a system to support new event types or modes, grep for every call site that dispatches on the old set \u2014 hardcoded event lists (e.g. a 2-event frozenset) silently reject new events instead of erroring, and the failure appears as \"feature doesn't work\" not \"event rejected\"",
+    "rewritten": "When extending a system to support new event types or modes, grep for every call site that dispatches on the old set \u2014 hardcoded event lists (e.g. a 2-event frozenset) silently reject new events instead of erroring, and the failure appears as \"feature doesn't work\" not \"event rejected\"",
+    "action": "keep",
+    "category": "both"
+  },
+  {
+    "original": "When LLM JSON parsing fails, retry up to 2 times before falling back \u2014 intermittent parse errors from code fences or formatting are recovered by a simple retry; three consecutive failures indicate a prompt problem, not a fluke",
+    "rewritten": "When LLM JSON parsing fails, retry up to 2 times before falling back \u2014 intermittent parse errors from code fences or formatting are recovered by a simple retry; three consecutive failures indicate a prompt problem, not a fluke",
+    "action": "keep",
+    "category": "both"
+  },
+  {
+    "original": "Always create a new branch for feature work \u2014 working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation",
+    "rewritten": "When starting feature work (Bash: git checkout, git branch): always create a new branch \u2014 working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse",
+    "rewritten": "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Enable CSRF protection on all forms and state-changing endpoints \u2014 without it, malicious sites can trigger actions on behalf of authenticated users via forged requests",
+    "rewritten": "When writing form handlers or state-changing API endpoints (Edit, Write): enable CSRF protection \u2014 without it, malicious sites can trigger actions on behalf of authenticated users via forged requests",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants \u2014 unnamed numbers scattered through code are impossible to find, update consistently, or understand the intent of",
+    "rewritten": "When writing code with literal numbers: extract magic numbers into named constants \u2014 unnamed numbers scattered through code are impossible to find, update consistently, or understand",
+    "action": "rewrite",
+    "category": "both"
+  },
+  {
+    "original": "No console.log or print debug statements in production code \u2014 debug output clutters logs, leaks internal state, and makes real errors harder to find in production monitoring",
+    "rewritten": "When writing or editing code (Edit, Write): remove console.log, print(), and debug statements before committing \u2014 debug output clutters logs, leaks internal state, and makes real errors harder to find in production monitoring",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Prefer immutable data structures over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency",
+    "rewritten": "When writing data structures, classes, or containers (Edit, Write): prefer immutable data structures (frozen dataclasses, tuples, frozensets) over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Review all dependencies for known vulnerabilities before adding \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for",
+    "rewritten": "When adding new dependencies (Bash: uv add, npm install, pip install, cargo add): review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Rotate any secrets that may have been exposed \u2014 exposed credentials remain valid until rotated, giving attackers a persistent access window that widens with every hour of delay",
+    "rewritten": "When discovering exposed credentials in code, logs, or git history (Bash: git log, git diff, Read): rotate any secrets that may have been exposed \u2014 exposed credentials remain valid until rotated, giving attackers a persistent access window",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
+    "rewritten": "When running git commit (Bash): run quality checks (ruff, mypy, pytest) before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Sanitize all HTML output to prevent XSS \u2014 unsanitized user content rendered as HTML lets attackers inject scripts that steal session tokens, redirect users, or deface the page",
+    "rewritten": "When writing code that renders user content as HTML (Edit, Write templates, frontend components): sanitize all HTML output \u2014 unsanitized user content lets attackers inject scripts that steal session tokens, redirect users, or deface the page",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread",
+    "rewritten": "When writing concurrent I/O code (Edit, Write) with threads, threading.Thread, or ThreadPoolExecutor: use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
+    "rewritten": "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input",
+    "rewritten": "When writing database queries (Edit, Write) with string formatting, f-strings, or concatenation: use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime",
+    "rewritten": "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
+    "rewritten": "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling",
+    "rewritten": "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling",
+    "action": "keep",
+    "category": "both"
+  },
+  {
+    "original": "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion",
+    "rewritten": "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion",
+    "action": "keep",
+    "category": "tool_use"
+  },
+  {
+    "original": "Monitor agent context usage in tmux \u2014 compact when context remaining drops below 67 percent",
+    "rewritten": "Monitor agent context usage in tmux \u2014 compact when context remaining drops below 67 percent",
+    "action": "keep",
+    "category": "both"
+  },
+  {
+    "original": "Write tests before implementation following TDD red-green-refactor cycle",
+    "rewritten": "When starting a new feature or fixing a bug (Edit, Write): write tests before implementation following TDD red-green-refactor cycle \u2014 test-first development catches design issues early and guarantees coverage",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "After the parallel LLM phase, retry failed items sequentially one at a time to avoid rate limiting contention",
+    "rewritten": "After the parallel LLM phase, retry failed items sequentially one at a time to avoid rate limiting contention",
+    "action": "keep",
+    "category": "both"
+  },
+  {
+    "original": "After every batch LLM response, diff sent IDs against returned IDs to detect silently dropped items",
+    "rewritten": "After every batch LLM response, diff sent IDs against returned IDs to detect silently dropped items",
+    "action": "keep",
+    "category": "both"
+  },
+  {
+    "original": "Use semantic similarity (embeddings or LLMs) for text deduplication \u2014 never use lexical or word-based matching",
+    "rewritten": "When writing deduplication logic for text data (Edit, Write): use semantic similarity (embeddings or LLMs) \u2014 never use lexical or word-based matching, because paraphrases and synonyms are invisible to string comparison",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Save LLM-generated artifacts (pickles, checkpoints) before overwriting \u2014 never destroy a baseline during experiments",
+    "rewritten": "When about to overwrite model artifacts, pickles, checkpoints, or baseline files (Bash: mv, cp, Write): save LLM-generated artifacts before overwriting \u2014 never destroy a baseline during experiments, because non-deterministic pipelines cannot reproduce the exact same output",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "For new libraries or APIs, research alternatives, verify documentation, audit maintenance status, and benchmark before adopting",
+    "rewritten": "When adding a new library or API dependency (Bash: uv add, npm install, pip install): research alternatives, verify documentation, audit maintenance status, and benchmark before adopting \u2014 unvetted dependencies become permanent tech debt",
+    "action": "rewrite",
+    "category": "tool_use"
+  },
+  {
+    "original": "Validate every phase against real data before moving to the next \u2014 synthetic tests pass when the real thing fails because mocks diverge from production behavior",
+    "rewritten": "Before moving to the next implementation phase: validate the current phase against real data \u2014 synthetic tests pass when the real thing fails because mocks diverge from production",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Establish baseline metrics before implementing any improvement \u2014 without before/after numbers you cannot distinguish real improvement from noise",
+    "rewritten": "Before implementing any improvement or optimization: establish baseline metrics first \u2014 without before/after numbers you cannot distinguish real improvement from noise",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Update CLAUDE.md when project structure, architecture, or conventions change \u2014 without this, the next session starts with stale context and makes wrong assumptions",
+    "rewritten": "After changing project structure, architecture, or conventions: update CLAUDE.md \u2014 without this, the next session starts with stale context and makes wrong assumptions",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Review PRDs with multiple specialist subagents (architect, security, database, code quality) in parallel \u2014 a single reviewer misses entire categories of issues that other specialists catch immediately",
+    "rewritten": "When reviewing a PRD or design document: use multiple specialist subagents (architect, security, code quality) in parallel \u2014 a single reviewer misses entire categories of issues",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Keep running review rounds until two consecutive rounds produce zero CRITICAL, HIGH, or MEDIUM findings \u2014 fixed round counts stop too early when issues cascade, and too late when code is already clean",
+    "rewritten": "After each review round: keep running until two consecutive rounds produce zero CRITICAL/HIGH/MEDIUM findings \u2014 fixed round counts stop too early or too late",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Search GitHub for existing implementations and proven patterns before writing anything from scratch \u2014 80% of problems are already solved, and battle-tested code has fewer bugs than fresh code",
+    "rewritten": "Before writing new utility code or implementing a common pattern: search GitHub first \u2014 80% of problems are already solved with battle-tested code",
+    "action": "rewrite",
+    "category": "both"
+  },
+  {
+    "original": "Fix the pipeline stage that produces bad output, do not patch downstream \u2014 downstream patches accumulate into unmaintainable complexity while the root cause keeps generating bad data",
+    "rewritten": "When debugging poor output quality: fix the upstream pipeline stage, not downstream patches \u2014 downstream fixes accumulate into unmaintainable complexity",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Each pipeline stage must be independently high quality \u2014 relying on downstream stages to rescue upstream failures means any stage failure cascades through the entire system",
+    "rewritten": "When building multi-stage pipelines: ensure each stage is independently high quality \u2014 downstream stages cannot rescue upstream failures",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "If a tool call or LLM response takes 10x longer than expected, investigate immediately \u2014 normalized slowness compounds across thousands of calls into hours of wasted time",
+    "rewritten": "When a tool call or LLM response takes 10x longer than expected: investigate immediately \u2014 normalized slowness compounds across thousands of calls",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Never trust LLM-generated confidence scores \u2014 use evidence counts, ensemble agreement, or historical track record instead, because LLMs produce plausible numbers that are poorly calibrated and create false certainty",
+    "rewritten": "When an LLM outputs confidence scores or probabilities: don't trust them \u2014 use evidence counts, ensemble agreement, or track record instead",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Spike-test risky integrations before building on them \u2014 if a dependency is unvalidated (new library, untested API, custom wrapper), spend 2 hours proving it works before designing an architecture around it, because discovering it fails after building 3 layers on top wastes days",
+    "rewritten": "Before building on an unvalidated dependency: spike-test it for 2 hours \u2014 discovering a library fails after building 3 layers on top wastes days",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Prefer mature extensible frameworks over building from scratch \u2014 if LangGraph, FastAPI, or similar battle-tested projects provide the feature (routing, checkpointing, streaming), use them even if a simpler stdlib approach works today, because refactoring from simple to framework later costs more than starting with the framework",
+    "rewritten": "When choosing between a simple stdlib approach and a framework (LangGraph, FastAPI): prefer the framework \u2014 refactoring from simple to framework later costs more",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Reuse popular open-source components for each layer of the system \u2014 only build custom code for what doesn't exist, because mature projects provide stability, community support, and extensibility that hand-rolled code cannot match",
+    "rewritten": "When building system components: reuse popular open-source projects \u2014 only build custom code for what doesn't exist; mature projects provide stability and community support",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Always test with real external data after mocked tests pass \u2014 NaN values, missing columns, empty strings, and API format differences only surface with live data, never with synthetic fixtures",
+    "rewritten": "After mocked tests pass: test with real external data \u2014 NaN values, missing columns, and API format differences only surface with live data",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Set subagent scope boundaries and terminate stale agents \u2014 an unbounded reviewer will find infinite speculative findings in any document, consuming context without improving quality",
+    "rewritten": "When launching subagents: set explicit scope boundaries and kill stale ones \u2014 unbounded reviewers find infinite speculative findings",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Audit your ground truth before blaming the model \u2014 wrong test expectations and fixture errors are indistinguishable from model failures, and removing wrong expectations is a free quality improvement with zero code change",
+    "rewritten": "When model predictions look wrong: audit the ground truth first \u2014 wrong fixture expectations are indistinguishable from model failures, and removing them is a free quality improvement",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Write rules and instructions that explain consequences, not just commands \u2014 agents follow rules they understand (\"without Enter, text is never submitted\") but ignore rules that just say what to do (\"always send Enter\")",
+    "rewritten": "When writing rules or instructions for agents: explain consequences, not just commands \u2014 agents follow rules they understand but ignore rules that just say what to do",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Control your evaluation methodology before trusting results \u2014 if you benchmark model A against model B's artifacts, model B wins by default; always evaluate the full pipeline end-to-end with each model generating its own inputs",
+    "rewritten": "Before trusting benchmark results: verify the evaluation methodology \u2014 if you benchmark model A against model B's artifacts, model B wins by default",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Run convergence reviews (code + security agents in parallel) after each implementation milestone \u2014 a single end-of-project review misses bugs that compound across phases, while per-phase reviews catch them when they're cheap to fix",
+    "rewritten": "After each implementation milestone: run convergence reviews with parallel code + security agents \u2014 per-phase reviews catch bugs when they're cheap to fix",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Run convergence reviews on PRD changes too, not just code \u2014 a design gap that survives review becomes an implementation bug that survives testing, because every downstream artifact inherits upstream ambiguity",
+    "rewritten": "After revising a PRD or design document: run convergence reviews \u2014 design gaps that survive review become implementation bugs that survive testing",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "After each milestone, create a comprehensive test plan before testing \u2014 the test plan itself should be reviewed by subagents (architect for coverage gaps, security for attack vectors, code quality for edge cases) because an incomplete test plan produces false confidence",
+    "rewritten": "Before testing a completed milestone: create a comprehensive test plan reviewed by subagents \u2014 an incomplete test plan produces false confidence",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Follow the three-layer quality gate: PRD + reviews \u2192 Implementation + reviews \u2192 Test plan + reviews \u2014 skipping any layer compounds risk; a reviewed PRD catches design gaps, reviewed code catches bugs, a reviewed test plan catches blind spots that both missed",
+    "rewritten": "For any significant feature: follow the three-layer gate \u2014 PRD + reviews, then implementation + reviews, then test plan + reviews \u2014 skipping any layer compounds risk",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Put reasoning BEFORE decision in LLM JSON output format \u2014 when the signal/action field comes first, the model commits to a default (e.g. \"hold\") before thinking; when reasoning comes first, the model analyzes the data and makes an informed decision, producing dramatically better outputs without needing thinking mode",
+    "rewritten": "When choosing LLM reasoning mode: thinking mode costs 10x but is most decisive; reasoning-first JSON recovers 80% of quality at 3x speed \u2014 match compute to difficulty",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Use \"reasoning-first\" JSON: {\"reasoning\": \"...\", \"signal\": \"...\"} not {\"signal\": \"...\", \"reasoning\": \"...\"} \u2014 field order in JSON prompts determines whether the model thinks before deciding; this is the cheapest quality upgrade available",
+    "rewritten": "Use \"reasoning-first\" JSON: {\"reasoning\": \"...\", \"signal\": \"...\"} not {\"signal\": \"...\", \"reasoning\": \"...\"} \u2014 field order in JSON prompts determines whether the model thinks before deciding; this is the cheapest quality upgrade available",
+    "action": "keep",
+    "category": "workflow"
+  },
+  {
+    "original": "Thinking mode (hidden CoT) produces the most decisive outputs but costs 10x tokens and time \u2014 reasoning-first JSON format recovers 80% of the quality at 3x the speed; use thinking for live analysis, reasoning-first for backtesting",
+    "rewritten": "When choosing LLM reasoning mode: thinking mode costs 10x but is most decisive; reasoning-first JSON recovers 80% of quality at 3x speed \u2014 match compute to difficulty",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Always include an example JSON object in the prompt \u2014 models that see the exact format they should produce have near-zero parse errors; without an example, they improvise with markdown fences and free text",
+    "rewritten": "Always include an example JSON object in the prompt \u2014 models that see the exact format they should produce have near-zero parse errors; without an example, they improvise with markdown fences and free text",
+    "action": "keep",
+    "category": "workflow"
+  },
+  {
+    "original": "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
+    "rewritten": "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
+    "action": "keep",
+    "category": "workflow"
+  },
+  {
+    "original": "SIMPLE tasks (1-2 files, low risk) can proceed without a plan \u2014 just implement and verify",
+    "rewritten": "When receiving a task touching 1-2 files (config change, small fix): proceed without a plan \u2014 simple tasks don't need overhead",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "MEDIUM tasks (3-10 files) require an inline plan, research, tests alongside code, and agent review after implementation",
+    "rewritten": "When receiving a task touching 3-10 files: create an inline plan with research, write tests alongside code, and run agent review after \u2014 medium tasks need structure",
+    "action": "rewrite",
+    "category": "both"
+  },
+  {
+    "original": "COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins",
+    "rewritten": "When receiving a task touching 10+ files or requiring new architecture: write a full PRD first \u2014 complex tasks without specs produce rework and missed requirements",
+    "action": "rewrite",
+    "category": "both"
+  },
+  {
+    "original": "Use the planner agent for complex features, architect agent for system design decisions, tdd-guide agent for new features and bug fixes",
+    "rewritten": "When starting complex features: use the planner agent; for system design: use architect; for new features/bugs: use tdd-guide \u2014 match the agent to the task type",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Launch parallel subagents for independent review tasks \u2014 never run them sequentially when they can run simultaneously",
+    "rewritten": "When multiple independent review or analysis tasks exist: launch parallel subagents \u2014 sequential execution wastes time when tasks don't depend on each other",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
+    "rewritten": "After writing code: run 3 parallel review agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Run iterative PRD reviews until a round comes back clean \u2014 typical convergence is 4 rounds",
+    "rewritten": "When reviewing PRDs: iterate rounds with specialist agents until a round comes back clean \u2014 each round finds issues at a different depth",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Manually inspect LLM output after every classification wave \u2014 read actual output, do not trust confidence scores",
+    "rewritten": "Manually inspect LLM output after every classification wave \u2014 read actual output, do not trust confidence scores",
+    "action": "keep",
+    "category": "both"
+  },
+  {
+    "original": "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions",
+    "rewritten": "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions",
+    "action": "keep",
+    "category": "workflow"
+  },
+  {
+    "original": "Never build infrastructure around unproven techniques \u2014 test hypotheses in controlled experiments first, implement only winners",
+    "rewritten": "Never build infrastructure around unproven techniques \u2014 test hypotheses in controlled experiments first, implement only winners",
+    "action": "keep",
+    "category": "workflow"
+  },
+  {
+    "original": "Use lightweight deterministic approaches first, add LLM stages only when they demonstrably improve quality",
+    "rewritten": "Use lightweight deterministic approaches first, add LLM stages only when they demonstrably improve quality",
+    "action": "keep",
+    "category": "workflow"
+  },
+  {
+    "original": "Store all predictions, reasoning, and grounding in benchmark results for later reanalysis \u2014 not just numeric scores",
+    "rewritten": "When saving benchmark results: store predictions, reasoning, and grounding \u2014 not just numeric scores \u2014 for later reanalysis when methodology changes",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Filter pipeline noise at multiple independent stages with configurable thresholds \u2014 no single filter point",
+    "rewritten": "When building retrieval pipelines: filter noise at multiple independent stages with configurable thresholds \u2014 no single filter point can handle all query types",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "When schema or cardinality changes, audit every consumer (views, queries, CLI, exports, tests) before implementing",
+    "rewritten": "When schema or cardinality changes, audit every consumer (views, queries, CLI, exports, tests) before implementing",
+    "action": "keep",
+    "category": "workflow"
+  },
+  {
+    "original": "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
+    "rewritten": "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
+    "action": "keep",
+    "category": "workflow"
+  },
+  {
+    "original": "When running A/B benchmark comparisons on LLM artifacts, use the same pre-built artifact and change only one variable",
+    "rewritten": "When running A/B benchmark comparisons on LLM artifacts, use the same pre-built artifact and change only one variable",
+    "action": "keep",
+    "category": "workflow"
+  },
+  {
+    "original": "Run the original paper code first when reproducing published results \u2014 do not theorize about score gaps without evidence",
+    "rewritten": "When reproducing published results: run the original paper code first \u2014 do not theorize about score gaps without evidence from the reference implementation",
+    "action": "rewrite",
+    "category": "workflow"
+  },
+  {
+    "original": "Score gaps between models on routine tasks usually indicate code or config differences, not model quality differences",
+    "rewritten": "Score gaps between models on routine tasks usually indicate code or config differences, not model quality differences",
+    "action": "keep",
+    "category": "workflow"
+  },
+  {
+    "original": "After 2 failed fix attempts on the same error, stop and ask the user for guidance instead of spiraling",
+    "rewritten": "After 2 failed fix attempts on the same error, stop and ask the user for guidance instead of spiraling",
+    "action": "keep",
+    "category": "workflow"
+  }
+]

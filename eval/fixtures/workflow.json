@@ -8,7 +8,7 @@
       "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "easy",
     "event": "UserPromptSubmit"
@@ -18,11 +18,11 @@
     "query": "UserPromptSubmit: run code review on the changes",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
-      "Keep running review rounds until two consecutive rounds produce zero CRITICAL, HIGH, or MEDIUM findings \u2014 fixed round counts stop too early when issues cascade, and too late when code is already clean"
+      "After writing code: run 3 parallel review agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
+      "After each review round: keep running until two consecutive rounds produce zero CRITICAL/HIGH/MEDIUM findings — fixed round counts stop too early or too late"
     ],
     "should_not_match": [
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow"
+      "Before running a batch LLM pipeline: benchmark a single call first — a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow"
     ],
     "difficulty": "easy",
     "event": "UserPromptSubmit"
@@ -32,12 +32,11 @@
     "query": "UserPromptSubmit: write the tests first then implement",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Write tests before implementation following TDD red-green-refactor cycle",
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production",
-      "Always mock external calls (LLM, APIs, network, subprocesses) in unit tests \u2014 real calls make tests slow, flaky, and non-deterministic; a test suite that takes 18 minutes instead of 1 second because background tasks run real LLM calls is a test suite nobody runs"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code — uncovered code is untested code, and untested code breaks silently in production"
     ],
     "should_not_match": [
-      "Fix the pipeline stage that produces bad output, do not patch downstream \u2014 downstream patches accumulate into unmaintainable complexity while the root cause keeps generating bad data"
+      "When debugging poor output quality: fix the upstream pipeline stage, not downstream patches — downstream fixes accumulate into unmaintainable complexity"
     ],
     "difficulty": "easy",
     "event": "UserPromptSubmit"
@@ -47,10 +46,7 @@
     "query": "UserPromptSubmit: commit and push",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless",
-      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
-      "Commit after each implementation phase completes \u2014 atomic tested commits prevent compound debt, enable bisection for regressions, and give reviewers digestible chunks instead of monolithic diffs",
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit — catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
@@ -63,11 +59,10 @@
     "query": "UserPromptSubmit: update the docs",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Update CLAUDE.md when project structure, architecture, or conventions change \u2014 without this, the next session starts with stale context and makes wrong assumptions",
-      "Update README when user-facing behavior, setup steps, or dependencies change \u2014 outdated README causes every new contributor to fail on setup"
+      "After changing project structure, architecture, or conventions: update CLAUDE.md — without this, the next session starts with stale context and makes wrong assumptions"
     ],
     "should_not_match": [
-      "Write tests before implementation following TDD red-green-refactor cycle"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "difficulty": "easy",
     "event": "UserPromptSubmit"
@@ -80,7 +75,7 @@
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
     ],
     "should_not_match": [
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow"
+      "Before running a batch LLM pipeline: benchmark a single call first — a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow"
     ],
     "difficulty": "easy",
     "event": "UserPromptSubmit"
@@ -90,7 +85,7 @@
     "query": "UserPromptSubmit: launch the review agents in parallel",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Launch parallel subagents for independent review tasks \u2014 never run them sequentially when they can run simultaneously"
+      "When multiple independent review or analysis tasks exist: launch parallel subagents — sequential execution wastes time when tasks don't depend on each other"
     ],
     "should_not_match": [
       "Use lightweight deterministic approaches first, add LLM stages only when they demonstrably improve quality"
@@ -103,11 +98,10 @@
     "query": "UserPromptSubmit: run a quick benchmark before the full pipeline",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow",
-      "If a tool call or LLM response takes 10x longer than expected, investigate immediately \u2014 normalized slowness compounds across thousands of calls into hours of wasted time"
+      "Before implementing any improvement or optimization: establish baseline metrics first — without before/after numbers you cannot distinguish real improvement from noise"
     ],
     "should_not_match": [
-      "Manually inspect LLM output after every classification wave \u2014 read actual output, do not trust confidence scores"
+      "Manually inspect LLM output after every classification wave — read actual output, do not trust confidence scores"
     ],
     "difficulty": "easy",
     "event": "UserPromptSubmit"
@@ -117,10 +111,10 @@
     "query": "UserPromptSubmit: check ralphs context usage",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Monitor agent context usage in tmux \u2014 compact when context remaining drops below 67 percent"
+      "Monitor agent context usage in tmux — compact when context remaining drops below 67 percent"
     ],
     "should_not_match": [
-      "Establish baseline metrics before implementing any improvement \u2014 without before/after numbers you cannot distinguish real improvement from noise"
+      "Before implementing any improvement or optimization: establish baseline metrics first — without before/after numbers you cannot distinguish real improvement from noise"
     ],
     "difficulty": "easy",
     "event": "UserPromptSubmit"
@@ -130,10 +124,11 @@
     "query": "UserPromptSubmit: do a security review before I commit",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
+      "After writing code: run 3 parallel review agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit — catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [
-      "Use semantic similarity (embeddings or LLMs) for text deduplication \u2014 never use lexical or word-based matching"
+      "When writing deduplication logic for text data (Edit, Write): use semantic similarity (embeddings or LLMs) — never use lexical or word-based matching, because paraphrases and synonyms are invisible to string comparison"
     ],
     "difficulty": "easy",
     "event": "UserPromptSubmit"
@@ -142,39 +137,37 @@
     "id": "wf-easy-search-existing",
     "query": "UserPromptSubmit: search github for existing implementations before we write this",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Search GitHub for existing implementations and proven patterns before writing anything from scratch \u2014 80% of problems are already solved, and battle-tested code has fewer bugs than fresh code"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Run iterative PRD reviews until a round comes back clean \u2014 typical convergence is 4 rounds"
+      "When reviewing PRDs: iterate rounds with specialist agents until a round comes back clean — each round finds issues at a different depth"
     ],
-    "difficulty": "easy",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "wf-easy-look-at-patterns",
     "query": "UserPromptSubmit: read the existing code patterns before writing the new module",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Read 2-3 similar files in the codebase before writing new code \u2014 introducing a second pattern where one exists creates permanent inconsistency that confuses every future reader"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
     ],
-    "difficulty": "easy",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "wf-easy-prd-review",
     "query": "UserPromptSubmit: review the PRD with multiple agents",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Review PRDs with multiple specialist subagents (architect, security, database, code quality) in parallel \u2014 a single reviewer misses entire categories of issues that other specialists catch immediately",
-      "Run iterative PRD reviews until a round comes back clean \u2014 typical convergence is 4 rounds",
-      "Run convergence reviews on PRD changes too, not just code \u2014 a design gap that survives review becomes an implementation bug that survives testing, because every downstream artifact inherits upstream ambiguity"
+      "When reviewing a PRD or design document: use multiple specialist subagents (architect, security, code quality) in parallel — a single reviewer misses entire categories of issues",
+      "When reviewing PRDs: iterate rounds with specialist agents until a round comes back clean — each round finds issues at a different depth",
+      "After revising a PRD or design document: run convergence reviews — design gaps that survive review become implementation bugs that survive testing"
     ],
     "should_not_match": [
-      "Write tests before implementation following TDD red-green-refactor cycle"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "difficulty": "easy",
     "event": "UserPromptSubmit"
@@ -184,11 +177,11 @@
     "query": "UserPromptSubmit: check the classification output manually",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Manually inspect LLM output after every classification wave \u2014 read actual output, do not trust confidence scores",
-      "Never trust LLM-generated confidence scores \u2014 use evidence counts, ensemble agreement, or historical track record instead, because LLMs produce plausible numbers that are poorly calibrated and create false certainty"
+      "Manually inspect LLM output after every classification wave — read actual output, do not trust confidence scores",
+      "When an LLM outputs confidence scores or probabilities: don't trust them — use evidence counts, ensemble agreement, or track record instead"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "easy",
     "event": "UserPromptSubmit"
@@ -198,10 +191,10 @@
     "query": "UserPromptSubmit: test this against real data not just fixtures",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Validate every phase against real data before moving to the next \u2014 synthetic tests pass when the real thing fails because mocks diverge from production behavior"
+      "Before moving to the next implementation phase: validate the current phase against real data — synthetic tests pass when the real thing fails because mocks diverge from production"
     ],
     "should_not_match": [
-      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting \u2014 never destroy a baseline during experiments"
+      "When about to overwrite model artifacts or baseline files: save a copy first — non-deterministic pipelines cannot reproduce the exact same output"
     ],
     "difficulty": "easy",
     "event": "UserPromptSubmit"
@@ -210,50 +203,47 @@
     "id": "wf-easy-save-artifacts",
     "query": "UserPromptSubmit: save the baseline pickle before we rebuild",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting \u2014 never destroy a baseline during experiments"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
     ],
-    "difficulty": "easy",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "wf-easy-lookup-docs",
     "query": "UserPromptSubmit: look up the library docs for fastembed",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search \u2014 wrong search tool returns irrelevant results and wastes time on false leads"
-    ],
+    "should_match": [],
     "should_not_match": [
       "When schema or cardinality changes, audit every consumer (views, queries, CLI, exports, tests) before implementing"
     ],
-    "difficulty": "easy",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "wf-easy-store-predictions",
     "query": "UserPromptSubmit: make sure we store the full predictions not just scores",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Store all predictions, reasoning, and grounding in benchmark results for later reanalysis \u2014 not just numeric scores"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Write tests before implementation following TDD red-green-refactor cycle"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
-    "difficulty": "easy",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "wf-easy-convergence",
     "query": "UserPromptSubmit: dont stop at 3 rounds, keep going until its clean",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Keep running review rounds until two consecutive rounds produce zero CRITICAL, HIGH, or MEDIUM findings \u2014 fixed round counts stop too early when issues cascade, and too late when code is already clean"
+      "After each review round: keep running until two consecutive rounds produce zero CRITICAL/HIGH/MEDIUM findings — fixed round counts stop too early or too late"
     ],
     "should_not_match": [
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow"
+      "Before running a batch LLM pipeline: benchmark a single call first — a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow"
     ],
     "difficulty": "easy",
     "event": "UserPromptSubmit"
@@ -263,10 +253,10 @@
     "query": "UserPromptSubmit: is this a simple or complex task",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
     ],
     "should_not_match": [
-      "Fix the pipeline stage that produces bad output, do not patch downstream \u2014 downstream patches accumulate into unmaintainable complexity while the root cause keeps generating bad data"
+      "When debugging poor output quality: fix the upstream pipeline stage, not downstream patches — downstream fixes accumulate into unmaintainable complexity"
     ],
     "difficulty": "easy",
     "event": "UserPromptSubmit"
@@ -289,10 +279,10 @@
     "query": "UserPromptSubmit: run the full dataset not just 10 samples",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions"
+      "Never trust small sample benchmark results — run the full dataset before drawing conclusions"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "easy",
     "event": "UserPromptSubmit"
@@ -302,13 +292,13 @@
     "query": "UserPromptSubmit: this feature is complex, help me plan it out",
     "corpus": "rules_global.txt",
     "should_match": [
-      "COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins",
-      "Use the planner agent for complex features, architect agent for system design decisions, tdd-guide agent for new features and bug fixes",
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
-      "Follow the three-layer quality gate: PRD + reviews \u2192 Implementation + reviews \u2192 Test plan + reviews \u2014 skipping any layer compounds risk; a reviewed PRD catches design gaps, reviewed code catches bugs, a reviewed test plan catches blind spots that both missed"
+      "When receiving a task touching 10+ files or requiring new architecture: write a full PRD first — complex tasks without specs produce rework and missed requirements",
+      "When starting complex features: use the planner agent; for system design: use architect; for new features/bugs: use tdd-guide — match the agent to the task type",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
+      "For any significant feature: follow the three-layer gate — PRD + reviews, then implementation + reviews, then test plan + reviews — skipping any layer compounds risk"
     ],
     "should_not_match": [
-      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan \u2014 just implement and verify"
+      "When receiving a task touching 1-2 files (config change, small fix): proceed without a plan — simple tasks don't need overhead"
     ],
     "difficulty": "medium",
     "event": "UserPromptSubmit"
@@ -318,10 +308,8 @@
     "query": "UserPromptSubmit: lets build the new session export feature",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
-      "Read 2-3 similar files in the codebase before writing new code \u2014 introducing a second pattern where one exists creates permanent inconsistency that confuses every future reader",
-      "Write tests before implementation following TDD red-green-refactor cycle",
-      "Search GitHub for existing implementations and proven patterns before writing anything from scratch \u2014 80% of problems are already solved, and battle-tested code has fewer bugs than fresh code"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
@@ -334,12 +322,12 @@
     "query": "UserPromptSubmit: run the benchmarks and iterate until quality is above 90 percent",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Validate every phase against real data before moving to the next \u2014 synthetic tests pass when the real thing fails because mocks diverge from production behavior",
-      "Establish baseline metrics before implementing any improvement \u2014 without before/after numbers you cannot distinguish real improvement from noise",
-      "Control your evaluation methodology before trusting results \u2014 if you benchmark model A against model B's artifacts, model B wins by default; always evaluate the full pipeline end-to-end with each model generating its own inputs"
+      "Before moving to the next implementation phase: validate the current phase against real data — synthetic tests pass when the real thing fails because mocks diverge from production",
+      "Before implementing any improvement or optimization: establish baseline metrics first — without before/after numbers you cannot distinguish real improvement from noise",
+      "Before trusting benchmark results: verify the evaluation methodology — if you benchmark model A against model B's artifacts, model B wins by default"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "medium",
     "event": "UserPromptSubmit"
@@ -349,9 +337,8 @@
     "query": "UserPromptSubmit: I want to add fastembed as a dependency for the reranker",
     "corpus": "rules_global.txt",
     "should_match": [
-      "For new libraries or APIs, research alternatives, verify documentation, audit maintenance status, and benchmark before adopting",
-      "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search \u2014 wrong search tool returns irrelevant results and wastes time on false leads",
-      "Spike-test risky integrations before building on them \u2014 if a dependency is unvalidated (new library, untested API, custom wrapper), spend 2 hours proving it works before designing an architecture around it, because discovering it fails after building 3 layers on top wastes days"
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting — unvetted dependencies become permanent tech debt",
+      "Before building on an unvalidated dependency: spike-test it for 2 hours — discovering a library fails after building 3 layers on top wastes days"
     ],
     "should_not_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
@@ -364,13 +351,10 @@
     "query": "UserPromptSubmit: run the full classification pipeline on all sessions",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow",
-      "Manually inspect LLM output after every classification wave \u2014 read actual output, do not trust confidence scores",
-      "After every batch LLM response, diff sent IDs against returned IDs to detect silently dropped items",
-      "Never use silent fallbacks \u2014 if a pipeline stage falls back to an alternative (backup data source, simpler model, cached result), log it loudly and surface it in the output so the user knows the result is degraded, not just different"
+      "Manually inspect LLM output after every classification wave — read actual output, do not trust confidence scores"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "medium",
     "event": "UserPromptSubmit"
@@ -380,9 +364,9 @@
     "query": "UserPromptSubmit: lets refactor the database layer, its getting messy",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
       "When schema or cardinality changes, audit every consumer (views, queries, CLI, exports, tests) before implementing",
-      "Write tests before implementation following TDD red-green-refactor cycle"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [
       "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion"
@@ -396,11 +380,11 @@
     "corpus": "rules_global.txt",
     "should_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling",
-      "Monitor agent context usage in tmux \u2014 compact when context remaining drops below 67 percent",
+      "Monitor agent context usage in tmux — compact when context remaining drops below 67 percent",
       "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion"
     ],
     "should_not_match": [
-      "Write tests before implementation following TDD red-green-refactor cycle"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "difficulty": "medium",
     "event": "UserPromptSubmit"
@@ -410,12 +394,12 @@
     "query": "UserPromptSubmit: lets try temporal CDT to improve accuracy",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Establish baseline metrics before implementing any improvement \u2014 without before/after numbers you cannot distinguish real improvement from noise",
-      "Never build infrastructure around unproven techniques \u2014 test hypotheses in controlled experiments first, implement only winners",
-      "Spike-test risky integrations before building on them \u2014 if a dependency is unvalidated (new library, untested API, custom wrapper), spend 2 hours proving it works before designing an architecture around it, because discovering it fails after building 3 layers on top wastes days"
+      "Before implementing any improvement or optimization: establish baseline metrics first — without before/after numbers you cannot distinguish real improvement from noise",
+      "Never build infrastructure around unproven techniques — test hypotheses in controlled experiments first, implement only winners",
+      "Before building on an unvalidated dependency: spike-test it for 2 hours — discovering a library fails after building 3 layers on top wastes days"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "medium",
     "event": "UserPromptSubmit"
@@ -425,8 +409,8 @@
     "query": "UserPromptSubmit: the output quality is garbage, lots of caricature descriptions",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Fix the pipeline stage that produces bad output, do not patch downstream \u2014 downstream patches accumulate into unmaintainable complexity while the root cause keeps generating bad data",
-      "Each pipeline stage must be independently high quality \u2014 relying on downstream stages to rescue upstream failures means any stage failure cascades through the entire system"
+      "When debugging poor output quality: fix the upstream pipeline stage, not downstream patches — downstream fixes accumulate into unmaintainable complexity",
+      "When building multi-stage pipelines: ensure each stage is independently high quality — downstream stages cannot rescue upstream failures"
     ],
     "should_not_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
@@ -438,25 +422,24 @@
     "id": "wf-medium-dedup-text",
     "query": "UserPromptSubmit: deduplicate these hypothesis statements",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use semantic similarity (embeddings or LLMs) for text deduplication \u2014 never use lexical or word-based matching"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
-    "difficulty": "medium",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "wf-medium-quick-fix",
     "query": "UserPromptSubmit: fix the typo in the config file",
     "corpus": "rules_global.txt",
     "should_match": [
-      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan \u2014 just implement and verify",
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+      "When receiving a task touching 1-2 files (config change, small fix): proceed without a plan — simple tasks don't need overhead",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
     ],
     "should_not_match": [
-      "COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins"
+      "When receiving a task touching 10+ files or requiring new architecture: write a full PRD first — complex tasks without specs produce rework and missed requirements"
     ],
     "difficulty": "medium",
     "event": "UserPromptSubmit"
@@ -466,13 +449,12 @@
     "query": "UserPromptSubmit: add a new CLI command for profile export with tests",
     "corpus": "rules_global.txt",
     "should_match": [
-      "MEDIUM tasks (3-10 files) require an inline plan, research, tests alongside code, and agent review after implementation",
-      "Write tests before implementation following TDD red-green-refactor cycle",
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production",
-      "Always mock external calls (LLM, APIs, network, subprocesses) in unit tests \u2014 real calls make tests slow, flaky, and non-deterministic; a test suite that takes 18 minutes instead of 1 second because background tasks run real LLM calls is a test suite nobody runs"
+      "When receiving a task touching 3-10 files: create an inline plan with research, write tests alongside code, and run agent review after — medium tasks need structure",
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code — uncovered code is untested code, and untested code breaks silently in production"
     ],
     "should_not_match": [
-      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting \u2014 never destroy a baseline during experiments"
+      "When about to overwrite model artifacts or baseline files: save a copy first — non-deterministic pipelines cannot reproduce the exact same output"
     ],
     "difficulty": "medium",
     "event": "UserPromptSubmit"
@@ -482,11 +464,11 @@
     "query": "UserPromptSubmit: rebuild the CDT with the new prompt and compare",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting \u2014 never destroy a baseline during experiments",
-      "When running A/B benchmark comparisons on LLM artifacts, use the same pre-built artifact and change only one variable"
+      "Before implementing any improvement or optimization: establish baseline metrics first — without before/after numbers you cannot distinguish real improvement from noise",
+      "Before trusting benchmark results: verify the evaluation methodology — if you benchmark model A against model B's artifacts, model B wins by default"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "medium",
     "event": "UserPromptSubmit"
@@ -496,7 +478,7 @@
     "query": "UserPromptSubmit: the paper claims 85 percent but we only get 70, figure out why",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Run the original paper code first when reproducing published results \u2014 do not theorize about score gaps without evidence",
+      "When reproducing published results: run the original paper code first — do not theorize about score gaps without evidence from the reference implementation",
       "Score gaps between models on routine tasks usually indicate code or config differences, not model quality differences"
     ],
     "should_not_match": [
@@ -510,9 +492,8 @@
     "query": "UserPromptSubmit: phase 1 is done, lets move to phase 2",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Validate every phase against real data before moving to the next \u2014 synthetic tests pass when the real thing fails because mocks diverge from production behavior",
-      "Commit after each implementation phase completes \u2014 atomic tested commits prevent compound debt, enable bisection for regressions, and give reviewers digestible chunks instead of monolithic diffs",
-      "Run convergence reviews (code + security agents in parallel) after each implementation milestone \u2014 a single end-of-project review misses bugs that compound across phases, while per-phase reviews catch them when they're cheap to fix"
+      "Before moving to the next implementation phase: validate the current phase against real data — synthetic tests pass when the real thing fails because mocks diverge from production",
+      "After each implementation milestone: run convergence reviews with parallel code + security agents — per-phase reviews catch bugs when they're cheap to fix"
     ],
     "should_not_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
@@ -524,26 +505,24 @@
     "id": "wf-medium-retry-failed",
     "query": "UserPromptSubmit: some of the parallel LLM calls failed, handle the failures",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "After the parallel LLM phase, retry failed items sequentially one at a time to avoid rate limiting contention",
-      "After every batch LLM response, diff sent IDs against returned IDs to detect silently dropped items"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
-    "difficulty": "medium",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "wf-medium-noise-filtering",
     "query": "UserPromptSubmit: theres too much noise in the extracted sessions",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Filter pipeline noise at multiple independent stages with configurable thresholds \u2014 no single filter point",
-      "Each pipeline stage must be independently high quality \u2014 relying on downstream stages to rescue upstream failures means any stage failure cascades through the entire system"
+      "When building retrieval pipelines: filter noise at multiple independent stages with configurable thresholds — no single filter point can handle all query types",
+      "When building multi-stage pipelines: ensure each stage is independently high quality — downstream stages cannot rescue upstream failures"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "medium",
     "event": "UserPromptSubmit"
@@ -553,11 +532,10 @@
     "query": "UserPromptSubmit: research how other projects handle session segmentation",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Search GitHub for existing implementations and proven patterns before writing anything from scratch \u2014 80% of problems are already solved, and battle-tested code has fewer bugs than fresh code",
-      "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search \u2014 wrong search tool returns irrelevant results and wastes time on false leads"
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting — unvetted dependencies become permanent tech debt"
     ],
     "should_not_match": [
-      "Monitor agent context usage in tmux \u2014 compact when context remaining drops below 67 percent"
+      "Monitor agent context usage in tmux — compact when context remaining drops below 67 percent"
     ],
     "difficulty": "medium",
     "event": "UserPromptSubmit"
@@ -567,7 +545,7 @@
     "query": "UserPromptSubmit: the first 10 results look amazing, 92 percent accuracy",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions"
+      "Never trust small sample benchmark results — run the full dataset before drawing conclusions"
     ],
     "should_not_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
@@ -580,8 +558,7 @@
     "query": "UserPromptSubmit: the pipeline is taking way too long, each call is 30 seconds",
     "corpus": "rules_global.txt",
     "should_match": [
-      "If a tool call or LLM response takes 10x longer than expected, investigate immediately \u2014 normalized slowness compounds across thousands of calls into hours of wasted time",
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow"
+      "When building multi-stage pipelines: ensure each stage is independently high quality — downstream stages cannot rescue upstream failures"
     ],
     "should_not_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
@@ -595,8 +572,8 @@
     "corpus": "rules_global.txt",
     "should_match": [
       "Use lightweight deterministic approaches first, add LLM stages only when they demonstrably improve quality",
-      "For new libraries or APIs, research alternatives, verify documentation, audit maintenance status, and benchmark before adopting",
-      "Spike-test risky integrations before building on them \u2014 if a dependency is unvalidated (new library, untested API, custom wrapper), spend 2 hours proving it works before designing an architecture around it, because discovering it fails after building 3 layers on top wastes days"
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting — unvetted dependencies become permanent tech debt",
+      "Before building on an unvalidated dependency: spike-test it for 2 hours — discovering a library fails after building 3 layers on top wastes days"
     ],
     "should_not_match": [
       "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion"
@@ -610,10 +587,10 @@
     "corpus": "rules_global.txt",
     "should_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
-      "Update CLAUDE.md when project structure, architecture, or conventions change \u2014 without this, the next session starts with stale context and makes wrong assumptions"
+      "After changing project structure, architecture, or conventions: update CLAUDE.md — without this, the next session starts with stale context and makes wrong assumptions"
     ],
     "should_not_match": [
-      "Write tests before implementation following TDD red-green-refactor cycle"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "difficulty": "medium",
     "event": "UserPromptSubmit"
@@ -623,12 +600,12 @@
     "query": "UserPromptSubmit: ok I wrote the implementation, now review everything",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
-      "Keep running review rounds until two consecutive rounds produce zero CRITICAL, HIGH, or MEDIUM findings \u2014 fixed round counts stop too early when issues cascade, and too late when code is already clean",
-      "Run convergence reviews (code + security agents in parallel) after each implementation milestone \u2014 a single end-of-project review misses bugs that compound across phases, while per-phase reviews catch them when they're cheap to fix"
+      "After writing code: run 3 parallel review agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
+      "After each review round: keep running until two consecutive rounds produce zero CRITICAL/HIGH/MEDIUM findings — fixed round counts stop too early or too late",
+      "After each implementation milestone: run convergence reviews with parallel code + security agents — per-phase reviews catch bugs when they're cheap to fix"
     ],
     "should_not_match": [
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow"
+      "Before running a batch LLM pipeline: benchmark a single call first — a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow"
     ],
     "difficulty": "medium",
     "event": "UserPromptSubmit"
@@ -638,11 +615,10 @@
     "query": "UserPromptSubmit: I keep getting the same error over and over",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When a tool fails, read the full error and search docs before retrying \u2014 blind retries waste time and hide the root cause, while the fix is usually in the error message",
       "After 2 failed fix attempts on the same error, stop and ask the user for guidance instead of spiraling"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "hard",
     "event": "UserPromptSubmit"
@@ -653,11 +629,10 @@
     "corpus": "rules_global.txt",
     "should_match": [
       "Score gaps between models on routine tasks usually indicate code or config differences, not model quality differences",
-      "When running A/B benchmark comparisons on LLM artifacts, use the same pre-built artifact and change only one variable",
-      "Control your evaluation methodology before trusting results \u2014 if you benchmark model A against model B's artifacts, model B wins by default; always evaluate the full pipeline end-to-end with each model generating its own inputs"
+      "Before trusting benchmark results: verify the evaluation methodology — if you benchmark model A against model B's artifacts, model B wins by default"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "hard",
     "event": "UserPromptSubmit"
@@ -667,8 +642,8 @@
     "query": "UserPromptSubmit: lets build the ensemble generation system for phase 3",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Never build infrastructure around unproven techniques \u2014 test hypotheses in controlled experiments first, implement only winners",
-      "Establish baseline metrics before implementing any improvement \u2014 without before/after numbers you cannot distinguish real improvement from noise"
+      "Never build infrastructure around unproven techniques — test hypotheses in controlled experiments first, implement only winners",
+      "Before implementing any improvement or optimization: establish baseline metrics first — without before/after numbers you cannot distinguish real improvement from noise"
     ],
     "should_not_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
@@ -681,13 +656,12 @@
     "query": "UserPromptSubmit: the profiles are all the same, too generic and flat",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Fix the pipeline stage that produces bad output, do not patch downstream \u2014 downstream patches accumulate into unmaintainable complexity while the root cause keeps generating bad data",
-      "Each pipeline stage must be independently high quality \u2014 relying on downstream stages to rescue upstream failures means any stage failure cascades through the entire system",
-      "Manually inspect LLM output after every classification wave \u2014 read actual output, do not trust confidence scores",
-      "Never use silent fallbacks \u2014 if a pipeline stage falls back to an alternative (backup data source, simpler model, cached result), log it loudly and surface it in the output so the user knows the result is degraded, not just different"
+      "When debugging poor output quality: fix the upstream pipeline stage, not downstream patches — downstream fixes accumulate into unmaintainable complexity",
+      "When building multi-stage pipelines: ensure each stage is independently high quality — downstream stages cannot rescue upstream failures",
+      "Manually inspect LLM output after every classification wave — read actual output, do not trust confidence scores"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "hard",
     "event": "UserPromptSubmit"
@@ -698,10 +672,10 @@
     "corpus": "rules_global.txt",
     "should_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
-      "Monitor agent context usage in tmux \u2014 compact when context remaining drops below 67 percent"
+      "Monitor agent context usage in tmux — compact when context remaining drops below 67 percent"
     ],
     "should_not_match": [
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow"
+      "Before running a batch LLM pipeline: benchmark a single call first — a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow"
     ],
     "difficulty": "hard",
     "event": "UserPromptSubmit"
@@ -710,36 +684,32 @@
     "id": "wf-hard-lexical-dedup-failing",
     "query": "UserPromptSubmit: the trigram matching isnt catching duplicates that mean the same thing",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use semantic similarity (embeddings or LLMs) for text deduplication \u2014 never use lexical or word-based matching"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Write tests before implementation following TDD red-green-refactor cycle"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
-    "difficulty": "hard",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "wf-hard-nondeterministic-results",
     "query": "UserPromptSubmit: I rebuilt the CDT and got completely different results, same config",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting \u2014 never destroy a baseline during experiments",
-      "When running A/B benchmark comparisons on LLM artifacts, use the same pre-built artifact and change only one variable"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
-    "difficulty": "hard",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "wf-hard-items-silently-missing",
     "query": "UserPromptSubmit: some interactions never get classified no matter how many times I run it",
     "corpus": "rules_global.txt",
     "should_match": [
-      "After every batch LLM response, diff sent IDs against returned IDs to detect silently dropped items",
-      "Filter pipeline noise at multiple independent stages with configurable thresholds \u2014 no single filter point"
+      "When building retrieval pipelines: filter noise at multiple independent stages with configurable thresholds — no single filter point can handle all query types"
     ],
     "should_not_match": [
       "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion"
@@ -752,11 +722,11 @@
     "query": "UserPromptSubmit: pilot scored 95 percent on 10 samples, ship it",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions",
-      "Validate every phase against real data before moving to the next \u2014 synthetic tests pass when the real thing fails because mocks diverge from production behavior"
+      "Never trust small sample benchmark results — run the full dataset before drawing conclusions",
+      "Before moving to the next implementation phase: validate the current phase against real data — synthetic tests pass when the real thing fails because mocks diverge from production"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "hard",
     "event": "UserPromptSubmit"
@@ -765,21 +735,20 @@
     "id": "wf-hard-wrong-tool-for-search",
     "query": "UserPromptSubmit: I need to find how authentication works in this codebase",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search \u2014 wrong search tool returns irrelevant results and wastes time on false leads"
-    ],
+    "should_match": [],
     "should_not_match": [
       "After the parallel LLM phase, retry failed items sequentially one at a time to avoid rate limiting contention"
     ],
-    "difficulty": "hard",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "wf-hard-coverage-not-enough",
     "query": "UserPromptSubmit: tests pass at 82 percent coverage, good enough right",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code — uncovered code is untested code, and untested code breaks silently in production"
     ],
     "should_not_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
@@ -792,7 +761,7 @@
     "query": "UserPromptSubmit: retrieval is bad, lets add three more reranking stages to fix it",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Each pipeline stage must be independently high quality \u2014 relying on downstream stages to rescue upstream failures means any stage failure cascades through the entire system",
+      "When building multi-stage pipelines: ensure each stage is independently high quality — downstream stages cannot rescue upstream failures",
       "Use lightweight deterministic approaches first, add LLM stages only when they demonstrably improve quality"
     ],
     "should_not_match": [
@@ -809,7 +778,7 @@
       "When schema or cardinality changes, audit every consumer (views, queries, CLI, exports, tests) before implementing"
     ],
     "should_not_match": [
-      "Use semantic similarity (embeddings or LLMs) for text deduplication \u2014 never use lexical or word-based matching"
+      "When writing deduplication logic for text data (Edit, Write): use semantic similarity (embeddings or LLMs) — never use lexical or word-based matching, because paraphrases and synonyms are invisible to string comparison"
     ],
     "difficulty": "hard",
     "event": "UserPromptSubmit"
@@ -819,10 +788,10 @@
     "query": "UserPromptSubmit: the command failed, let me just try a different approach",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When a tool fails, read the full error and search docs before retrying \u2014 blind retries waste time and hide the root cause, while the fix is usually in the error message"
+      "After 2 failed fix attempts on the same error, stop and ask the user for guidance instead of spiraling"
     ],
     "should_not_match": [
-      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting \u2014 never destroy a baseline during experiments"
+      "When about to overwrite model artifacts or baseline files: save a copy first — non-deterministic pipelines cannot reproduce the exact same output"
     ],
     "difficulty": "hard",
     "event": "UserPromptSubmit"
@@ -832,7 +801,7 @@
     "query": "UserPromptSubmit: our implementation scores way lower than what they claim in the paper",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Run the original paper code first when reproducing published results \u2014 do not theorize about score gaps without evidence",
+      "When reproducing published results: run the original paper code first — do not theorize about score gaps without evidence from the reference implementation",
       "Score gaps between models on routine tasks usually indicate code or config differences, not model quality differences"
     ],
     "should_not_match": [
@@ -847,8 +816,8 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
-      "Write tests before implementation following TDD red-green-refactor cycle"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -859,8 +828,8 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow",
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "Before running a batch LLM pipeline: benchmark a single call first — a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow",
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -871,8 +840,8 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
-      "Read 2-3 similar files in the codebase before writing new code \u2014 introducing a second pattern where one exists creates permanent inconsistency that confuses every future reader"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
+      "Before creating a new file or writing a new module (Write, Edit): read 2-3 similar files in the codebase first — introducing a second pattern where one exists creates permanent inconsistency that confuses every future reader"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -883,8 +852,8 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search \u2014 wrong search tool returns irrelevant results and wastes time on false leads",
-      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow"
+      "When searching for library docs, API usage, or code patterns (WebSearch, Bash: grep, mgrep): use Context7 for library docs, Exa for web research, mgrep for semantic code search — wrong search tool returns irrelevant results and wastes time on false leads",
+      "Before running a batch LLM pipeline: benchmark a single call first — a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -895,8 +864,8 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
-      "Write tests before implementation following TDD red-green-refactor cycle"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -907,7 +876,7 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
     ],
     "difficulty": "negative",
@@ -919,8 +888,8 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless",
-      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless",
+      "When running git add or git commit, or writing config/.env files: never include secrets — once pushed, secrets are in the history forever and require rotation across all environments"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -931,8 +900,8 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code — uncovered code is untested code, and untested code breaks silently in production"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -943,8 +912,8 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Write tests before implementation following TDD red-green-refactor cycle",
-      "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
+      "After writing code: run 3 parallel review agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -955,8 +924,8 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search \u2014 wrong search tool returns irrelevant results and wastes time on false leads",
-      "Read 2-3 similar files in the codebase before writing new code \u2014 introducing a second pattern where one exists creates permanent inconsistency that confuses every future reader"
+      "When searching for library docs, API usage, or code patterns (WebSearch, Bash: grep, mgrep): use Context7 for library docs, Exa for web research, mgrep for semantic code search — wrong search tool returns irrelevant results and wastes time on false leads",
+      "Before creating a new file or writing a new module (Write, Edit): read 2-3 similar files in the codebase first — introducing a second pattern where one exists creates permanent inconsistency that confuses every future reader"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -968,7 +937,7 @@
     "should_match": [],
     "should_not_match": [
       "When running A/B benchmark comparisons on LLM artifacts, use the same pre-built artifact and change only one variable",
-      "Use semantic similarity (embeddings or LLMs) for text deduplication \u2014 never use lexical or word-based matching"
+      "When writing deduplication logic for text data (Edit, Write): use semantic similarity (embeddings or LLMs) — never use lexical or word-based matching, because paraphrases and synonyms are invisible to string comparison"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -979,7 +948,7 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "When a tool fails, read the full error and search docs before retrying \u2014 blind retries waste time and hide the root cause, while the fix is usually in the error message",
+      "When a tool fails, read the full error and search docs before retrying — blind retries waste time and hide the root cause, while the fix is usually in the error message",
       "After 2 failed fix attempts on the same error, stop and ask the user for guidance instead of spiraling"
     ],
     "difficulty": "negative",
@@ -991,8 +960,8 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
-      "Write tests before implementation following TDD red-green-refactor cycle"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -1003,8 +972,8 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Search GitHub for existing implementations and proven patterns before writing anything from scratch \u2014 80% of problems are already solved, and battle-tested code has fewer bugs than fresh code",
-      "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search \u2014 wrong search tool returns irrelevant results and wastes time on false leads"
+      "Before writing new utility code or implementing a common pattern: search GitHub first — 80% of problems are already solved with battle-tested code",
+      "When searching for library docs, API usage, or code patterns (WebSearch, Bash: grep, mgrep): use Context7 for library docs, Exa for web research, mgrep for semantic code search — wrong search tool returns irrelevant results and wastes time on false leads"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -1015,7 +984,7 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "When a tool fails, read the full error and search docs before retrying \u2014 blind retries waste time and hide the root cause, while the fix is usually in the error message",
+      "When a tool fails, read the full error and search docs before retrying — blind retries waste time and hide the root cause, while the fix is usually in the error message",
       "After 2 failed fix attempts on the same error, stop and ask the user for guidance instead of spiraling"
     ],
     "difficulty": "negative",
@@ -1028,7 +997,7 @@
     "should_match": [],
     "should_not_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
-      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
+      "When running git add or git commit, or writing config/.env files: never include secrets — once pushed, secrets are in the history forever and require rotation across all environments"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -1039,8 +1008,8 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
-      "Use the planner agent for complex features, architect agent for system design decisions, tdd-guide agent for new features and bug fixes"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
+      "When starting complex features: use the planner agent; for system design: use architect; for new features/bugs: use tdd-guide — match the agent to the task type"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -1052,7 +1021,7 @@
     "should_match": [],
     "should_not_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
-      "Update CLAUDE.md when project structure, architecture, or conventions change \u2014 without this, the next session starts with stale context and makes wrong assumptions"
+      "After changing project structure, architecture, or conventions: update CLAUDE.md — without this, the next session starts with stale context and makes wrong assumptions"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -1063,8 +1032,8 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use semantic similarity (embeddings or LLMs) for text deduplication \u2014 never use lexical or word-based matching",
-      "Establish baseline metrics before implementing any improvement \u2014 without before/after numbers you cannot distinguish real improvement from noise"
+      "When writing deduplication logic for text data (Edit, Write): use semantic similarity (embeddings or LLMs) — never use lexical or word-based matching, because paraphrases and synonyms are invisible to string comparison",
+      "Before implementing any improvement or optimization: establish baseline metrics first — without before/after numbers you cannot distinguish real improvement from noise"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -1075,8 +1044,8 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
-      "Store all predictions, reasoning, and grounding in benchmark results for later reanalysis \u2014 not just numeric scores"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
+      "When saving benchmark results: store predictions, reasoning, and grounding — not just numeric scores — for later reanalysis when methodology changes"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -1087,8 +1056,8 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search \u2014 wrong search tool returns irrelevant results and wastes time on false leads",
-      "Search GitHub for existing implementations and proven patterns before writing anything from scratch \u2014 80% of problems are already solved, and battle-tested code has fewer bugs than fresh code"
+      "When searching for library docs, API usage, or code patterns (WebSearch, Bash: grep, mgrep): use Context7 for library docs, Exa for web research, mgrep for semantic code search — wrong search tool returns irrelevant results and wastes time on false leads",
+      "Before writing new utility code or implementing a common pattern: search GitHub first — 80% of problems are already solved with battle-tested code"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -1099,8 +1068,8 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions",
-      "Establish baseline metrics before implementing any improvement \u2014 without before/after numbers you cannot distinguish real improvement from noise"
+      "Never trust small sample benchmark results — run the full dataset before drawing conclusions",
+      "Before implementing any improvement or optimization: establish baseline metrics first — without before/after numbers you cannot distinguish real improvement from noise"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -1109,15 +1078,14 @@
     "id": "wf-neg-debug-print",
     "query": "UserPromptSubmit: add a print statement to debug this",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "No console.log or print debug statements in production code \u2014 debug output clutters logs, leaks internal state, and makes real errors harder to find in production monitoring"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Write tests before implementation following TDD red-green-refactor cycle",
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
     ],
-    "difficulty": "hard",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "wf-neg-copy-paste",
@@ -1125,7 +1093,7 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Save LLM-generated artifacts (pickles, checkpoints) before overwriting \u2014 never destroy a baseline during experiments",
+      "When about to overwrite model artifacts or baseline files: save a copy first — non-deterministic pipelines cannot reproduce the exact same output",
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
     ],
     "difficulty": "negative",
@@ -1135,52 +1103,48 @@
     "id": "prompt-avoid-mutation",
     "query": "UserPromptSubmit: Update the process_orders function to modify the input list in place for better performance instead of creating copies",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Never mutate function arguments or shared state \u2014 mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere"
-    ],
+    "should_match": [],
     "should_not_match": [],
-    "difficulty": "medium",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "prompt-silent-fallback",
     "query": "UserPromptSubmit: Add a fallback to the data fetcher so if the primary API is down it quietly uses cached data without bothering the user",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Never use silent fallbacks \u2014 if a pipeline stage falls back to an alternative (backup data source, simpler model, cached result), log it loudly and surface it in the output so the user knows the result is degraded, not just different"
-    ],
+    "should_match": [],
     "should_not_match": [],
-    "difficulty": "easy",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "prompt-cache-strategy",
     "query": "UserPromptSubmit: Add caching to the market data fetcher to avoid hitting the API on every call",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Cache expensive external data with explicit TTL \u2014 stale cache is a silent data bug that corrupts downstream analysis, and no cache is a performance bug that makes the system unusably slow"
-    ],
+    "should_match": [],
     "should_not_match": [],
-    "difficulty": "medium",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "prompt-protocol-design",
     "query": "UserPromptSubmit: Create an interface for the storage layer so we can swap between PostgreSQL and SQLite backends",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Design module interfaces as Protocols \u2014 concrete implementations can be swapped without refactoring callers, enabling testing with fakes and future provider changes without cascading code changes"
-    ],
+    "should_match": [],
     "should_not_match": [],
-    "difficulty": "easy",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "prompt-spike-test-new-lib",
     "query": "UserPromptSubmit: Integrate the new OpenBB SDK for financial data access and build the data pipeline on top of it",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Spike-test risky integrations before building on them \u2014 if a dependency is unvalidated (new library, untested API, custom wrapper), spend 2 hours proving it works before designing an architecture around it, because discovering it fails after building 3 layers on top wastes days"
+      "Before building on an unvalidated dependency: spike-test it for 2 hours — discovering a library fails after building 3 layers on top wastes days"
     ],
     "should_not_match": [],
     "difficulty": "medium",
@@ -1191,7 +1155,7 @@
     "query": "UserPromptSubmit: Build a custom HTTP routing system with middleware support for the API server",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Prefer mature extensible frameworks over building from scratch \u2014 if LangGraph, FastAPI, or similar battle-tested projects provide the feature (routing, checkpointing, streaming), use them even if a simpler stdlib approach works today, because refactoring from simple to framework later costs more than starting with the framework"
+      "Prefer mature extensible frameworks over building from scratch — if LangGraph, FastAPI, or similar battle-tested projects provide the feature (routing, checkpointing, streaming), use them even if a simpler stdlib approach works today, because refactoring from simple to framework later costs more than starting with the framework"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -1202,7 +1166,7 @@
     "query": "UserPromptSubmit: Write a custom JWT token parser and validator from scratch for the auth system",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Reuse popular open-source components for each layer of the system \u2014 only build custom code for what doesn't exist, because mature projects provide stability, community support, and extensibility that hand-rolled code cannot match"
+      "Reuse popular open-source components for each layer of the system — only build custom code for what doesn't exist, because mature projects provide stability, community support, and extensibility that hand-rolled code cannot match"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -1213,7 +1177,7 @@
     "query": "UserPromptSubmit: The mocked tests all pass, let's move on to building the next feature",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Always test with real external data after mocked tests pass \u2014 NaN values, missing columns, empty strings, and API format differences only surface with live data, never with synthetic fixtures"
+      "After mocked tests pass: test with real external data — NaN values, missing columns, and API format differences only surface with live data"
     ],
     "should_not_match": [],
     "difficulty": "medium",
@@ -1225,7 +1189,7 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "When composing scores from multiple signals, separate direction from magnitude \u2014 multiplying direction \u00d7 confidence double-counts the signal and produces near-zero results for uncertain inputs"
+      "When composing scores from multiple signals, separate direction from magnitude — multiplying direction × confidence double-counts the signal and produces near-zero results for uncertain inputs"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -1236,7 +1200,7 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use a fallback chain with NaN-safe extraction for external data fields \u2014 API column names are unstable across providers, and float(NaN) is truthy so `value or default` silently passes NaN through"
+      "When writing code that parses API responses or external data (Edit, Write): use a fallback chain with NaN-safe extraction — API column names are unstable across providers, and float(NaN) is truthy so `value or default` silently passes NaN through"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -1245,19 +1209,18 @@
     "id": "prompt-data-model-defaults",
     "query": "UserPromptSubmit: Create a FinancialData dataclass that requires revenue, net_income, eps, free_cash_flow, and dividend_yield for all tickers",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Make data models accept defaults for optional data sources \u2014 crypto has no income statements, new companies have no history, some providers lack certain fields \u2014 hardcoded required fields silently exclude valid use cases"
-    ],
+    "should_match": [],
     "should_not_match": [],
-    "difficulty": "easy",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "prompt-rule-explain-why",
     "query": "UserPromptSubmit: Write a rule that says 'Always run tests before committing' for the team guidelines",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Write rules and instructions that explain consequences, not just commands \u2014 agents follow rules they understand (\"without Enter, text is never submitted\") but ignore rules that just say what to do (\"always send Enter\")"
+      "When writing rules or instructions for agents: explain consequences, not just commands — agents follow rules they understand but ignore rules that just say what to do"
     ],
     "should_not_match": [],
     "difficulty": "medium",
@@ -1269,7 +1232,7 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Write rules and instructions that explain consequences, not just commands \u2014 agents follow rules they understand (\"without Enter, text is never submitted\") but ignore rules that just say what to do (\"always send Enter\")"
+      "When writing rules or instructions for agents: explain consequences, not just commands — agents follow rules they understand but ignore rules that just say what to do"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -1278,74 +1241,68 @@
     "id": "mock-external-calls-user-asks",
     "query": "UserPromptSubmit: why are tests hitting the real OpenAI API? they keep failing with rate limit errors",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Always mock external calls (LLM, APIs, network, subprocesses) in unit tests \u2014 real calls make tests slow, flaky, and non-deterministic; a test suite that takes 18 minutes instead of 1 second because background tasks run real LLM calls is a test suite nobody runs"
-    ],
+    "should_match": [],
     "should_not_match": [],
-    "difficulty": "easy",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "test-suite-under-5s-user-normalize",
     "query": "UserPromptSubmit: the tests take about 30 seconds now but that seems fine since there are 900+ tests",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "The full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests because slow tests get skipped and skipped tests hide bugs"
-    ],
+    "should_match": [],
     "should_not_match": [],
-    "difficulty": "hard",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "single-test-over-1s-user",
     "query": "UserPromptSubmit: test_full_pipeline_integration takes 4.5 seconds by itself, can you figure out why?",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "If a single test takes more than 1 second, it is either testing too much or hitting a real service \u2014 split it or mock the slow dependency"
-    ],
+    "should_match": [],
     "should_not_match": [],
-    "difficulty": "easy",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "llama-server-np-slots-user-configure",
     "query": "UserPromptSubmit: I'm launching llama-server with -np 8 and -c 65536, what's the max tokens per request?",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When using llama-server with -np N parallel slots, total context is divided by N \u2014 ensure every prompt fits within (total_ctx / np) tokens per slot, because exceeding it returns a cryptic 400 error with no useful diagnostic"
-    ],
+    "should_match": [],
     "should_not_match": [],
-    "difficulty": "easy",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "daemon-same-code-paths-user",
     "query": "UserPromptSubmit: the daemon returns different results than the CLI for the same query, fewer rules and no event filtering",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Verify the daemon/fast path exercises the same code paths as the inline/slow path \u2014 daemon shortcuts silently bypass features (event masks, affinity filtering, tool_name routing) that work perfectly in direct mode, making the core feature inoperative in production"
-    ],
+    "should_match": [],
     "should_not_match": [],
-    "difficulty": "medium",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "reasoning-before-decision-user-asks",
     "query": "UserPromptSubmit: design a JSON output format for the analyst agent with fields for action, confidence, and explanation",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Put reasoning BEFORE decision in LLM JSON output format \u2014 when the signal/action field comes first, the model commits to a default (e.g. \"hold\") before thinking; when reasoning comes first, the model analyzes the data and makes an informed decision, producing dramatically better outputs without needing thinking mode"
-    ],
+    "should_match": [],
     "should_not_match": [],
-    "difficulty": "medium",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "thinking-mode-vs-reasoning-user",
     "query": "UserPromptSubmit: should I enable thinking mode for the reranker or is reasoning-first JSON enough?",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Thinking mode (hidden CoT) produces the most decisive outputs but costs 10x tokens and time \u2014 reasoning-first JSON format recovers 80% of the quality at 3x the speed; use thinking for live analysis, reasoning-first for backtesting"
+      "When choosing LLM reasoning mode: thinking mode costs 10x but is most decisive; reasoning-first JSON recovers 80% of quality at 3x speed — match compute to difficulty"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -1356,7 +1313,7 @@
     "query": "UserPromptSubmit: Phase 2 is done, let's skip the review and jump straight to Phase 3 since we're behind schedule",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Run convergence reviews (code + security agents in parallel) after each implementation milestone \u2014 a single end-of-project review misses bugs that compound across phases, while per-phase reviews catch them when they're cheap to fix"
+      "After each implementation milestone: run convergence reviews with parallel code + security agents — per-phase reviews catch bugs when they're cheap to fix"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -1367,7 +1324,8 @@
     "query": "UserPromptSubmit: let's finish all 5 phases first and then do one big commit at the end",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Commit after each implementation phase completes \u2014 atomic tested commits prevent compound debt, enable bisection for regressions, and give reviewers digestible chunks instead of monolithic diffs"
+      "After each implementation milestone: run convergence reviews with parallel code + security agents — per-phase reviews catch bugs when they're cheap to fix",
+      "For any significant feature: follow the three-layer gate — PRD + reviews, then implementation + reviews, then test plan + reviews — skipping any layer compounds risk"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -1378,7 +1336,7 @@
     "query": "UserPromptSubmit: I updated the PRD with the new caching architecture, should we review it or just start coding?",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Run convergence reviews on PRD changes too, not just code \u2014 a design gap that survives review becomes an implementation bug that survives testing, because every downstream artifact inherits upstream ambiguity"
+      "After revising a PRD or design document: run convergence reviews — design gaps that survive review become implementation bugs that survive testing"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -1389,7 +1347,7 @@
     "query": "UserPromptSubmit: we have the PRD done, let's skip straight to implementation and write tests at the end",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Follow the three-layer quality gate: PRD + reviews \u2192 Implementation + reviews \u2192 Test plan + reviews \u2014 skipping any layer compounds risk; a reviewed PRD catches design gaps, reviewed code catches bugs, a reviewed test plan catches blind spots that both missed"
+      "For any significant feature: follow the three-layer gate — PRD + reviews, then implementation + reviews, then test plan + reviews — skipping any layer compounds risk"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -1400,7 +1358,7 @@
     "query": "UserPromptSubmit: launch a review agent to check the entire codebase for potential improvements",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Set subagent scope boundaries and terminate stale agents \u2014 an unbounded reviewer will find infinite speculative findings in any document, consuming context without improving quality"
+      "When launching subagents: set explicit scope boundaries and kill stale ones — unbounded reviewers find infinite speculative findings"
     ],
     "should_not_match": [],
     "difficulty": "medium",
@@ -1411,7 +1369,7 @@
     "query": "UserPromptSubmit: the model regressed badly on the new fixtures, we need to tune the prompt or try a bigger model",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Audit your ground truth before blaming the model \u2014 wrong test expectations and fixture errors are indistinguishable from model failures, and removing wrong expectations is a free quality improvement with zero code change"
+      "When model predictions look wrong: audit the ground truth first — wrong fixture expectations are indistinguishable from model failures, and removing them is a free quality improvement"
     ],
     "should_not_match": [],
     "difficulty": "hard",
@@ -1422,7 +1380,7 @@
     "query": "UserPromptSubmit: benchmark Qwen 9B against the expansions generated by Qwen 35B to see which reranker is better",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Control your evaluation methodology before trusting results \u2014 if you benchmark model A against model B's artifacts, model B wins by default; always evaluate the full pipeline end-to-end with each model generating its own inputs"
+      "Before trusting benchmark results: verify the evaluation methodology — if you benchmark model A against model B's artifacts, model B wins by default"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -1433,10 +1391,10 @@
     "query": "UserPromptSubmit: the benchmark is taking 45 minutes per model now but it used to take 5 minutes, something must have changed",
     "corpus": "rules_global.txt",
     "should_match": [
-      "If a tool call or LLM response takes 10x longer than expected, investigate immediately \u2014 normalized slowness compounds across thousands of calls into hours of wasted time"
+      "Before trusting benchmark results: verify the evaluation methodology — if you benchmark model A against model B's artifacts, model B wins by default"
     ],
     "should_not_match": [],
-    "difficulty": "easy",
+    "difficulty": "medium",
     "event": "UserPromptSubmit"
   },
   {
@@ -1444,7 +1402,7 @@
     "query": "UserPromptSubmit: the build keeps failing with the same error, I've rerun it 3 times already",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When a tool fails, read the full error and search docs before retrying \u2014 blind retries waste time and hide the root cause, while the fix is usually in the error message"
+      "After 2 failed fix attempts on the same error, stop and ask the user for guidance instead of spiraling"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -1455,11 +1413,11 @@
     "query": "UserPromptSubmit: Okay good job, can you bring up web interface, a command for easy web serving would be useful, and after I want you to write a test plan and do meticulous testing and code reviews to understand the current state",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code — uncovered code is untested code, and untested code breaks silently in production"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
-      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
+      "When running Python package commands (Bash): use uv instead — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
+      "When running git add or git commit, or writing config/.env files: never include secrets — once pushed, secrets are in the history forever and require rotation across all environments"
     ],
     "difficulty": "medium",
     "event": "UserPromptSubmit"
@@ -1469,10 +1427,10 @@
     "query": "UserPromptSubmit: It shows Failed to load runs, we need to make sure web interface works too, ask a subagent to test and verify everything",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Set subagent scope boundaries and terminate stale agents \u2014 an unbounded reviewer will find infinite speculative findings in any document, consuming context without improving quality"
+      "When launching subagents: set explicit scope boundaries and kill stale ones — unbounded reviewers find infinite speculative findings"
     ],
     "should_not_match": [
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
+      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead — string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables"
     ],
     "difficulty": "hard",
     "event": "UserPromptSubmit"
@@ -1490,25 +1448,23 @@
     "id": "v3-user-research-hooks",
     "query": "UserPromptSubmit: Currently we have two hooks pretooluse and userpromptsubmit, can you research and tell me what other hooks are available and which would be useful to include?",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search \u2014 wrong search tool returns irrelevant results and wastes time on false leads",
-      "Search GitHub for existing implementations and proven patterns before writing anything from scratch \u2014 80% of problems are already solved, and battle-tested code has fewer bugs than fresh code"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+      "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings — undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
     ],
-    "difficulty": "hard",
-    "event": "UserPromptSubmit"
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "tier": "easy"
   },
   {
     "id": "v3-user-use-toml-and-migrate",
     "query": "UserPromptSubmit: This is not right design, lets use toml and migrate. Users can mention events and tools, also the default mode is infer which will extend events and tools based on llm as users might not have configured them",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
     ],
     "should_not_match": [
-      "Always validate user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
+      "When writing API endpoints, form handlers, or CLI parsers: validate all user input at system boundaries — unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
     ],
     "difficulty": "hard",
     "event": "UserPromptSubmit"
@@ -1519,7 +1475,7 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
+      "When running git add or git commit, or writing config/.env files: never include secrets — once pushed, secrets are in the history forever and require rotation across all environments"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -1530,8 +1486,8 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Never force-push to main or master branch \u2014 force-push overwrites other developers' commits with no recovery path",
-      "Always create a new branch for feature work \u2014 working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation"
+      "Never force-push to main or master branch — force-push overwrites other developers' commits with no recovery path",
+      "When starting feature work (Bash: git checkout, git branch): always create a new branch — working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation"
     ],
     "difficulty": "negative",
     "event": "UserPromptSubmit"
@@ -1541,7 +1497,7 @@
     "query": "UserPromptSubmit: yes these are rules we want to keep in mind, read claude md of alphaloom, git push project",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit — catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [],
     "difficulty": "hard",
@@ -1561,11 +1517,11 @@
     "query": "UserPromptSubmit: Option B + C sounds good but we need to evaluate quality metrics so benchmarking is important, we can defer this complexity to a later phase",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Control your evaluation methodology before trusting results \u2014 if you benchmark model A against model B's artifacts, model B wins by default; always evaluate the full pipeline end-to-end with each model generating its own inputs",
-      "Establish baseline metrics before implementing any improvement \u2014 without before/after numbers you cannot distinguish real improvement from noise"
+      "Before trusting benchmark results: verify the evaluation methodology — if you benchmark model A against model B's artifacts, model B wins by default",
+      "Before implementing any improvement or optimization: establish baseline metrics first — without before/after numbers you cannot distinguish real improvement from noise"
     ],
     "should_not_match": [
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code — uncovered code is untested code, and untested code breaks silently in production"
     ],
     "difficulty": "hard",
     "event": "UserPromptSubmit"
@@ -1579,6 +1535,960 @@
     ],
     "should_not_match": [],
     "difficulty": "hard",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-neg-what-does-this-do",
+    "query": "UserPromptSubmit: what does the process_batch function do",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-yes-looks-right",
+    "query": "UserPromptSubmit: yes that looks right, go ahead",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-no-other-file",
+    "query": "UserPromptSubmit: no I meant the other file, not that one",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-check-disk-space",
+    "query": "UserPromptSubmit: how much disk space is left on this machine",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-rest-vs-graphql",
+    "query": "UserPromptSubmit: whats the difference between REST and GraphQL",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-dns-explanation",
+    "query": "UserPromptSubmit: explain how DNS resolution works",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-python-version",
+    "query": "UserPromptSubmit: what version of python are we using",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-show-readme",
+    "query": "UserPromptSubmit: show me the README",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-where-is-main",
+    "query": "UserPromptSubmit: where is the main entry point for this app",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-tcp-vs-udp",
+    "query": "UserPromptSubmit: whats the difference between TCP and UDP",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-perfect-thanks",
+    "query": "UserPromptSubmit: perfect, thats exactly what I needed",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-how-caching-works",
+    "query": "UserPromptSubmit: how does the caching layer work in this project",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-find-import",
+    "query": "UserPromptSubmit: where is pandas imported in the codebase",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-show-class-hierarchy",
+    "query": "UserPromptSubmit: show me the class hierarchy for the retriever module",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-what-os",
+    "query": "UserPromptSubmit: what OS is this running on",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-nevermind",
+    "query": "UserPromptSubmit: nevermind, forget what I said",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-ls-directory",
+    "query": "UserPromptSubmit: list whats in the tests directory",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-how-many-tests",
+    "query": "UserPromptSubmit: how many test files do we have",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-explain-decorator",
+    "query": "UserPromptSubmit: what does the @cached_property decorator do",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-whats-toml",
+    "query": "UserPromptSubmit: what is TOML format and how does it differ from YAML",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-go-back",
+    "query": "UserPromptSubmit: actually go back to what we were doing before",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-cat-file",
+    "query": "UserPromptSubmit: cat the pyproject.toml",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-how-old-repo",
+    "query": "UserPromptSubmit: when was the first commit in this repo",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-whos-author",
+    "query": "UserPromptSubmit: who authored the retriever module",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-wait",
+    "query": "UserPromptSubmit: wait hold on let me think",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-ascii-art",
+    "query": "UserPromptSubmit: draw me an ASCII diagram of the architecture",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-port-number",
+    "query": "UserPromptSubmit: what port is the dev server running on",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-count-todo",
+    "query": "UserPromptSubmit: how many TODOs are in the codebase",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-ok-continue",
+    "query": "UserPromptSubmit: ok continue",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-explain-git-rebase",
+    "query": "UserPromptSubmit: explain what git rebase does vs git merge",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-which-branch",
+    "query": "UserPromptSubmit: which branch are we on right now",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-memory-usage",
+    "query": "UserPromptSubmit: check the memory usage of this process",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-regex-help",
+    "query": "UserPromptSubmit: help me write a regex that matches email addresses",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-idk",
+    "query": "UserPromptSubmit: hmm im not sure, what do you think",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-color-scheme",
+    "query": "UserPromptSubmit: change the terminal color scheme to solarized dark",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-how-many-deps",
+    "query": "UserPromptSubmit: how many dependencies does this project have",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-convert-timestamp",
+    "query": "UserPromptSubmit: convert this unix timestamp to a readable date: 1712534400",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-skip-that",
+    "query": "UserPromptSubmit: skip that part, its not important right now",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-ssh-key",
+    "query": "UserPromptSubmit: how do I generate an SSH key",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-tail-logs",
+    "query": "UserPromptSubmit: tail the last 50 lines of the log file",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-what-license",
+    "query": "UserPromptSubmit: what license is this project using",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-looks-good-ship-it",
+    "query": "UserPromptSubmit: looks good, ship it",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-how-containers-work",
+    "query": "UserPromptSubmit: can you explain how Docker containers differ from VMs",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-find-string",
+    "query": "UserPromptSubmit: search for the string TODO_CLEANUP in the source files",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-compare-syntax",
+    "query": "UserPromptSubmit: whats the difference between async def and regular def in python",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-indent-spaces",
+    "query": "UserPromptSubmit: does this project use tabs or spaces",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-thats-wrong",
+    "query": "UserPromptSubmit: thats wrong, the return type should be a list not a dict",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-wc-lines",
+    "query": "UserPromptSubmit: count the lines in retriever.py",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-explain-dataclass",
+    "query": "UserPromptSubmit: whats the difference between a dataclass and a namedtuple",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-kill-process",
+    "query": "UserPromptSubmit: kill the process on port 8081",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-undo-last",
+    "query": "UserPromptSubmit: undo what you just did",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-pick-first-option",
+    "query": "UserPromptSubmit: go with the first option",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-how-http2-works",
+    "query": "UserPromptSubmit: explain how HTTP/2 multiplexing works",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-what-imports",
+    "query": "UserPromptSubmit: what does pipeline.py import",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-size-of-model",
+    "query": "UserPromptSubmit: how big is the bge-small-en model in megabytes",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-repeat-that",
+    "query": "UserPromptSubmit: can you repeat that last part",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-clear-terminal",
+    "query": "UserPromptSubmit: clear the terminal",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-gpu-specs",
+    "query": "UserPromptSubmit: what GPU do we have available",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-spelling-fix",
+    "query": "UserPromptSubmit: theres a typo in the docstring, retrival should be retrieval",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-how-event-loop",
+    "query": "UserPromptSubmit: how does the python asyncio event loop work internally",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-check-node-version",
+    "query": "UserPromptSubmit: what node version is installed",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-show-git-blame",
+    "query": "UserPromptSubmit: show git blame for line 42 of config.py",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-exactly",
+    "query": "UserPromptSubmit: exactly, thats what I was trying to say",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-ping-server",
+    "query": "UserPromptSubmit: ping google.com and see if we have internet",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-neg-open-in-editor",
+    "query": "UserPromptSubmit: open this file in VS Code",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit",
+    "should_not_match": []
+  },
+  {
+    "id": "wf-new-add-auth-feature",
+    "query": "UserPromptSubmit: I want to add user authentication to the API",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
+      "When receiving a task touching 3-10 files: create an inline plan with research, write tests alongside code, and run agent review after — medium tasks need structure"
+    ],
+    "should_not_match": [
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
+    ],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-refactor-db-layer",
+    "query": "UserPromptSubmit: lets refactor the entire persistence layer to use SQLAlchemy",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
+      "When receiving a task touching 10+ files or requiring new architecture: write a full PRD first — complex tasks without specs produce rework and missed requirements",
+      "When starting complex features: use the planner agent; for system design: use architect; for new features/bugs: use tdd-guide — match the agent to the task type",
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting — unvetted dependencies become permanent tech debt"
+    ],
+    "should_not_match": [
+      "When receiving a task touching 1-2 files (config change, small fix): proceed without a plan — simple tasks don't need overhead"
+    ],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-done-with-phase1",
+    "query": "UserPromptSubmit: alright phase 1 is complete, all tests pass, moving on",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before moving to the next implementation phase: validate the current phase against real data — synthetic tests pass when the real thing fails because mocks diverge from production",
+      "After each implementation milestone: run convergence reviews with parallel code + security agents — per-phase reviews catch bugs when they're cheap to fix",
+      "After mocked tests pass: test with real external data — NaN values, missing columns, and API format differences only surface with live data"
+    ],
+    "should_not_match": [
+      "When receiving a task touching 1-2 files (config change, small fix): proceed without a plan — simple tasks don't need overhead"
+    ],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-use-langchain",
+    "query": "UserPromptSubmit: lets use langchain for the agent orchestration layer",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting — unvetted dependencies become permanent tech debt",
+      "Before building on an unvalidated dependency: spike-test it for 2 hours — discovering a library fails after building 3 layers on top wastes days",
+      "Prefer mature extensible frameworks over building from scratch — if LangGraph, FastAPI, or similar battle-tested projects provide the feature (routing, checkpointing, streaming), use them even if a simpler stdlib approach works today, because refactoring from simple to framework later costs more than starting with the framework"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-confidence-trust",
+    "query": "UserPromptSubmit: the model says 95% confidence on this classification, should we trust it",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When an LLM outputs confidence scores or probabilities: don't trust them — use evidence counts, ensemble agreement, or track record instead"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-prd-updated",
+    "query": "UserPromptSubmit: I updated the PRD with the new event types section, lets start coding",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After revising a PRD or design document: run convergence reviews — design gaps that survive review become implementation bugs that survive testing",
+      "For any significant feature: follow the three-layer gate — PRD + reviews, then implementation + reviews, then test plan + reviews — skipping any layer compounds risk"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-spawn-reviewers",
+    "query": "UserPromptSubmit: spawn a code reviewer and security reviewer to check the auth module",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When multiple independent review or analysis tasks exist: launch parallel subagents — sequential execution wastes time when tasks don't depend on each other",
+      "When launching subagents: set explicit scope boundaries and kill stale ones — unbounded reviewers find infinite speculative findings"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-fix-bug-found",
+    "query": "UserPromptSubmit: I found a bug in the session parser, it crashes on empty input",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+    ],
+    "should_not_match": [
+      "When receiving a task touching 10+ files or requiring new architecture: write a full PRD first — complex tasks without specs produce rework and missed requirements"
+    ],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-small-config-change",
+    "query": "UserPromptSubmit: just bump the timeout from 500 to 1000 in the config",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When receiving a task touching 1-2 files (config change, small fix): proceed without a plan — simple tasks don't need overhead",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
+    ],
+    "should_not_match": [
+      "When receiving a task touching 10+ files or requiring new architecture: write a full PRD first — complex tasks without specs produce rework and missed requirements"
+    ],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-write-custom-embedding",
+    "query": "UserPromptSubmit: write a custom embedding model wrapper from scratch",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Reuse popular open-source components for each layer of the system — only build custom code for what doesn't exist, because mature projects provide stability, community support, and extensibility that hand-rolled code cannot match"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-test-plan-before-testing",
+    "query": "UserPromptSubmit: we finished the implementation, lets start testing",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before testing a completed milestone: create a comprehensive test plan reviewed by subagents — an incomplete test plan produces false confidence",
+      "After each implementation milestone: run convergence reviews with parallel code + security agents — per-phase reviews catch bugs when they're cheap to fix",
+      "After mocked tests pass: test with real external data — NaN values, missing columns, and API format differences only surface with live data"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-secret-in-log",
+    "query": "UserPromptSubmit: I noticed the API key is showing up in the debug logs",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When discovering exposed credentials in code, logs, or git history (Bash: git log, git diff, Read): rotate any secrets that may have been exposed — exposed credentials remain valid until rotated, giving attackers a persistent access window"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-quick-n10-check",
+    "query": "UserPromptSubmit: lets run it on 10 examples to get a feel for quality",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never trust small sample benchmark results — run the full dataset before drawing conclusions"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-skip-review-tired",
+    "query": "UserPromptSubmit: I know we should review but lets just skip it this time, its a small change",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After writing code: run 3 parallel review agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
+      "After each review round: keep running until two consecutive rounds produce zero CRITICAL/HIGH/MEDIUM findings — fixed round counts stop too early or too late"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-not-working-retry",
+    "query": "UserPromptSubmit: this isnt working, ive tried 3 different things and its still broken",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After 2 failed fix attempts on the same error, stop and ask the user for guidance instead of spiraling"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-context-compaction",
+    "query": "UserPromptSubmit: ok we need to wrap up soon, context is getting heavy",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
+      "Monitor agent context usage in tmux — compact when context remaining drops below 67 percent",
+      "After changing project structure, architecture, or conventions: update CLAUDE.md — without this, the next session starts with stale context and makes wrong assumptions"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-build-vector-db",
+    "query": "UserPromptSubmit: lets build the vector search system, I think we need about 15 new files",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When receiving a task touching 10+ files or requiring new architecture: write a full PRD first — complex tasks without specs produce rework and missed requirements",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning",
+      "When starting complex features: use the planner agent; for system design: use architect; for new features/bugs: use tdd-guide — match the agent to the task type",
+      "For any significant feature: follow the three-layer gate — PRD + reviews, then implementation + reviews, then test plan + reviews — skipping any layer compounds risk"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-agent-report-back",
+    "query": "UserPromptSubmit: tell cody to send his report to my tmux window when hes done",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion",
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-update-claude-md",
+    "query": "UserPromptSubmit: we changed the architecture, make sure CLAUDE.md reflects that",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After changing project structure, architecture, or conventions: update CLAUDE.md — without this, the next session starts with stale context and makes wrong assumptions"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-model-wrong-audit-first",
+    "query": "UserPromptSubmit: the recall dropped 15 points after adding new fixtures, the model must be broken",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When model predictions look wrong: audit the ground truth first — wrong fixture expectations are indistinguishable from model failures, and removing them is a free quality improvement",
+      "Before trusting benchmark results: verify the evaluation methodology — if you benchmark model A against model B's artifacts, model B wins by default"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-lightweight-first",
+    "query": "UserPromptSubmit: should we use GPT-4 for the classification or is there a simpler approach",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use lightweight deterministic approaches first, add LLM stages only when they demonstrably improve quality"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-unproven-technique",
+    "query": "UserPromptSubmit: I read about contrastive hypothesis generation, lets build that into our pipeline",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never build infrastructure around unproven techniques — test hypotheses in controlled experiments first, implement only winners",
+      "Before implementing any improvement or optimization: establish baseline metrics first — without before/after numbers you cannot distinguish real improvement from noise"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-fix-upstream",
+    "query": "UserPromptSubmit: the embeddings are garbage, lets add a better postprocessor to clean them up",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When debugging poor output quality: fix the upstream pipeline stage, not downstream patches — downstream fixes accumulate into unmaintainable complexity",
+      "When building multi-stage pipelines: ensure each stage is independently high quality — downstream stages cannot rescue upstream failures"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-multi-stage-noise",
+    "query": "UserPromptSubmit: the retrieval pipeline returns too many irrelevant results, one filter isnt enough",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When building retrieval pipelines: filter noise at multiple independent stages with configurable thresholds — no single filter point can handle all query types",
+      "When building multi-stage pipelines: ensure each stage is independently high quality — downstream stages cannot rescue upstream failures"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-schema-migration",
+    "query": "UserPromptSubmit: we need to change the Rule dataclass to add an events field",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When schema or cardinality changes, audit every consumer (views, queries, CLI, exports, tests) before implementing",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-paper-reproduce",
+    "query": "UserPromptSubmit: the PersonaMem paper says they get 85% on the benchmark, we should try their approach",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When reproducing published results: run the original paper code first — do not theorize about score gaps without evidence from the reference implementation",
+      "Score gaps between models on routine tasks usually indicate code or config differences, not model quality differences"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-write-agent-instructions",
+    "query": "UserPromptSubmit: write the system prompt for the review agent, keep it simple - just list what to check",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When writing rules or instructions for agents: explain consequences, not just commands — agents follow rules they understand but ignore rules that just say what to do"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-thinking-mode-choice",
+    "query": "UserPromptSubmit: should I turn on thinking mode for the expansion generator or use reasoning-first json",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When choosing LLM reasoning mode: thinking mode costs 10x but is most decisive; reasoning-first JSON recovers 80% of quality at 3x speed — match compute to difficulty"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-mocked-passing-ship",
+    "query": "UserPromptSubmit: all unit tests pass with mocks, lets ship it to production",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After mocked tests pass: test with real external data — NaN values, missing columns, and API format differences only surface with live data",
+      "Before moving to the next implementation phase: validate the current phase against real data — synthetic tests pass when the real thing fails because mocks diverge from production"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-new-review-three-rounds",
+    "query": "UserPromptSubmit: the first review round found 5 issues, we fixed them all, are we done",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After each review round: keep running until two consecutive rounds produce zero CRITICAL/HIGH/MEDIUM findings — fixed round counts stop too early or too late"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
     "event": "UserPromptSubmit"
   }
 ]

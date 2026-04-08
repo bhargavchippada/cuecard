@@ -1,11 +1,10 @@
 [
   {
     "id": "stop-git-commit-made",
-    "query": "Stop: Committed changes with git commit -m 'fix: resolve auth bug' and pushed to feature branch",
+    "query": "Stop: User asked: fix the auth bug and push it to the feature branch | Agent said: Fixed the auth bug in src/auth.py and committed with git commit -m 'fix: resolve auth bug'. Pushed to feature/auth-fix.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
-      "Run ruff and mypy before committing Python code \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -15,25 +14,23 @@
   },
   {
     "id": "stop-git-commit-secrets-risk",
-    "query": "Stop: Edited .env file and committed all changes with git add -A && git commit",
+    "query": "Stop: User asked: update the database credentials in the env file and commit | Agent said: Updated .env with new DB credentials. Committed all changes with git add -A && git commit.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "difficulty": "medium",
     "event": "Stop"
   },
   {
     "id": "stop-file-edits-python",
-    "query": "Stop: Edited src/api.py and src/models.py to add new user creation endpoint",
+    "query": "Stop: User asked: add a user creation endpoint to the API | Agent said: Added POST /users endpoint in src/api.py and UserCreate model in src/models.py. The endpoint validates email format and hashes passwords.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production",
-      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -43,526 +40,504 @@
   },
   {
     "id": "stop-wrote-new-module",
-    "query": "Stop: Created new file src/cache.py with CacheManager class and helper functions",
+    "query": "Stop: User asked: create a caching module for the application | Agent said: Created src/cache.py with CacheManager class supporting TTL-based expiry and LRU eviction. Includes get, set, and invalidate methods.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "medium",
     "event": "Stop"
   },
   {
     "id": "stop-tests-written",
-    "query": "Stop: Wrote test_api.py with 15 test cases covering the new endpoint, all passing with 95% coverage",
+    "query": "Stop: User asked: write tests for the new user endpoint with full coverage | Agent said: Wrote test_api.py with 15 test cases covering the new endpoint. All passing with 95% coverage.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "difficulty": "medium",
     "event": "Stop"
   },
   {
     "id": "stop-pip-install-used",
-    "query": "Stop: Installed httpx and pydantic using pip install, added them to requirements.txt",
+    "query": "Stop: User asked: add httpx and pydantic to the project | Agent said: Installed httpx and pydantic using pip install. Added them to requirements.txt. Ready to use.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
-      "Review all dependencies for known vulnerabilities before adding \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting \u2014 unvetted dependencies become permanent tech debt"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "easy",
+    "difficulty": "medium",
     "event": "Stop"
   },
   {
     "id": "stop-database-query-added",
-    "query": "Stop: Added database queries in src/db.py using string formatting for SQL queries",
+    "query": "Stop: User asked: explain how the database layer works | Agent said: The database module in src/db.py uses string formatting for SQL queries. I described the query patterns and connection handling.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
+      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
-    "difficulty": "medium",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-html-template-created",
-    "query": "Stop: Created HTML templates for user profile page with dynamic content rendering",
+    "query": "Stop: User asked: what does the user profile page look like | Agent said: The profile page uses HTML templates with dynamic content rendering via Jinja2. I described the template structure and variables.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Sanitize all HTML output to prevent XSS \u2014 unsanitized user content rendered as HTML lets attackers inject scripts that steal session tokens, redirect users, or deface the page"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
+      "When writing concurrent I/O code with threads (Edit, Write): use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
     ],
-    "difficulty": "hard",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-force-pushed-main",
-    "query": "Stop: Force pushed to main branch to fix a bad merge commit",
+    "query": "Stop: User asked: how do I undo the bad merge on main | Agent said: Explained the options: revert commit, or interactive rebase. Did not make any changes to the repository.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Never force-push to main or master branch \u2014 force-push overwrites other developers' commits with no recovery path"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "easy",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-refactored-dataclasses",
-    "query": "Stop: Refactored models.py to use dataclasses instead of plain dicts for data transfer objects",
+    "query": "Stop: User asked: explain the data model in models.py | Agent said: The module uses plain dicts for data transfer objects. I described the structure and suggested dataclasses as an improvement.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
-      "Prefer immutable data structures over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency",
-      "Never mutate function arguments or shared state \u2014 mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "hard",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-form-endpoint-added",
-    "query": "Stop: Added POST /settings endpoint that processes form data to update user preferences",
+    "query": "Stop: User asked: what endpoints does the settings module have | Agent said: There is a POST /settings endpoint that processes form data to update user preferences. I described the request format and validation.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Enable CSRF protection on all forms and state-changing endpoints \u2014 without it, malicious sites can trigger actions on behalf of authenticated users via forged requests",
-      "Always validate user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "hard",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-env-vars-hardcoded",
-    "query": "Stop: Configured the API client with hardcoded URL and timeout values in src/client.py",
+    "query": "Stop: User asked: check how the API client is configured | Agent said: The client in src/client.py has the URL and timeout hardcoded directly. I read through the configuration and reported the values.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use environment variables for configuration, not hardcoded values \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
-      "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants \u2014 unnamed numbers scattered through code are impossible to find, update consistently, or understand the intent of"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "medium",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-error-handling-added",
-    "query": "Stop: Added try/except blocks around API calls in src/service.py with empty except clauses",
+    "query": "Stop: User asked: review the error handling in the service layer | Agent said: Found try/except blocks around API calls in src/service.py with empty except clauses. Reported the findings.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Always handle errors explicitly at every level, never silently swallow exceptions \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
-    "difficulty": "medium",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-tmux-delegation",
-    "query": "Stop: Sent commands to cody via tmux send-keys to run the test suite",
+    "query": "Stop: User asked: delegate the test suite run to cody | Agent said: Sent commands to cody via tmux send-keys to run the test suite. Waiting for results.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "easy",
+    "difficulty": "medium",
     "event": "Stop"
   },
   {
     "id": "stop-sensitive-file-created",
-    "query": "Stop: Created config/credentials.yaml with database passwords and API keys for deployment",
+    "query": "Stop: User asked: set up deployment credentials for the staging server | Agent said: Created config/credentials.yaml with database passwords and API keys. Deployment config is ready.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Set file permissions to 0o600 for sensitive files (keys, configs, tokens) \u2014 world-readable secrets are the most common cloud breach vector",
-      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
-      "Use environment variables for configuration, not hardcoded values \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
+      "When discovering exposed credentials in code, logs, or git history (Bash: git log, git diff, Read): rotate any secrets that may have been exposed \u2014 exposed credentials remain valid until rotated, giving attackers a persistent access window"
     ],
     "should_not_match": [
-      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
+      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
-    "difficulty": "easy",
+    "difficulty": "medium",
     "event": "Stop"
   },
   {
     "id": "stop-async-network-calls",
-    "query": "Stop: Implemented concurrent HTTP fetcher using threading.Thread to download multiple URLs in parallel",
+    "query": "Stop: User asked: how is the concurrent HTTP fetcher implemented | Agent said: It uses threading.Thread to download multiple URLs in parallel. I described the thread pool pattern and error handling.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
+      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables"
     ],
-    "difficulty": "hard",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-linting-skipped",
-    "query": "Stop: Committed Python changes without running linter or type checker",
+    "query": "Stop: User asked: commit the Python changes we just made | Agent said: Committed all changes. Tests pass. Ready to push.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Run ruff and mypy before committing Python code \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "difficulty": "medium",
     "event": "Stop"
   },
   {
     "id": "stop-branch-not-created",
-    "query": "Stop: Implemented feature directly on main branch without creating a feature branch",
+    "query": "Stop: User asked: what branch are we on | Agent said: We are on main. I read the git status and confirmed no uncommitted changes.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Always create a new branch for feature work \u2014 working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "easy",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-dependency-added-no-audit",
-    "query": "Stop: Added pyjwt and cryptography packages to the project for authentication",
+    "query": "Stop: User asked: add JWT authentication to the project | Agent said: Added pyjwt and cryptography packages. Implemented token generation and validation in src/auth.py.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Review all dependencies for known vulnerabilities before adding \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting \u2014 unvetted dependencies become permanent tech debt"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "hard",
+    "difficulty": "medium",
     "event": "Stop"
   },
   {
     "id": "stop-resource-leak",
-    "query": "Stop: Wrote file processing code that opens files without using context managers or closing them",
+    "query": "Stop: User asked: describe how the file processing works | Agent said: The processor in src/processor.py opens files with open() calls but does not use context managers. I explained the flow.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
-    "difficulty": "medium",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-gitignore-missing",
-    "query": "Stop: Generated build artifacts in dist/ and compiled .pyc files but did not update .gitignore",
+    "query": "Stop: User asked: why is the repo so large | Agent said: Found that dist/ and compiled .pyc files are being tracked. The .gitignore does not exclude build artifacts.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Add .gitignore entries for generated files and build artifacts \u2014 committed build artifacts bloat the repo and cause merge conflicts on every build"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
+      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
-    "difficulty": "medium",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-secret-exposed-in-logs",
-    "query": "Stop: Logged the full request including Authorization header to debug an API issue",
+    "query": "Stop: User asked: debug why the API returns 401 | Agent said: Logged the full request including the Authorization header to trace the issue. Found the token was expired.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Rotate any secrets that may have been exposed \u2014 exposed credentials remain valid until rotated, giving attackers a persistent access window that widens with every hour of delay"
+      "When discovering exposed credentials in code, logs, or git history (Bash: git log, git diff, Read): rotate any secrets that may have been exposed \u2014 exposed credentials remain valid until rotated, giving attackers a persistent access window"
     ],
     "should_not_match": [
-      "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
+      "When writing concurrent I/O code with threads (Edit, Write): use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
     ],
     "difficulty": "hard",
     "event": "Stop"
   },
   {
     "id": "stop-neg-read-only",
-    "query": "Stop: Read several configuration files and source code to understand the project structure",
+    "query": "Stop: User asked: help me understand the project structure | Agent said: Read several configuration files and source code modules. The project uses a modular architecture with separate packages for API, models, and utils.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-grep-search",
-    "query": "Stop: Searched for all usages of the deprecated function across the codebase using grep",
+    "query": "Stop: User asked: find all usages of the deprecated parse_config function | Agent said: Searched the entire codebase with grep. Found 7 usages across 4 files. Listed all locations with line numbers.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-listed-files",
-    "query": "Stop: Listed directory contents and checked git log to understand recent changes",
+    "query": "Stop: User asked: what changed recently in this repo | Agent said: Listed directory contents and checked git log. Last 5 commits were refactoring of the parser module and adding test coverage.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-git-status-check",
-    "query": "Stop: Checked git status and git diff to review uncommitted changes",
+    "query": "Stop: User asked: are there any uncommitted changes | Agent said: Checked git status and git diff. There are 3 modified files with unstaged changes in src/pipeline.py, src/config.py, and tests/test_pipeline.py.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-read-docs",
-    "query": "Stop: Read the README.md and CLAUDE.md documentation files to understand project conventions",
+    "query": "Stop: User asked: what are the project conventions | Agent said: Read README.md and CLAUDE.md. The project uses uv for packages, pytest for testing, ruff for linting, and requires 100% coverage.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+      "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-answered-question",
-    "query": "Stop: Answered user's question about how the retrieval pipeline works based on reading the source code",
+    "query": "Stop: User asked: how does the retrieval pipeline work | Agent said: The pipeline has three stages: dense embedding retrieval, sparse BM25 matching, and optional LLM reranking. Results are fused via RRF.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-browsed-tests",
-    "query": "Stop: Read through test files to understand existing test patterns and coverage",
+    "query": "Stop: User asked: what tests exist for the retriever module | Agent said: Read through test files. Found test_retriever.py with 45 tests covering cosine similarity, parent collapse, and threshold filtering.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-git-log-review",
-    "query": "Stop: Reviewed git log history and commit messages to understand the development timeline",
+    "query": "Stop: User asked: show me the development timeline for the last week | Agent said: Reviewed git log history. 12 commits over the past week covering sparse retriever, RRF fusion, and LLM reranker integration.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-explained-architecture",
-    "query": "Stop: Explained how the multi-stage retrieval pipeline works including dense, sparse, and LLM reranking stages",
+    "query": "Stop: User asked: explain the multi-stage retrieval design | Agent said: Stage 1 uses dense embeddings for semantic matching. Stage 2 uses BM25 for keyword matching. Stage 3 optionally applies LLM reranking for precision.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+      "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-created-plan",
-    "query": "Stop: Created an implementation plan for the new caching layer, outlining phases, risks, and dependencies",
+    "query": "Stop: User asked: plan the implementation of the new caching layer | Agent said: Created a 4-phase implementation plan covering in-memory cache, Redis integration, cache invalidation, and monitoring. Outlined risks and dependencies.",
     "corpus": "rules_global.txt",
     "should_match": [
       "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
     ],
     "should_not_match": [
-      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
+      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
     "difficulty": "hard",
     "event": "Stop"
   },
   {
     "id": "stop-neg-ran-tests-passed",
-    "query": "Stop: Ran the full test suite with pytest and all 847 tests passed with 100% coverage",
+    "query": "Stop: User asked: make sure everything passes before I commit | Agent said: Ran the full test suite with pytest. All 847 tests passed with 100% coverage. Ruff and mypy clean.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-checked-server-logs",
-    "query": "Stop: Read the server logs and checked error traces to diagnose why the API was returning 500 errors",
+    "query": "Stop: User asked: why is the API returning 500 errors | Agent said: Read the server logs and found a stack trace pointing to a null reference in the auth middleware. Identified the root cause.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Always handle errors explicitly at every level, never silently swallow exceptions \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
+      "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-compared-libraries",
-    "query": "Stop: Compared fastembed, sentence-transformers, and openai embeddings for latency and quality tradeoffs",
+    "query": "Stop: User asked: which embedding library should we use | Agent said: Compared fastembed, sentence-transformers, and OpenAI embeddings. fastembed is 50MB vs 2GB, runs on ONNX, and has comparable quality. Recommending fastembed.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "For new libraries or APIs, research alternatives, verify documentation, audit maintenance status, and benchmark before adopting"
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting \u2014 unvetted dependencies become permanent tech debt"
     ],
     "should_not_match": [
-      "Review all dependencies for known vulnerabilities before adding \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
+      "When adding new dependencies: review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
     ],
     "difficulty": "hard",
     "event": "Stop"
   },
   {
     "id": "stop-neg-reviewed-pr",
-    "query": "Stop: Reviewed pull request #42 and left comments on code quality and test coverage gaps",
+    "query": "Stop: User asked: review PR 42 | Agent said: Reviewed pull request #42. Left comments on code quality gaps and missing test coverage for the new retry logic.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-ran-benchmark",
-    "query": "Stop: Ran the E2E benchmark script and recorded latency metrics for the 9B and 35B models",
+    "query": "Stop: User asked: run the E2E benchmark for 9B and 35B | Agent said: Ran bench_e2e.py for both models. 9B: F2=0.797, PosRecall=0.560. 35B: F2=0.808, PosRecall=0.808. Results saved to eval/results/.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-discussed-design",
-    "query": "Stop: Discussed the tradeoffs between event-mask filtering and query-time affinity with the user",
+    "query": "Stop: User asked: should we use event-mask filtering or query-time affinity | Agent said: Discussed tradeoffs. Event-mask is O(1) lookup at query time but requires offline classification. Query-time is more flexible but adds latency. Recommending event-mask.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Prefer immutable data structures over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency"
+      "When writing data structures or containers (Edit, Write): prefer immutable data structures over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-read-error-output",
-    "query": "Stop: Read the mypy error output and identified 3 type annotation issues in src/pipeline.py",
+    "query": "Stop: User asked: what are the mypy errors in pipeline.py | Agent said: Read the mypy output. Found 3 type annotation issues: incompatible return type on line 42, missing Optional on line 78, and wrong generic parameter on line 112.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Run ruff and mypy before committing Python code \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
+      "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-checked-ci-status",
-    "query": "Stop: Checked the CI pipeline status on GitHub Actions and reviewed the failing job logs",
+    "query": "Stop: User asked: is CI green | Agent said: Checked GitHub Actions. The build job passed but the lint job failed on an unused import in src/utils.py. Provided the exact error.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-inspected-docker",
-    "query": "Stop: Inspected the Docker container logs and checked port mappings to debug a connection refused error",
+    "query": "Stop: User asked: why can't the app connect to postgres | Agent said: Inspected the Docker container logs. The postgres container is healthy but the app container has the wrong port mapping. Identified the fix.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
+      "When writing code that opens files, database connections, or HTTP sessions (Edit, Write): always close them after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-checked-git-blame",
-    "query": "Stop: Used git blame and git log to trace when and why the retry logic was removed from the HTTP client",
+    "query": "Stop: User asked: who removed the retry logic from the HTTP client | Agent said: Used git blame and git log. The retry logic was removed in commit a3f21b by cody during the session 15 refactor. The commit message says it was intentional.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-listed-processes",
-    "query": "Stop: Checked running processes with ps aux and verified the llama-server was listening on port 8081",
+    "query": "Stop: User asked: is the llama-server running | Agent said: Checked with ps aux. llama-server is running on port 8081 with 5 parallel slots and 98304 context. PID 12345.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
+      "When writing concurrent I/O code with threads (Edit, Write): use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-summarized-session",
-    "query": "Stop: Summarized what was accomplished in this session and outlined next steps for the user",
+    "query": "Stop: User asked: what did we accomplish today | Agent said: Summarized the session: implemented BM25 sparse retriever, added RRF fusion, wrote 42 tests with 100% coverage, and benchmarked 3 embedding models.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+      "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-neg-curl-health-check",
-    "query": "Stop: Sent a curl request to the health endpoint to verify the server was responding correctly",
+    "query": "Stop: User asked: verify the server is responding | Agent said: Sent a curl request to the health endpoint. Got 200 OK with response time of 12ms. Server is healthy.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Always validate user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
+      "When writing API endpoints, form handlers, or CLI parsers: validate all user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-multi-violation-commit",
-    "query": "Stop: Added new endpoint in src/api.py with pip-installed flask, committed directly on main without tests or linting",
+    "query": "Stop: User asked: add a new endpoint and deploy it | Agent said: Added new endpoint in src/api.py, installed flask with pip, and committed directly on main. Should be ready to deploy.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
-      "Always create a new branch for feature work \u2014 working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation",
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production",
-      "Run ruff and mypy before committing Python code \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -572,240 +547,217 @@
   },
   {
     "id": "stop-multi-security-violations",
-    "query": "Stop: Built a login form endpoint that takes user credentials, stores them in the database with string-concatenated SQL, and renders error messages with raw HTML",
+    "query": "Stop: User asked: how is the login form endpoint built | Agent said: It takes user credentials, stores them in the database with string-concatenated SQL, and renders error messages with raw HTML. I described the flow.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Always validate user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source",
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input",
-      "Sanitize all HTML output to prevent XSS \u2014 unsanitized user content rendered as HTML lets attackers inject scripts that steal session tokens, redirect users, or deface the page",
-      "Enable CSRF protection on all forms and state-changing endpoints \u2014 without it, malicious sites can trigger actions on behalf of authenticated users via forged requests"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "medium",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-eval-usage-in-code",
-    "query": "Stop: Created a dynamic configuration loader in src/config.py that uses eval() to parse user-provided expressions",
+    "query": "Stop: User asked: review the config loader module | Agent said: The dynamic configuration loader in src/config.py uses eval() to parse user-provided expressions. I explained the design and returned.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Never use eval(), exec(), or shell=True in production code \u2014 these execute arbitrary input as code, enabling remote code execution attacks",
-      "Always validate user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
-    "difficulty": "medium",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-large-function-written",
-    "query": "Stop: Wrote a 200-line process_data() function in src/etl.py that handles parsing, validation, transformation, and output in a single block",
+    "query": "Stop: User asked: describe the ETL pipeline | Agent said: The main function process_data() in src/etl.py is 200 lines and handles parsing, validation, transformation, and output in a single block. I described the flow.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Keep functions under 50 lines and source files under 800 lines (400 preferred) \u2014 large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "medium",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-mutable-dict-config",
-    "query": "Stop: Created the Settings class as a plain dict that gets mutated throughout request handling in src/server.py",
+    "query": "Stop: User asked: how is the server settings managed | Agent said: The Settings class is a plain dict that gets mutated during request handling in src/server.py. I read through the code and described the pattern.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
-      "Prefer immutable data structures over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency",
-      "Never mutate function arguments or shared state \u2014 mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "medium",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-debug-prints-left",
-    "query": "Stop: Finished implementing the search feature in src/search.py but left several print(f'DEBUG: {query}') statements in the code",
+    "query": "Stop: User asked: is there any debug output left in the search module | Agent said: Found several print(f'DEBUG: {query}') statements in src/search.py. Listed all the locations.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "No console.log or print debug statements in production code \u2014 debug output clutters logs, leaks internal state, and makes real errors harder to find in production monitoring"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
+      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables"
     ],
-    "difficulty": "easy",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-hard-new-module-no-tests",
-    "query": "Stop: Created src/scheduler.py with task scheduling functionality",
+    "query": "Stop: User asked: implement a task scheduler module | Agent said: Created src/scheduler.py with cron-like scheduling, task queuing, and retry logic. All functionality is implemented and working.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production",
-      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime",
-      "Document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "hard",
     "event": "Stop"
   },
   {
     "id": "stop-hard-db-pool-no-cleanup",
-    "query": "Stop: Added database connection pooling in src/db.py that creates connections on demand",
+    "query": "Stop: User asked: explain the database connection handling | Agent said: The db module creates connections on demand with a pool. I described the pool configuration and query execution flow.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
+      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
-    "difficulty": "hard",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-hard-committed-nonfmt",
-    "query": "Stop: Committed the refactored parser module after running tests but before checking types",
+    "query": "Stop: User asked: commit the refactored parser module | Agent said: Committed the refactored parser after running tests. All tests pass. Ready to push.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Run ruff and mypy before committing Python code \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "difficulty": "hard",
     "event": "Stop"
   },
   {
     "id": "stop-hard-network-with-threads",
-    "query": "Stop: Added a background task in src/worker.py that polls three APIs concurrently using ThreadPoolExecutor",
+    "query": "Stop: User asked: how does the background worker poll APIs | Agent said: It uses ThreadPoolExecutor to poll three APIs concurrently in src/worker.py. I described the thread pool configuration.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread",
-      "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
-    "difficulty": "hard",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-hard-partial-gitignore",
-    "query": "Stop: Set up the project build pipeline which outputs compiled assets to build/ and .cache/",
+    "query": "Stop: User asked: describe the build pipeline setup | Agent said: The build outputs compiled assets to build/ and .cache/ directories. I walked through the build configuration and output structure.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Add .gitignore entries for generated files and build artifacts \u2014 committed build artifacts bloat the repo and cause merge conflicts on every build"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
-    "difficulty": "hard",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-hard-env-in-code",
-    "query": "Stop: Configured the email service with SMTP host smtp.gmail.com and port 587 directly in src/email.py",
+    "query": "Stop: User asked: how is the email service configured | Agent said: SMTP host smtp.gmail.com and port 587 are set directly in src/email.py. I described the email sending flow and configuration.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use environment variables for configuration, not hardcoded values \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
+      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables"
     ],
-    "difficulty": "hard",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-hard-test-after-code",
-    "query": "Stop: Implemented the full OAuth flow in src/auth.py then wrote tests for it afterward",
+    "query": "Stop: User asked: implement the OAuth flow with tests | Agent said: Implemented the full OAuth flow in src/auth.py including token exchange, refresh, and revocation. Then wrote tests for it afterward. All tests pass.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "difficulty": "hard",
     "event": "Stop"
   },
   {
     "id": "stop-hard-ambiguous-function-untyped",
-    "query": "Stop: Added helper functions to src/utils.py for data transformation and string formatting",
+    "query": "Stop: User asked: what helper functions are in utils.py | Agent said: Found data transformation and string formatting helpers in src/utils.py. Listed all functions with their signatures and descriptions.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
+      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables"
     ],
-    "difficulty": "hard",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "stop-commit-no-conventional",
-    "query": "Stop: Committed the bug fix with message 'fixed the broken login page'",
+    "query": "Stop: User asked: commit the bug fix for the login page | Agent said: Committed with message 'fixed the broken login page'. Pushed to the feature branch.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless",
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [
-      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
     "difficulty": "medium",
     "event": "Stop"
   },
   {
     "id": "stop-sensitive-perms-wrong",
-    "query": "Stop: Created the SSH key pair and saved private key to config/deploy_key with default file permissions",
-    "corpus": "rules_global.txt",
-    "should_match": [
-      "Set file permissions to 0o600 for sensitive files (keys, configs, tokens) \u2014 world-readable secrets are the most common cloud breach vector"
-    ],
-    "should_not_match": [
-      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
-    ],
-    "difficulty": "medium",
-    "event": "Stop"
-  },
-  {
-    "id": "stop-hard-swallowed-error",
-    "query": "Stop: Wrapped the payment processing call in a try/except that catches Exception and returns None",
-    "corpus": "rules_global.txt",
-    "should_match": [
-      "Always handle errors explicitly at every level, never silently swallow exceptions \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
-    ],
-    "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
-    ],
-    "difficulty": "hard",
-    "event": "Stop"
-  },
-  {
-    "id": "stop-neg-read-test-output",
-    "query": "Stop: Read the pytest output to check which 3 tests were failing and analyzed the assertion errors",
+    "query": "Stop: User asked: describe the SSH key setup | Agent said: The deploy key pair was saved to config/deploy_key with default file permissions. I explained the key generation process.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
+    ],
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
+  },
+  {
+    "id": "stop-hard-swallowed-error",
+    "query": "Stop: User asked: review the payment processing error handling | Agent said: The payment call is wrapped in try/except that catches Exception and returns None. I described the error handling pattern.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+    ],
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
+  },
+  {
+    "id": "stop-neg-read-test-output",
+    "query": "Stop: User asked: which tests are failing and why | Agent said: Read the pytest output. 3 tests failing in test_auth.py. All are assertion errors on token expiry validation. Listed the exact failures.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "stop-test-real-data",
-    "query": "Stop: Completed the data pipeline implementation with 100% mocked test coverage but did not run against the live OpenBB API",
+    "query": "Stop: User asked: implement the data pipeline with full test coverage | Agent said: Data pipeline is complete. All 120 tests pass with 100% coverage using mocked API responses.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Always test with real external data after mocked tests pass \u2014 NaN values, missing columns, empty strings, and API format differences only surface with live data, never with synthetic fixtures"
+      "After mocked tests pass: test with real external data \u2014 NaN values, missing columns, and API format differences only surface with live data"
     ],
     "should_not_match": [],
     "difficulty": "medium",
@@ -813,10 +765,10 @@
   },
   {
     "id": "stop-rule-explain-why",
-    "query": "Stop: Wrote 15 new rules for the project guidelines document, each rule states the command but none explain why the rule matters or what goes wrong without it",
+    "query": "Stop: User asked: write project guidelines for the team | Agent said: Wrote 15 rules covering commit format, testing, and code style. Each rule states what to do but none explain why or what happens if you don't follow them.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Write rules and instructions that explain consequences, not just commands \u2014 agents follow rules they understand (\"without Enter, text is never submitted\") but ignore rules that just say what to do (\"always send Enter\")"
+      "When writing rules or instructions for agents: explain consequences, not just commands \u2014 agents follow rules they understand but ignore rules that just say what to do"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -824,10 +776,10 @@
   },
   {
     "id": "convergence-reviews-stop-milestone",
-    "query": "Stop: Completed Phase 3 implementation with all tests passing and ready for review",
+    "query": "Stop: User asked: implement Phase 3 of the retrieval pipeline | Agent said: Phase 3 implementation complete. LLM reranker integrated, 47 new tests all passing. Ready for the next phase.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Run convergence reviews (code + security agents in parallel) after each implementation milestone \u2014 a single end-of-project review misses bugs that compound across phases, while per-phase reviews catch them when they're cheap to fix"
+      "After each implementation milestone: run convergence reviews with parallel code + security agents \u2014 per-phase reviews catch bugs when they're cheap to fix"
     ],
     "should_not_match": [],
     "difficulty": "medium",
@@ -835,21 +787,21 @@
   },
   {
     "id": "convergence-reviews-neg-mid-phase",
-    "query": "Stop: Implemented 3 of 7 functions in the retriever module, continuing next turn",
+    "query": "Stop: User asked: implement the retriever module | Agent said: Implemented 3 of 7 functions in the retriever module. Continuing next turn with the remaining 4 functions.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Run convergence reviews (code + security agents in parallel) after each implementation milestone \u2014 a single end-of-project review misses bugs that compound across phases, while per-phase reviews catch them when they're cheap to fix"
+      "After each implementation milestone: run convergence reviews with parallel code + security agents \u2014 per-phase reviews catch bugs when they're cheap to fix"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "commit-per-phase-stop",
-    "query": "Stop: Finished implementing Phase 2 (sparse retriever + BM25 + RRF fusion) with 42 new tests all passing",
+    "query": "Stop: User asked: implement the sparse retriever with BM25 and RRF fusion | Agent said: Phase 2 complete. Added BM25Okapi, RRF fusion in retrievers/__init__.py, and parent-child collapse. 42 new tests all passing.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Commit after each implementation phase completes \u2014 atomic tested commits prevent compound debt, enable bisection for regressions, and give reviewers digestible chunks instead of monolithic diffs"
+      "After each implementation milestone: run convergence reviews with parallel code + security agents \u2014 per-phase reviews catch bugs when they're cheap to fix"
     ],
     "should_not_match": [],
     "difficulty": "medium",
@@ -857,10 +809,10 @@
   },
   {
     "id": "test-plan-after-milestone-stop",
-    "query": "Stop: Phase 1 core pipeline implementation complete with all features working, need to plan testing strategy",
+    "query": "Stop: User asked: implement Phase 1 core pipeline | Agent said: Phase 1 core pipeline is complete with all features working. Embeddings, retrieval, and formatting are operational. Need to plan testing strategy.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "After each milestone, create a comprehensive test plan before testing \u2014 the test plan itself should be reviewed by subagents (architect for coverage gaps, security for attack vectors, code quality for edge cases) because an incomplete test plan produces false confidence"
+      "Before testing a completed milestone: create a comprehensive test plan reviewed by subagents \u2014 an incomplete test plan produces false confidence"
     ],
     "should_not_match": [],
     "difficulty": "medium",
@@ -868,10 +820,10 @@
   },
   {
     "id": "three-layer-quality-gate-stop",
-    "query": "Stop: Completed full implementation of the expansion system including PRD review, code review, and test plan review",
+    "query": "Stop: User asked: build the expansion system end to end | Agent said: Expansion system complete. Wrote PRD, implemented code across 4 files, and wrote tests. Shipped it all in one go without separate reviews at each stage.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Follow the three-layer quality gate: PRD + reviews \u2192 Implementation + reviews \u2192 Test plan + reviews \u2014 skipping any layer compounds risk; a reviewed PRD catches design gaps, reviewed code catches bugs, a reviewed test plan catches blind spots that both missed"
+      "For any significant feature: follow the three-layer gate \u2014 PRD + reviews, then implementation + reviews, then test plan + reviews \u2014 skipping any layer compounds risk"
     ],
     "should_not_match": [],
     "difficulty": "hard",
@@ -879,34 +831,32 @@
   },
   {
     "id": "v3-stop-prd-review-complete",
-    "query": "Stop: Completed PRD review for closed-loop hooks with 4 parallel reviewer agents. Addressed 2 CRITICAL, 14 HIGH, and 12 MEDIUM findings. PRD converged at v1.2.",
+    "query": "Stop: User asked: review the closed-loop hooks PRD | Agent said: Completed PRD review with 4 parallel reviewer agents. Addressed 2 CRITICAL, 14 HIGH, and 12 MEDIUM findings. PRD converged at v1.2.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "v3-stop-tests-pass-coverage-100",
-    "query": "Stop: All 826 tests pass with 100% coverage. Ruff and mypy clean. Ready for commit.",
+    "query": "Stop: User asked: verify everything is green before commit | Agent said: All 826 tests pass with 100% coverage. Ruff and mypy clean. Ready to commit.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
-    ],
+    "should_match": [],
     "should_not_match": [],
-    "difficulty": "easy",
-    "event": "Stop"
+    "difficulty": "negative",
+    "event": "Stop",
+    "tier": "easy"
   },
   {
     "id": "v3-stop-implemented-toml-parser",
-    "query": "Stop: Implemented TOML rule parser with events and tools frozenset fields, added migrate CLI command to convert .txt to .toml, wrote 47 new tests.",
+    "query": "Stop: User asked: implement TOML rule parser and migration command | Agent said: Implemented TOML parser with events and tools frozenset fields. Added migrate CLI command to convert .txt to .toml. Wrote 47 new tests.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -914,18 +864,18 @@
   },
   {
     "id": "v3-stop-reading-existing-code",
-    "query": "Stop: Read and analyzed existing codebase structure including models.py, parser.py, indexer.py, and loader.py to understand current architecture.",
+    "query": "Stop: User asked: help me understand the current architecture | Agent said: Read and analyzed models.py, parser.py, indexer.py, and loader.py. The pipeline uses a multi-stage design with pluggable retrievers and optional reranking.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "difficulty": "negative",
     "event": "Stop"
   },
   {
     "id": "v3-stop-expansion-validation",
-    "query": "Stop: Ran expansion validation script comparing raw vs enriched cosine similarity. Average delta +0.371 across 8 hard fixtures.",
+    "query": "Stop: User asked: validate the expansion quality | Agent said: Ran expansion validation script comparing raw vs enriched cosine similarity. Average delta +0.371 across 8 hard fixtures. Expansions significantly improve matching.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [],
@@ -934,7 +884,7 @@
   },
   {
     "id": "v3-stop-git-repo-created-pushed",
-    "query": "Stop: Created private GitHub repo bhargavchippada/alphaloom, pushed to origin, renamed branch master to main.",
+    "query": "Stop: User asked: create the alphaloom repo on GitHub and push | Agent said: Created private repo bhargavchippada/alphaloom. Pushed all code and renamed branch master to main. Repository is ready.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
@@ -945,14 +895,721 @@
   },
   {
     "id": "v3-stop-daemon-bug-fixes",
-    "query": "Stop: Fixed 7 daemon bugs including 500ms timeout (changed to config-aware), Typer CLI import overhead in hook path, and stop_server not checking process death.",
+    "query": "Stop: User asked: fix the daemon reliability issues | Agent said: Fixed 7 daemon bugs including 500ms timeout changed to config-aware, removed Typer CLI import overhead in hook path, and added process death check to stop_server.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Always handle errors explicitly at every level, never silently swallow exceptions \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
-      "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
+      "After writing code: run 3 parallel review agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
     ],
     "should_not_match": [],
     "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-end-turn-bare",
+    "query": "Stop: User asked: thanks, that's all for now | Agent said: You're welcome. Session complete. Let me know if you need anything else.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-explained-caching",
+    "query": "Stop: User asked: how does the caching layer work | Agent said: The cache uses Redis with TTL-based expiry. Keys are prefixed by module name. TTLs range from 60s for price data to 3600s for fundamentals.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When fetching external data: cache expensive results with explicit TTL \u2014 stale cache corrupts downstream analysis, and no cache makes the system unusably slow"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-listed-cli-commands",
+    "query": "Stop: User asked: what CLI commands are available | Agent said: Listed all commands: setup, config, configure, retrieve, rules, eval, serve, hook, and migrate. Described each with flags and examples.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When editing code that changes CLI commands, API endpoints, setup steps, or adding new dependencies (Edit, Write): update README to match \u2014 outdated README causes every new contributor to fail on setup"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-used-uv-correctly",
+    "query": "Stop: User asked: install the project dependencies | Agent said: Ran uv sync to install all dependencies. Lock file is up to date. All packages resolved successfully.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-ran-ruff-mypy-clean",
+    "query": "Stop: User asked: check if the code is clean before we commit | Agent said: Ran ruff check and mypy on all changed files. Both passed with zero issues. Code is clean.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-described-error-message",
+    "query": "Stop: User asked: what does this ImportError mean | Agent said: The error means the fastembed package is not installed. Install it with uv add fastembed. The import path changed in version 0.3.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When a tool fails, read the full error and search docs before retrying \u2014 blind retries waste time and hide the root cause, while the fix is usually in the error message"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-checked-disk-usage",
+    "query": "Stop: User asked: how much disk space do we have | Agent said: Checked with df -h. 40GB free on the main partition. The models directory is using 28GB for GGUF files.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When writing code that opens files, database connections, or HTTP sessions (Edit, Write): always close them after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-printed-env-vars",
+    "query": "Stop: User asked: are the required environment variables set | Agent said: Verified DATABASE_URL and API_KEY are both set. DATABASE_URL points to localhost:5432. API_KEY is configured.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-showed-diff",
+    "query": "Stop: User asked: show me what we're about to commit | Agent said: Ran git diff --staged. Changes in 3 files: src/pipeline.py (added sparse retriever call), src/config.py (new threshold param), tests/test_pipeline.py (6 new tests).",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-read-pyproject-toml",
+    "query": "Stop: User asked: what are the project dependencies | Agent said: Read pyproject.toml. Core deps: typer, rich, fastembed, numpy. Dev deps: pytest, pytest-cov, ruff, mypy, mutmut.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting \u2014 unvetted dependencies become permanent tech debt"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-formatted-output",
+    "query": "Stop: User asked: format the benchmark results for review | Agent said: Formatted all results into a markdown table showing F2, PosRecall, Noise, and NegSil per model. Presented the comparison.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-created-branch-correctly",
+    "query": "Stop: User asked: create a feature branch for the caching work | Agent said: Created feature/add-caching branch and switched to it. Ready to start implementation.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When starting feature work (Bash: git checkout, git branch): always create a new branch \u2014 working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-counted-lines",
+    "query": "Stop: User asked: how big is this project | Agent said: Counted with wc -l. 4,200 lines of Python source code across 18 modules. 3,800 lines of tests across 14 test files.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When a function exceeds 50 lines (Edit, Write): split it \u2014 large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes. Keep files under 800 lines (400 preferred)"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-confirmed-test-green",
+    "query": "Stop: User asked: are all tests green | Agent said: Confirmed all 312 tests pass with 100% coverage. Zero ruff violations. Zero mypy errors.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-explained-type-error",
+    "query": "Stop: User asked: why is mypy complaining about the TypeVar | Agent said: The TypeVar bound is too restrictive. It should be bound to Protocol instead of the concrete class. Explained the fix.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-checked-port-availability",
+    "query": "Stop: User asked: is port 8081 available for llama-server | Agent said: Checked with lsof. Port 8081 is free. No other process is using it. Safe to start the server.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When using llama-server with -np N parallel slots, total context is divided by N \u2014 ensure every prompt fits within (total_ctx / np) tokens per slot, because exceeding it returns a cryptic 400 error with no useful diagnostic"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-navigated-repo",
+    "query": "Stop: User asked: where are the database models defined | Agent said: Navigated the repo. Database models are in src/models/db.py with SQLAlchemy declarative base. Schema migrations are in alembic/versions/.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When writing data models, schemas, or dataclasses (Edit, Write): make them accept defaults for optional data sources \u2014 crypto has no income statements, new companies have no history \u2014 hardcoded required fields silently exclude valid use cases"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-copied-file-path",
+    "query": "Stop: User asked: which test is failing | Agent said: The failing test is tests/test_auth.py::test_token_expiry. Here is the absolute path so you can run it directly.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-wrote-commit-msg-conventional",
+    "query": "Stop: User asked: commit the refactor | Agent said: Committed with message 'refactor: extract retriever into pluggable adapter pattern'. Ran lint, type check, and tests first. All clean.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-checked-memory-usage",
+    "query": "Stop: User asked: how much RAM is the embedding model using | Agent said: Checked with htop. The fastembed process is using 380MB. Total system memory usage is 12GB of 32GB.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When writing concurrent I/O code with threads (Edit, Write): use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-clarified-requirements",
+    "query": "Stop: User asked: build the list API endpoint | Agent said: Before implementing, I need to clarify: should the API return paginated results or the full list? What is the expected max size?",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When writing API endpoints, form handlers, or CLI parsers: validate all user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-updated-gitignore-correctly",
+    "query": "Stop: User asked: make sure build artifacts are not tracked | Agent said: Added dist/, __pycache__/, and .mypy_cache/ to .gitignore. Verified they are no longer tracked.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When running build commands or adding generated output directories: add .gitignore entries for generated files and build artifacts \u2014 committed artifacts bloat the repo and cause merge conflicts on every build"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-timed-test-suite",
+    "query": "Stop: User asked: how fast is the test suite | Agent said: Timed the full run. 312 tests complete in 2.3 seconds. All mocked, no real services hit.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-new-feature-no-tdd",
+    "query": "Stop: User asked: build the notification system with email and SMS | Agent said: Implemented email and SMS providers across 4 files. Wrote all code first, then added tests at the end. All tests pass.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+    ],
+    "should_not_match": [
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-complex-feature-no-plan",
+    "query": "Stop: User asked: build the authentication system | Agent said: Built the entire auth system across 15 files including OAuth, JWT, sessions, and role-based access. All working. No PRD was written.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When receiving a task touching 10+ files or requiring new architecture: write a full PRD first \u2014 complex tasks without specs produce rework and missed requirements"
+    ],
+    "should_not_match": [
+      "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-skipped-convergence-reviews",
+    "query": "Stop: User asked: implement Phase 4 and Phase 5 | Agent said: Phase 4 complete. Moving straight to Phase 5 now. No code or security review was run between phases.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After each implementation milestone: run convergence reviews with parallel code + security agents \u2014 per-phase reviews catch bugs when they're cheap to fix"
+    ],
+    "should_not_match": [
+      "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
+    ],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-no-baseline-metrics",
+    "query": "Stop: User asked: optimize the retrieval pipeline for speed | Agent said: Refactored the retrieval pipeline with batched embeddings and cached BM25 scores. Should be faster now.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before implementing any improvement or optimization: establish baseline metrics first \u2014 without before/after numbers you cannot distinguish real improvement from noise"
+    ],
+    "should_not_match": [
+      "When building multi-stage pipelines: ensure each stage is independently high quality \u2014 downstream stages cannot rescue upstream failures"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-no-claudemd-update",
+    "query": "Stop: User asked: reorganize the src directory into subpackages | Agent said: Moved modules into subpackages: src/core/, src/retrievers/, src/adapters/. Changed import paths throughout the project. All tests pass.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After changing project structure, architecture, or conventions: update CLAUDE.md \u2014 without this, the next session starts with stale context and makes wrong assumptions"
+    ],
+    "should_not_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-built-on-unproven-lib",
+    "query": "Stop: User asked: build the caching layer with that new library | Agent said: Spent 4 hours building on top of the library. Turns out it is incompatible with our Python version. Need to start over.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before building on an unvalidated dependency: spike-test it for 2 hours \u2014 discovering a library fails after building 3 layers on top wastes days"
+    ],
+    "should_not_match": [
+      "After mocked tests pass: test with real external data \u2014 NaN values, missing columns, and API format differences only surface with live data"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-small-sample-declared-winner",
+    "query": "Stop: User asked: which model is better, A or B | Agent said: Ran the benchmark on 5 fixtures. Model A scored 0.82 vs Model B at 0.78. Model A is the winner.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions"
+    ],
+    "should_not_match": [
+      "Before implementing any improvement or optimization: establish baseline metrics first \u2014 without before/after numbers you cannot distinguish real improvement from noise"
+    ],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-no-code-review-after-writing",
+    "query": "Stop: User asked: implement the payment integration | Agent said: Wrote 800 lines of new code across 6 files for Stripe payment processing. All tests pass. Ready to commit.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After writing code: run 3 parallel review agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
+    ],
+    "should_not_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+    ],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-llm-confidence-trusted",
+    "query": "Stop: User asked: which model should we deploy | Agent said: Model A reports 95% confidence on the classification task. Deploying Model A based on its self-reported confidence.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When an LLM outputs confidence scores or probabilities: don't trust them \u2014 use evidence counts, ensemble agreement, or track record instead"
+    ],
+    "should_not_match": [
+      "When choosing LLM reasoning mode: thinking mode costs 10x but is most decisive; reasoning-first JSON recovers 80% of quality at 3x speed \u2014 match compute to difficulty"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-subagent-unbounded",
+    "query": "Stop: User asked: run a code review on the new module | Agent said: Launched code review subagent. It ran 30 rounds finding increasingly speculative issues. The last round flagged variable naming preferences.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When launching subagents: set explicit scope boundaries and kill stale ones \u2014 unbounded reviewers find infinite speculative findings"
+    ],
+    "should_not_match": [
+      "When multiple independent review or analysis tasks exist: launch parallel subagents \u2014 sequential execution wastes time when tasks don't depend on each other"
+    ],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-downstream-patching",
+    "query": "Stop: User asked: fix the caricature output from the CDT pipeline | Agent said: Added manual post-processing rules to tone down the exaggerated personality traits. The generation prompt was not changed.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When debugging poor output quality: fix the upstream pipeline stage, not downstream patches \u2014 downstream fixes accumulate into unmaintainable complexity"
+    ],
+    "should_not_match": [
+      "When building multi-stage pipelines: ensure each stage is independently high quality \u2014 downstream stages cannot rescue upstream failures"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-built-infra-around-unproven",
+    "query": "Stop: User asked: build the ensemble hypothesis generation system | Agent said: Built full ensemble infrastructure with voting, weighting, and aggregation. The contrastive generation technique it depends on has not been validated yet.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never build infrastructure around unproven techniques \u2014 test hypotheses in controlled experiments first, implement only winners"
+    ],
+    "should_not_match": [
+      "Prefer mature extensible frameworks over building from scratch \u2014 if LangGraph, FastAPI, or similar battle-tested projects provide the feature (routing, checkpointing, streaming), use them even if a simpler stdlib approach works today, because refactoring from simple to framework later costs more than starting with the framework"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mocked-only-no-real-test",
+    "query": "Stop: User asked: implement and test the API integration | Agent said: All 250 unit tests pass with mocked HTTP responses. Coverage is at 100%. Integration is complete.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After mocked tests pass: test with real external data \u2014 NaN values, missing columns, and API format differences only surface with live data"
+    ],
+    "should_not_match": [
+      "Before implementing any improvement or optimization: establish baseline metrics first \u2014 without before/after numbers you cannot distinguish real improvement from noise"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-multi-model-wrong-methodology",
+    "query": "Stop: User asked: compare 9B and 35B model quality | Agent said: Used expansions generated by the 35B model for both comparisons. 35B scored 0.808 vs 9B at 0.762. 35B is clearly better.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before trusting benchmark results: verify the evaluation methodology \u2014 if you benchmark model A against model B's artifacts, model B wins by default"
+    ],
+    "should_not_match": [
+      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-parallel-agents-sequential",
+    "query": "Stop: User asked: run code review, security review, and type checking | Agent said: Ran code review first, then security review, then type checking. Each one sequentially. All came back clean.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When multiple independent review or analysis tasks exist: launch parallel subagents \u2014 sequential execution wastes time when tasks don't depend on each other"
+    ],
+    "should_not_match": [
+      "When launching subagents: set explicit scope boundaries and kill stale ones \u2014 unbounded reviewers find infinite speculative findings"
+    ],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-prd-single-reviewer",
+    "query": "Stop: User asked: review the PRD before we start building | Agent said: Had one reviewer look at the PRD. They approved it in a single round with minor comments. Ready to implement.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When reviewing a PRD or design document: use multiple specialist subagents (architect, security, code quality) in parallel \u2014 a single reviewer misses entire categories of issues"
+    ],
+    "should_not_match": [
+      "After each review round: keep running until two consecutive rounds produce zero CRITICAL/HIGH/MEDIUM findings \u2014 fixed round counts stop too early or too late"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-review-stopped-early",
+    "query": "Stop: User asked: run convergence reviews on the implementation | Agent said: Ran 2 rounds of review. Round 1 found 3 HIGH issues, Round 2 found 1 MEDIUM. Stopping because we did 2 rounds.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After each review round: keep running until two consecutive rounds produce zero CRITICAL/HIGH/MEDIUM findings \u2014 fixed round counts stop too early or too late"
+    ],
+    "should_not_match": [
+      "When reviewing a PRD or design document: use multiple specialist subagents (architect, security, code quality) in parallel \u2014 a single reviewer misses entire categories of issues"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-medium-task-no-tests",
+    "query": "Stop: User asked: add the Stripe payment integration | Agent said: Added the integration touching 5 files. No inline plan was created and no tests were written alongside the code. Implementation is complete.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When receiving a task touching 3-10 files: create an inline plan with research, write tests alongside code, and run agent review after \u2014 medium tasks need structure"
+    ],
+    "should_not_match": [
+      "When receiving a task touching 1-2 files (config change, small fix): proceed without a plan \u2014 simple tasks don't need overhead"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-wrong-fixtures-not-audited",
+    "query": "Stop: User asked: why did model recall drop 5 points | Agent said: Analyzed the predictions and found the model is missing more rules than before. The expected fixture answers were not checked for correctness.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When model predictions look wrong: audit the ground truth first \u2014 wrong fixture expectations are indistinguishable from model failures, and removing them is a free quality improvement"
+    ],
+    "should_not_match": [
+      "Before implementing any improvement or optimization: establish baseline metrics first \u2014 without before/after numbers you cannot distinguish real improvement from noise"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-schema-changed-no-audit",
+    "query": "Stop: User asked: extend the Rule dataclass with events and tools fields | Agent said: Changed the Rule dataclass from 3 fields to 7 fields. Updated the parser and indexer to handle the new fields.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When schema or cardinality changes, audit every consumer (views, queries, CLI, exports, tests) before implementing"
+    ],
+    "should_not_match": [
+      "After changing project structure, architecture, or conventions: update CLAUDE.md \u2014 without this, the next session starts with stale context and makes wrong assumptions"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-three-failed-attempts-no-ask",
+    "query": "Stop: User asked: fix the import error in pipeline.py | Agent said: Tried 5 different approaches to fix the import error. None worked. Going to try a 6th approach now.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After 2 failed fix attempts on the same error, stop and ask the user for guidance instead of spiraling"
+    ],
+    "should_not_match": [
+      "When debugging poor output quality: fix the upstream pipeline stage, not downstream patches \u2014 downstream fixes accumulate into unmaintainable complexity"
+    ],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-compaction-no-save",
+    "query": "Stop: User asked: continue working on the feature | Agent said: Context is at 85% and may compact soon. Current task progress has not been saved to artifacts/ yet. Continuing implementation.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
+    ],
+    "should_not_match": [
+      "After changing project structure, architecture, or conventions: update CLAUDE.md \u2014 without this, the next session starts with stale context and makes wrong assumptions"
+    ],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-lightweight-before-llm",
+    "query": "Stop: User asked: build a rule retrieval system | Agent said: Set up an LLM reranker as the only retrieval stage. Queries go directly to the LLM for relevance scoring. No embedding or BM25 pre-filtering.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use lightweight deterministic approaches first, add LLM stages only when they demonstrably improve quality"
+    ],
+    "should_not_match": [
+      "When building retrieval pipelines: filter noise at multiple independent stages with configurable thresholds \u2014 no single filter point can handle all query types"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-llm-output-not-inspected",
+    "query": "Stop: User asked: classify all 500 rules by event type | Agent said: Ran the LLM classification on all 500 items. Aggregate accuracy is 78%. Individual outputs were not reviewed.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Manually inspect LLM output after every classification wave \u2014 read actual output, do not trust confidence scores"
+    ],
+    "should_not_match": [
+      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-custom-code-instead-of-oss",
+    "query": "Stop: User asked: build the API server | Agent said: Wrote a custom 500-line HTTP routing framework from scratch with request parsing, middleware, and response formatting. The server is working.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Reuse popular open-source components for each layer of the system \u2014 only build custom code for what doesn't exist, because mature projects provide stability, community support, and extensibility that hand-rolled code cannot match"
+    ],
+    "should_not_match": [
+      "Prefer mature extensible frameworks over building from scratch \u2014 if LangGraph, FastAPI, or similar battle-tested projects provide the feature (routing, checkpointing, streaming), use them even if a simpler stdlib approach works today, because refactoring from simple to framework later costs more than starting with the framework"
+    ],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-score-gaps-assumed-model",
+    "query": "Stop: User asked: analyze the model comparison results | Agent said: Qwen 9B scored 5 points lower than 35B on F2. Concluding 9B is fundamentally worse. Did not check if they used the same config and corpus.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Score gaps between models on routine tasks usually indicate code or config differences, not model quality differences"
+    ],
+    "should_not_match": [
+      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-agent-monitor-context",
+    "query": "Stop: User asked: check on the delegated agents | Agent said: The agent in tmux has been running for 2 hours. Context usage is at 90%. Nobody has checked on it or triggered compaction.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Monitor agent context usage in tmux \u2014 compact when context remaining drops below 67 percent"
+    ],
+    "should_not_match": [
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-agent-reporting-poll",
+    "query": "Stop: User asked: delegate the test run to cody | Agent said: Delegated work to cody in tmux. Polling the pane every 30 seconds to check if it is done instead of having cody report back.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion"
+    ],
+    "should_not_match": [
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-multi-stage-no-isolation",
+    "query": "Stop: User asked: build the 4-stage processing pipeline | Agent said: Built the full pipeline end-to-end. Each stage was only tested as part of the whole pipeline, never in isolation.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When building multi-stage pipelines: ensure each stage is independently high quality \u2014 downstream stages cannot rescue upstream failures"
+    ],
+    "should_not_match": [
+      "Use lightweight deterministic approaches first, add LLM stages only when they demonstrably improve quality"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-retrieval-single-filter",
+    "query": "Stop: User asked: set up the retrieval system | Agent said: Implemented retrieval using only embedding cosine similarity with a single threshold. No BM25, no reranker, no second filtering stage.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When building retrieval pipelines: filter noise at multiple independent stages with configurable thresholds \u2014 no single filter point can handle all query types"
+    ],
+    "should_not_match": [
+      "Use lightweight deterministic approaches first, add LLM stages only when they demonstrably improve quality"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-published-paper-not-reproduced",
+    "query": "Stop: User asked: compare our approach against the paper's baseline | Agent said: Our approach scores 10 points higher than the paper reports. The paper's original code was not run to verify their numbers.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When reproducing published results: run the original paper code first \u2014 do not theorize about score gaps without evidence from the reference implementation"
+    ],
+    "should_not_match": [
+      "Before trusting benchmark results: verify the evaluation methodology \u2014 if you benchmark model A against model B's artifacts, model B wins by default"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-chose-simple-over-framework",
+    "query": "Stop: User asked: build the agent orchestration layer | Agent said: Built orchestration with plain asyncio.gather. Simpler for v0.1. Note that v0.2 will need conditional routing and checkpointing which asyncio.gather cannot provide.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Prefer mature extensible frameworks over building from scratch \u2014 if LangGraph, FastAPI, or similar battle-tested projects provide the feature (routing, checkpointing, streaming), use them even if a simpler stdlib approach works today, because refactoring from simple to framework later costs more than starting with the framework"
+    ],
+    "should_not_match": [
+      "Reuse popular open-source components for each layer of the system \u2014 only build custom code for what doesn't exist, because mature projects provide stability, community support, and extensibility that hand-rolled code cannot match"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-phase-validation-skipped",
+    "query": "Stop: User asked: implement Phase 1 and Phase 2 of the pipeline | Agent said: Phase 1 and Phase 2 both complete. All unit tests pass. Phase 1 output was not tested against real data before starting Phase 2.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before moving to the next implementation phase: validate the current phase against real data \u2014 synthetic tests pass when the real thing fails because mocks diverge from production"
+    ],
+    "should_not_match": [
+      "After each implementation milestone: run convergence reviews with parallel code + security agents \u2014 per-phase reviews catch bugs when they're cheap to fix"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-planner-not-used",
+    "query": "Stop: User asked: refactor the entire module structure across 20 files | Agent said: Started the refactoring directly. Moved files, updated imports, and changed the package layout without creating a plan first.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When starting complex features: use the planner agent; for system design: use architect; for new features/bugs: use tdd-guide \u2014 match the agent to the task type"
+    ],
+    "should_not_match": [
+      "When receiving a task touching 1-2 files (config change, small fix): proceed without a plan \u2014 simple tasks don't need overhead"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-reasoning-mode-mismatch",
+    "query": "Stop: User asked: classify these 200 items as relevant or not | Agent said: Used full thinking mode for each classification. Each call took 7 seconds. Total processing time was 23 minutes.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When choosing LLM reasoning mode: thinking mode costs 10x but is most decisive; reasoning-first JSON recovers 80% of quality at 3x speed \u2014 match compute to difficulty"
+    ],
+    "should_not_match": [
+      "Manually inspect LLM output after every classification wave \u2014 read actual output, do not trust confidence scores"
+    ],
+    "difficulty": "hard",
     "event": "Stop"
   }
 ]

@@ -1,0 +1,317 @@
+[
+  {
+    "original": "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
+    "rewritten": "When writing or editing code (Edit, Write, Bash) that contains strings, config values, or connection parameters: never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
+    "action": "rewrite"
+  },
+  {
+    "original": "Always validate user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source",
+    "rewritten": "When writing code that accepts external input (API endpoints, form handlers, CLI args, file parsers, query params): always validate user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source",
+    "action": "rewrite"
+  },
+  {
+    "original": "Never use eval(), exec(), or shell=True in production code \u2014 these execute arbitrary input as code, enabling remote code execution attacks",
+    "rewritten": "When writing Bash commands with subprocess, os.system, or Python exec/eval, or editing code with shell=True: never use eval(), exec(), or shell=True in production \u2014 these execute arbitrary input as code, enabling remote code execution attacks",
+    "action": "rewrite"
+  },
+  {
+    "original": "Set file permissions to 0o600 for sensitive files (keys, configs, tokens) \u2014 world-readable secrets are the most common cloud breach vector",
+    "rewritten": "When creating or writing sensitive files (keys, configs, tokens, .env, credentials) via Bash or Write: set file permissions to 0o600 \u2014 world-readable secrets are the most common cloud breach vector",
+    "action": "rewrite"
+  },
+  {
+    "original": "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production",
+    "rewritten": "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
+    "action": "rewrite"
+  },
+  {
+    "original": "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow",
+    "rewritten": "When about to run a batch LLM pipeline (Bash: python run_pipeline.py, batch inference, bulk classification): benchmark a single LLM call first \u2014 a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow",
+    "action": "rewrite"
+  },
+  {
+    "original": "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
+    "rewritten": "When running pip, pip install, pip freeze, or any Python package command (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
+    "action": "rewrite"
+  },
+  {
+    "original": "Run ruff and mypy before committing Python code \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
+    "rewritten": "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
+    "action": "rewrite"
+  },
+  {
+    "original": "Always handle errors explicitly at every level, never silently swallow exceptions \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
+    "rewritten": "When writing or editing try/except, catch, .catch(), or error handling code (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
+    "action": "rewrite"
+  },
+  {
+    "original": "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service",
+    "rewritten": "When writing code that opens files, database connections, or HTTP sessions (Edit, Write): always close them after use with context managers (with/async with) \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service",
+    "action": "rewrite"
+  },
+  {
+    "original": "Use environment variables for configuration, not hardcoded values \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
+    "rewritten": "When writing code with hardcoded URLs, ports, API endpoints, database strings, or feature flags (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
+    "action": "rewrite"
+  },
+  {
+    "original": "Never mutate function arguments or shared state \u2014 mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere",
+    "rewritten": "When writing or editing functions that receive objects, dicts, or lists as arguments (Edit, Write): never mutate function arguments or shared state \u2014 mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere",
+    "action": "rewrite"
+  },
+  {
+    "original": "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless",
+    "rewritten": "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless",
+    "action": "rewrite"
+  },
+  {
+    "original": "Never force-push to main or master branch \u2014 force-push overwrites other developers' commits with no recovery path",
+    "rewritten": "Never force-push to main or master branch \u2014 force-push overwrites other developers' commits with no recovery path",
+    "action": "keep"
+  },
+  {
+    "original": "Update README when user-facing behavior, setup steps, or dependencies change \u2014 outdated README causes every new contributor to fail on setup",
+    "rewritten": "When editing code that changes CLI commands, API endpoints, setup steps, or adding new dependencies (Edit, Write): update README to match \u2014 outdated README causes every new contributor to fail on setup",
+    "action": "rewrite"
+  },
+  {
+    "original": "Add .gitignore entries for generated files and build artifacts \u2014 committed build artifacts bloat the repo and cause merge conflicts on every build",
+    "rewritten": "When running build commands (Bash: npm run build, cargo build, python setup.py) or adding new generated output directories: add .gitignore entries for generated files and build artifacts \u2014 committed artifacts bloat the repo and cause merge conflicts on every build",
+    "action": "rewrite"
+  },
+  {
+    "original": "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message",
+    "rewritten": "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message",
+    "action": "keep"
+  },
+  {
+    "original": "Read 2-3 similar files in the codebase before writing new code \u2014 introducing a second pattern where one exists creates permanent inconsistency that confuses every future reader",
+    "rewritten": "Before creating a new file or writing a new module (Write, Edit): read 2-3 similar files in the codebase first \u2014 introducing a second pattern where one exists creates permanent inconsistency that confuses every future reader",
+    "action": "rewrite"
+  },
+  {
+    "original": "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search \u2014 wrong search tool returns irrelevant results and wastes time on false leads",
+    "rewritten": "When searching for library docs, API usage, or code patterns (WebSearch, Bash: grep, mgrep): use Context7 for library docs, Exa for web research, mgrep for semantic code search \u2014 wrong search tool returns irrelevant results and wastes time on false leads",
+    "action": "rewrite"
+  },
+  {
+    "original": "When a tool fails, read the full error and search docs before retrying \u2014 blind retries waste time and hide the root cause, while the fix is usually in the error message",
+    "rewritten": "When a tool fails, read the full error and search docs before retrying \u2014 blind retries waste time and hide the root cause, while the fix is usually in the error message",
+    "action": "keep"
+  },
+  {
+    "original": "Keep functions under 50 lines and source files under 800 lines (400 preferred) \u2014 large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes",
+    "rewritten": "When writing or editing functions (Edit, Write): keep functions under 50 lines and source files under 800 lines (400 preferred) \u2014 large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes",
+    "action": "rewrite"
+  },
+  {
+    "original": "Never use silent fallbacks \u2014 if a pipeline stage falls back to an alternative (backup data source, simpler model, cached result), log it loudly and surface it in the output so the user knows the result is degraded, not just different",
+    "rewritten": "When writing error handling, try/except, or fallback logic (Edit, Write): never use silent fallbacks \u2014 if a pipeline stage falls back to an alternative, log it loudly and surface it in the output so the user knows the result is degraded, not just different",
+    "action": "rewrite"
+  },
+  {
+    "original": "Log every external API call with latency, status code, and response size \u2014 without observability on external dependencies, production debugging becomes guesswork and intermittent failures go undetected",
+    "rewritten": "When writing code that calls external APIs (requests, httpx, aiohttp, fetch, urllib) via Edit or Write: log every call with latency, status code, and response size \u2014 without observability, production debugging becomes guesswork and intermittent failures go undetected",
+    "action": "rewrite"
+  },
+  {
+    "original": "Cache expensive external data with explicit TTL \u2014 stale cache is a silent data bug that corrupts downstream analysis, and no cache is a performance bug that makes the system unusably slow",
+    "rewritten": "When writing code that fetches external data (API calls, database queries, web scraping) via Edit or Write: cache expensive results with explicit TTL \u2014 stale cache corrupts downstream analysis, and no cache makes the system unusably slow",
+    "action": "rewrite"
+  },
+  {
+    "original": "Design module interfaces as Protocols \u2014 concrete implementations can be swapped without refactoring callers, enabling testing with fakes and future provider changes without cascading code changes",
+    "rewritten": "When writing new classes or module interfaces (Edit, Write): design interfaces as Protocols \u2014 concrete implementations can be swapped without refactoring callers, enabling testing with fakes and future provider changes without cascading code changes",
+    "action": "rewrite"
+  },
+  {
+    "original": "When composing scores from multiple signals, separate direction from magnitude \u2014 multiplying direction \u00d7 confidence double-counts the signal and produces near-zero results for uncertain inputs",
+    "rewritten": "When composing scores from multiple signals, separate direction from magnitude \u2014 multiplying direction \u00d7 confidence double-counts the signal and produces near-zero results for uncertain inputs",
+    "action": "keep"
+  },
+  {
+    "original": "Use a fallback chain with NaN-safe extraction for external data fields \u2014 API column names are unstable across providers, and float(NaN) is truthy so `value or default` silently passes NaN through",
+    "rewritten": "When writing code that parses API responses or external data (Edit, Write): use a fallback chain with NaN-safe extraction \u2014 API column names are unstable across providers, and float(NaN) is truthy so `value or default` silently passes NaN through",
+    "action": "rewrite"
+  },
+  {
+    "original": "Make data models accept defaults for optional data sources \u2014 crypto has no income statements, new companies have no history, some providers lack certain fields \u2014 hardcoded required fields silently exclude valid use cases",
+    "rewritten": "When writing data models, schemas, or dataclasses (Edit, Write): make them accept defaults for optional data sources \u2014 crypto has no income statements, new companies have no history \u2014 hardcoded required fields silently exclude valid use cases",
+    "action": "rewrite"
+  },
+  {
+    "original": "Commit after each implementation phase completes \u2014 atomic tested commits prevent compound debt, enable bisection for regressions, and give reviewers digestible chunks instead of monolithic diffs",
+    "rewritten": "When finishing an implementation phase or milestone (Bash: git commit): commit after each phase \u2014 atomic tested commits prevent compound debt, enable bisection for regressions, and give reviewers digestible chunks instead of monolithic diffs",
+    "action": "rewrite"
+  },
+  {
+    "original": "Always mock external calls (LLM, APIs, network, subprocesses) in unit tests \u2014 real calls make tests slow, flaky, and non-deterministic; a test suite that takes 18 minutes instead of 1 second because background tasks run real LLM calls is a test suite nobody runs",
+    "rewritten": "When writing unit tests that involve LLM calls, HTTP requests, or subprocesses (Edit, Write test files): always mock external calls \u2014 real calls make tests slow, flaky, and non-deterministic; 18-minute test suites get skipped",
+    "action": "rewrite"
+  },
+  {
+    "original": "Never let a test trigger a real background task, HTTP request, or subprocess \u2014 mock at the boundary so the test exercises YOUR code, not the external service; if the mock is wrong, that's what integration tests are for",
+    "rewritten": "When writing test functions that call code with background tasks or HTTP clients (Edit, Write test files): never let a test trigger a real background task or HTTP request \u2014 mock at the boundary so the test exercises YOUR code, not the external service",
+    "action": "rewrite"
+  },
+  {
+    "original": "The full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests because slow tests get skipped and skipped tests hide bugs",
+    "rewritten": "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests",
+    "action": "rewrite"
+  },
+  {
+    "original": "Mark tests that require real services with @pytest.mark.slow or @pytest.mark.e2e and exclude them from the default test run \u2014 the default `pytest` invocation must always be fast, deterministic, and offline",
+    "rewritten": "Mark tests that require real services with @pytest.mark.slow or @pytest.mark.e2e and exclude them from the default test run \u2014 the default `pytest` invocation must always be fast, deterministic, and offline",
+    "action": "keep"
+  },
+  {
+    "original": "If a single test takes more than 1 second, it is either testing too much or hitting a real service \u2014 split it or mock the slow dependency",
+    "rewritten": "If a single test takes more than 1 second, it is either testing too much or hitting a real service \u2014 split it or mock the slow dependency",
+    "action": "keep"
+  },
+  {
+    "original": "Never use time.sleep() in tests to wait for async operations \u2014 use mock clocks, manual event triggers, or synchronous test helpers instead, because sleep-based tests are both slow and flaky",
+    "rewritten": "When writing test code with async operations or waits (Edit, Write test files): never use time.sleep() \u2014 use mock clocks, manual event triggers, or synchronous test helpers instead, because sleep-based tests are both slow and flaky",
+    "action": "rewrite"
+  },
+  {
+    "original": "When using llama-server with -np N parallel slots, total context is divided by N \u2014 ensure every prompt fits within (total_ctx / np) tokens per slot, because exceeding it returns a cryptic 400 error with no useful diagnostic",
+    "rewritten": "When using llama-server with -np N parallel slots, total context is divided by N \u2014 ensure every prompt fits within (total_ctx / np) tokens per slot, because exceeding it returns a cryptic 400 error with no useful diagnostic",
+    "action": "keep"
+  },
+  {
+    "original": "Verify the daemon/fast path exercises the same code paths as the inline/slow path \u2014 daemon shortcuts silently bypass features (event masks, affinity filtering, tool_name routing) that work perfectly in direct mode, making the core feature inoperative in production",
+    "rewritten": "When writing or modifying daemon/server code that provides a fast path (Edit, Write serve.py, daemon code): verify the fast path exercises the same code paths as the inline path \u2014 daemon shortcuts silently bypass features that work in direct mode, making core features inoperative in production",
+    "action": "rewrite"
+  },
+  {
+    "original": "When extending a system to support new event types or modes, grep for every call site that dispatches on the old set \u2014 hardcoded event lists (e.g. a 2-event frozenset) silently reject new events instead of erroring, and the failure appears as \"feature doesn't work\" not \"event rejected\"",
+    "rewritten": "When extending a system to support new event types or modes, grep for every call site that dispatches on the old set \u2014 hardcoded event lists (e.g. a 2-event frozenset) silently reject new events instead of erroring, and the failure appears as \"feature doesn't work\" not \"event rejected\"",
+    "action": "keep"
+  },
+  {
+    "original": "When LLM JSON parsing fails, retry up to 2 times before falling back \u2014 intermittent parse errors from code fences or formatting are recovered by a simple retry; three consecutive failures indicate a prompt problem, not a fluke",
+    "rewritten": "When LLM JSON parsing fails, retry up to 2 times before falling back \u2014 intermittent parse errors from code fences or formatting are recovered by a simple retry; three consecutive failures indicate a prompt problem, not a fluke",
+    "action": "keep"
+  },
+  {
+    "original": "Always create a new branch for feature work \u2014 working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation",
+    "rewritten": "When starting feature work (Bash: git checkout, git branch): always create a new branch \u2014 working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation",
+    "action": "rewrite"
+  },
+  {
+    "original": "Document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse",
+    "rewritten": "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse",
+    "action": "rewrite"
+  },
+  {
+    "original": "Enable CSRF protection on all forms and state-changing endpoints \u2014 without it, malicious sites can trigger actions on behalf of authenticated users via forged requests",
+    "rewritten": "When writing form handlers or state-changing API endpoints (Edit, Write): enable CSRF protection \u2014 without it, malicious sites can trigger actions on behalf of authenticated users via forged requests",
+    "action": "rewrite"
+  },
+  {
+    "original": "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants \u2014 unnamed numbers scattered through code are impossible to find, update consistently, or understand the intent of",
+    "rewritten": "When writing or editing code with literal numbers (timeouts, limits, sizes, counts, thresholds) in Edit or Write: extract magic numbers into named constants \u2014 unnamed numbers scattered through code are impossible to find, update consistently, or understand",
+    "action": "rewrite"
+  },
+  {
+    "original": "No console.log or print debug statements in production code \u2014 debug output clutters logs, leaks internal state, and makes real errors harder to find in production monitoring",
+    "rewritten": "When writing or editing code (Edit, Write): remove console.log, print(), and debug statements before committing \u2014 debug output clutters logs, leaks internal state, and makes real errors harder to find in production monitoring",
+    "action": "rewrite"
+  },
+  {
+    "original": "Prefer immutable data structures over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency",
+    "rewritten": "When writing data structures, classes, or containers (Edit, Write): prefer immutable data structures (frozen dataclasses, tuples, frozensets) over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency",
+    "action": "rewrite"
+  },
+  {
+    "original": "Review all dependencies for known vulnerabilities before adding \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for",
+    "rewritten": "When adding new dependencies (Bash: uv add, npm install, pip install, cargo add): review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for",
+    "action": "rewrite"
+  },
+  {
+    "original": "Rotate any secrets that may have been exposed \u2014 exposed credentials remain valid until rotated, giving attackers a persistent access window that widens with every hour of delay",
+    "rewritten": "When discovering exposed credentials in code, logs, or git history (Bash: git log, git diff, Read): rotate any secrets that may have been exposed \u2014 exposed credentials remain valid until rotated, giving attackers a persistent access window",
+    "action": "rewrite"
+  },
+  {
+    "original": "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
+    "rewritten": "When running git commit (Bash): run quality checks (ruff, mypy, pytest) before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
+    "action": "rewrite"
+  },
+  {
+    "original": "Sanitize all HTML output to prevent XSS \u2014 unsanitized user content rendered as HTML lets attackers inject scripts that steal session tokens, redirect users, or deface the page",
+    "rewritten": "When writing code that renders user content as HTML (Edit, Write templates, frontend components): sanitize all HTML output \u2014 unsanitized user content lets attackers inject scripts that steal session tokens, redirect users, or deface the page",
+    "action": "rewrite"
+  },
+  {
+    "original": "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread",
+    "rewritten": "When writing concurrent I/O code (Edit, Write) with threads, threading.Thread, or ThreadPoolExecutor: use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread",
+    "action": "rewrite"
+  },
+  {
+    "original": "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
+    "rewritten": "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
+    "action": "rewrite"
+  },
+  {
+    "original": "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input",
+    "rewritten": "When writing database queries (Edit, Write) with string formatting, f-strings, or concatenation: use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables",
+    "action": "rewrite"
+  },
+  {
+    "original": "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime",
+    "rewritten": "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime",
+    "action": "rewrite"
+  },
+  {
+    "original": "Write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
+    "rewritten": "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
+    "action": "rewrite"
+  },
+  {
+    "original": "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling",
+    "rewritten": "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling",
+    "action": "keep"
+  },
+  {
+    "original": "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion",
+    "rewritten": "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion",
+    "action": "keep"
+  },
+  {
+    "original": "Monitor agent context usage in tmux \u2014 compact when context remaining drops below 67 percent",
+    "rewritten": "Monitor agent context usage in tmux \u2014 compact when context remaining drops below 67 percent",
+    "action": "keep"
+  },
+  {
+    "original": "Write tests before implementation following TDD red-green-refactor cycle",
+    "rewritten": "When starting a new feature or fixing a bug (Edit, Write): write tests before implementation following TDD red-green-refactor cycle \u2014 test-first development catches design issues early and guarantees coverage",
+    "action": "rewrite"
+  },
+  {
+    "original": "After the parallel LLM phase, retry failed items sequentially one at a time to avoid rate limiting contention",
+    "rewritten": "After the parallel LLM phase, retry failed items sequentially one at a time to avoid rate limiting contention",
+    "action": "keep"
+  },
+  {
+    "original": "After every batch LLM response, diff sent IDs against returned IDs to detect silently dropped items",
+    "rewritten": "After every batch LLM response, diff sent IDs against returned IDs to detect silently dropped items",
+    "action": "keep"
+  },
+  {
+    "original": "Use semantic similarity (embeddings or LLMs) for text deduplication \u2014 never use lexical or word-based matching",
+    "rewritten": "When writing deduplication logic for text data (Edit, Write): use semantic similarity (embeddings or LLMs) \u2014 never use lexical or word-based matching, because paraphrases and synonyms are invisible to string comparison",
+    "action": "rewrite"
+  },
+  {
+    "original": "Save LLM-generated artifacts (pickles, checkpoints) before overwriting \u2014 never destroy a baseline during experiments",
+    "rewritten": "When about to overwrite model artifacts, pickles, checkpoints, or baseline files (Bash: mv, cp, Write): save LLM-generated artifacts before overwriting \u2014 never destroy a baseline during experiments, because non-deterministic pipelines cannot reproduce the exact same output",
+    "action": "rewrite"
+  },
+  {
+    "original": "For new libraries or APIs, research alternatives, verify documentation, audit maintenance status, and benchmark before adopting",
+    "rewritten": "When adding a new library or API dependency (Bash: uv add, npm install, pip install): research alternatives, verify documentation, audit maintenance status, and benchmark before adopting \u2014 unvetted dependencies become permanent tech debt",
+    "action": "rewrite"
+  }
+]

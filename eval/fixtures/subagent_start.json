@@ -3,28 +3,22 @@
     "id": "sub-security-reviewer",
     "query": "SubagentStart:security-reviewer: Review all changed files for security vulnerabilities including hardcoded secrets, SQL injection, and XSS vectors",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-code-reviewer",
     "query": "SubagentStart:code-reviewer: Review code quality of src/api.py and src/models.py for patterns, naming, and best practices",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime",
-      "Keep functions under 50 lines and source files under 800 lines (400 preferred) \u2014 large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
@@ -32,8 +26,7 @@
     "query": "SubagentStart:tdd-guide: Write tests for the new user authentication module following TDD methodology",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -45,13 +38,11 @@
     "id": "sub-build-error-resolver",
     "query": "SubagentStart:build-error-resolver: Fix the mypy type errors in src/pipeline.py and src/retriever.py",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
@@ -59,11 +50,10 @@
     "query": "SubagentStart:doc-updater: Update README.md and CLAUDE.md to reflect the new CLI commands and configuration options",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Update CLAUDE.md when project structure, architecture, or conventions change \u2014 without this, the next session starts with stale context and makes wrong assumptions",
-      "Update README when user-facing behavior, setup steps, or dependencies change \u2014 outdated README causes every new contributor to fail on setup"
+      "After changing project structure, architecture, or conventions: update CLAUDE.md \u2014 without this, the next session starts with stale context and makes wrong assumptions"
     ],
     "should_not_match": [
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
+      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables"
     ],
     "difficulty": "easy",
     "event": "SubagentStart"
@@ -72,118 +62,104 @@
     "id": "sub-refactor-cleaner",
     "query": "SubagentStart:refactor-cleaner: Remove dead code and unused imports from src/legacy.py and src/compat.py",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Keep functions under 50 lines and source files under 800 lines (400 preferred) \u2014 large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-implement-feature",
-    "query": "SubagentStart:cody: Implement the caching layer in src/cache.py with Redis backend and TTL support",
+    "query": "SubagentStart:general-purpose: Implement the caching layer in src/cache.py with Redis backend and TTL support",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service",
-      "Cache expensive external data with explicit TTL \u2014 stale cache is a silent data bug that corrupts downstream analysis, and no cache is a performance bug that makes the system unusably slow"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "medium",
+    "difficulty": "easy",
     "event": "SubagentStart"
   },
   {
     "id": "sub-implement-api-endpoint",
-    "query": "SubagentStart:ralph: Build the REST API endpoint POST /api/users with input validation and error handling",
+    "query": "SubagentStart:general-purpose: Build the REST API endpoint POST /api/users with input validation and error handling",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Always validate user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source",
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+    ],
+    "should_not_match": [
+      "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
+    ],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-database-migration",
+    "query": "SubagentStart:general-purpose: Write database migration to add user_sessions table with foreign key to users",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
     "difficulty": "medium",
-    "event": "SubagentStart"
-  },
-  {
-    "id": "sub-database-migration",
-    "query": "SubagentStart:cody: Write database migration to add user_sessions table with foreign key to users",
-    "corpus": "rules_global.txt",
-    "should_match": [
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
-    ],
-    "should_not_match": [
-      "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
-    ],
-    "difficulty": "hard",
     "event": "SubagentStart"
   },
   {
     "id": "sub-security-audit-secrets",
     "query": "SubagentStart:security-reviewer: Audit the entire codebase for hardcoded secrets and credentials that should be environment variables",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
-      "Use environment variables for configuration, not hardcoded values \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
+      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-git-commit-prep",
-    "query": "SubagentStart:ralph: Prepare the commit: run linters, format code, check for secrets, and create a conventional commit",
+    "query": "SubagentStart:general-purpose: Prepare the commit: run linters, format code, check for secrets, and create a conventional commit",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
-      "Run ruff and mypy before committing Python code \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [
-      "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
+      "When writing concurrent I/O code with threads (Edit, Write): use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
     ],
     "difficulty": "easy",
     "event": "SubagentStart"
   },
   {
     "id": "sub-write-html-templates",
-    "query": "SubagentStart:cody: Create the HTML templates for the admin dashboard with user data display",
+    "query": "SubagentStart:general-purpose: Create the HTML templates for the admin dashboard with user data display",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Sanitize all HTML output to prevent XSS \u2014 unsanitized user content rendered as HTML lets attackers inject scripts that steal session tokens, redirect users, or deface the page"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-async-service",
-    "query": "SubagentStart:ralph: Implement the async HTTP client service for fetching data from multiple upstream APIs",
+    "query": "SubagentStart:general-purpose: Implement the async HTTP client service for fetching data from multiple upstream APIs",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread",
-      "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-install-deps",
-    "query": "SubagentStart:cody: Install the required packages: fastapi, httpx, and pydantic for the new API service",
+    "query": "SubagentStart:general-purpose: Install the required packages: fastapi, httpx, and pydantic for the new API service",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
-      "Review all dependencies for known vulnerabilities before adding \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting \u2014 unvetted dependencies become permanent tech debt"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -193,43 +169,37 @@
   },
   {
     "id": "sub-feature-branch",
-    "query": "SubagentStart:ralph: Create a feature branch, implement the search feature, and push for review",
+    "query": "SubagentStart:general-purpose: Create a feature branch, implement the search feature, and push for review",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Always create a new branch for feature work \u2014 working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [
-      "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
+      "When writing concurrent I/O code with threads (Edit, Write): use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
     ],
-    "difficulty": "medium",
+    "difficulty": "easy",
     "event": "SubagentStart"
   },
   {
     "id": "sub-eval-script",
-    "query": "SubagentStart:cody: Write a Python eval script that processes user-submitted expressions and returns results",
+    "query": "SubagentStart:general-purpose: Write a Python eval script that processes user-submitted expressions and returns results",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Never use eval(), exec(), or shell=True in production code \u2014 these execute arbitrary input as code, enabling remote code execution attacks",
-      "Always validate user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "hard",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-data-model-design",
     "query": "SubagentStart:architect: Design the data model for the configuration system with nested settings and defaults",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
-      "Prefer immutable data structures over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
@@ -237,64 +207,56 @@
     "query": "SubagentStart:security-reviewer: A CI log exposed the production API key, investigate and rotate all affected secrets",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Rotate any secrets that may have been exposed \u2014 exposed credentials remain valid until rotated, giving attackers a persistent access window that widens with every hour of delay",
-      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
+      "When discovering exposed credentials in code, logs, or git history (Bash: git log, git diff, Read): rotate any secrets that may have been exposed \u2014 exposed credentials remain valid until rotated, giving attackers a persistent access window"
     ],
     "should_not_match": [
-      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
+      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
     "difficulty": "easy",
     "event": "SubagentStart"
   },
   {
     "id": "sub-file-processor",
-    "query": "SubagentStart:cody: Implement the file processing pipeline that reads CSVs, transforms data, and writes JSON output",
+    "query": "SubagentStart:general-purpose: Implement the file processing pipeline that reads CSVs, transforms data, and writes JSON output",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service",
-      "Always handle errors explicitly at every level, never silently swallow exceptions \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-debug-print-cleanup",
     "query": "SubagentStart:refactor-cleaner: Remove all debug print statements and console.log calls from the production codebase",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "No console.log or print debug statements in production code \u2014 debug output clutters logs, leaks internal state, and makes real errors harder to find in production monitoring"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
+      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables"
     ],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-gitignore-setup",
-    "query": "SubagentStart:cody: Set up .gitignore for the Python project with proper exclusions for build artifacts and virtual environments",
+    "query": "SubagentStart:general-purpose: Set up .gitignore for the Python project with proper exclusions for build artifacts and virtual environments",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Add .gitignore entries for generated files and build artifacts \u2014 committed build artifacts bloat the repo and cause merge conflicts on every build"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-tmux-worker",
-    "query": "SubagentStart:ralph: Run the benchmark suite in a tmux session and report results back via tmux send-keys",
+    "query": "SubagentStart:general-purpose: Run the benchmark suite in a tmux session and report results back via tmux send-keys",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
     ],
     "should_not_match": [
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
+      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables"
     ],
     "difficulty": "easy",
     "event": "SubagentStart"
@@ -303,140 +265,132 @@
     "id": "sub-magic-numbers-refactor",
     "query": "SubagentStart:refactor-cleaner: Extract all hardcoded numeric values in src/config.py into named constants with documentation",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants \u2014 unnamed numbers scattered through code are impossible to find, update consistently, or understand the intent of"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-neg-read-only-agent",
-    "query": "SubagentStart:explorer: Read the codebase and summarize the architecture of the retrieval pipeline",
+    "query": "SubagentStart:Explore: Read the codebase and summarize the architecture of the retrieval pipeline",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-neg-search-agent",
-    "query": "SubagentStart:researcher: Search GitHub for existing BM25 implementations in Python to evaluate",
+    "query": "SubagentStart:Explore: Search GitHub for existing BM25 implementations in Python to evaluate",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Search GitHub for existing implementations and proven patterns before writing anything from scratch \u2014 80% of problems are already solved, and battle-tested code has fewer bugs than fresh code"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
-    "difficulty": "hard",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-neg-git-log-agent",
-    "query": "SubagentStart:explorer: Review the git history and summarize the changes from the last 10 commits",
+    "query": "SubagentStart:Explore: Review the git history and summarize the changes from the last 10 commits",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-neg-docs-reader",
-    "query": "SubagentStart:researcher: Read the FastAPI documentation to understand dependency injection patterns",
+    "query": "SubagentStart:Explore: Read the FastAPI documentation to understand dependency injection patterns",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search \u2014 wrong search tool returns irrelevant results and wastes time on false leads"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+      "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
     ],
-    "difficulty": "hard",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-neg-perf-monitor",
-    "query": "SubagentStart:monitor: Watch the CPU and memory usage while the benchmark suite runs",
+    "query": "SubagentStart:Explore: Watch the CPU and memory usage while the benchmark suite runs",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
+      "When writing concurrent I/O code with threads (Edit, Write): use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
     ],
     "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-neg-test-reader",
-    "query": "SubagentStart:explorer: Read through the test suite and report which modules have low coverage",
+    "query": "SubagentStart:Explore: Read through the test suite and report which modules have low coverage",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
     "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-neg-explain-agent",
-    "query": "SubagentStart:explainer: Explain to the user how the BM25 scoring algorithm works in this codebase",
+    "query": "SubagentStart:general-purpose: Explain to the user how the BM25 scoring algorithm works in this codebase",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
-    "id": "sub-neg-compare-frameworks",
-    "query": "SubagentStart:researcher: Compare Django, FastAPI, and Flask for the new API service and summarize tradeoffs",
+    "id": "sub-compare-frameworks",
+    "query": "SubagentStart:general-purpose: Compare Django, FastAPI, and Flask for the new API service and summarize tradeoffs",
     "corpus": "rules_global.txt",
     "should_match": [
-      "For new libraries or APIs, research alternatives, verify documentation, audit maintenance status, and benchmark before adopting"
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting \u2014 unvetted dependencies become permanent tech debt"
     ],
     "should_not_match": [
-      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
-    "difficulty": "hard",
+    "difficulty": "medium",
     "event": "SubagentStart"
   },
   {
     "id": "sub-neg-analyze-benchmark",
-    "query": "SubagentStart:analyst: Analyze the benchmark results from eval/results/ and identify regression patterns",
+    "query": "SubagentStart:general-purpose: Analyze the benchmark results from eval/results/ and identify regression patterns",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Store all predictions, reasoning, and grounding in benchmark results for later reanalysis \u2014 not just numeric scores"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
-    "difficulty": "hard",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-neg-explain-algorithm",
-    "query": "SubagentStart:explainer: Walk the user through how RRF fusion combines dense and sparse retrieval scores",
+    "query": "SubagentStart:general-purpose: Walk the user through how RRF fusion combines dense and sparse retrieval scores",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
+      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
     "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-neg-read-logs",
-    "query": "SubagentStart:monitor: Tail the daemon server logs and report any errors or warnings from the last hour",
+    "query": "SubagentStart:Explore: Tail the daemon server logs and report any errors or warnings from the last hour",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Always handle errors explicitly at every level, never silently swallow exceptions \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
+      "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
     ],
     "difficulty": "negative",
     "event": "SubagentStart"
@@ -447,312 +401,282 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Prefer immutable data structures over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency"
+      "When writing data structures or containers (Edit, Write): prefer immutable data structures over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency"
     ],
     "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-neg-search-github-issues",
-    "query": "SubagentStart:researcher: Search GitHub issues for fastembed to find known bugs related to ONNX model loading",
+    "query": "SubagentStart:Explore: Search GitHub issues for fastembed to find known bugs related to ONNX model loading",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Review all dependencies for known vulnerabilities before adding \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
+      "When adding new dependencies: review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
     ],
     "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-neg-report-coverage",
-    "query": "SubagentStart:analyst: Run pytest --cov and generate a coverage report showing which modules are below 90%",
+    "query": "SubagentStart:general-purpose: Run pytest --cov and generate a coverage report showing which modules are below 90%",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
     "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-neg-profile-latency",
-    "query": "SubagentStart:monitor: Profile the retrieval pipeline latency per stage and report p50/p95 timings",
+    "query": "SubagentStart:Explore: Profile the retrieval pipeline latency per stage and report p50/p95 timings",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
+      "When writing concurrent I/O code with threads (Edit, Write): use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
     ],
     "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
-    "id": "sub-neg-plan-migration",
+    "id": "sub-planner-migration",
     "query": "SubagentStart:planner: Plan the migration from txt rule format to TOML format including phases, risks, and rollback strategy",
     "corpus": "rules_global.txt",
     "should_match": [
       "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
     ],
     "should_not_match": [
-      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
-    "difficulty": "hard",
+    "difficulty": "medium",
     "event": "SubagentStart"
   },
   {
     "id": "sub-neg-check-disk-usage",
-    "query": "SubagentStart:monitor: Check disk usage for the model cache directory and report which GGUF files are largest",
+    "query": "SubagentStart:Explore: Check disk usage for the model cache directory and report which GGUF files are largest",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
+      "When writing code that opens files, database connections, or HTTP sessions (Edit, Write): always close them after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
     ],
     "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-neg-summarize-changes",
-    "query": "SubagentStart:explorer: Read all commits on the feature branch and write a summary of what changed for the PR description",
+    "query": "SubagentStart:Explore: Read all commits on the feature branch and write a summary of what changed for the PR description",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-neg-watch-ci",
-    "query": "SubagentStart:monitor: Watch the GitHub Actions workflow run and notify when it completes or fails",
+    "query": "SubagentStart:Explore: Watch the GitHub Actions workflow run and notify when it completes or fails",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-planner-feature",
-    "query": "SubagentStart:planner: Plan and implement the webhook notification system that sends HTTP POST callbacks on rule match events",
+    "query": "SubagentStart:planner: Plan the webhook notification system that sends HTTP POST callbacks on rule match events",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service",
-      "Log every external API call with latency, status code, and response size \u2014 without observability on external dependencies, production debugging becomes guesswork and intermittent failures go undetected"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "medium",
+    "difficulty": "easy",
     "event": "SubagentStart"
   },
   {
     "id": "sub-e2e-runner-login-flow",
     "query": "SubagentStart:e2e-runner: Test the complete user login flow through the web interface including form submission and session creation",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Enable CSRF protection on all forms and state-changing endpoints \u2014 without it, malicious sites can trigger actions on behalf of authenticated users via forged requests",
-      "Sanitize all HTML output to prevent XSS \u2014 unsanitized user content rendered as HTML lets attackers inject scripts that steal session tokens, redirect users, or deface the page"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-database-reviewer-schema",
-    "query": "SubagentStart:database-reviewer: Review and optimize the SQL queries in src/repository.py, check for injection risks and missing indexes",
+    "query": "SubagentStart:code-reviewer: Review and optimize the SQL queries in src/repository.py, check for injection risks and missing indexes",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
+    ],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-multi-task-agent",
+    "query": "SubagentStart:general-purpose: Implement the data export feature in src/export.py, write tests, and commit with a proper message",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
     "difficulty": "easy",
-    "event": "SubagentStart"
-  },
-  {
-    "id": "sub-multi-task-agent",
-    "query": "SubagentStart:ralph: Implement the data export feature in src/export.py, install the openpyxl package, write tests, and commit with a proper message",
-    "corpus": "rules_global.txt",
-    "should_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
-      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
-    ],
-    "should_not_match": [
-      "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
-    ],
-    "difficulty": "medium",
     "event": "SubagentStart"
   },
   {
     "id": "sub-hard-cleanup-agent",
     "query": "SubagentStart:refactor-cleaner: Clean up src/legacy_api.py which has grown to 900 lines with deeply nested functions",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Keep functions under 50 lines and source files under 800 lines (400 preferred) \u2014 large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-hard-ambiguous-script",
-    "query": "SubagentStart:cody: Create a utility script that processes configuration files and generates deployment manifests",
+    "query": "SubagentStart:general-purpose: Create a utility script that processes configuration files and generates deployment manifests",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Always handle errors explicitly at every level, never silently swallow exceptions \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
+      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables"
     ],
-    "difficulty": "hard",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-hard-config-agent",
-    "query": "SubagentStart:cody: Set up the application configuration system with defaults, env overrides, and file-based config",
+    "query": "SubagentStart:general-purpose: Set up the application configuration system with defaults, env overrides, and file-based config",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use environment variables for configuration, not hardcoded values \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
-      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
+      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables"
     ],
-    "difficulty": "hard",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-hard-build-agent-python",
-    "query": "SubagentStart:cody: Fix the failing build by resolving import errors and adding missing dependencies",
+    "query": "SubagentStart:build-error-resolver: Fix the failing build by resolving import errors and adding missing dependencies",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
-      "Review all dependencies for known vulnerabilities before adding \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-tmux-deploy-agent",
-    "query": "SubagentStart:ralph: Deploy the staging environment by sending commands to the deployment server via tmux send-keys",
+    "query": "SubagentStart:general-purpose: Deploy the staging environment by sending commands to the deployment server via tmux send-keys",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
     ],
     "should_not_match": [
-      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
     "difficulty": "medium",
     "event": "SubagentStart"
   },
   {
     "id": "sub-credential-manager",
-    "query": "SubagentStart:cody: Implement the credential manager that stores and retrieves API keys for third-party integrations",
+    "query": "SubagentStart:general-purpose: Implement the credential manager that stores and retrieves API keys for third-party integrations",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
-      "Set file permissions to 0o600 for sensitive files (keys, configs, tokens) \u2014 world-readable secrets are the most common cloud breach vector"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-hard-async-crawler",
-    "query": "SubagentStart:cody: Build a web crawler that fetches pages from a sitemap and extracts structured data",
+    "query": "SubagentStart:general-purpose: Build a web crawler that fetches pages from a sitemap and extracts structured data",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread",
-      "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
+      "Prefer mature extensible frameworks over building from scratch \u2014 if LangGraph, FastAPI, or similar battle-tested projects provide the feature (routing, checkpointing, streaming), use them even if a simpler stdlib approach works today, because refactoring from simple to framework later costs more than starting with the framework"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "hard",
     "event": "SubagentStart"
   },
   {
     "id": "sub-hard-calculator-eval",
-    "query": "SubagentStart:cody: Build a math expression evaluator that safely computes user-provided formulas",
+    "query": "SubagentStart:general-purpose: Build a math expression evaluator that safely computes user-provided formulas",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Never use eval(), exec(), or shell=True in production code \u2014 these execute arbitrary input as code, enabling remote code execution attacks",
-      "Always validate user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
+      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
-    "difficulty": "hard",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-hard-secret-rotation-ambiguous",
     "query": "SubagentStart:security-reviewer: Review the key management module and verify secrets are handled properly throughout the lifecycle",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
-      "Set file permissions to 0o600 for sensitive files (keys, configs, tokens) \u2014 world-readable secrets are the most common cloud breach vector"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
-    "difficulty": "hard",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "sub-hard-constants-extraction",
     "query": "SubagentStart:refactor-cleaner: Audit src/pipeline.py for magic numbers used in timeouts, retry counts, and buffer sizes",
     "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+    ],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-hard-git-branch-commit",
+    "query": "SubagentStart:general-purpose: Create a feature branch, implement the notification service, write tests, run linters, and create a PR",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants \u2014 unnamed numbers scattered through code are impossible to find, update consistently, or understand the intent of"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables"
     ],
     "difficulty": "easy",
     "event": "SubagentStart"
   },
   {
-    "id": "sub-hard-git-branch-commit",
-    "query": "SubagentStart:ralph: Create a feature branch, implement the notification service, write tests, run linters, and create a PR",
-    "corpus": "rules_global.txt",
-    "should_match": [
-      "Always create a new branch for feature work \u2014 working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation",
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
-    ],
-    "should_not_match": [
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
-    ],
-    "difficulty": "medium",
-    "event": "SubagentStart"
-  },
-  {
     "id": "sub-read-patterns-implement",
-    "query": "SubagentStart:builder: Implement a new NotificationService class in src/services/ that sends email and SMS alerts",
+    "query": "SubagentStart:general-purpose: Implement a new NotificationService class in src/services/ that sends email and SMS alerts",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Read 2-3 similar files in the codebase before writing new code \u2014 introducing a second pattern where one exists creates permanent inconsistency that confuses every future reader"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [],
-    "difficulty": "hard",
+    "difficulty": "easy",
     "event": "SubagentStart"
   },
   {
     "id": "sub-spike-test-integration",
-    "query": "SubagentStart:builder: Build the real-time data streaming pipeline using the new websocket-client library for market data feeds",
+    "query": "SubagentStart:general-purpose: Build the real-time data streaming pipeline using the new websocket-client library for market data feeds",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Spike-test risky integrations before building on them \u2014 if a dependency is unvalidated (new library, untested API, custom wrapper), spend 2 hours proving it works before designing an architecture around it, because discovering it fails after building 3 layers on top wastes days"
+      "Before building on an unvalidated dependency: spike-test it for 2 hours \u2014 discovering a library fails after building 3 layers on top wastes days"
     ],
     "should_not_match": [],
     "difficulty": "hard",
@@ -760,49 +684,40 @@
   },
   {
     "id": "sub-prefer-framework",
-    "query": "SubagentStart:builder: Implement a custom task queue with retry logic, dead letter handling, and priority scheduling from scratch",
+    "query": "SubagentStart:general-purpose: Implement a custom task queue with retry logic, dead letter handling, and priority scheduling from scratch",
     "corpus": "rules_global.txt",
     "should_match": [
       "Prefer mature extensible frameworks over building from scratch \u2014 if LangGraph, FastAPI, or similar battle-tested projects provide the feature (routing, checkpointing, streaming), use them even if a simpler stdlib approach works today, because refactoring from simple to framework later costs more than starting with the framework"
     ],
-    "should_not_match": [
-      "Reuse popular open-source components for each layer of the system \u2014 only build custom code for what doesn't exist, because mature projects provide stability, community support, and extensibility that hand-rolled code cannot match"
-    ],
+    "should_not_match": [],
     "difficulty": "medium",
     "event": "SubagentStart"
   },
   {
     "id": "new-event-type-subagent-implementation",
-    "query": "SubagentStart:builder: Implement SubagentStart event support in the adapter, adding query construction and hook output formatting for the new event type",
+    "query": "SubagentStart:general-purpose: Implement SubagentStart event support in the adapter, adding query construction and hook output formatting for the new event type",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When extending a system to support new event types or modes, grep for every call site that dispatches on the old set \u2014 hardcoded event lists (e.g. a 2-event frozenset) silently reject new events instead of erroring, and the failure appears as \"feature doesn't work\" not \"event rejected\""
-    ],
+    "should_match": [],
     "should_not_match": [],
-    "difficulty": "hard",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "reasoning-first-json-subagent",
-    "query": "SubagentStart:builder: Create the LLM prompt template for sentiment analysis with output schema {\"sentiment\": \"positive|negative|neutral\", \"reasoning\": \"...\"}",
+    "query": "SubagentStart:general-purpose: Create the LLM prompt template for sentiment analysis with output schema",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Use \"reasoning-first\" JSON: {\"reasoning\": \"...\", \"signal\": \"...\"} not {\"signal\": \"...\", \"reasoning\": \"...\"} \u2014 field order in JSON prompts determines whether the model thinks before deciding; this is the cheapest quality upgrade available"
-    ],
+    "should_match": [],
     "should_not_match": [],
-    "difficulty": "hard",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "example-json-in-prompt-subagent",
-    "query": "SubagentStart:builder: Create a prompt template for the technicals agent that returns {\"signal\": \"buy\", \"confidence\": 0.8, \"reasoning\": \"...\"}",
+    "query": "SubagentStart:general-purpose: Create a prompt template for the technicals agent that returns buy/sell/hold signals with confidence scores",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Always include an example JSON object in the prompt \u2014 models that see the exact format they should produce have near-zero parse errors; without an example, they improvise with markdown fences and free text",
-      "Use \"reasoning-first\" JSON: {\"reasoning\": \"...\", \"signal\": \"...\"} not {\"signal\": \"...\", \"reasoning\": \"...\"} \u2014 field order in JSON prompts determines whether the model thinks before deciding; this is the cheapest quality upgrade available"
-    ],
+    "should_match": [],
     "should_not_match": [],
-    "difficulty": "hard",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
@@ -810,7 +725,7 @@
     "query": "SubagentStart:architect: Review the updated PRD for Phase 4 closed-loop hooks, focusing on architectural soundness and completeness",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Run convergence reviews on PRD changes too, not just code \u2014 a design gap that survives review becomes an implementation bug that survives testing, because every downstream artifact inherits upstream ambiguity"
+      "After revising a PRD or design document: run convergence reviews \u2014 design gaps that survive review become implementation bugs that survive testing"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -818,13 +733,13 @@
   },
   {
     "id": "test-plan-after-milestone-subagent",
-    "query": "SubagentStart:tdd-guide: Write tests for the new affinity inference module covering happy path, edge cases, and error handling",
+    "query": "SubagentStart:tdd-guide: Create a comprehensive test plan for the new affinity inference module covering happy path, edge cases, and error handling",
     "corpus": "rules_global.txt",
     "should_match": [
-      "After each milestone, create a comprehensive test plan before testing \u2014 the test plan itself should be reviewed by subagents (architect for coverage gaps, security for attack vectors, code quality for edge cases) because an incomplete test plan produces false confidence"
+      "Before testing a completed milestone: create a comprehensive test plan reviewed by subagents \u2014 an incomplete test plan produces false confidence"
     ],
     "should_not_match": [],
-    "difficulty": "hard",
+    "difficulty": "medium",
     "event": "SubagentStart"
   },
   {
@@ -832,7 +747,7 @@
     "query": "SubagentStart:code-reviewer: Review all code in the project for quality issues, check every file in src/ and tests/",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Set subagent scope boundaries and terminate stale agents \u2014 an unbounded reviewer will find infinite speculative findings in any document, consuming context without improving quality"
+      "When launching subagents: set explicit scope boundaries and kill stale ones \u2014 unbounded reviewers find infinite speculative findings"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -844,7 +759,7 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Set subagent scope boundaries and terminate stale agents \u2014 an unbounded reviewer will find infinite speculative findings in any document, consuming context without improving quality"
+      "When launching subagents: set explicit scope boundaries and kill stale ones \u2014 unbounded reviewers find infinite speculative findings"
     ],
     "difficulty": "negative",
     "event": "SubagentStart"
@@ -853,49 +768,40 @@
     "id": "v3-subagent-code-reviewer",
     "query": "SubagentStart:code-reviewer: Review the following files for code quality, bugs, DRY violations, and naming: src/cuecard/affinity.py, src/cuecard/models.py, src/cuecard/parser.py, tests/test_affinity.py",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Keep functions under 50 lines and source files under 800 lines (400 preferred) \u2014 large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes",
-      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
+      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "v3-subagent-security-reviewer",
     "query": "SubagentStart:security-reviewer: Security analysis of src/cuecard/adapters/claude_code.py, src/cuecard/security.py, src/cuecard/serve.py. Check for injection, secrets exposure, path traversal, and input validation.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
-      "Always validate user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
-    ],
+    "should_match": [],
     "should_not_match": [],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "v3-subagent-test-web-interface",
-    "query": "SubagentStart:tester: Test the alphaloom web interface at localhost:5173. Verify the dashboard loads, runs list displays, and API calls to localhost:8453 succeed with the bearer token.",
+    "query": "SubagentStart:e2e-runner: Test the alphaloom web interface at localhost:5173. Verify the dashboard loads, runs list displays, and API calls to localhost:8453 succeed.",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Always handle errors explicitly at every level, never silently swallow exceptions \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
-      "Always validate user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
-    ],
+    "should_match": [],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "v3-subagent-fixture-miner",
-    "query": "SubagentStart:fixture-miner: Mine real Claude Code session transcripts from ~/.claude/projects/ to create golden eval fixtures. Extract tool calls, classify difficulty, assign should_match rules from the corpus.",
+    "query": "SubagentStart:general-purpose: Mine real Claude Code session transcripts from ~/.claude/projects/ to create golden eval fixtures. Extract tool calls, classify difficulty, assign should_match rules.",
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
     "difficulty": "negative",
     "event": "SubagentStart"
@@ -906,18 +812,1000 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+      "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
     ],
     "difficulty": "negative",
     "event": "SubagentStart"
   },
   {
     "id": "v3-subagent-build-phase",
-    "query": "SubagentStart:builder: Implement Phase 2 of the closed-loop hooks PRD: affinity inference with LLM classification, AffinityIndex O(1) lookup storage, affinity.json sidecar with SHA-256 checksum, and strict/infer mode switching.",
+    "query": "SubagentStart:general-purpose: Implement Phase 2 of the closed-loop hooks PRD: affinity inference with LLM classification, AffinityIndex storage, and strict/infer mode switching.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime",
-      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-find-react-components",
+    "query": "SubagentStart:Explore: Find all React component files in the frontend directory and list their export names",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-node-version",
+    "query": "SubagentStart:general-purpose: What is the current Node.js LTS version and when does it reach end-of-life?",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-db-schema-design",
+    "query": "SubagentStart:Plan: Design the database schema for user profiles with relationships to posts and comments",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-review-auth-quality",
+    "query": "SubagentStart:code-reviewer: Review the auth module for code quality, readability, and adherence to project conventions",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-write-payment-tests",
+    "query": "SubagentStart:tdd-guide: Write tests for the payment service covering charge, refund, and webhook verification flows",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-count-lines",
+    "query": "SubagentStart:Explore: Count the total lines of code in src/ broken down by language",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-list-endpoints",
+    "query": "SubagentStart:Explore: List all REST API endpoints defined in the Flask application with their HTTP methods",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-explain-caching",
+    "query": "SubagentStart:general-purpose: Explain the difference between LRU cache and TTL cache and when to use each one",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-analyze-imports",
+    "query": "SubagentStart:Explore: Trace the import graph for src/cuecard/pipeline.py and show which modules it depends on",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-check-python-version",
+    "query": "SubagentStart:general-purpose: Check which Python version is installed and whether it meets the 3.11+ requirement",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-review-tests-pass",
+    "query": "SubagentStart:code-reviewer: Verify that all existing tests in tests/ pass and report any failures with tracebacks",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-plan-ui-layout",
+    "query": "SubagentStart:Plan: Design the layout for the dashboard page with a sidebar navigation and main content area",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-summarize-pr-feedback",
+    "query": "SubagentStart:general-purpose: Summarize the reviewer feedback from PR #247 and organize it by severity",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-find-unused-deps",
+    "query": "SubagentStart:Explore: Check pyproject.toml for dependencies that are declared but never imported in src/",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-architect-tradeoff",
+    "query": "SubagentStart:architect: Compare monorepo vs polyrepo structure for our three microservices and document tradeoffs",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-read-error-logs",
+    "query": "SubagentStart:general-purpose: Read the error logs from /var/log/app/error.log and categorize the top 10 most frequent errors",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-explain-rrf",
+    "query": "SubagentStart:general-purpose: What is Reciprocal Rank Fusion and how does it differ from simple score averaging?",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-review-existing-tests",
+    "query": "SubagentStart:code-reviewer: Review test_pipeline.py and test_retriever.py for test quality, coverage gaps, and fixture reuse",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-security-scan-deps",
+    "query": "SubagentStart:security-reviewer: Run safety check and pip-audit on current dependencies and report any known CVEs",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-planner-sprint",
+    "query": "SubagentStart:planner: Break down the Phase 5 multi-source parsing work into sprint-sized tasks with effort estimates",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-diagram-architecture",
+    "query": "SubagentStart:architect: Generate a Mermaid sequence diagram showing the request flow from hook trigger through pipeline to response",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-find-todo-comments",
+    "query": "SubagentStart:Explore: Search for all TODO and FIXME comments across the codebase and list them with file locations",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-measure-startup-time",
+    "query": "SubagentStart:general-purpose: Measure the cold start time of the cuecard CLI by timing 10 invocations of cuecard --help",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-e2e-verify-existing",
+    "query": "SubagentStart:e2e-runner: Run the existing Playwright test suite and capture screenshots of any failures",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-review-ruff-config",
+    "query": "SubagentStart:code-reviewer: Check the ruff configuration in pyproject.toml and verify it matches team conventions",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-translate-error",
+    "query": "SubagentStart:general-purpose: This stack trace is in Japanese. Translate the error message and suggest what caused it",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-plan-api-versioning",
+    "query": "SubagentStart:architect: Propose an API versioning strategy for the REST API considering backwards compatibility",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-diff-branches",
+    "query": "SubagentStart:Explore: Show the diff between the main branch and feature/affinity-inference for src/cuecard/",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-check-docker-status",
+    "query": "SubagentStart:general-purpose: Check if the PostgreSQL and Redis Docker containers are running and healthy",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-review-changelog",
+    "query": "SubagentStart:doc-updater: Review the CHANGELOG.md entries for the v2.0 release and verify they match the actual changes",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-explain-git-rebase",
+    "query": "SubagentStart:general-purpose: Explain the difference between git merge and git rebase and when each is appropriate",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-check-type-coverage",
+    "query": "SubagentStart:Explore: Run mypy on the entire src/ directory and report the current type coverage percentage",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-plan-data-migration",
+    "query": "SubagentStart:Plan: Design the data migration plan for moving user records from SQLite to PostgreSQL",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-find-circular-imports",
+    "query": "SubagentStart:Explore: Detect circular import chains in the src/cuecard/ package and report which modules are involved",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-review-security-compliant",
+    "query": "SubagentStart:security-reviewer: Verify that src/cuecard/security.py correctly implements path validation and secrets scrubbing",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-estimate-bundle-size",
+    "query": "SubagentStart:general-purpose: Calculate the installed size of all dependencies listed in pyproject.toml",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-list-env-vars",
+    "query": "SubagentStart:Explore: Find all environment variables referenced in the codebase and check which ones are currently set",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-compare-test-runners",
+    "query": "SubagentStart:general-purpose: Compare pytest vs unittest vs nose2 as test runners for this project",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-architect-caching-strategy",
+    "query": "SubagentStart:architect: Evaluate whether Redis, Memcached, or in-process LRU is the best caching layer for our query volume",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-planner-payment-system",
+    "query": "SubagentStart:planner: Design the architecture for the new payment processing system with Stripe integration, covering 12+ files across backend and frontend",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When receiving a task touching 10+ files or requiring new architecture: write a full PRD first \u2014 complex tasks without specs produce rework and missed requirements"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-general-implement-auth",
+    "query": "SubagentStart:general-purpose: Implement the user authentication feature end to end with OAuth2 and JWT tokens",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-new-library-redis",
+    "query": "SubagentStart:general-purpose: Integrate the new redis-om library for caching with connection pooling and TTL management",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before building on an unvalidated dependency: spike-test it for 2 hours \u2014 discovering a library fails after building 3 layers on top wastes days"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-ralph-build-pipeline-from-scratch",
+    "query": "SubagentStart:general-purpose: Build the data ingestion pipeline from scratch with queue processing, retry logic, and dead letter handling",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Prefer mature extensible frameworks over building from scratch \u2014 if LangGraph, FastAPI, or similar battle-tested projects provide the feature (routing, checkpointing, streaming), use them even if a simpler stdlib approach works today, because refactoring from simple to framework later costs more than starting with the framework"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-refactor-architecture",
+    "query": "SubagentStart:general-purpose: Refactor the monolithic API into separate domain services with shared configuration and independent test suites across 15+ files",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When receiving a task touching 10+ files or requiring new architecture: write a full PRD first \u2014 complex tasks without specs produce rework and missed requirements"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-cody-implement-notification-feature",
+    "query": "SubagentStart:general-purpose: Implement the push notification feature in src/notifications/ with tests and documentation",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-parallel-review-team",
+    "query": "SubagentStart:general-purpose: Launch code-reviewer, security-reviewer, and python-reviewer in parallel on the Phase 3 implementation",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When multiple independent review or analysis tasks exist: launch parallel subagents \u2014 sequential execution wastes time when tasks don't depend on each other"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-validate-with-real-data",
+    "query": "SubagentStart:general-purpose: Run the classification pipeline against real production data samples to verify accuracy before merging",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before moving to the next implementation phase: validate the current phase against real data \u2014 synthetic tests pass when the real thing fails because mocks diverge from production"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-planner-classify-search-feature",
+    "query": "SubagentStart:planner: Plan the implementation of the full-text search feature with Elasticsearch integration",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-architect-review-prd-phase5",
+    "query": "SubagentStart:architect: Review the Phase 5 multi-source parsing PRD together with code-quality and security reviewers in parallel",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When reviewing a PRD or design document: use multiple specialist subagents (architect, security, code quality) in parallel \u2014 a single reviewer misses entire categories of issues"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-benchmark-before-optimize",
+    "query": "SubagentStart:general-purpose: Optimize the retrieval pipeline latency by adding caching and batched embedding calls",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before implementing any improvement or optimization: establish baseline metrics first \u2014 without before/after numbers you cannot distinguish real improvement from noise"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-ralph-implement-phase-commit",
+    "query": "SubagentStart:general-purpose: Implement Phase 2 of the event mask feature, run tests, and commit when all pass",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After each implementation milestone: run convergence reviews with parallel code + security agents \u2014 per-phase reviews catch bugs when they're cheap to fix"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-write-agent-instructions",
+    "query": "SubagentStart:general-purpose: Write the system prompt and instructions for the new sentiment analysis agent",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When writing rules or instructions for agents: explain consequences, not just commands \u2014 agents follow rules they understand but ignore rules that just say what to do"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-cody-update-claude-md",
+    "query": "SubagentStart:doc-updater: Update CLAUDE.md and README after the architecture change to multi-stage retrieval",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After changing project structure, architecture, or conventions: update CLAUDE.md \u2014 without this, the next session starts with stale context and makes wrong assumptions"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-build-ml-pipeline",
+    "query": "SubagentStart:general-purpose: Build the ML inference pipeline with preprocessing, model loading, and postprocessing stages",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When building multi-stage pipelines: ensure each stage is independently high quality \u2014 downstream stages cannot rescue upstream failures"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-tmux-worker-delegate",
+    "query": "SubagentStart:general-purpose: Run the full benchmark suite via tmux and report results back when complete",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-debug-quality-regression",
+    "query": "SubagentStart:general-purpose: Debug why the retrieval quality dropped 10% after adding the new expansion prompt",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When debugging poor output quality: fix the upstream pipeline stage, not downstream patches \u2014 downstream fixes accumulate into unmaintainable complexity"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-adopt-langchain",
+    "query": "SubagentStart:general-purpose: Replace the custom LLM wrapper with LangChain for prompt management and chain composition",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting \u2014 unvetted dependencies become permanent tech debt"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-general-significant-feature",
+    "query": "SubagentStart:general-purpose: Implement the real-time collaboration feature with WebSocket support, conflict resolution, and presence indicators across 15+ files",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "For any significant feature: follow the three-layer gate \u2014 PRD + reviews, then implementation + reviews, then test plan + reviews \u2014 skipping any layer compounds risk"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-planner-medium-task",
+    "query": "SubagentStart:planner: Plan the implementation of dark mode theme switching across 5 components",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When receiving a task touching 3-10 files: create an inline plan with research, write tests alongside code, and run agent review after \u2014 medium tasks need structure"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-build-retrieval-pipeline",
+    "query": "SubagentStart:general-purpose: Build the multi-stage retrieval pipeline with dense embeddings, BM25, fusion, and LLM reranking",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When building multi-stage pipelines: ensure each stage is independently high quality \u2014 downstream stages cannot rescue upstream failures"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-ralph-convergence-review-phase3",
+    "query": "SubagentStart:general-purpose: Run convergence review round 2 on the Phase 3 implementation focusing on issues found in round 1",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After each review round: keep running until two consecutive rounds produce zero CRITICAL/HIGH/MEDIUM findings \u2014 fixed round counts stop too early or too late"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-unproven-technique",
+    "query": "SubagentStart:general-purpose: Implement the contrastive hypothesis generation approach for CDT refinement",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never build infrastructure around unproven techniques \u2014 test hypotheses in controlled experiments first, implement only winners"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-cody-simple-fix",
+    "query": "SubagentStart:general-purpose: Fix the typo in the error message on line 42 of src/formatter.py",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When receiving a task touching 1-2 files (config change, small fix): proceed without a plan \u2014 simple tasks don't need overhead"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-schema-change",
+    "query": "SubagentStart:general-purpose: Change the Rule dataclass to add an optional priority field and update all consumers",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When schema or cardinality changes, audit every consumer (views, queries, CLI, exports, tests) before implementing"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-general-benchmark-models",
+    "query": "SubagentStart:general-purpose: Benchmark Qwen 9B vs Gemma E4B on the eval fixtures and compare F2 scores",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before trusting benchmark results: verify the evaluation methodology \u2014 if you benchmark model A against model B's artifacts, model B wins by default"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-lightweight-before-llm",
+    "query": "SubagentStart:general-purpose: Add rule matching to the pipeline starting with keyword matching, then evaluate if an LLM stage improves results",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use lightweight deterministic approaches first, add LLM stages only when they demonstrably improve quality"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-prd-review-multi-specialist",
+    "query": "SubagentStart:code-reviewer: Review the completion gate PRD with architect, security, and code quality perspectives",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When reviewing a PRD or design document: use multiple specialist subagents (architect, security, code quality) in parallel \u2014 a single reviewer misses entire categories of issues"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-test-plan-milestone",
+    "query": "SubagentStart:tdd-guide: Create the test plan for Phase 4 closed-loop hooks covering unit, integration, and E2E scenarios",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before testing a completed milestone: create a comprehensive test plan reviewed by subagents \u2014 an incomplete test plan produces false confidence"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-cody-save-compaction-state",
+    "query": "SubagentStart:general-purpose: Context is getting low, save current task progress to artifacts/ before compaction",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-reproduce-paper-results",
+    "query": "SubagentStart:general-purpose: Reproduce the PersonaMem benchmark results from the original paper before comparing our implementation",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When reproducing published results: run the original paper code first \u2014 do not theorize about score gaps without evidence from the reference implementation"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-stuck-on-error",
+    "query": "SubagentStart:build-error-resolver: Debug the flaky test_pipeline integration test that fails intermittently with timeout errors, already tried twice with no success",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After 2 failed fix attempts on the same error, stop and ask the user for guidance instead of spiraling"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-monitor-context-usage",
+    "query": "SubagentStart:general-purpose: Check context remaining for the three builder agents in tmux panes and compact any below 67%",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Monitor agent context usage in tmux \u2014 compact when context remaining drops below 67 percent"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-evaluate-llm-confidence",
+    "query": "SubagentStart:general-purpose: Use the LLM confidence score to filter low-quality classifications in the affinity pipeline",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When an LLM outputs confidence scores or probabilities: don't trust them \u2014 use evidence counts, ensemble agreement, or track record instead"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-inspect-classification-wave",
+    "query": "SubagentStart:general-purpose: Run the affinity classification on all 109 rules and verify the output labels are correct",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Manually inspect LLM output after every classification wave \u2014 read actual output, do not trust confidence scores"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-ralph-implement-and-review",
+    "query": "SubagentStart:general-purpose: Implement the TOML parser in src/parser.py with tests, then run code and security review when done",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After writing code: run 3 parallel review agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-architect-match-agent-complex",
+    "query": "SubagentStart:general-purpose: This feature requires a new database schema, 3 API endpoints, and a React dashboard, figure out the approach",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When starting complex features: use the planner agent; for system design: use architect; for new features/bugs: use tdd-guide \u2014 match the agent to the task type"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-score-gap-investigation",
+    "query": "SubagentStart:general-purpose: Investigate why Qwen 9B scores 5 points lower than 35B on the basic tier despite using the same corpus",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Score gaps between models on routine tasks usually indicate code or config differences, not model quality differences"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-mocked-tests-done",
+    "query": "SubagentStart:general-purpose: All unit tests pass with mocks, now run the pipeline against the live OpenBB API to verify real data handling",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After mocked tests pass: test with real external data \u2014 NaN values, missing columns, and API format differences only surface with live data"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-small-sample-benchmark",
+    "query": "SubagentStart:general-purpose: The 20% sample shows Gemma winning, run the full 984-fixture dataset to confirm before switching defaults",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-general-implement-search-tdd",
+    "query": "SubagentStart:general-purpose: Implement the fuzzy search feature in src/search.py with unit tests for edge cases",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-planner-classify-config-change",
+    "query": "SubagentStart:planner: Plan the work needed to add a new configuration option for embedding model selection",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-cody-update-docs-after-refactor",
+    "query": "SubagentStart:doc-updater: The retriever module was split into dense.py and sparse.py, update CLAUDE.md with the new structure",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After changing project structure, architecture, or conventions: update CLAUDE.md \u2014 without this, the next session starts with stale context and makes wrong assumptions"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-validate-before-phase3",
+    "query": "SubagentStart:general-purpose: Phase 2 implementation is done, validate against real session transcripts before starting Phase 3",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before moving to the next implementation phase: validate the current phase against real data \u2014 synthetic tests pass when the real thing fails because mocks diverge from production"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-custom-orm",
+    "query": "SubagentStart:general-purpose: Build a custom ORM layer for database access with query building and migration support",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Reuse popular open-source components for each layer of the system \u2014 only build custom code for what doesn't exist, because mature projects provide stability, community support, and extensibility that hand-rolled code cannot match"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-unbounded-review-all-tests",
+    "query": "SubagentStart:code-reviewer: Review every test file in the project for test quality, mocking patterns, and coverage completeness",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When launching subagents: set explicit scope boundaries and kill stale ones \u2014 unbounded reviewers find infinite speculative findings"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-tdd-guide-already-doing-tdd",
+    "query": "SubagentStart:tdd-guide: Continue the TDD cycle for src/affinity.py: the failing test for binary classification is written, now implement the code to make it pass",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+    ],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-doc-updater-review-only",
+    "query": "SubagentStart:doc-updater: Check if the API examples in README.md still work with the current version and report any that are outdated",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "After changing project structure, architecture, or conventions: update CLAUDE.md \u2014 without this, the next session starts with stale context and makes wrong assumptions"
+    ],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-planner-simple-task",
+    "query": "SubagentStart:planner: How long would it take to rename the top_k parameter to max_results across the codebase?",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+    ],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-security-reviewer-bounded",
+    "query": "SubagentStart:security-reviewer: Check ONLY the new OAuth callback endpoint in src/auth.py for CSRF and token validation",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When launching subagents: set explicit scope boundaries and kill stale ones \u2014 unbounded reviewers find infinite speculative findings"
+    ],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-general-purpose-read-config",
+    "query": "SubagentStart:general-purpose: Read cuecard.toml and explain what each configuration option does",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-architect-document-decisions",
+    "query": "SubagentStart:architect: Document the architectural decision record for choosing fastembed over sentence-transformers",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-e2e-runner-smoke-test",
+    "query": "SubagentStart:e2e-runner: Run a quick smoke test of the CLI: cuecard retrieve 'test query' and verify it returns results",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-neg-refactor-cleaner-read-only",
+    "query": "SubagentStart:refactor-cleaner: Identify which functions in src/pipeline.py exceed 50 lines and list them with their line counts",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-audit-ground-truth",
+    "query": "SubagentStart:general-purpose: The eval F2 score dropped 5 points after adding new fixtures. Check if the new fixture expectations are correct before blaming the model.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When model predictions look wrong: audit the ground truth first \u2014 wrong fixture expectations are indistinguishable from model failures, and removing them is a free quality improvement"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-builder-retrieval-pipeline-noise",
+    "query": "SubagentStart:general-purpose: The retrieval pipeline returns too many irrelevant rules. Add a second filtering stage with configurable thresholds.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When building retrieval pipelines: filter noise at multiple independent stages with configurable thresholds \u2014 no single filter point can handle all query types"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-general-three-layer-small-feature",
+    "query": "SubagentStart:planner: Plan the new rate-limiting middleware for the API across auth, routes, and tests modules",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When receiving a task touching 3-10 files: create an inline plan with research, write tests alongside code, and run agent review after \u2014 medium tasks need structure"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "sub-general-use-framework-over-custom",
+    "query": "SubagentStart:general-purpose: Build a custom HTTP routing framework with middleware support, path matching, and error handling",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Reuse popular open-source components for each layer of the system \u2014 only build custom code for what doesn't exist, because mature projects provide stability, community support, and extensibility that hand-rolled code cannot match"
     ],
     "should_not_match": [],
     "difficulty": "easy",

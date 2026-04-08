@@ -17,7 +17,9 @@ cuecard/
 │   ├── multi-stage-retrieval-prd.md  # Multi-stage PRD v1.1 (converged)
 │   ├── phase4-closed-loop-hooks-prd.md # Closed-loop hooks PRD v1.2 (converged)
 │   ├── paper-design-rule-rationale.md # Compliance paper design
-│   └── session-20-progress.md        # Current session state
+│   ├── phase6-completion-gate-prd.md  # Completion gate Stop hook PRD v1.2 (converged)
+│   ├── phase7-rule-quality-prd.md     # Trigger-aware rule rewriting PRD v1.0
+│   └── session-25-progress.md         # Current session state
 ├── src/cuecard/            # Core library (agent-agnostic)
 │   ├── __init__.py         # Public API: load_config, retrieve, format_rules
 │   ├── loader.py           # Unified index loading with freshness + scope composition
@@ -179,7 +181,7 @@ mutmut verifies that tests actually detect code changes (mutations). 100% line c
 ### Affinity Design
 - Rules have event/tool affinity — which hook events and tools they apply to
 - Two modes: `infer` (LLM classifies at index time, default) and `strict` (explicit annotations only)
-- **Binary classification**: LLM classifies rules as `tool_use` (→ PreToolUse+PostToolUse), `workflow` (→ UserPromptSubmit+SubagentStart+Stop), or `both` (→ all 5 events). 7 golden examples in the prompt guide correct reasoning. This replaces the original 5-event classification which had 60% misclassification rate.
+- **Minimum retrieval scope**: LLM classifies rules as `tool_use` (→ PreToolUse+PostToolUse), `workflow` (→ UserPromptSubmit+SubagentStart+Stop), or `both` (→ all 5 events). Prompt asks "when would the agent misbehave without this rule?" — tool_use if at tool time, workflow if at planning time, both only if agent can plan AROUND the tool event entirely. 93.5% accuracy. Ground truth: 60 tool_use, 44 workflow, 3 both.
 - `AffinityIndex` uses O(1) dict lookup (not frozen dataclass — follows `Index` pattern)
 - `LoadedIndex` composite return type wraps `(Index, AffinityIndex | None)`
 - `load_or_build()` returns `LoadedIndex | None` — all call sites destructure
@@ -319,8 +321,11 @@ max_expansion_length = 200  # Max chars per expansion
 - **E2E benchmarking:** `tools/bench_e2e.py` — each model generates its own expansions AND reranks. Default mode going forward. `bench_models.py` deprecated (shared-corpus comparisons are unfair). Corpora cached at `eval/corpora/enriched_{tier}_{label}/` per model.
 - **Expansion prompt v5:** Reasoning-field prompt for expansions (structured CoT before generating) — COMPLETE
 - **Eval corpus:** 109 rules in `eval/corpora/rules_global.txt` (unified global + basic + workflow). All fixture files reference `rules_global.txt`.
-- **Eval dataset:** 831 fixtures across 5 event types (442 PreToolUse, 124 UserPromptSubmit, 115 PostToolUse, 77 Stop, 73 SubagentStart). 486 positive, 345 negative. Verified in 4 rounds (R0 audit, R1 3-agent, R2 spot-check, R3 compliance-fix). 73 fixtures mined from real sessions.
-- **Tagged corpus:** `eval/corpora/rules_global_tagged.json` — each rule tagged as tool_use/workflow/both for affinity validation
+- **Eval dataset:** 1096+ fixtures across 5 event types (441 PreToolUse, 219 UserPromptSubmit, 131 PostToolUse, 135 Stop, 170 SubagentStart). All events balanced 44-49% positive. Cross-event consistency enforced (tool_use rules only in PreToolUse/PostToolUse fixtures). 5 verification rounds converged. +41 mined Stop fixtures in Phase 6 format (`eval/fixtures/stop_mined.json`).
+- **Tagged corpus:** `eval/corpora/rules_global_tagged.json` — each rule tagged as tool_use/workflow/both. Ground truth uses minimum-retrieval-scope principle (session 26): 60 tool_use, 44 workflow, 3 both. Affinity prompt accuracy: 93.5%.
+- **Fixture realism (session 25):** Stop fixtures use realistic `"Stop: end_turn"` queries. PostToolUse: 3 compliance-as-violation errors fixed, 5 output format fixes. SubagentStart: trimmed 2.6→1.5 rules/pos. All events rebalanced to 46-53% positive.
+- **Phase 6 Completion Gate:** PRD converged (v1.2, 3 review rounds). Stop hook reads `last_assistant_message` + `transcript_path`, always blocks up to `max_stop_blocks` (Option A), shared `execute_stop_gate()` function. Pending implementation.
+- **Phase 7 Rule Quality:** PRD written. Rewrite all 109 rules with trigger conditions ("When X: do Y — because Z"). 63/109 rewritten (PreToolUse subset). Remaining 46 workflow rules in progress.
 - **CLI UX:** `cuecard configure` interactive setup, `cuecard serve` daemon, expand progress bar — COMPLETE
 - **Hook format:** Correct `hookEventName` + `permissionDecision` for PreToolUse, `hook_event_name` input field detection — COMPLETE
 - **Global install:** `uv tool install` support, `cuecard hook` CLI entry point — COMPLETE
@@ -351,7 +356,15 @@ All event types use the same pipeline. The adapter dispatches to per-event handl
 - PostToolUse: `"PostToolUse:{tool_name}: {tool_input[:200]} → {scrub_secrets(tool_output[:500])}"`
 - UserPromptSubmit: `"UserPromptSubmit: {prompt[:500]}"`
 - SubagentStart: `"SubagentStart:{agent_type}: {prompt[:500]}"`
-- Stop: `"Stop: {stop_reason[:500]}"` (fallback: "turn completed")
+- Stop (current): `"Stop: {stop_reason[:500]}"` (fallback: "turn completed") — minimal context
+- Stop (Phase 6): `"Stop: User asked: {user_prompt[:300]} | Agent said: {last_assistant_msg[:200]}"` — reads transcript
+
+**Stop hook input fields (from Claude Code):**
+- `last_assistant_message` — agent's final response text
+- `transcript_path` — full session JSONL (extractable user prompts)
+- `stop_hook_active` — boolean loop guard (unverified, counter is primary guard)
+- `session_id` — session identifier
+- Stop output uses flat `{"decision": "block", "reason": "..."}` NOT `hookSpecificOutput` wrapper
 
 PostToolUse, SubagentStart, and Stop all apply `scrub_secrets()` before query construction.
 
@@ -503,6 +516,24 @@ LLM-generated expansions (v2 prompt): 8/12 threshold crossings, avg delta +0.276
 - Added 3 negative examples: process-rules-excluded-from-pytest, LLM-rules-excluded-from-edit, high-candidate-discrimination-on-git-diff
 - Added RULE CATEGORIES section mapping rule types to event types
 - Reduced LLM candidate input from top_k=20/threshold=0.20 to top_k=12/threshold=0.25
+
+### Quality Gap Analysis (session 25)
+
+**Affinity accuracy:** 86.2% (after ground truth correction — 20 rules re-tagged workflow→both). Remaining 15 mismatches are genuinely borderline. Affinity is NOT the bottleneck.
+
+**Affinity mask impact:** Applied post-scoring (`scores[~mask] = -inf`) in both dense and sparse retrievers. PreToolUse gets 78/109 rules (28% reduction). Workflow events get ALL 109 rules (no reduction). The binary classification helps PreToolUse but doesn't help workflow events.
+
+**Pipeline bottleneck (verified — session 26 top_k=30 diagnostic):**
+- top_k=5 vs top_k=30: only +0.8% recall improvement
+- **Bottleneck is embedding/expansion quality, NOT the LLM reranker**
+- Correct rules never reach the reranker — they're not in the embedding neighborhood
+- Path forward: better expansions, richer queries (Phase 6), or better embedding model
+
+**Root cause: rule text is the only retrieval signal.** Rules that describe WHAT but not WHEN match every topically-similar query. "Run convergence reviews" matches everything about reviews/quality. "After completing an implementation phase: run convergence reviews" matches specifically.
+
+**Planned fix (Phase 7):** Rewrite all 109 rules with trigger conditions ("When X: do Y — because Z"). Adds tool names and action context as vocabulary for embeddings. Target: PreToolUse F2 ≥0.666 (+10 pts). 63/109 rules rewritten (PreToolUse subset), remaining 46 in progress.
+
+**Fixture realism (session 25):** 831→984 fixtures. Stop fixtures use realistic `"Stop: end_turn"`. PostToolUse: 3 compliance-as-violation fixes. SubagentStart: trimmed over-specification. All events rebalanced to 46-53% positive. +41 mined Stop fixtures in Phase 6 format.
 
 ## When in Doubt
 
