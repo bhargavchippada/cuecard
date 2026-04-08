@@ -150,49 +150,45 @@ EXAMPLES (note the reasoning field — think through your analysis first):
 
 Rule: "Always close file handles, database connections, and network sockets"
 {{"reasoning": "This rule fires when code opens a resource without \
-closing it. The vocabulary gap is between 'close resources' and the \
-specific APIs: open(), connect(), socket(). I need expansions showing \
-real code patterns where resources are opened but cleanup is missing.", \
+closing it. Queries look like Edit/Write with file paths and code. \
+I need query-shaped expansions that the embedding model can match \
+against real tool calls.", \
 "expansions": [\
-"open() without corresponding close() or context manager", \
-"aiohttp.ClientSession created but never closed", \
-"psycopg2.connect() missing connection.close()", \
-"socket.socket() without cleanup in finally block", \
-"tempfile.NamedTemporaryFile left open after use"]}}
-Bad expansions (too abstract, just paraphrases):
+"Edit: src/api.py -- db = connect() without close()", \
+"Write: src/handler.py -- open('data.csv') without context manager", \
+"Edit: adding aiohttp.ClientSession without closing it", \
+"Write: src/scraper.py -- socket.socket() without cleanup", \
+"psycopg2.connect() missing connection.close()"]}}
+Bad expansions (too abstract, no query shape):
 - "close all open resources"
 - "ensure proper resource cleanup"
 
-Rule: "Run quality checks before every commit"
-{{"reasoning": "This rule fires when a developer is about to commit \
-without running checks. The triggers are: direct git commit commands, \
-indirect signals like 'ship it' or 'done with feature', and merge/push \
-actions that bypass CI. I need both direct CLI commands and indirect \
-intent signals.", \
+Rule: "Always handle errors explicitly, never leave catch blocks empty"
+{{"reasoning": "This rule fires when code has bare except/catch blocks. \
+Queries show Edit/Write with code content. The embedding model needs \
+to see try/except patterns with file paths.", \
 "expansions": [\
-"git commit without running tests first", \
+"Edit: src/handler.py -- try: except: pass", \
+"Write: src/api.py -- adding bare except block", \
+"Edit: adding try/except with empty catch body", \
+"Write: src/service.py -- catch Exception without logging", \
+"Edit: src/processor.py -- silencing errors with except pass"]}}
+Bad expansions:
+- "handle errors properly"
+- "don't use empty catch blocks"
+
+Rule: "Run quality checks before every commit"
+{{"reasoning": "This rule fires on git commit and related actions. \
+I need both direct CLI commands and indirect signals.", \
+"expansions": [\
+"Bash: git commit -m 'fix: update logic'", \
 "Bash: git add -A && git commit", \
-"pushing changes without type checking via mypy", \
-"I'm done with the feature, ship it", \
-"merging PR without CI passing"]}}
+"Bash: git push origin feature-branch", \
+"pushing changes without running ruff or mypy", \
+"committing code without running the test suite"]}}
 Bad expansions:
 - "verify code quality before committing"
-- "run checks before git commit"
-
-Rule: "Never trust small sample benchmark results"
-{{"reasoning": "This rule fires when someone draws conclusions from \
-insufficient data. The triggers are: reporting metrics from small n, \
-pilot tests presented as conclusive, and any benchmark without sample \
-size disclosure. I need expansions showing specific small-n scenarios.", \
-"expansions": [\
-"benchmark scores from only 10 test cases", \
-"reporting accuracy from n=5 evaluation", \
-"pilot test with 20 samples shows 95 percent", \
-"A/B test with insufficient sample size", \
-"drawing conclusions from partial dataset run"]}}
-Bad expansions:
-- "don't trust small benchmarks"
-- "use larger sample sizes"\""""
+- "run checks before git commit"\""""
 
     system = f"""You generate retrieval expansion phrases for coding rules.
 
@@ -216,20 +212,30 @@ DOES that needs this rule, not what they should do after. "open() without \
 close()" triggers "close file handles" — but "always close connections" \
 is just a paraphrase. {action_guidance}
 
-3. **Include indirect triggers.** Some actions don't mention the rule's \
+3. **Match the query shape.** Queries look like tool calls: \
+"Edit: src/api.py -- def process(data):", "Bash: pip install flask", \
+"Write: config.py -- DB_URL='postgres://...'". At least half your \
+expansions should include tool prefixes (Edit:, Write:, Bash:) and \
+realistic file paths or code snippets. The embedding model matches \
+by surface similarity — if queries have file paths and code, \
+expansions need them too.
+
+4. **Include indirect triggers.** Some actions don't mention the rule's \
 topic at all but should still surface it. "docker build" should trigger \
 "review dependencies." Think: what ACTIONS have this rule as a consequence?
 
-4. **Vary the form.** Each expansion should use different sentence \
-structure, different vocabulary, different scenario. {token_guidance} \
+5. **Vary the form.** Mix query-shaped expansions ("Edit: src/handler.py \
+adding bare except pass") with natural language descriptions ("API \
+endpoint without input validation"). {token_guidance} \
 Avoid template repetition (not five "[X] without [Y]" patterns).
 
-5. **Stop when you'd be rephrasing.** Simple rules need 3-4 expansions. \
+6. **Stop when you'd be rephrasing.** Simple rules need 3-4 expansions. \
 Complex rules with many triggering scenarios need 8-10. Quality beats \
 quantity — an expansion that's too similar to another wastes retrieval space.
 
-QUALITY TEST: For each expansion, ask "Would a developer actually type \
-something like this?" If the answer is no, drop it.
+QUALITY TEST: For each expansion, ask "Does this look like something \
+the embedding model would see as a query?" If it's too abstract, \
+add a tool prefix and concrete code.
 
 {cross_domain_dont}
 

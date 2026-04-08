@@ -34,7 +34,7 @@ class TestBuildExpansionPrompt:
         system, _ = _build_expansion_prompt("test rule", "nonce1")
         assert "Always close file handles" in system
         assert "Run quality checks before every commit" in system
-        assert "Never trust small sample benchmark results" in system
+        assert "Always handle errors explicitly" in system
 
     def test_contains_golden_examples_workflow(self) -> None:
         system, _ = _build_expansion_prompt(
