@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
-    from cuecard.models import Index, RankedResult, Rule
+    from cuecard.models import AffinityIndex, Index, RankedResult, Rule
 
 import numpy as np
 
@@ -368,6 +368,7 @@ def run_eval(
     corpus_override: tuple[str, ...] | None = None,
     sample_ratio: float = 1.0,
     seed: int = 42,
+    affinity: AffinityIndex | None = None,
 ) -> EvalSummary:
     """Run evaluation across all fixtures and aggregate metrics.
 
@@ -460,6 +461,9 @@ def run_eval(
         start = time.perf_counter()
         from cuecard.pipeline import run_pipeline
 
+        # Extract event type from fixture for event mask filtering
+        event = fixture.event if fixture.event else ""
+
         pipeline_result = run_pipeline(
             fixture.query,
             index,
@@ -471,6 +475,8 @@ def run_eval(
             ),  # type: ignore[arg-type]
             embedding_model=model,  # type: ignore[arg-type]
             mode=effective_mode,
+            event=event,
+            affinity=affinity,
         )
         ranked: Sequence[RankedResult] = pipeline_result.results
         elapsed_ms = (time.perf_counter() - start) * 1000.0

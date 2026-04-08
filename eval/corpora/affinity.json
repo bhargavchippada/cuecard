@@ -1,0 +1,1581 @@
+{
+  "version": 1,
+  "mode": "infer",
+  "model": "local",
+  "checksum": "5abd880ada53a1fcec89e2a5cf84037d8d90a1972bd8b150aab52e6a0c98a6f5",
+  "rules": [
+    {
+      "text_hash": "00833667b0c2031807bde43bdb980c67a9f75bb67a3641a2a8027ed0cbff89dc",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule directly constrains the `git commit` and `git push` operations (tool_use). It is also a critical security policy that must be followed throughout the entire development process (workflow)."
+    },
+    {
+      "text_hash": "dd7d1a60a585c76bdbff6e2fa2a1dc379eca6f79f32890668636378bee5b17a0",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Input validation is a fundamental coding practice that must be implemented when writing code (tool_use). It also serves as a critical security and quality gate that must be considered during the design and planning phases of development (workflow)."
+    },
+    {
+      "text_hash": "a0fc46c7889af728faf044ce2849a358703c33e0906f98118e5640e155df054a",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific coding practice (avoiding dangerous functions) which directly constrains how code is written (tool_use). It also serves as a critical security standard that must be followed throughout the development process (workflow)."
+    },
+    {
+      "text_hash": "ab14ca23c2fd8ebe326cd089542894ebc01f98c95dfdde5d59f5d5c0e76d001d",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Setting file permissions directly constrains how file system operations (like writing or editing files) are performed using tools (tool_use). It is also a critical security standard that must be followed throughout the development process (workflow)."
+    },
+    {
+      "text_hash": "9d7912c905141f9c0db64fe2fcc5583d8a15ad941dab9d1fdcd4e7077006f1cc",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Requiring 100% test coverage dictates how code is written and tested (tool_use, e.g., running test runners). It also functions as a mandatory quality gate that must be passed before the commit action is allowed (workflow)."
+    },
+    {
+      "text_hash": "657851259673d33973d27138e6df328db812980f801b0c9a491921f88751705b",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a validation process (workflow) that must occur before proceeding to the next step. It is a high-level quality gate and methodology requirement, not a specific instruction on how to execute a tool like 'Edit' or 'Bash'."
+    },
+    {
+      "text_hash": "50ef73544d6cc72ed43adf0b363972422727fcaaf524acf2553259236fac1d92",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific pre-execution step (a PING test) that must occur before a larger process (full pipeline run). This is a methodological decision about process flow (workflow), but it directly involves running a specific command or tool call (a benchmark/test execution) (tool_use)."
+    },
+    {
+      "text_hash": "890de81c5a35ef73f3e470960aebc1585c3384c77c1cbee39f266c9cff86a535",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Establishing baseline metrics is a planning and methodology step that must occur before any coding or tool execution begins. It dictates the process for measuring success, making it a workflow rule."
+    },
+    {
+      "text_hash": "2957346e8b300518340099e5517866a423e85f235abf2c0841f81eb5651ce3c4",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates the specific tool/command to use for package management (`uv` instead of `pip`). This directly constrains how shell commands are executed (tool_use). Furthermore, enforcing the use of a specific, robust tool is a coding/development standard that guides the entire development process (workflow)."
+    },
+    {
+      "text_hash": "3873a7cd4ef5db813a997da6b1fc0295942dc80ab2e36845124e04ee125d2861",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Running linters (ruff) and type checkers (mypy) directly constrains the execution of tools (tool_use). Furthermore, establishing this as a mandatory step before committing is a quality gate and process requirement (workflow)."
+    },
+    {
+      "text_hash": "48113a484ed8ece005752147975b6b65e794e6a272e402b8892590b69194be61",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Explicit error handling dictates how code is written (tool_use) by requiring specific constructs like try/catch blocks. It also serves as a fundamental quality standard and best practice for the entire development process (workflow)."
+    },
+    {
+      "text_hash": "015ff3eff8e0848f3e821708cc743d41dca2a34ac89f7cdea51e3e510f8f6db6",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates specific coding practices (closing handles, connections) which directly constrain how code is written and executed (tool_use). It also serves as a fundamental quality standard that must be adhered to throughout the development process (workflow)."
+    },
+    {
+      "text_hash": "5663b218e112bab742ae62b6058719e48269714a8034a183362a15e30807ce40",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates how configuration should be handled when writing code (tool_use), specifically preventing hardcoding in files. It is also a fundamental best practice and security standard that guides the entire development process (workflow)."
+    },
+    {
+      "text_hash": "d3176d66084b95869be4be85a0af396711d2e29295f88fea7442c51afe7f23af",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific coding pattern (immutability) when writing or modifying code (tool_use). It also serves as a fundamental design principle and quality standard that must be adhered to throughout the development process (workflow)."
+    },
+    {
+      "text_hash": "fc9ee7ac012b86bbc8f545b6e636de60bff8f9019b60750b403400c4e098bc97",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Conventional commits dictate the structure of commit messages, which directly influences how Git commands (tool_use) are executed. Furthermore, enforcing this format is a process standard for maintaining project history and enabling automated changelog generation (workflow)."
+    },
+    {
+      "text_hash": "0bdda0de9dce30e610bfb437a52ce8fbeb4f45ab780a2955e0e2bea29e2dff20",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule directly constrains the use of git commands (tool_use) by forbidding a specific operation (force-push). It is also a policy governing the development process and collaboration standards (workflow)."
+    },
+    {
+      "text_hash": "1f0a127fec1e3b731dda0ad1ce2154cb70f24ebbdc65ca0e066326d49c5049f3",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Updating documentation (CLAUDE.md) is a process step that must occur when architectural changes happen (workflow). While this might involve writing or editing a file (tool_use), the core instruction is about maintaining context and process integrity, not a specific coding standard or command execution."
+    },
+    {
+      "text_hash": "7aa614aec64f0a403a859776647d4e04e69463ae8e6f079c1750324c2a99e513",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Updating the README is a process step that must occur when code changes (workflow). This often involves using a text editor or writing/editing files (tool_use)."
+    },
+    {
+      "text_hash": "41e799b655a565dd1477f15c03eedc8a4134cf6ee7a284ae54f436532f9eba23",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Adding entries to .gitignore directly constrains file operations (tool_use, e.g., git add/commit) to prevent certain files from being tracked. It is also a standard practice and quality gate for repository hygiene (workflow)."
+    },
+    {
+      "text_hash": "e3cd87a6664c787c6169ac7186e301eb4341962b30b6b703c7b1e2dbcd9f5465",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific methodology for reviewing documentation (PRDs) by involving multiple specialized agents. This is a process and planning decision, not a constraint on how a specific tool (like 'Write' or 'Bash') should be executed."
+    },
+    {
+      "text_hash": "a2a9be4e7317d707969e18ee6f62eb3a2445ea6b722014914f0947877fe191d8",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates the stopping condition for a review process, which is a methodological decision about when a task is complete. It does not constrain how specific tools are used to write or run code."
+    },
+    {
+      "text_hash": "031fbdf31fd65b754a47b7fc74d58b3e9ae1778ca50cb831da5c478f5e1dcff2",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific command-line interaction pattern when using the `tmux` tool (tool_use). It is a technical constraint on how commands are executed, which falls under tool usage, but it also serves as a mandatory operational procedure for the assistant (workflow)."
+    },
+    {
+      "text_hash": "69597fdd35ee9f2a64ab747940fb779a6516b11153a7460f6bf341ab118a2281",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a research and planning step (workflow) that must occur before any coding or tool execution (tool_use). Searching GitHub involves using a search tool."
+    },
+    {
+      "text_hash": "cff30ec8630f71647f7660c8bb12717988b8a9f7ca8a94073b053bb7e11fc249",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a research and investigation step (reading existing files) before the act of writing code. This is a methodological guideline (workflow) that influences the planning and execution of the coding task (tool_use)."
+    },
+    {
+      "text_hash": "a09afa79c4673d44c354c7daaf056c430b38c8dec8413ecabdc4ff73e589dc5f",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a high-level architectural and debugging strategy: fix the source of the error rather than applying temporary fixes downstream. This is a process/methodology guideline (workflow) that influences how code changes are implemented and tested (tool_use)."
+    },
+    {
+      "text_hash": "ab1e02068a4b60cf6781a3e36657fff388db4994304f0aea2c80e8252cb8fe00",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a quality standard for the design and execution of pipeline stages. Ensuring each stage is independently high quality is a process/methodology requirement (workflow), and it directly influences how code is written and tested within those stages (tool_use)."
+    },
+    {
+      "text_hash": "58d0b174132f04220454c1144e3da580795293bdb9d4ab3bb19b09edc67b67d9",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule addresses performance monitoring during tool execution (tool_use) and dictates a response protocol (investigation) when performance deviates from expectations, which is a process/methodology concern (workflow)."
+    },
+    {
+      "text_hash": "7c411e7d56625472fd975778eddcd9154008e2b266f4600dad7e6b09780b8a8b",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates which specific tools (Context7, Exa, mgrep) must be used for different types of information retrieval (documentation, web research, code search). This directly constrains tool execution (tool_use) and establishes a standard operating procedure for research phases (workflow)."
+    },
+    {
+      "text_hash": "1fda7fa2a0c727cd311cad2734c7c691108c7985a0d7958bf491fed0cb9c01ac",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific procedure to follow when a tool execution fails. Reading the error and searching documentation is a direct instruction on how to handle tool output (tool_use), and this entire procedure is a defined part of the operational methodology (workflow)."
+    },
+    {
+      "text_hash": "768fb8186b55bcb934ac03a17f25dfae9b9203e8251462dbb7728fdeaa95dc48",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Line length limits directly constrain how code is written and refactored (tool_use). They also serve as a structural quality standard that must be adhered to throughout the development process (workflow)."
+    },
+    {
+      "text_hash": "659d62bc9a493c9c45a2f6e867512f542192c3bd18099c29d400ecf87acdb66b",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates how logging and output must be handled when a specific operational event (a fallback) occurs. Logging and output generation are direct constraints on how code or scripts (tools) must behave. Furthermore, ensuring the user is aware of degraded results is a quality and process requirement (workflow)."
+    },
+    {
+      "text_hash": "2207d9033e08522683f321d878ff8109baacf9d8aa543bfeb0d97acf6bd19bb5",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a methodology for evaluating results, specifically advising against relying on a certain type of output (LLM confidence scores) and instead prescribing alternative evaluation metrics (evidence counts, ensemble agreement). This is a high-level process and quality gate decision, not a direct instruction on how to execute a specific tool command."
+    },
+    {
+      "text_hash": "2941cccbc4e6e262b3ba4d2610f7238e8eb26fdf77fe36dd40c70d070ef2c900",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Logging API calls is a direct instruction on how to write code (tool_use). Furthermore, establishing this logging requirement is a quality and operational standard that must be followed throughout the development process (workflow)."
+    },
+    {
+      "text_hash": "a9227c5a90daf6e809ec39fa87c13ed754efb072c319bd0172abce8bc1996e80",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific implementation pattern (caching with TTL) when interacting with external data, which constrains how code is written (tool_use). Furthermore, it establishes a critical quality standard regarding data integrity and performance trade-offs, making it a process guideline (workflow)."
+    },
+    {
+      "text_hash": "96256e8416f3d0e96227b7b1c4d4279dd7156ab2e7231549de5968696b8d0e4b",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Designing interfaces using Protocols is a specific coding pattern that dictates how code should be structured (tool_use). This design choice is also a high-level architectural decision that guides the overall development process and maintainability (workflow)."
+    },
+    {
+      "text_hash": "391a9e4fc9d4dbd6977731cf7eabe086cfe1885b8d5aefbd57efc9937806ff68",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific investigative process (spike-testing) that must occur before proceeding with design or implementation. This is a high-level planning and risk mitigation strategy (workflow), although the act of 'proving it works' might involve running specific tests or commands (tool_use). Since it's fundamentally about process and risk management, workflow is primary, but the execution involves tooling."
+    },
+    {
+      "text_hash": "81e6d82b2b41541e4a8a4013b79e0f211bf93d37aaa8027d55e494d3abffdd1b",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a high-level architectural decision (preferring established frameworks) which influences the design and implementation choices made during coding (tool_use). It is also a strategic guideline for the entire development process (workflow)."
+    },
+    {
+      "text_hash": "e512e176ce0eca78d85c10e7f95b68619b65155fddf7af22c0e95369c8d029e8",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a high-level architectural and design decision (workflow) regarding code composition. While this decision influences which libraries are imported and used in the code (tool_use), it is fundamentally a strategic guideline about *what* to build, not *how* to execute a command or write syntax."
+    },
+    {
+      "text_hash": "d7fbfa46355ad44d602bd6254e88f74ffdb88bd5dd69d6be7153e2a9efc0e7ac",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific testing methodology. Running tests against real external data involves executing code and interacting with external systems (tool_use). Furthermore, it sets a quality gate or standard for the testing process (workflow)."
+    },
+    {
+      "text_hash": "f1a41135493fff9e63d52e46fa73a291ea2e45a6bd59ea05827aff3c42a1c555",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific mathematical methodology for combining data signals (a scoring mechanism). This is a design/algorithmic constraint on how the code should be written (tool_use), and it represents a core principle of the system's logic or quality standard (workflow)."
+    },
+    {
+      "text_hash": "3efd67b0dd4d764dcfd82398cb17d0be767ff36adb10179c6261f63c681cc131",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific, robust coding pattern (NaN-safe extraction/fallback chain) to handle unstable external data, which directly impacts how code is written and executed (tool_use). It also serves as a design standard or quality requirement for the implementation (workflow)."
+    },
+    {
+      "text_hash": "a9f9dfc3b79ae7bd2b7de7272535d992e627b3e796d3dba07aab5b6f9242b26e",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates how agents (which are essentially processes/tools) should be managed\u2014setting boundaries and terminating them. This is a process control mechanism (workflow) that directly governs the execution and lifecycle of the agents/tools being used (tool_use)."
+    },
+    {
+      "text_hash": "5fc0f426b189217f83d35c45c7512161b4899ed977206e335c8ef19dcaf92893",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a design choice for data structures (making fields optional with defaults). This directly impacts how code is written and structured (tool_use), and it serves as a fundamental design principle or quality standard for the entire project (workflow)."
+    },
+    {
+      "text_hash": "2b3314238497bcab2fec08d95ea15192dda6f7a342aa3703c0d2c0f8926dc7d0",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule advises on a debugging and quality assurance methodology. It dictates a process (auditing ground truth before blaming the model) which is a workflow concern, rather than constraining a specific tool execution like 'Write' or 'Bash'."
+    },
+    {
+      "text_hash": "c8c28f4470a92584b5aa31e256046c7966105389c3c53c8064bf6260ef5189ef",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates the *style* and *content* of the instructions provided to the agent. It is a meta-rule about how the assistant should communicate its constraints and expectations, which falls under process/methodology (workflow). It does not directly constrain the execution of a specific tool command (tool_use)."
+    },
+    {
+      "text_hash": "106384b5295e760534862336b6e00356287aa6e309bed691d1cf67b427fe24b1",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates the methodology for comparing results (benchmarking strategy). It is a high-level process decision about how evaluations must be structured, rather than a constraint on how a specific tool (like 'bash' or 'edit') should be used during execution."
+    },
+    {
+      "text_hash": "554f4ea7db9f54c0b6a112e7650d29ba4f93aee60f2c47ac3095cdc4d2c530bc",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific process (running reviews after milestones) rather than constraining how a specific tool is used during coding or execution. It is purely about methodology and quality gates."
+    },
+    {
+      "text_hash": "a681064efc543bc28f7aff380345364fcbb75523bd0de21c0b0e0fc5a2a5248c",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates the process of committing code (workflow) and directly constrains the use of the 'git commit' tool (tool_use) by requiring atomic, tested commits."
+    },
+    {
+      "text_hash": "c5803feebf6380836ea0bd5af427bcce771342b597ca97e3be1a88c7603de842",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule mandates a review process (convergence reviews) to be applied to design documents (PRD changes) in addition to code. This is purely a process and methodology decision, not a constraint on how tools like 'Edit' or 'Bash' are used."
+    },
+    {
+      "text_hash": "949f78053312eb2d16bc98a6745d863f833a6335f009c4ba7e803740dc098dd3",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific process (creating and reviewing a test plan) that must occur before testing begins. The review by specialized subagents (architect, security, code quality) is a methodological gate, making it a workflow concern. While the plan informs how testing tools will be used, the rule itself is about the *process* of planning and review, not the execution of a specific tool command."
+    },
+    {
+      "text_hash": "6d7eefc16d5fe46440d4c425a1a9ea0e4a8ad4506b5e71571dcfbe3dddf4462f",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule describes a multi-stage process involving planning (PRD review), implementation (code review), and testing (test plan review). These are all high-level process and quality gates, not specific instructions on how to execute a tool like 'Write' or 'Bash'."
+    },
+    {
+      "text_hash": "f3202defb535d44c841708ae652c42b79279de431e3621f0bf857d16f24d5818",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Mocking external calls directly dictates how code is written and tested (tool_use), as it constrains the implementation of unit tests. It is also a fundamental quality standard and best practice that must be followed during the development process (workflow)."
+    },
+    {
+      "text_hash": "c46c9647e24684a1c5627b31a290da91ceb0f0635d8a9f7cda95e6c2974e53da",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates how code should be written specifically within test files (tool_use), enforcing a pattern (mocking boundaries) that is a core part of the testing methodology and quality standard (workflow)."
+    },
+    {
+      "text_hash": "42b533c17f0e18cd8f0850ff04d0c69fcd532e6689b9ab0a496d7e80b86d9c93",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "The rule dictates a performance constraint on running the unit test suite (a tool execution, tool_use). Furthermore, it establishes a quality gate and a mandatory investigation process if this constraint is violated, which is a process/methodology decision (workflow)."
+    },
+    {
+      "text_hash": "51de2186dad55439f0f2b51745dd50446fa0db8399dfcb2fbfa79928f733319f",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates how tests are marked (a coding/testing standard, tool_use) and imposes a constraint on the default execution process (workflow) to ensure speed and determinism."
+    },
+    {
+      "text_hash": "deead758732fbaf7a78969ea4b9467edf68a67fbde213bb6ba81d7667dd7f0ec",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific strategy for handling slow tests. It influences how tests are written and structured (tool_use, e.g., modifying test code or mocking dependencies) and serves as a quality gate/guideline for the testing process (workflow)."
+    },
+    {
+      "text_hash": "b354278c506bb869c17ffc76fe1ccb2ac6762c24a0923c0d0284b75401ee1980",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific coding pattern (avoiding time.sleep) when writing tests (tool_use). It also serves as a quality standard or best practice guideline for the entire testing process (workflow)."
+    },
+    {
+      "text_hash": "010376f6ee7c655b16d2ec5121c2b56d842b246b86abf4785647d81535193174",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific constraint on how parameters are used when invoking a tool (llama-server). It directly affects the input provided to the tool call (tool_use). Furthermore, it establishes a critical operational constraint that must be considered during the planning and execution phase of any task involving this server (workflow)."
+    },
+    {
+      "text_hash": "3178ed71d967e4625914f4715876c61e1d03a98a6995167eba52767e3adbf8ab",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule mandates a specific verification step (testing/validation) to ensure functional parity between two execution paths (daemon vs. inline). This is a quality gate and testing methodology (workflow), and it directly dictates how tests or code paths must be exercised (tool_use)."
+    },
+    {
+      "text_hash": "7fe173d16f78b7f1a4819272c93cdf8f599cf03951962feef602e18a2a007507",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific code inspection procedure (using `grep`) to find potential bugs (silent rejections) when modifying event dispatching logic. This is a direct instruction on how to use a tool (`grep`) to enforce a coding standard/quality gate during development."
+    },
+    {
+      "text_hash": "87b20427650eb8c14beb7d3d11c8e3a9b870d2fe62bb12e9f61a5bab61e6f2a3",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates the internal structure and sequence of the LLM's output generation (reasoning before decision). This is a meta-instruction governing the process of how the assistant operates, making it a workflow rule. It does not directly constrain the execution of external tools or code writing standards, although better reasoning might lead to better tool use."
+    },
+    {
+      "text_hash": "187c94aceac44bcb6c2f4968d5f9939b284b45600921d4766f4ad32062afe06b",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific structural requirement for the output format (JSON field order). This affects how the model generates its response (a process/workflow constraint) and is a meta-instruction about the structure of the output, which is related to how the assistant 'uses' its output format."
+    },
+    {
+      "text_hash": "9ec6a41cbadb1dc34f8924cd7b720b7044f888cf632e21f47fef4d6fe9626040",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a strategic choice between two modes of operation (Thinking mode vs. Reasoning-first JSON format) based on the context (live analysis vs. backtesting). This is a high-level process and methodology decision (workflow), but it directly influences how the model generates output, which is a form of execution constraint (tool_use/output generation)."
+    },
+    {
+      "text_hash": "844be58594a4b46a5bd53c6ea4c9632880da62e1636c49276e646cd8cdead8f7",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates the structure of the input prompt itself, which is a meta-level instruction about how the interaction should proceed (workflow). While it influences the *output* format, it is a guideline for the *process* of prompting, not a constraint on how code is written or tools are executed."
+    },
+    {
+      "text_hash": "f556c952435a4d97829e494d45bcc326d2cdbd1efebf92f37210e4c3bf5fb157",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific operational procedure (retry logic) when a tool execution (JSON parsing) fails. This is a direct constraint on how the system handles tool output (tool_use), and it defines a recovery process/error handling methodology (workflow)."
+    },
+    {
+      "text_hash": "3aef62eabe0453612b0675dd94cf754e5ff4579f76c301b3acf36030f09c001d",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Creating a new branch directly constrains git operations (tool_use). It is also a fundamental process and methodology rule for development workflow (workflow)."
+    },
+    {
+      "text_hash": "d9914601f1867b85d04c7368ceb15bcc575e629f928f80ea27adf198752ef05d",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Writing docstrings is a direct instruction on how to write code (tool_use). Furthermore, enforcing documentation standards is a quality gate and part of the overall development process (workflow)."
+    },
+    {
+      "text_hash": "a8cd61c894ea96b445eae5a92bea433d468dad3410f105684dc58ec9fdd192a0",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Enabling CSRF protection is a specific coding requirement that must be implemented when writing code (tool_use). It also serves as a critical security standard that must be adhered to throughout the development process (workflow)."
+    },
+    {
+      "text_hash": "2d6c8fd805884d6dd35daac0fc4867b56c5a956faab76c11c259c09417fb819e",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Extracting magic numbers into named constants is a direct coding practice that dictates how code is written (tool_use). It also serves as a fundamental code quality standard that must be adhered to throughout the development process (workflow)."
+    },
+    {
+      "text_hash": "711142de9fd18e25a607aa35d9258fa5bbac02c326eae2d90989f8f2007f805e",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates what kind of code should be written (avoiding specific debugging statements), which directly constrains the code generation/editing tools (tool_use). It also serves as a quality standard or best practice that must be followed throughout the development process (workflow)."
+    },
+    {
+      "text_hash": "066d7c6420586fceae8e6b3f0c650a310445be766328849923e470aefe877331",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific coding pattern (using immutable structures) which directly influences how code is written (tool_use). It also serves as a fundamental design principle and quality standard for the entire development process (workflow)."
+    },
+    {
+      "text_hash": "9fde6f014136f44a07d47ffc9e7d77ed2d6f4239d04eceb2d8c44664ef3aaaa8",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Checking dependencies for vulnerabilities is a security check that must happen before code is written or tools are used to install them (tool_use). It is also a critical part of the overall development process and quality gate (workflow)."
+    },
+    {
+      "text_hash": "ea99db742276da8c7db305f9028ab683049b64b8cc722776e178f4a77e56d1f5",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Rotating secrets is a security action that must be performed (tool_use, e.g., using a secret management tool or CLI). It is also a critical policy/process step to follow after a security incident (workflow)."
+    },
+    {
+      "text_hash": "20b0097ddf626628744b826a0af0f99560bb7c7cacc9a04e5435d6e73ee7119b",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Running linting, type checking, and tests directly constrains the execution of tools (tool_use). Furthermore, enforcing this check before a commit is a mandatory quality gate and process step (workflow)."
+    },
+    {
+      "text_hash": "582f729ef34df690178748922b6ac436e4289aaad8b183e18bac7b02b4f01049",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Sanitizing HTML output is a direct constraint on how code is written (tool_use), specifically when rendering user-provided data. It is also a critical security standard that must be followed throughout the development process (workflow)."
+    },
+    {
+      "text_hash": "c5fba85cdc2409399630b4a35ac396151566e89f83b599c825c9fb16eaf67c2f",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific implementation pattern (using asyncio over threads) when writing code for I/O-bound tasks. This directly constrains how the code is written (tool_use) and serves as a technical standard for the development process (workflow)."
+    },
+    {
+      "text_hash": "e4d38f6269359104e21035a61d3fd0b0867a7e891790c563e94590f1c688d660",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific coding pattern (using frozen dataclasses) when writing Python code (tool_use). It serves as a strict coding standard to prevent bugs, which is a quality/process guideline (workflow)."
+    },
+    {
+      "text_hash": "01a74d50c0e3610efc9be0dfa8257e69c14d0fd5887b6518d6468a713628be29",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific, secure coding practice (using parameterized queries) when interacting with a database. This directly constrains how code is written (tool_use) and serves as a critical security standard that must be followed throughout the development process (workflow)."
+    },
+    {
+      "text_hash": "99dfd03d182b02dd24a4a66f2fe00158fdbf1847f0682ad436645e630f2e4274",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Type hints are a direct constraint on how code is written (tool_use), as they dictate the structure of the code being generated. They also serve as a quality standard and best practice that must be followed throughout the development process (workflow)."
+    },
+    {
+      "text_hash": "c28656467b1d531ed2fc26949ccf29727a15361af67ea8ed754bad49452a08f0",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "TDD is a methodology (workflow) that dictates the sequence of actions. Writing tests first directly influences the code generation and testing tools used (tool_use)."
+    },
+    {
+      "text_hash": "a64ef109b5507835f9bb90e87179c45b3b432eba99fe1c4632093dc95b9aec2b",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a mandatory step in the planning and initiation phase of a task (classification and reasoning), which is a process methodology, not a constraint on how code or tools are executed."
+    },
+    {
+      "text_hash": "10f2cf3a6a8c2d8fe9faa843ef34ca6299eef8322ce9af6a92a9bc1fcab3fb3a",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a process flow based on task complexity (SIMPLE tasks can skip planning). This is a methodological decision about the development process, not a constraint on how specific tools are executed."
+    },
+    {
+      "text_hash": "70644b3731e687555968d0af14af4ddd765090292e5c539cc14e7819a910d6c3",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific process (inline plan, research, tests, agent review) that must be followed when handling a task of a certain size (MEDIUM). This is a process/methodology constraint (workflow), although the required components (tests, code) involve tool usage."
+    },
+    {
+      "text_hash": "54cc10f424aa9e611dd28ce1f50014d72bf2fb5055f6a6d62f01e696719fe84a",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a prerequisite process (writing a PRD) based on task complexity before any coding or tool execution (implementation) can start. It is purely a process/planning gate."
+    },
+    {
+      "text_hash": "b7d8fc588c8796effae6fc42ce3d6126c30f8a68ded68a3d15856a5691f674ba",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates which specialized agent (a form of tool/persona) should be invoked based on the nature of the task (complex features, system design, etc.). This is a process/methodology decision (workflow) that governs the selection and use of specific agents/tools (tool_use)."
+    },
+    {
+      "text_hash": "8ce37b81cd0e098f9be152955e0e0210bcbd060621aa15330a6d47521f19d784",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates the execution strategy (parallel vs. sequential) for subagents, which is a process/methodology decision (workflow). While running agents might involve tool execution, the rule itself governs the *scheduling* and *process* of those executions, not the syntax or usage of a specific tool."
+    },
+    {
+      "text_hash": "875e3b3a84014c324a98a67d9dfb43b74face2e92b542f881257ca3c02f0a004",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a multi-step process involving multiple agents (a workflow/process decision) that will likely involve running specific review tools or commands (tool_use)."
+    },
+    {
+      "text_hash": "3056cb82e080de991e1b47cd3d4df2ac53a5090620298ad9cdf3885e37cf4daf",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific operational methodology: using `tmux` for process management (tool_use) and `cron` for monitoring (tool_use). Furthermore, delegating work to agents and monitoring progress is a high-level process/workflow decision."
+    },
+    {
+      "text_hash": "3884dabd6e1520bdace5071e837d684fd1ca2cc2c021cbc1cf307e78457c604b",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific communication protocol (tmux send-keys) for how delegated agents should interact with the session, which is a constraint on how tools (like tmux) are used (tool_use). It also defines a required operational procedure for the agents (workflow)."
+    },
+    {
+      "text_hash": "a7cbb6aef4694cdf4b25fd49422524ba5e70e370d43588cc9815e916e86554e0",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific action (compacting context) based on a metric (context usage dropping below 67 percent) within a specific environment (tmux). This is a direct operational constraint on how the agent manages its state/tools (tool_use), and it functions as a monitoring/resource management policy (workflow)."
+    },
+    {
+      "text_hash": "a06530336a203f4946496506fa9df14cb1fc50663bc4092705b205ea061b3dea",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a process for reviewing documentation (PRD reviews) and setting a process goal (convergence rounds). It is purely about methodology and process, not about how code or tools are executed."
+    },
+    {
+      "text_hash": "14c591cfafe929e7f8fa474f8a6a17f36e9d1913cb31dd7d83d92f6860837a36",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "TDD dictates a specific sequence of actions: writing tests (tool_use/code generation) before implementation (tool_use/code generation), which is a strict methodology or process (workflow)."
+    },
+    {
+      "text_hash": "caf72be4aff50f0001846503855038acceab6be2368f2e7da667b0c86cedaaa5",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a manual review process (inspecting output) after a specific action (classification wave). This is a process/methodology decision (workflow) and does not constrain the execution of any specific tool command (tool_use)."
+    },
+    {
+      "text_hash": "d4a20742b83e2ae5f44ac9cb483f519d226a0e6b6219816f1d680c0414bce82e",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a methodology for evaluation (running the full dataset vs. small samples). This is a process/methodology decision (workflow) and does not constrain the mechanics of running a specific tool command (tool_use)."
+    },
+    {
+      "text_hash": "f4bec035d2bd9b88501b406f1e3a064ead72620650bd7beda6ebd299e9c28268",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a methodological approach to development\u2014testing hypotheses before full implementation. This is a high-level process and planning guideline (workflow) rather than a direct instruction on how to use a specific tool or command (tool_use)."
+    },
+    {
+      "text_hash": "3aed8448154616a32809b484bb83a56cf5ba8d60f61369f5351ea90ec311ff8e",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a methodological preference for problem-solving: prioritizing simple, deterministic methods over complex LLM-driven approaches. This is a high-level process and planning guideline (workflow), rather than a direct instruction on how a specific tool (like 'Write' or 'Bash') must be executed (tool_use)."
+    },
+    {
+      "text_hash": "8f8028049aecba59d86e38a8f0c4c569a595e13ddb35ebdf154052f4d17a590a",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific sequence of operations (retrying failed items sequentially) after a phase of parallel execution. This directly governs how the system executes subsequent steps (tool_use) and defines the methodology for handling failures (workflow)."
+    },
+    {
+      "text_hash": "9b031fdfd30e255975d72e22a3dcce79c844ca4fa6441abf87b7da4a182fa935",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule describes a verification step (diffing IDs) that must occur after a specific action (LLM response). This verification is a process/quality check (workflow), but it requires executing a comparison/diffing operation, which is a form of programmatic action or tool usage (tool_use)."
+    },
+    {
+      "text_hash": "b15e37fa8328cb685590b68e030682643de3b322ad82f8ffdbad8fe14b7c16ad",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates the specific methodology (semantic similarity vs. lexical matching) to be used when processing text, which applies both to the implementation logic (tool_use, e.g., choosing the right embedding model or function) and as a high-level quality/processing standard (workflow)."
+    },
+    {
+      "text_hash": "ad2dcbcfdfc02549f92c9c39ed490c0e8e1051306d072a305915b97885d406d8",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "Saving artifacts directly constrains file system operations (tool_use). The instruction to 'never destroy a baseline during experiments' is a high-level methodological guideline regarding data integrity and process management (workflow)."
+    },
+    {
+      "text_hash": "a62351cfbce5163f556596b9f7a6799b7be679322f6492c4caa3e7c5228c207d",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates how data must be stored and what information must be captured (predictions, reasoning, grounding). This is a requirement for the overall process and analysis methodology (workflow), and it implies specific actions when running benchmarks or logging results (tool_use)."
+    },
+    {
+      "text_hash": "a7815116073e471063396f063695d3a5f4abd05a4148e29abbbb9e202ea5d9d4",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule describes a design pattern for data processing pipelines (filtering noise). Implementing this requires specific coding/configuration (tool_use), and defining the multi-stage, configurable nature of the filtering is a high-level architectural/process decision (workflow)."
+    },
+    {
+      "text_hash": "fd6632e9009ff3875a217e482e2d8e76cb3d90ae72598d387f1c85e7278b3d10",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule mandates a comprehensive audit process (workflow) before making a change to the data structure (schema/cardinality). While auditing might involve running specific queries or tests (tool_use), the core instruction is a pre-implementation process gate, making it primarily a workflow concern, though it implies tool usage."
+    },
+    {
+      "text_hash": "670f2c4203978bb04b743cb6deb38e08f05b3b8ff2791cf4d6afd560b22445ba",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific step in the overall process (saving state before compaction). It is a procedural requirement rather than a constraint on how a specific tool (like 'write' or 'bash') must be executed, making it a workflow rule. It does not govern the mechanics of tool usage itself."
+    },
+    {
+      "text_hash": "6ba5767ca48e45063666c00fb114ea42c36f15f5da6b31ecfb9078ce1c91cc0c",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific methodology for running benchmarks (a process/workflow decision) to ensure valid comparisons. While running the benchmark involves tool execution, the rule itself is about the *strategy* of the comparison, not the mechanics of the tool usage."
+    },
+    {
+      "text_hash": "2a0af0ef17e26362b0fad15185d342702e2cb87860b4117f3b7dcc8ea3bcf3ca",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a specific sequence of actions (running original code first) when performing research or reproduction. This is a methodological constraint on the process (workflow), and it directly influences the sequence of tool executions (e.g., running a specific script or environment setup) (tool_use)."
+    },
+    {
+      "text_hash": "90f9964d5e515bffcf52c8b03eb5761861759f691aa67be8d0c79d9a14142b2f",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule is a guideline for interpreting experimental results (benchmarking/evaluation). It dictates how the *process* of analyzing results should be conducted, rather than constraining how code is written or tools are executed."
+    },
+    {
+      "text_hash": "5911d6b5a2c77e4119b1babfe3b7a3dbfae10fa99787dafd446e9ce6fe73d271",
+      "events": [
+        "PostToolUse",
+        "PreToolUse",
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule mandates a comprehensive research and validation process (research alternatives, verify documentation, audit maintenance status, benchmark) before any code implementation or adoption occurs. This is fundamentally a planning and quality gate process (workflow), although benchmarking might involve running specific tests or scripts (tool_use). Since the core instruction is about the *process* of selection, workflow is primary, but benchmarking implies tool interaction."
+    },
+    {
+      "text_hash": "5d6b8b11475fc5340bee9c81abc43b4191dbf63abb40c15e7bdbaad35f84daae",
+      "events": [
+        "Stop",
+        "SubagentStart",
+        "UserPromptSubmit"
+      ],
+      "tools": [],
+      "source": "inferred",
+      "explicit_events": [],
+      "explicit_tools": [],
+      "reasoning": "This rule dictates a stopping condition and a change in interaction strategy (asking the user for guidance) after a certain number of failed attempts. This is a process control mechanism, not a direct instruction on how to write or execute a specific tool command."
+    }
+  ]
+}

@@ -141,12 +141,13 @@ class TestBuildAffinityPrompt:
         assert "PreToolUse" in user
         assert "Bash" in user
 
-    def test_known_events_in_system_prompt(self) -> None:
+    def test_categories_in_system_prompt(self) -> None:
         system, _ = _build_affinity_prompt(
             "test", "nonce", frozenset(), frozenset(),
         )
-        for event in KNOWN_HOOK_EVENTS:
-            assert event in system
+        assert "tool_use" in system
+        assert "workflow" in system
+        assert "categories" in system
 
 
 # --- _parse_affinity_response ---

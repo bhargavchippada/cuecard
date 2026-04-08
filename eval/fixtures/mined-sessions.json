@@ -1,849 +1,849 @@
 [
-    {
-        "id": "mined-read-settings-json",
-        "query": "Read: /home/turiya/.claude/settings.json",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Run ruff and mypy before committing Python code"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-read-soul-md",
-        "query": "Read: /home/turiya/.claude/rules/common/SOUL.md",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Document all public API functions with docstrings"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-read-eval-py",
-        "query": "Read: /home/turiya/projects/cuecard/src/cuecard/eval.py",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use uv for all Python package operations, never pip"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-read-conftest-py",
-        "query": "Read: /home/turiya/projects/cuecard/tests/conftest.py",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Never force-push to main or master branch"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-read-models-py",
-        "query": "Read: /home/turiya/projects/cuecard/src/cuecard/models.py",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Send Enter after every tmux send-keys command"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-read-security-py",
-        "query": "Read: /home/turiya/projects/cuecard/src/cuecard/security.py",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use asyncio for I/O-bound operations, not threads"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-read-indexer-py",
-        "query": "Read: /home/turiya/projects/cuecard/src/cuecard/indexer.py",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Never commit secrets (API keys, tokens, passwords) to git"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-read-strategy-md",
-        "query": "Read: /home/turiya/projects/cuecard/artifacts/retrieval-quality-strategy-2026-04-01.md",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Run quality checks before every commit"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-glob-soul-md",
-        "query": "Glob: {\"pattern\": \"**/SOUL.md\", \"path\": \"/home/turiya/.claude\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-glob-artifacts-md",
-        "query": "Glob: {\"pattern\": \"artifacts/*.md\", \"path\": \"/home/turiya/projects/cuecard/artifacts\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "100% test coverage on all new code"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-glob-eval-corpora",
-        "query": "Glob: {\"pattern\": \"eval/corpora/*\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Always validate user input at system boundaries"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-glob-eval-fixtures",
-        "query": "Glob: {\"pattern\": \"eval/fixtures/*\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use parameterized queries to prevent SQL injection"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-glob-delulu-sessions",
-        "query": "Glob: {\"pattern\": \"**/delulu*\", \"path\": \"/home/turiya/.claude\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use type hints on all function signatures"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-grep-eval-class",
-        "query": "Grep: {\"pattern\": \"class.*Eval|def test.*eval\", \"path\": \"/home/turiya/projects/cuecard/tests/test_cli.py\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Never use eval() or exec() in production code"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-grep-scrub-secrets",
-        "query": "Grep: {\"pattern\": \"def scrub_secrets|def validate_endpoint|ALLOWED_LLM\", \"path\": \"/home/turiya/projects/cuecard/src/cuecard/\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Sanitize all HTML output to prevent XSS"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-grep-ranked-result",
-        "query": "Grep: {\"pattern\": \"class RankedResult|class ConfigError\", \"path\": \"/home/turiya/projects/cuecard/src/cuecard/\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-uv-run-pytest",
-        "query": "Bash: uv run pytest tests/test_eval.py -x -q",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "100% test coverage on all new code"
-        ],
-        "should_not_match": [
-            "Never commit secrets (API keys, tokens, passwords) to git"
-        ],
-        "difficulty": "medium",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-uv-run-pytest-cov",
-        "query": "Bash: uv run pytest --cov=cuecard --cov-fail-under=100",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "100% test coverage on all new code"
-        ],
-        "should_not_match": [
-            "Send Enter after every tmux send-keys command"
-        ],
-        "difficulty": "easy",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-uv-run-ruff-check",
-        "query": "Bash: uv run ruff check src/cuecard/eval.py src/cuecard/cli.py",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Run ruff and mypy before committing Python code"
-        ],
-        "should_not_match": [
-            "Use parameterized queries to prevent SQL injection"
-        ],
-        "difficulty": "easy",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-uv-run-mypy",
-        "query": "Bash: uv run mypy src/",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Run ruff and mypy before committing Python code",
-            "Use type hints on all function signatures"
-        ],
-        "should_not_match": [
-            "Send Enter after every tmux send-keys command"
-        ],
-        "difficulty": "easy",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-coverage-run",
-        "query": "Bash: uv run coverage run --source=cuecard.eval -m pytest tests/test_eval.py -q",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "100% test coverage on all new code",
-            "Write tests before implementation (TDD red-green-refactor)"
-        ],
-        "should_not_match": [
-            "Never force-push to main or master branch"
-        ],
-        "difficulty": "medium",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-curl-localhost-health",
-        "query": "Bash: curl -s http://localhost:8081/health",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Always validate user input at system boundaries"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-llama-server-start",
-        "query": "Bash: nohup /home/turiya/llama.cpp/build/bin/llama-server -m ~/models/Qwen3.5-35B-A3B-Q4_K_M.gguf --port 8081 -ngl 99 -c 16384 --jinja > /tmp/llama-server.log 2>&1 &",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use uv for all Python package operations, never pip"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-pgrep-llama",
-        "query": "Bash: pgrep -f llama-server && kill $(pgrep -f llama-server)",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-ls-claude-sessions",
-        "query": "Bash: ls -la ~/.claude/sessions/ | head -20",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Add .gitignore entries for generated files and build artifacts"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-ls-projects",
-        "query": "Bash: ls ~/projects/ | grep -i delulu",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-uv-sync",
-        "query": "Bash: uv sync",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Use uv for all Python package operations, never pip",
-            "Review all dependencies for known vulnerabilities before adding"
-        ],
-        "should_not_match": [
-            "Send Enter after every tmux send-keys command"
-        ],
-        "difficulty": "medium",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-python-json-load",
-        "query": "Bash: python3 -c \"import json; d=json.load(open('eval/fixtures/combined.json')); print(f'Total fixtures: {len(d)}')\"",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Never use eval() or exec() in production code"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-tmux-send-keys-report",
-        "query": "Bash: tmux send-keys -t delulu \"RALPH EVAL: DONE. 337 tests pass. eval.py=100% coverage.\" Enter",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Send Enter after every tmux send-keys command"
-        ],
-        "should_not_match": [
-            "Use uv for all Python package operations, never pip"
-        ],
-        "difficulty": "easy",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-tmux-send-keys-fixtures",
-        "query": "Bash: tmux send-keys -t delulu 'RALPH FIXTURES: DONE. 82 fixtures.' Enter",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Send Enter after every tmux send-keys command"
-        ],
-        "should_not_match": [
-            "Run quality checks before every commit"
-        ],
-        "difficulty": "easy",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-edit-settings-hooks",
-        "query": "Edit: {\"file_path\": \"/home/turiya/.claude/settings.json\", \"old_string\": \"{\\\"type\\\": \\\"command\\\", \\\"command\\\": \\\"uv run python -m cuecard.\\\"}\", \"new_string\": \"{\\\"matcher\\\": \\\"\\\", \\\"hooks\\\": [{\\\"type\\\": \\\"command\\\"}]}\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Never commit secrets (API keys, tokens, passwords) to git"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-edit-parser-imports",
-        "query": "Edit: {\"file_path\": \"src/cuecard/parser.py\", \"old_string\": \"\\\"\\\"\\\"Parse rule files into Rule objects.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\ni\", \"new_string\": \"\\\"\\\"\\\"Parse rule files into Rule objects.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\ni\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-edit-prd-add-bm25-criteria",
-        "query": "Edit: {\"file_path\": \"artifacts/enriched-retrieval-prd.md\", \"old_string\": \"Commit: [hash]\", \"new_string\": \"Commit: [hash]\\n\\nBM25 exit criteria: if BM25 unique_recall < 2% above embedding-only, skip\"}",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Establish baseline metrics before implementing any improvement — you cannot claim X is better without before/after numbers",
-            "Never build infrastructure around unproven techniques — test hypotheses in controlled experiments first, implement only winners"
-        ],
-        "should_not_match": [
-            "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
-        ],
-        "difficulty": "hard",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-write-expansion-validation",
-        "query": "Write: {\"file_path\": \"/home/turiya/projects/cuecard/artifacts/expansion-validation.py\", \"content\": \"# Expansion validation experiment script\"}",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Never build infrastructure around unproven techniques — test hypotheses in controlled experiments first, implement only winners"
-        ],
-        "should_not_match": [
-            "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
-        ],
-        "difficulty": "hard",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-uv-run-expansion",
-        "query": "Bash: uv run python artifacts/expansion-validation.py",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Always benchmark a single LLM call before launching a full pipeline run — a 2-second PING test can save hours"
-        ],
-        "should_not_match": [
-            "Run iterative PRD reviews until a round comes back clean — typical convergence is 4 rounds"
-        ],
-        "difficulty": "hard",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-read-false-negative-analysis",
-        "query": "Read: /home/turiya/projects/cuecard/artifacts/false-negative-analysis.md",
-        "corpus": "rules_workflow.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-tail-session-jsonl",
-        "query": "Bash: tail -c 500000 ~/.claude/projects/-home-turiya-projects-delulu/session.jsonl | python3 -c \"import sys, json; ...\"",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Always handle errors explicitly, never silently swallow exceptions"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-cat-daemon-log",
-        "query": "Bash: cat /tmp/llama-server.log 2>/dev/null | tail -20",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "No console.log or print debug statements in production code"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-curl-v1-models",
-        "query": "Bash: curl -s http://localhost:8081/v1/models | python3 -c \"import sys,json; print(json.dumps(json.load(sys.stdin),indent=2))\"",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use uv for all Python package operations, never pip"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-grep-eval-cmd-cli",
-        "query": "Grep: {\"pattern\": \"def eval_cmd|@app.command.*eval\", \"path\": \"/home/turiya/projects/cuecard/src/cuecard/cli.py\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Never use eval() or exec() in production code"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-glob-py-files-in-src",
-        "query": "Glob: {\"pattern\": \"src/**/*.py\", \"path\": \"/home/turiya/projects/cuecard\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use type hints on all function signatures"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-edit-models-add-field",
-        "query": "Edit: {\"file_path\": \"src/cuecard/models.py\", \"old_string\": \"@dataclass(frozen=True)\\nclass Rule:\", \"new_string\": \"@dataclass(frozen=True)\\nclass Rule:\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "should_not_match": [
-            "Never commit secrets (API keys, tokens, passwords) to git"
-        ],
-        "difficulty": "medium",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-uv-run-pytest-test-models",
-        "query": "Bash: uv run pytest tests/test_models.py -x -q",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Write tests before implementation (TDD red-green-refactor)"
-        ],
-        "should_not_match": [
-            "Use parameterized queries to prevent SQL injection"
-        ],
-        "difficulty": "medium",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-write-session-progress",
-        "query": "Write: {\"file_path\": \"/home/turiya/projects/cuecard/artifacts/session-12-progress.md\", \"content\": \"# Session 12 Progress\\n\\n## What was done...\"}",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
-        ],
-        "should_not_match": [
-            "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
-        ],
-        "difficulty": "easy",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "wf-mined-add-bm25-retrieval",
-        "query": "UserPromptSubmit: add BM25 retrieval as a hybrid stage alongside embeddings",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins",
-            "Never build infrastructure around unproven techniques — test hypotheses in controlled experiments first, implement only winners",
-            "Use lightweight deterministic approaches first, add LLM stages only when they demonstrably improve quality"
-        ],
-        "should_not_match": [
-            "SIMPLE tasks (1-2 files, low risk) can proceed without a plan — just implement and verify"
-        ],
-        "difficulty": "medium",
-        "event": "UserPromptSubmit"
-    },
-    {
-        "id": "wf-mined-run-eval-benchmark",
-        "query": "UserPromptSubmit: run the eval benchmark on the current fixtures and report results",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Establish baseline metrics before implementing any improvement — you cannot claim X is better without before/after numbers",
-            "Never trust small sample benchmark results — run the full dataset before drawing conclusions"
-        ],
-        "should_not_match": [
-            "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning"
-        ],
-        "difficulty": "easy",
-        "event": "UserPromptSubmit"
-    },
-    {
-        "id": "wf-mined-mine-sessions-fixtures",
-        "query": "UserPromptSubmit: mine real user sessions for new eval fixtures focusing on underrepresented tools",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Validate every phase against real data before moving to the next phase — synthetic tests alone are insufficient"
-        ],
-        "should_not_match": [
-            "Use the planner agent for complex features, architect agent for system design decisions, tdd-guide agent for new features and bug fixes"
-        ],
-        "difficulty": "hard",
-        "event": "UserPromptSubmit"
-    },
-    {
-        "id": "wf-mined-implement-query-expansion",
-        "query": "UserPromptSubmit: implement query expansion using LLM to rephrase tool inputs before embedding",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "MEDIUM tasks (3-10 files) require an inline plan, research, tests alongside code, and agent review after implementation",
-            "Never build infrastructure around unproven techniques — test hypotheses in controlled experiments first, implement only winners",
-            "Establish baseline metrics before implementing any improvement — you cannot claim X is better without before/after numbers"
-        ],
-        "should_not_match": [
-            "SIMPLE tasks (1-2 files, low risk) can proceed without a plan — just implement and verify"
-        ],
-        "difficulty": "medium",
-        "event": "UserPromptSubmit"
-    },
-    {
-        "id": "wf-mined-review-prd-enriched-retrieval",
-        "query": "UserPromptSubmit: review the enriched retrieval PRD and check for gaps",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Review PRDs with multiple specialist subagents (architect, security, database, code quality) in parallel before implementing",
-            "Run iterative PRD reviews until a round comes back clean — typical convergence is 4 rounds"
-        ],
-        "should_not_match": [
-            "Write tests before implementation following TDD red-green-refactor cycle"
-        ],
-        "difficulty": "easy",
-        "event": "UserPromptSubmit"
-    },
-    {
-        "id": "wf-mined-fix-llm-reranker-regression",
-        "query": "UserPromptSubmit: the LLM reranker is showing worse results on medium-tier fixtures, debug and fix it",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "When a tool or command fails, read the full error message and search project docs before retrying — never retry blindly",
-            "Fix the pipeline stage that produces bad output, do not patch the output with manual rules downstream",
-            "Manually inspect LLM output after every classification wave — read actual output, do not trust confidence scores"
-        ],
-        "should_not_match": [
-            "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
-        ],
-        "difficulty": "medium",
-        "event": "UserPromptSubmit"
-    },
-    {
-        "id": "wf-mined-delegate-to-ralph",
-        "query": "UserPromptSubmit: have ralph handle the fixture expansion while I work on the pipeline",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling",
-            "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion",
-            "Monitor agent context usage in tmux — compact when context remaining drops below 67 percent"
-        ],
-        "should_not_match": [
-            "Write tests before implementation following TDD red-green-refactor cycle"
-        ],
-        "difficulty": "medium",
-        "event": "UserPromptSubmit"
-    },
-    {
-        "id": "wf-mined-compare-embedding-models",
-        "query": "UserPromptSubmit: compare jina-code vs CodeRankEmbed for our retrieval pipeline with a benchmark",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Establish baseline metrics before implementing any improvement — you cannot claim X is better without before/after numbers",
-            "When running A/B benchmark comparisons on LLM artifacts, use the same pre-built artifact and change only one variable",
-            "For new libraries or APIs, research alternatives, verify documentation, audit maintenance status, and benchmark before adopting"
-        ],
-        "should_not_match": [
-            "SIMPLE tasks (1-2 files, low risk) can proceed without a plan — just implement and verify"
-        ],
-        "difficulty": "medium",
-        "event": "UserPromptSubmit"
-    },
-    {
-        "id": "wf-mined-save-progress-compaction",
-        "query": "UserPromptSubmit: save the current progress, context is getting low",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
-            "Update CLAUDE.md when project structure, architecture, or conventions change during a session"
-        ],
-        "should_not_match": [
-            "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
-        ],
-        "difficulty": "easy",
-        "event": "UserPromptSubmit"
-    },
-    {
-        "id": "wf-mined-check-test-coverage-gaps",
-        "query": "UserPromptSubmit: check for test coverage gaps in the pipeline module",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Require 100 percent test coverage on all new code — not 80 percent, not 90 percent, always 100 percent"
-        ],
-        "should_not_match": [
-            "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
-        ],
-        "difficulty": "easy",
-        "event": "UserPromptSubmit"
-    },
-    {
-        "id": "wf-mined-start-security-review",
-        "query": "UserPromptSubmit: run a security review on the cuecard codebase before we publish",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
-            "Run security review before every commit — check for hardcoded secrets, SQL injection, XSS, missing input validation"
-        ],
-        "should_not_match": [
-            "SIMPLE tasks (1-2 files, low risk) can proceed without a plan — just implement and verify"
-        ],
-        "difficulty": "easy",
-        "event": "UserPromptSubmit"
-    },
-    {
-        "id": "mined-bash-wc-lines-eval",
-        "query": "Bash: wc -l /home/turiya/projects/cuecard/src/cuecard/eval.py",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Keep functions under 50 lines, files under 400 lines"
-        ],
-        "should_not_match": [
-            "Use uv for all Python package operations, never pip"
-        ],
-        "difficulty": "hard",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-bash-ls-lt-session-files",
-        "query": "Bash: ls -lt ~/.claude/projects/-home-turiya-projects-delulu/ | head -5",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Set file permissions to 0o600 for sensitive files"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-read-llm-reranker-py",
-        "query": "Read: /home/turiya/projects/cuecard/src/cuecard/llm_reranker.py",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Run ruff and mypy before committing Python code"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-read-benchmark-results",
-        "query": "Read: /home/turiya/projects/cuecard/eval/results/benchmark-session12.json",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Use conventional commit format (feat:, fix:, refactor:, etc.)"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-grep-import-threading-cuecard",
-        "query": "Grep: {\"pattern\": \"import threading|from threading\", \"path\": \"src/cuecard/\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Use asyncio for I/O-bound operations, not threads"
-        ],
-        "should_not_match": [
-            "Send Enter after every tmux send-keys command"
-        ],
-        "difficulty": "medium",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-grep-print-debug",
-        "query": "Grep: {\"pattern\": \"print\\\\(|console\\\\.log\", \"path\": \"src/\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "No console.log or print debug statements in production code"
-        ],
-        "should_not_match": [
-            "Use frozen dataclasses for immutable data"
-        ],
-        "difficulty": "easy",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-grep-any-type",
-        "query": "Grep: {\"pattern\": \"Any\\\\b|: any\\\\b\", \"path\": \"src/cuecard/\", \"glob\": \"*.py\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Use type hints on all function signatures"
-        ],
-        "should_not_match": [
-            "Never force-push to main or master branch"
-        ],
-        "difficulty": "medium",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-grep-magic-numbers",
-        "query": "Grep: {\"pattern\": \"threshold.*0\\\\.[0-9]+|top_k.*[0-9]+\", \"path\": \"src/cuecard/\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [
-            "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
-        ],
-        "should_not_match": [
-            "Use asyncio for I/O-bound operations, not threads"
-        ],
-        "difficulty": "medium",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-glob-test-files",
-        "query": "Glob: {\"pattern\": \"tests/test_*.py\", \"path\": \"/home/turiya/projects/cuecard\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Write tests before implementation (TDD red-green-refactor)"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-edit-expansion-fix-score",
-        "query": "Edit: {\"file_path\": \"artifacts/expansion-validation.py\", \"old_string\": \"raw_score = float(query_vec \", \"new_string\": \"raw_score = float((query_vec\"}",
-        "corpus": "rules_basic.txt",
-        "should_match": [],
-        "should_not_match": [
-            "Never use eval() or exec() in production code"
-        ],
-        "difficulty": "negative",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "mined-write-expansion-prompt-iter",
-        "query": "Write: {\"file_path\": \"/home/turiya/projects/cuecard/artifacts/expansion-prompt-iteration.py\", \"content\": \"# Prompt iteration experiment for query expansion\"}",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Never build infrastructure around unproven techniques — test hypotheses in controlled experiments first, implement only winners"
-        ],
-        "should_not_match": [
-            "Use the planner agent for complex features, architect agent for system design decisions, tdd-guide agent for new features and bug fixes"
-        ],
-        "difficulty": "hard",
-        "event": "PreToolUse"
-    },
-    {
-        "id": "wf-mined-update-claude-md",
-        "query": "UserPromptSubmit: update CLAUDE.md with the new benchmark results from session 13",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Update CLAUDE.md when project structure, architecture, or conventions change during a session"
-        ],
-        "should_not_match": [
-            "Never trust small sample benchmark results — run the full dataset before drawing conclusions"
-        ],
-        "difficulty": "easy",
-        "event": "UserPromptSubmit"
-    },
-    {
-        "id": "wf-mined-search-github-codex",
-        "query": "UserPromptSubmit: search GitHub for how other projects implement rule retrieval for coding agents",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Search GitHub for existing implementations and proven patterns before writing anything from scratch",
-            "For new libraries or APIs, research alternatives, verify documentation, audit maintenance status, and benchmark before adopting"
-        ],
-        "should_not_match": [
-            "Write tests before implementation following TDD red-green-refactor cycle"
-        ],
-        "difficulty": "easy",
-        "event": "UserPromptSubmit"
-    },
-    {
-        "id": "wf-mined-what-failed-n10",
-        "query": "UserPromptSubmit: the n=10 benchmark looks promising but I don't trust it, run the full dataset",
-        "corpus": "rules_workflow.txt",
-        "should_match": [
-            "Never trust small sample benchmark results — run the full dataset before drawing conclusions",
-            "Validate every phase against real data before moving to the next phase — synthetic tests alone are insufficient"
-        ],
-        "should_not_match": [
-            "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
-        ],
-        "difficulty": "easy",
-        "event": "UserPromptSubmit"
-    }
+  {
+    "id": "mined-read-settings-json",
+    "query": "Read: /home/turiya/.claude/settings.json",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run ruff and mypy before committing Python code"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-read-soul-md",
+    "query": "Read: /home/turiya/.claude/rules/common/SOUL.md",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Document all public API functions with docstrings"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-read-eval-py",
+    "query": "Read: /home/turiya/projects/cuecard/src/cuecard/eval.py",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-read-conftest-py",
+    "query": "Read: /home/turiya/projects/cuecard/tests/conftest.py",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never force-push to main or master branch"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-read-models-py",
+    "query": "Read: /home/turiya/projects/cuecard/src/cuecard/models.py",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-read-security-py",
+    "query": "Read: /home/turiya/projects/cuecard/src/cuecard/security.py",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use asyncio for I/O-bound operations, not threads"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-read-indexer-py",
+    "query": "Read: /home/turiya/projects/cuecard/src/cuecard/indexer.py",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-read-strategy-md",
+    "query": "Read: /home/turiya/projects/cuecard/artifacts/retrieval-quality-strategy-2026-04-01.md",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run quality checks before every commit"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-glob-soul-md",
+    "query": "Glob: {\"pattern\": \"**/SOUL.md\", \"path\": \"/home/turiya/.claude\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-glob-artifacts-md",
+    "query": "Glob: {\"pattern\": \"artifacts/*.md\", \"path\": \"/home/turiya/projects/cuecard/artifacts\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "100% test coverage on all new code"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-glob-eval-corpora",
+    "query": "Glob: {\"pattern\": \"eval/corpora/*\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always validate user input at system boundaries"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-glob-eval-fixtures",
+    "query": "Glob: {\"pattern\": \"eval/fixtures/*\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-glob-delulu-sessions",
+    "query": "Glob: {\"pattern\": \"**/delulu*\", \"path\": \"/home/turiya/.claude\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use type hints on all function signatures"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-grep-eval-class",
+    "query": "Grep: {\"pattern\": \"class.*Eval|def test.*eval\", \"path\": \"/home/turiya/projects/cuecard/tests/test_cli.py\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never use eval() or exec() in production code"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-grep-scrub-secrets",
+    "query": "Grep: {\"pattern\": \"def scrub_secrets|def validate_endpoint|ALLOWED_LLM\", \"path\": \"/home/turiya/projects/cuecard/src/cuecard/\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Sanitize all HTML output to prevent XSS"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-grep-ranked-result",
+    "query": "Grep: {\"pattern\": \"class RankedResult|class ConfigError\", \"path\": \"/home/turiya/projects/cuecard/src/cuecard/\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-uv-run-pytest",
+    "query": "Bash: uv run pytest tests/test_eval.py -x -q",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "100% test coverage on all new code"
+    ],
+    "should_not_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-uv-run-pytest-cov",
+    "query": "Bash: uv run pytest --cov=cuecard --cov-fail-under=100",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "100% test coverage on all new code"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "easy",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-uv-run-ruff-check",
+    "query": "Bash: uv run ruff check src/cuecard/eval.py src/cuecard/cli.py",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Run ruff and mypy before committing Python code"
+    ],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "difficulty": "easy",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-uv-run-mypy",
+    "query": "Bash: uv run mypy src/",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Run ruff and mypy before committing Python code",
+      "Use type hints on all function signatures"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "easy",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-coverage-run",
+    "query": "Bash: uv run coverage run --source=cuecard.eval -m pytest tests/test_eval.py -q",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "100% test coverage on all new code",
+      "Write tests before implementation (TDD red-green-refactor)"
+    ],
+    "should_not_match": [
+      "Never force-push to main or master branch"
+    ],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-curl-localhost-health",
+    "query": "Bash: curl -s http://localhost:8081/health",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always validate user input at system boundaries"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-llama-server-start",
+    "query": "Bash: nohup /home/turiya/llama.cpp/build/bin/llama-server -m ~/models/Qwen3.5-35B-A3B-Q4_K_M.gguf --port 8081 -ngl 99 -c 16384 --jinja > /tmp/llama-server.log 2>&1 &",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-pgrep-llama",
+    "query": "Bash: pgrep -f llama-server && kill $(pgrep -f llama-server)",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-ls-claude-sessions",
+    "query": "Bash: ls -la ~/.claude/sessions/ | head -20",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Add .gitignore entries for generated files and build artifacts"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-ls-projects",
+    "query": "Bash: ls ~/projects/ | grep -i delulu",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-uv-sync",
+    "query": "Bash: uv sync",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use uv for all Python package operations, never pip",
+      "Review all dependencies for known vulnerabilities before adding"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-python-json-load",
+    "query": "Bash: python3 -c \"import json; d=json.load(open('eval/fixtures/combined.json')); print(f'Total fixtures: {len(d)}')\"",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never use eval() or exec() in production code"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-tmux-send-keys-report",
+    "query": "Bash: tmux send-keys -t delulu \"RALPH EVAL: DONE. 337 tests pass. eval.py=100% coverage.\" Enter",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "easy",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-tmux-send-keys-fixtures",
+    "query": "Bash: tmux send-keys -t delulu 'RALPH FIXTURES: DONE. 82 fixtures.' Enter",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "should_not_match": [
+      "Run quality checks before every commit"
+    ],
+    "difficulty": "easy",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-edit-settings-hooks",
+    "query": "Edit: {\"file_path\": \"/home/turiya/.claude/settings.json\", \"old_string\": \"{\\\"type\\\": \\\"command\\\", \\\"command\\\": \\\"uv run python -m cuecard.\\\"}\", \"new_string\": \"{\\\"matcher\\\": \\\"\\\", \\\"hooks\\\": [{\\\"type\\\": \\\"command\\\"}]}\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-edit-parser-imports",
+    "query": "Edit: {\"file_path\": \"src/cuecard/parser.py\", \"old_string\": \"\\\"\\\"\\\"Parse rule files into Rule objects.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\ni\", \"new_string\": \"\\\"\\\"\\\"Parse rule files into Rule objects.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\ni\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-edit-prd-add-bm25-criteria",
+    "query": "Edit: {\"file_path\": \"artifacts/enriched-retrieval-prd.md\", \"old_string\": \"Commit: [hash]\", \"new_string\": \"Commit: [hash]\\n\\nBM25 exit criteria: if BM25 unique_recall < 2% above embedding-only, skip\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Establish baseline metrics before implementing any improvement \u2014 without before/after numbers you cannot distinguish real improvement from noise",
+      "Never build infrastructure around unproven techniques \u2014 test hypotheses in controlled experiments first, implement only winners"
+    ],
+    "should_not_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+    ],
+    "difficulty": "hard",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-write-expansion-validation",
+    "query": "Write: {\"file_path\": \"/home/turiya/projects/cuecard/artifacts/expansion-validation.py\", \"content\": \"# Expansion validation experiment script\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never build infrastructure around unproven techniques \u2014 test hypotheses in controlled experiments first, implement only winners"
+    ],
+    "should_not_match": [
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
+    ],
+    "difficulty": "hard",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-uv-run-expansion",
+    "query": "Bash: uv run python artifacts/expansion-validation.py",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always benchmark a single LLM call before launching a full pipeline run \u2014 a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow"
+    ],
+    "should_not_match": [
+      "Run iterative PRD reviews until a round comes back clean \u2014 typical convergence is 4 rounds"
+    ],
+    "difficulty": "hard",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-read-false-negative-analysis",
+    "query": "Read: /home/turiya/projects/cuecard/artifacts/false-negative-analysis.md",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-tail-session-jsonl",
+    "query": "Bash: tail -c 500000 ~/.claude/projects/-home-turiya-projects-delulu/session.jsonl | python3 -c \"import sys, json; ...\"",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always handle errors explicitly, never silently swallow exceptions"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-cat-daemon-log",
+    "query": "Bash: cat /tmp/llama-server.log 2>/dev/null | tail -20",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "No console.log or print debug statements in production code"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-curl-v1-models",
+    "query": "Bash: curl -s http://localhost:8081/v1/models | python3 -c \"import sys,json; print(json.dumps(json.load(sys.stdin),indent=2))\"",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-grep-eval-cmd-cli",
+    "query": "Grep: {\"pattern\": \"def eval_cmd|@app.command.*eval\", \"path\": \"/home/turiya/projects/cuecard/src/cuecard/cli.py\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never use eval() or exec() in production code"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-glob-py-files-in-src",
+    "query": "Glob: {\"pattern\": \"src/**/*.py\", \"path\": \"/home/turiya/projects/cuecard\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use type hints on all function signatures"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-edit-models-add-field",
+    "query": "Edit: {\"file_path\": \"src/cuecard/models.py\", \"old_string\": \"@dataclass(frozen=True)\\nclass Rule:\", \"new_string\": \"@dataclass(frozen=True)\\nclass Rule:\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "should_not_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-uv-run-pytest-test-models",
+    "query": "Bash: uv run pytest tests/test_models.py -x -q",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Write tests before implementation (TDD red-green-refactor)"
+    ],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-write-session-progress",
+    "query": "Write: {\"file_path\": \"/home/turiya/projects/cuecard/artifacts/session-12-progress.md\", \"content\": \"# Session 12 Progress\\n\\n## What was done...\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
+    ],
+    "should_not_match": [
+      "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
+    ],
+    "difficulty": "easy",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "wf-mined-add-bm25-retrieval",
+    "query": "UserPromptSubmit: add BM25 retrieval as a hybrid stage alongside embeddings",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins",
+      "Never build infrastructure around unproven techniques \u2014 test hypotheses in controlled experiments first, implement only winners",
+      "Use lightweight deterministic approaches first, add LLM stages only when they demonstrably improve quality"
+    ],
+    "should_not_match": [
+      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan \u2014 just implement and verify"
+    ],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-mined-run-eval-benchmark",
+    "query": "UserPromptSubmit: run the eval benchmark on the current fixtures and report results",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Establish baseline metrics before implementing any improvement \u2014 without before/after numbers you cannot distinguish real improvement from noise",
+      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions"
+    ],
+    "should_not_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+    ],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-mined-mine-sessions-fixtures",
+    "query": "UserPromptSubmit: mine real user sessions for new eval fixtures focusing on underrepresented tools",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Validate every phase against real data before moving to the next \u2014 synthetic tests pass when the real thing fails because mocks diverge from production behavior"
+    ],
+    "should_not_match": [
+      "Use the planner agent for complex features, architect agent for system design decisions, tdd-guide agent for new features and bug fixes"
+    ],
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-mined-implement-query-expansion",
+    "query": "UserPromptSubmit: implement query expansion using LLM to rephrase tool inputs before embedding",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "MEDIUM tasks (3-10 files) require an inline plan, research, tests alongside code, and agent review after implementation",
+      "Never build infrastructure around unproven techniques \u2014 test hypotheses in controlled experiments first, implement only winners",
+      "Establish baseline metrics before implementing any improvement \u2014 without before/after numbers you cannot distinguish real improvement from noise"
+    ],
+    "should_not_match": [
+      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan \u2014 just implement and verify"
+    ],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-mined-review-prd-enriched-retrieval",
+    "query": "UserPromptSubmit: review the enriched retrieval PRD and check for gaps",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Review PRDs with multiple specialist subagents (architect, security, database, code quality) in parallel \u2014 a single reviewer misses entire categories of issues that other specialists catch immediately",
+      "Run iterative PRD reviews until a round comes back clean \u2014 typical convergence is 4 rounds"
+    ],
+    "should_not_match": [
+      "Write tests before implementation following TDD red-green-refactor cycle"
+    ],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-mined-fix-llm-reranker-regression",
+    "query": "UserPromptSubmit: the LLM reranker is showing worse results on medium-tier fixtures, debug and fix it",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When a tool fails, read the full error and search docs before retrying \u2014 blind retries waste time and hide the root cause, while the fix is usually in the error message",
+      "Fix the pipeline stage that produces bad output, do not patch downstream \u2014 downstream patches accumulate into unmaintainable complexity while the root cause keeps generating bad data",
+      "Manually inspect LLM output after every classification wave \u2014 read actual output, do not trust confidence scores"
+    ],
+    "should_not_match": [
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
+    ],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-mined-delegate-to-ralph",
+    "query": "UserPromptSubmit: have ralph handle the fixture expansion while I work on the pipeline",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling",
+      "Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion",
+      "Monitor agent context usage in tmux \u2014 compact when context remaining drops below 67 percent"
+    ],
+    "should_not_match": [
+      "Write tests before implementation following TDD red-green-refactor cycle"
+    ],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-mined-compare-embedding-models",
+    "query": "UserPromptSubmit: compare jina-code vs CodeRankEmbed for our retrieval pipeline with a benchmark",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Establish baseline metrics before implementing any improvement \u2014 without before/after numbers you cannot distinguish real improvement from noise",
+      "When running A/B benchmark comparisons on LLM artifacts, use the same pre-built artifact and change only one variable",
+      "For new libraries or APIs, research alternatives, verify documentation, audit maintenance status, and benchmark before adopting"
+    ],
+    "should_not_match": [
+      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan \u2014 just implement and verify"
+    ],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-mined-save-progress-compaction",
+    "query": "UserPromptSubmit: save the current progress, context is getting low",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
+      "Update CLAUDE.md when project structure, architecture, or conventions change \u2014 without this, the next session starts with stale context and makes wrong assumptions"
+    ],
+    "should_not_match": [
+      "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
+    ],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-mined-check-test-coverage-gaps",
+    "query": "UserPromptSubmit: check for test coverage gaps in the pipeline module",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+    ],
+    "should_not_match": [
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
+    ],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-mined-start-security-review",
+    "query": "UserPromptSubmit: run a security review on the cuecard codebase before we publish",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
+      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
+    ],
+    "should_not_match": [
+      "SIMPLE tasks (1-2 files, low risk) can proceed without a plan \u2014 just implement and verify"
+    ],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "mined-bash-wc-lines-eval",
+    "query": "Bash: wc -l /home/turiya/projects/cuecard/src/cuecard/eval.py",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Keep functions under 50 lines, files under 400 lines"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "hard",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-bash-ls-lt-session-files",
+    "query": "Bash: ls -lt ~/.claude/projects/-home-turiya-projects-delulu/ | head -5",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Set file permissions to 0o600 for sensitive files"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-read-llm-reranker-py",
+    "query": "Read: /home/turiya/projects/cuecard/src/cuecard/llm_reranker.py",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run ruff and mypy before committing Python code"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-read-benchmark-results",
+    "query": "Read: /home/turiya/projects/cuecard/eval/results/benchmark-session12.json",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-grep-import-threading-cuecard",
+    "query": "Grep: {\"pattern\": \"import threading|from threading\", \"path\": \"src/cuecard/\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use asyncio for I/O-bound operations, not threads"
+    ],
+    "should_not_match": [
+      "Send Enter after every tmux send-keys command"
+    ],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-grep-print-debug",
+    "query": "Grep: {\"pattern\": \"print\\\\(|console\\\\.log\", \"path\": \"src/\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "No console.log or print debug statements in production code"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "difficulty": "easy",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-grep-any-type",
+    "query": "Grep: {\"pattern\": \"Any\\\\b|: any\\\\b\", \"path\": \"src/cuecard/\", \"glob\": \"*.py\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use type hints on all function signatures"
+    ],
+    "should_not_match": [
+      "Never force-push to main or master branch"
+    ],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-grep-magic-numbers",
+    "query": "Grep: {\"pattern\": \"threshold.*0\\\\.[0-9]+|top_k.*[0-9]+\", \"path\": \"src/cuecard/\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
+    ],
+    "should_not_match": [
+      "Use asyncio for I/O-bound operations, not threads"
+    ],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-glob-test-files",
+    "query": "Glob: {\"pattern\": \"tests/test_*.py\", \"path\": \"/home/turiya/projects/cuecard\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Write tests before implementation (TDD red-green-refactor)"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-edit-expansion-fix-score",
+    "query": "Edit: {\"file_path\": \"artifacts/expansion-validation.py\", \"old_string\": \"raw_score = float(query_vec \", \"new_string\": \"raw_score = float((query_vec\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never use eval() or exec() in production code"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mined-write-expansion-prompt-iter",
+    "query": "Write: {\"file_path\": \"/home/turiya/projects/cuecard/artifacts/expansion-prompt-iteration.py\", \"content\": \"# Prompt iteration experiment for query expansion\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never build infrastructure around unproven techniques \u2014 test hypotheses in controlled experiments first, implement only winners"
+    ],
+    "should_not_match": [
+      "Use the planner agent for complex features, architect agent for system design decisions, tdd-guide agent for new features and bug fixes"
+    ],
+    "difficulty": "hard",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "wf-mined-update-claude-md",
+    "query": "UserPromptSubmit: update CLAUDE.md with the new benchmark results from session 13",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Update CLAUDE.md when project structure, architecture, or conventions change \u2014 without this, the next session starts with stale context and makes wrong assumptions"
+    ],
+    "should_not_match": [
+      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions"
+    ],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-mined-search-github-codex",
+    "query": "UserPromptSubmit: search GitHub for how other projects implement rule retrieval for coding agents",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Search GitHub for existing implementations and proven patterns before writing anything from scratch \u2014 80% of problems are already solved, and battle-tested code has fewer bugs than fresh code",
+      "For new libraries or APIs, research alternatives, verify documentation, audit maintenance status, and benchmark before adopting"
+    ],
+    "should_not_match": [
+      "Write tests before implementation following TDD red-green-refactor cycle"
+    ],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "wf-mined-what-failed-n10",
+    "query": "UserPromptSubmit: the n=10 benchmark looks promising but I don't trust it, run the full dataset",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions",
+      "Validate every phase against real data before moving to the next \u2014 synthetic tests pass when the real thing fails because mocks diverge from production behavior"
+    ],
+    "should_not_match": [
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
+    ],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  }
 ]

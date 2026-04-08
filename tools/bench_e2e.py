@@ -48,27 +48,27 @@ RESULTS_DIR = EVAL_DIR / "results"
 
 SOURCE_FILES = {
     "basic": {
-        "rules_txt": CORPORA_DIR / "rules_basic.txt",
+        "rules_txt": CORPORA_DIR / "rules_global.txt",
         "event_type": "PreToolUse",
         "fixtures": EVAL_DIR / "fixtures" / "basic.json",
     },
     "workflow": {
-        "rules_txt": CORPORA_DIR / "rules_workflow.txt",
+        "rules_txt": CORPORA_DIR / "rules_global.txt",
         "event_type": "UserPromptSubmit",
         "fixtures": EVAL_DIR / "fixtures" / "workflow.json",
     },
     "post_tool_use": {
-        "rules_txt": CORPORA_DIR / "rules_basic.txt",
+        "rules_txt": CORPORA_DIR / "rules_global.txt",
         "event_type": "PostToolUse",
         "fixtures": EVAL_DIR / "fixtures" / "post_tool_use.json",
     },
     "stop": {
-        "rules_txt": CORPORA_DIR / "rules_basic.txt",
+        "rules_txt": CORPORA_DIR / "rules_global.txt",
         "event_type": "Stop",
         "fixtures": EVAL_DIR / "fixtures" / "stop.json",
     },
     "subagent_start": {
-        "rules_txt": CORPORA_DIR / "rules_basic.txt",
+        "rules_txt": CORPORA_DIR / "rules_global.txt",
         "event_type": "SubagentStart",
         "fixtures": EVAL_DIR / "fixtures" / "subagent_start.json",
     },
@@ -198,8 +198,17 @@ def run_benchmark(label: str, *, sample_ratio: float = 0.2, seed: int = 42) -> d
     """Run basic + workflow eval against model-specific corpora."""
     from fastembed import TextEmbedding
 
+    from cuecard.affinity import load_affinity
+
     print(f"\nLoading embedding model: {EMBEDDING_MODEL}")
     embedding_model = TextEmbedding(model_name=EMBEDDING_MODEL)
+
+    # Load affinity index for event mask filtering (if available)
+    affinity = load_affinity(str(CORPORA_DIR))
+    if affinity:
+        print(f"Loaded affinity index: {affinity.mode}, {len(affinity.items)} entries")
+    else:
+        print("No affinity index found — event mask disabled")
 
     results = {}
     for tier, cfg in SOURCE_FILES.items():
@@ -224,6 +233,7 @@ def run_benchmark(label: str, *, sample_ratio: float = 0.2, seed: int = 42) -> d
             corpus_override=(corpus_path,),
             sample_ratio=sample_ratio,
             seed=seed,
+            affinity=affinity,
         )
 
         results[tier] = summary_to_dict(summary)

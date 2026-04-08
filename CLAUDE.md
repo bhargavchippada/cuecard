@@ -179,6 +179,7 @@ mutmut verifies that tests actually detect code changes (mutations). 100% line c
 ### Affinity Design
 - Rules have event/tool affinity — which hook events and tools they apply to
 - Two modes: `infer` (LLM classifies at index time, default) and `strict` (explicit annotations only)
+- **Binary classification**: LLM classifies rules as `tool_use` (→ PreToolUse+PostToolUse), `workflow` (→ UserPromptSubmit+SubagentStart+Stop), or `both` (→ all 5 events). 7 golden examples in the prompt guide correct reasoning. This replaces the original 5-event classification which had 60% misclassification rate.
 - `AffinityIndex` uses O(1) dict lookup (not frozen dataclass — follows `Index` pattern)
 - `LoadedIndex` composite return type wraps `(Index, AffinityIndex | None)`
 - `load_or_build()` returns `LoadedIndex | None` — all call sites destructure
@@ -188,6 +189,7 @@ mutmut verifies that tests actually detect code changes (mutations). 100% line c
 - `KNOWN_HOOK_EVENTS` canonical constant in `models.py` — single source of truth
 - TOML rule format: `[[rules]]` with optional `events` and `tools` frozenset fields
 - `cuecard migrate` converts .txt → .toml (comments NOT preserved)
+- `run_eval()` accepts optional `affinity` parameter and passes `event` + `affinity` to `run_pipeline()`
 
 ### Expansion Design
 - Rules can have 0-10 expansions (paraphrases, trigger phrases, code patterns)
@@ -311,12 +313,14 @@ max_expansion_length = 200  # Max chars per expansion
 - **Benchmarking:** 6 embedding models, raw vs enriched vs LLM, v1 vs v3 expansion prompts — COMPLETE
 - **Small model investigation:** Qwen3-0.6B not viable; Qwen3.5-4B/9B benchmarked — COMPLETE
 - **LLM robustness:** Configurable stop sequences, JSON extraction, retry on parse failure — COMPLETE
-- **Prompt engineering:** 13 few-shot examples, principle-based guidelines, loss-pattern driven — COMPLETE
+- **Prompt engineering:** 16 few-shot examples (13 original + 3 category-aware negatives), category-aware guidance, principle-based guidelines — COMPLETE
 - **Model benchmarking:** Qwen3.5-9B/4B/2B vs 35B on v3 corpora with sampling — COMPLETE
 - **Eval infrastructure:** tqdm progress, stratified sampling, bench_models.py script — COMPLETE
 - **E2E benchmarking:** `tools/bench_e2e.py` — each model generates its own expansions AND reranks. Default mode going forward. `bench_models.py` deprecated (shared-corpus comparisons are unfair). Corpora cached at `eval/corpora/enriched_{tier}_{label}/` per model.
 - **Expansion prompt v5:** Reasoning-field prompt for expansions (structured CoT before generating) — COMPLETE
-- **Eval dataset:** 1121 fixtures (438 original + 149 mined + 36 PostToolUse + 30 Stop + 30 SubagentStart + all migrated with event field)
+- **Eval corpus:** 109 rules in `eval/corpora/rules_global.txt` (unified global + basic + workflow). All fixture files reference `rules_global.txt`.
+- **Eval dataset:** 831 fixtures across 5 event types (442 PreToolUse, 124 UserPromptSubmit, 115 PostToolUse, 77 Stop, 73 SubagentStart). 486 positive, 345 negative. Verified in 4 rounds (R0 audit, R1 3-agent, R2 spot-check, R3 compliance-fix). 73 fixtures mined from real sessions.
+- **Tagged corpus:** `eval/corpora/rules_global_tagged.json` — each rule tagged as tool_use/workflow/both for affinity validation
 - **CLI UX:** `cuecard configure` interactive setup, `cuecard serve` daemon, expand progress bar — COMPLETE
 - **Hook format:** Correct `hookEventName` + `permissionDecision` for PreToolUse, `hook_event_name` input field detection — COMPLETE
 - **Global install:** `uv tool install` support, `cuecard hook` CLI entry point — COMPLETE
@@ -472,6 +476,33 @@ Cross-encoder (MiniLM) is a regression on code — skip it. Use llm-local or llm
 | Threshold crossings (N→Y) | — | 10/12 pairs | — |
 
 LLM-generated expansions (v2 prompt): 8/12 threshold crossings, avg delta +0.276.
+
+### With 109-Rule Corpus (session 24, 40% sample, seed=42, Gemma E4B, jina-code + LLM + event mask)
+
+**Corpus:** `eval/corpora/rules_global.txt` (109 rules — global + basic + workflow unified)
+**Fixtures:** 831 total (486 pos, 345 neg), verified in 4 rounds
+**Pipeline:** dense + sparse + RRF (top_k=12, threshold=0.25) → LLM reranker (16 examples, category-aware) → event mask (binary affinity)
+
+| Event | F2 | PosRecall | Noise | NegSil | p50ms |
+|-------|------|-----------|-------|--------|-------|
+| PreToolUse | 0.566 | 0.319 | 0.408 | 0.523 | 1415 |
+| UserPromptSubmit | 0.618 | 0.444 | 0.384 | 0.833 | 1402 |
+| PostToolUse | 0.528 | 0.415 | 0.493 | 0.316 | 1472 |
+| Stop | 0.426 | 0.414 | 0.595 | 0.100 | 1457 |
+| SubagentStart | 0.248 | 0.296 | 0.814 | 0.000 | 1522 |
+
+**Key findings (109 rules vs 32 rules):**
+- 3.4x corpus expansion caused ~30% F2 drop — expected, more rules = harder discrimination
+- Event mask helps PreToolUse +3% F2 and PostToolUse +3% F2 (noise reduction)
+- Prompt tuning (category awareness, 3 new negative examples) recovered +5-8% on PreToolUse/Workflow
+- Compliance-as-violation was the #1 fixture error — 25 false positives removed in R3
+- Binary affinity classification (tool_use/workflow with golden examples) >> 5-event classification
+
+**Reranker prompt changes (session 24):**
+- Replaced "when in doubt, include" with category-aware guidance (concrete=include, process=exclude on tool events)
+- Added 3 negative examples: process-rules-excluded-from-pytest, LLM-rules-excluded-from-edit, high-candidate-discrimination-on-git-diff
+- Added RULE CATEGORIES section mapping rule types to event types
+- Reduced LLM candidate input from top_k=20/threshold=0.20 to top_k=12/threshold=0.25
 
 ## When in Doubt
 

@@ -1,0 +1,841 @@
+[
+  {
+    "id": "v3-bash-git-remote-v",
+    "query": "Bash: git remote -v",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never force-push to main or master branch"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-gh-repo-create-private",
+    "query": "Bash: gh repo create bhargavchippada/alphaloom --private --source=. --push --remote=origin 2>&1",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git",
+      "Never force-push to main or master branch"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-git-branch-rename-master-main",
+    "query": "Bash: git branch -m master main && git push origin main && git push origin --delete master && git branch --set-upstream-to=origin/main main",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never force-push to main or master branch"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-export-api-token-secrets",
+    "query": "Bash: export ALPHALOOM_API_TOKEN=$(python3 -c \"import secrets; print(secrets.token_urlsafe(48))\") && echo \"Token set: ${ALPHALOOM_API_TOKEN:0:8}...\"",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use environment variables for configuration, not hardcoded values"
+    ],
+    "should_not_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-pkill-uvicorn-vite",
+    "query": "Bash: pkill -f \"uvicorn alphaloom\" 2>/dev/null; pkill -f \"vite\" 2>/dev/null; sleep 1 && echo \"cleaned\"",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-curl-localhost-runs",
+    "query": "Bash: curl -s -H \"Authorization: Bearer BCZZOq7DQuODfc6pjv_i1vC1LYlcEZzh93uvglj1b44uK173KFt1w9GciJPzu_VV\" http://localhost:8453/runs 2>&1",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git",
+      "Always validate user input at system boundaries"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-lsof-kill-ports",
+    "query": "Bash: lsof -ti:5173,5174,5175,8453 2>/dev/null | xargs kill -9 2>/dev/null; sleep 2; echo \"ports cleared\"",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-uv-run-pytest-specific-tests",
+    "query": "Bash: uv run pytest tests/test_models.py tests/test_config.py tests/test_cli.py tests/test_orchestrator.py -q -x 2>&1",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "100% test coverage on all new code",
+      "Write tests before implementation (TDD red-green-refactor)"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-uv-run-pytest-cov-100",
+    "query": "Bash: uv run pytest --cov=cuecard --cov-fail-under=100 -q 2>&1 | tail -15",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "100% test coverage on all new code"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-uv-run-ruff-check-mypy",
+    "query": "Bash: uv run ruff check src/ tests/ 2>&1 && uv run mypy src/ 2>&1 | tail -10",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run ruff and mypy before committing Python code"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-python-json-load-fixtures",
+    "query": "Bash: python3 -c \"import json; d=json.load(open('eval/fixtures/combined.json')); hard=[f for f in d if f.get('tier')=='hard']; print(len(hard))\"",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-cat-sessions-json",
+    "query": "Bash: cat ~/.claude/sessions/*.json 2>/dev/null",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-tail-large-session-file",
+    "query": "Bash: tail -c 500000 ~/.claude/projects/-home-turiya-projects-delulu/d44c8d6c-bb81-4ae0-9bcb-session.jsonl | python3 -c \"import sys,json; [print(json.loads(l).get('message',{}).get('content','')[:100]) for l in sys.stdin]\"",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-curl-v1-models-llama",
+    "query": "Bash: curl -s http://localhost:8081/v1/models 2>/dev/null | python3 -c \"import sys,json; print(json.dumps(json.load(sys.stdin),indent=2))\"",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always validate user input at system boundaries"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-grep-provenance-test",
+    "query": "Bash: grep -n \"provenance.file == \\\"/tmp/rules.txt\\\"\" tests/test_parser.py",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use type hints on all function signatures"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-wc-l-test-file",
+    "query": "Bash: wc -l tests/test_indexer.py",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Keep functions under 50 lines, files under 400 lines"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-git-diff-stat",
+    "query": "Bash: git diff --stat 2>&1 | tail -30",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-uv-run-ruff-fix",
+    "query": "Bash: uv run ruff check tests/test_serve.py --fix 2>&1",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run ruff and mypy before committing Python code"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-ls-eval-corpora",
+    "query": "Bash: ls /home/turiya/projects/cuecard/eval/corpora/",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Add .gitignore entries for generated files and build artifacts"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-bash-ps-aux-grep",
+    "query": "Bash: ps aux | grep -E \"vite|uvicorn|node\" | grep -v grep | head -5",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-read-claude-settings",
+    "query": "Read: /home/turiya/.claude/settings.json",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Set file permissions to 0o600 for sensitive files"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-read-pyproject-toml",
+    "query": "Read: /home/turiya/projects/alphaloom/pyproject.toml",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Review all dependencies for known vulnerabilities before adding"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-read-vite-config",
+    "query": "Read: /home/turiya/projects/alphaloom/app/vite.config.ts",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-read-conftest",
+    "query": "Read: /home/turiya/projects/cuecard/tests/conftest.py",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Write tests before implementation (TDD red-green-refactor)"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-glob-artifacts-md",
+    "query": "Glob: artifacts/*.md",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-glob-eval-fixtures",
+    "query": "Glob: eval/fixtures/*",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-grep-class-test-rule",
+    "query": "Grep: class TestRule:",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "100% test coverage on all new code"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-grep-logger-warning",
+    "query": "Grep: logger\\.warning.*rule.*text",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always handle errors explicitly, never silently swallow exceptions"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-edit-settings-hook-command",
+    "query": "Edit: /home/turiya/.claude/settings.json old: {\"type\": \"command\", \"command\": \"uv run python -m cuecard.adapters.claude_code\"} new: {\"type\": \"command\", \"command\": \"cuecard hook\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-edit-models-frozen-dataclass",
+    "query": "Edit: /home/turiya/projects/cuecard/src/cuecard/models.py old: @dataclass(frozen=True)\nclass Rule:\n    \"\"\"A single rule with its source provenance new: @dataclass(frozen=True)\nclass Rule:\n    \"\"\"A single rule with source provenance and event affinity",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use frozen dataclasses for immutable data",
+      "Document all public API functions with docstrings"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-edit-parser-add-toml-support",
+    "query": "Edit: /home/turiya/projects/cuecard/src/cuecard/parser.py old: def _parse_txt(path: str) -> list[Rule]: new: def _parse_toml(path: str) -> list[Rule]:\n    \"\"\"Parse TOML rule format with events and tools.\"\"\"\n    import tomllib\n    with open(path, 'rb') as f:\n        data = tomllib.load(f)",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always close file handles, database connections, network sockets, HTTP sessions, and other resources",
+      "Use type hints on all function signatures",
+      "Document all public API functions with docstrings"
+    ],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-edit-retriever-dot-product",
+    "query": "Edit: /home/turiya/projects/cuecard/src/cuecard/retriever.py old: # --- dot product (== cosine because embeddings are L2-normalized) ---\n    scores = query_vec @ index.embeddings.T",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use type hints on all function signatures"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-edit-expander-text-truncation",
+    "query": "Edit: /home/turiya/projects/cuecard/src/cuecard/expander.py old: rule.text[:80], new: rule.text[:120],",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-edit-indexer-constants",
+    "query": "Edit: /home/turiya/projects/cuecard/src/cuecard/indexer.py old: _RULES_JSON_VERSION = 1\n_MAX_EXPANSION_LENGTH = 200\n_MAX_EXPANSIONS_PER_RULE = 10 new: from cuecard.models import MAX_EXPANSION_LENGTH, MAX_EXPANSIONS_PER_RULE\n_RULES_JSON_VERSION = 1",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-edit-cli-rules-remove-write-back",
+    "query": "Edit: /home/turiya/projects/cuecard/src/cuecard/cli_rules.py old: # Read file, remove the line, write back\n    file_path = Path(target.provenance.file)\n    lines = file_path.read_text().splitlines()",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always handle errors explicitly, never silently swallow exceptions"
+    ],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "difficulty": "hard",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-edit-llm-utils-call-local",
+    "query": "Edit: /home/turiya/projects/cuecard/src/cuecard/llm_utils.py old: def call_local(\n    system_prompt: str,\n    user_prompt: str,\n    endpoint: str,",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use type hints on all function signatures"
+    ],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "difficulty": "easy",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-write-serve-py",
+    "query": "Write: /home/turiya/projects/cuecard/src/cuecard/serve.py content: \"\"\"Persistent daemon server for cuecard.\"\"\"\nfrom __future__ import annotations\nimport http.server\nimport json\nimport os\nimport signal\nfrom pathlib import Path",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use type hints on all function signatures",
+      "Document all public API functions with docstrings",
+      "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
+    ],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-write-test-serve-py",
+    "query": "Write: /home/turiya/projects/cuecard/tests/test_serve.py content: \"\"\"Tests for cuecard.serve.\"\"\"\nfrom __future__ import annotations\nimport json\nfrom unittest.mock import patch, MagicMock\nimport pytest",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "100% test coverage on all new code"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "easy",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-write-expansion-validation-script",
+    "query": "Write: /home/turiya/projects/cuecard/artifacts/expansion-validation.py content: \"\"\"Validate expansion quality by comparing cosine similarity.\"\"\"\nimport numpy as np\nfrom fastembed import TextEmbedding",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "100% test coverage on all new code",
+      "Write tests before implementation (TDD red-green-refactor)"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "v3-post-bash-pytest-all-pass",
+    "query": "PostToolUse:Bash: uv run pytest -x -q 2>&1 | tail -5 \u2192 826 passed in 4.32s",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "100% test coverage on all new code"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-bash-pytest-failures",
+    "query": "PostToolUse:Bash: uv run pytest tests/test_serve.py -q --tb=short 2>&1 \u2192 FAILED tests/test_serve.py::TestDaemon::test_start_server - AssertionError: expected call to run_pipeline\n2 failed, 14 passed in 1.2s",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always handle errors explicitly, never silently swallow exceptions"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-bash-mypy-errors",
+    "query": "PostToolUse:Bash: uv run mypy src/ 2>&1 \u2192 src/cuecard/serve.py:45: error: Argument 1 to \"run_pipeline\" has incompatible type \"str | None\"; expected \"str\"  [arg-type]\nFound 3 errors in 2 files",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use type hints on all function signatures"
+    ],
+    "should_not_match": [
+      "Run ruff and mypy before committing Python code"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-bash-ruff-clean",
+    "query": "PostToolUse:Bash: uv run ruff check src/ tests/ 2>&1 \u2192 All checks passed!",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run ruff and mypy before committing Python code"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-bash-coverage-missing",
+    "query": "PostToolUse:Bash: uv run pytest --cov=cuecard --cov-fail-under=100 -q 2>&1 \u2192 FAIL Required test coverage of 100% not reached. Total coverage: 94.3%\nsrc/cuecard/serve.py    78%   42-58, 71-83",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "100% test coverage on all new code"
+    ],
+    "should_not_match": [
+      "Write tests before implementation (TDD red-green-refactor)"
+    ],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-bash-git-status-untracked",
+    "query": "PostToolUse:Bash: git status 2>&1 \u2192 On branch feat/closed-loop-hooks\nChanges not staged for commit:\n  modified: src/cuecard/models.py\n  modified: src/cuecard/parser.py\nUntracked files:\n  src/cuecard/affinity.py\n  tests/test_affinity.py",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always create a new branch for feature work",
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-bash-git-log",
+    "query": "PostToolUse:Bash: git log --oneline -5 \u2192 22d9aa1 refactor: split 7 oversized test files into 27 focused modules\n3bcfe8e fix: daemon reliability \u2014 config-aware timeout, fast hook dispatch\nd89ab59 refactor: E2E benchmarking, Gemma 4 default",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-edit-add-frozen-dataclass",
+    "query": "PostToolUse:Edit: src/cuecard/models.py old: class AffinityEntry \u2192 Edit successful",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use frozen dataclasses for immutable data"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-write-new-module",
+    "query": "PostToolUse:Write: src/cuecard/affinity.py \u2192 File written successfully (187 lines)",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use type hints on all function signatures",
+      "Document all public API functions with docstrings",
+      "100% test coverage on all new code"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-read-adapter",
+    "query": "PostToolUse:Read: src/cuecard/adapters/claude_code.py \u2192 (file contents displayed)",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-user-bring-up-web-interface",
+    "query": "UserPromptSubmit: Okay good job, can you bring up web interface, a command for easy web serving would be useful, and after I want you to write a test plan and do meticulous testing and code reviews to understand the current state",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "100% test coverage on all new code"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip",
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "v3-user-web-interface-broken",
+    "query": "UserPromptSubmit: It shows Failed to load runs, we need to make sure web interface works too, ask a subagent to test and verify everything",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always handle errors explicitly, never silently swallow exceptions"
+    ],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "v3-user-read-soul-md-rules",
+    "query": "UserPromptSubmit: read soul md and cuecard global rules from ~.cuecard",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "v3-user-research-hooks",
+    "query": "UserPromptSubmit: Currently we have two hooks pretooluse and userpromptsubmit, can you research and tell me what other hooks are available and which would be useful to include?",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Document all public API functions with docstrings"
+    ],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "v3-user-use-toml-and-migrate",
+    "query": "UserPromptSubmit: This is not right design, lets use toml and migrate. Users can mention events and tools, also the default mode is infer which will extend events and tools based on llm as users might not have configured them",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always validate user input at system boundaries"
+    ],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "v3-user-keep-repo-private",
+    "query": "UserPromptSubmit: keep repo private",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git"
+    ],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "v3-user-rename-to-main",
+    "query": "UserPromptSubmit: yes rename to main",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never force-push to main or master branch",
+      "Always create a new branch for feature work"
+    ],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "v3-user-git-push-project",
+    "query": "UserPromptSubmit: yes these are rules we want to keep in mind, read claude md of alphaloom, git push project",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Run quality checks before every commit"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "v3-user-discuss-one-by-one",
+    "query": "UserPromptSubmit: Lets discuss one by one",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "v3-user-benchmarking-important",
+    "query": "UserPromptSubmit: Option B + C sounds good but we need to evaluate quality metrics so benchmarking is important, we can defer this complexity to a later phase",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "100% test coverage on all new code"
+    ],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "v3-user-migrate-corpus-eval-data",
+    "query": "UserPromptSubmit: We need to migrate our corpus / golden eval data to have event types too and measure quality by event type too. Which hooks are we focusing on in this?",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "v3-stop-prd-review-complete",
+    "query": "Stop: Completed PRD review for closed-loop hooks with 4 parallel reviewer agents. Addressed 2 CRITICAL, 14 HIGH, and 12 MEDIUM findings. PRD converged at v1.2.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run quality checks before every commit"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "v3-stop-tests-pass-coverage-100",
+    "query": "Stop: All 826 tests pass with 100% coverage. Ruff and mypy clean. Ready for commit.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Run quality checks before every commit",
+      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "v3-stop-implemented-toml-parser",
+    "query": "Stop: Implemented TOML rule parser with events and tools frozenset fields, added migrate CLI command to convert .txt to .toml, wrote 47 new tests.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Run quality checks before every commit",
+      "100% test coverage on all new code"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "v3-stop-reading-existing-code",
+    "query": "Stop: Read and analyzed existing codebase structure including models.py, parser.py, indexer.py, and loader.py to understand current architecture.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run quality checks before every commit"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "v3-stop-expansion-validation",
+    "query": "Stop: Ran expansion validation script comparing raw vs enriched cosine similarity. Average delta +0.371 across 8 hard fixtures.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "v3-stop-git-repo-created-pushed",
+    "query": "Stop: Created private GitHub repo bhargavchippada/alphaloom, pushed to origin, renamed branch master to main.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never force-push to main or master branch"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "v3-stop-daemon-bug-fixes",
+    "query": "Stop: Fixed 7 daemon bugs including 500ms timeout (changed to config-aware), Typer CLI import overhead in hook path, and stop_server not checking process death.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always handle errors explicitly, never silently swallow exceptions",
+      "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "v3-subagent-code-reviewer",
+    "query": "SubagentStart:code-reviewer: Review the following files for code quality, bugs, DRY violations, and naming: src/cuecard/affinity.py, src/cuecard/models.py, src/cuecard/parser.py, tests/test_affinity.py",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Keep functions under 50 lines, files under 400 lines",
+      "Use type hints on all function signatures",
+      "No console.log or print debug statements in production code"
+    ],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection"
+    ],
+    "difficulty": "medium",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "v3-subagent-security-reviewer",
+    "query": "SubagentStart:security-reviewer: Security analysis of src/cuecard/adapters/claude_code.py, src/cuecard/security.py, src/cuecard/serve.py. Check for injection, secrets exposure, path traversal, and input validation.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never commit secrets (API keys, tokens, passwords) to git",
+      "Always validate user input at system boundaries",
+      "Sanitize all HTML output to prevent XSS",
+      "Set file permissions to 0o600 for sensitive files"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "v3-subagent-test-web-interface",
+    "query": "SubagentStart:tester: Test the alphaloom web interface at localhost:5173. Verify the dashboard loads, runs list displays, and API calls to localhost:8453 succeed with the bearer token.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always handle errors explicitly, never silently swallow exceptions",
+      "Always validate user input at system boundaries"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip"
+    ],
+    "difficulty": "medium",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "v3-subagent-fixture-miner",
+    "query": "SubagentStart:fixture-miner: Mine real Claude Code session transcripts from ~/.claude/projects/ to create golden eval fixtures. Extract tool calls, classify difficulty, assign should_match rules from the corpus.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "100% test coverage on all new code"
+    ],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "v3-subagent-architect",
+    "query": "SubagentStart:architect: Review the closed-loop hooks PRD v1.2 for architectural soundness. Check event mask design, affinity index storage, LoadedIndex composite pattern, and adapter dispatch.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Document all public API functions with docstrings"
+    ],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "v3-subagent-build-phase",
+    "query": "SubagentStart:builder: Implement Phase 2 of the closed-loop hooks PRD: affinity inference with LLM classification, AffinityIndex O(1) lookup storage, affinity.json sidecar with SHA-256 checksum, and strict/infer mode switching.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use type hints on all function signatures",
+      "100% test coverage on all new code",
+      "Use frozen dataclasses for immutable data",
+      "Always handle errors explicitly, never silently swallow exceptions"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  }
+]

@@ -2,12 +2,12 @@
   {
     "id": "post-bash-git-commit-env",
     "query": "PostToolUse:Bash: git commit -a → [master abc1234] fix: update config\n 3 files changed\n .env | 1 +",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Never commit secrets (API keys, tokens, passwords) to git"
+      "Never commit secrets (API keys, tokens, passwords, connection strings) to git — once pushed, secrets are in the history forever and require rotation across all environments"
     ],
     "should_not_match": [
-      "Send Enter after every tmux send-keys command"
+      "Always append Enter after tmux send-keys text — without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
     "difficulty": "medium",
     "event": "PostToolUse"
@@ -15,25 +15,23 @@
   {
     "id": "post-bash-git-commit-clean",
     "query": "PostToolUse:Bash: git commit -m 'feat: add search' → [feature abc5678] feat: add search\n 2 files changed, 45 insertions(+)",
-    "corpus": "rules_basic.txt",
-    "should_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
-    ],
+    "corpus": "rules_global.txt",
+    "should_match": [],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip"
+      "Use uv for all Python package operations, never pip — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "PostToolUse"
   },
   {
     "id": "post-edit-eval-usage",
     "query": "PostToolUse:Edit: src/handler.py → def process(data):\n    result = eval(data['expression'])\n    return result",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Never use eval() or exec() in production code"
+      "Never use eval(), exec(), or shell=True in production code — these execute arbitrary input as code, enabling remote code execution attacks"
     ],
     "should_not_match": [
-      "Send Enter after every tmux send-keys command"
+      "Always append Enter after tmux send-keys text — without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
     "difficulty": "easy",
     "event": "PostToolUse"
@@ -41,12 +39,12 @@
   {
     "id": "post-bash-pip-install",
     "query": "PostToolUse:Bash: pip install requests → Successfully installed requests-2.31.0",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Use uv for all Python package operations, never pip"
+      "Use uv for all Python package operations, never pip — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "should_not_match": [
-      "Never commit secrets (API keys, tokens, passwords) to git"
+      "Never commit secrets (API keys, tokens, passwords, connection strings) to git — once pushed, secrets are in the history forever and require rotation across all environments"
     ],
     "difficulty": "easy",
     "event": "PostToolUse"
@@ -54,12 +52,12 @@
   {
     "id": "post-write-no-type-hints",
     "query": "PostToolUse:Write: src/utils.py → def calculate(x, y):\n    return x + y\n\ndef transform(data):\n    return [item for item in data if item]",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Use type hints on all function signatures"
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip"
+      "Use uv for all Python package operations, never pip — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "difficulty": "medium",
     "event": "PostToolUse"
@@ -67,25 +65,23 @@
   {
     "id": "post-bash-test-failures",
     "query": "PostToolUse:Bash: uv run pytest → FAILED tests/test_api.py::test_create - AssertionError\n3 failed, 12 passed, 2 warnings",
-    "corpus": "rules_basic.txt",
-    "should_match": [
-      "100% test coverage on all new code"
-    ],
+    "corpus": "rules_global.txt",
+    "should_match": [],
     "should_not_match": [
-      "Use frozen dataclasses for immutable data"
+      "Use frozen dataclasses for immutable data — mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "PostToolUse"
   },
   {
     "id": "post-bash-test-low-coverage",
     "query": "PostToolUse:Bash: uv run pytest --cov=src → 15 passed\nName          Stmts   Miss  Cover\nsrc/api.py       80     25    69%\nTOTAL           200     40    80%",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "100% test coverage on all new code"
+      "Require 100% test coverage on all new code before committing — uncovered code is untested code, and untested code breaks silently in production"
     ],
     "should_not_match": [
-      "Send Enter after every tmux send-keys command"
+      "Always append Enter after tmux send-keys text — without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
     "difficulty": "medium",
     "event": "PostToolUse"
@@ -93,12 +89,13 @@
   {
     "id": "post-edit-console-log",
     "query": "PostToolUse:Edit: src/service.py → def fetch_data(url):\n    print(f'DEBUG: fetching {url}')\n    response = requests.get(url)\n    print(f'DEBUG: status={response.status_code}')\n    return response.json()",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "No console.log or print debug statements in production code"
+      "No console.log or print debug statements in production code — debug output clutters logs, leaks internal state, and makes real errors harder to find in production monitoring",
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
     ],
     "should_not_match": [
-      "Use parameterized queries to prevent SQL injection"
+      "Use parameterized queries to prevent SQL injection — string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
     ],
     "difficulty": "easy",
     "event": "PostToolUse"
@@ -106,12 +103,13 @@
   {
     "id": "post-edit-sql-injection",
     "query": "PostToolUse:Edit: src/db.py → def get_user(name):\n    query = f\"SELECT * FROM users WHERE name = '{name}'\"\n    return db.execute(query)",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Use parameterized queries to prevent SQL injection"
+      "Use parameterized queries to prevent SQL injection — string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input",
+      "Always validate user input at system boundaries — unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip"
+      "Use uv for all Python package operations, never pip — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "difficulty": "easy",
     "event": "PostToolUse"
@@ -119,12 +117,12 @@
   {
     "id": "post-write-xss-vector",
     "query": "PostToolUse:Write: templates/profile.html → <div>Welcome, {{ user.name | safe }}!</div>\n<script>var bio = '{{ user.bio }}';</script>",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Sanitize all HTML output to prevent XSS"
+      "Sanitize all HTML output to prevent XSS — unsanitized user content rendered as HTML lets attackers inject scripts that steal session tokens, redirect users, or deface the page"
     ],
     "should_not_match": [
-      "Use frozen dataclasses for immutable data"
+      "Use frozen dataclasses for immutable data — mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
     "difficulty": "medium",
     "event": "PostToolUse"
@@ -132,12 +130,12 @@
   {
     "id": "post-edit-hardcoded-config",
     "query": "PostToolUse:Edit: src/client.py → API_URL = 'https://api.prod.example.com'\nTIMEOUT = 30\nMAX_RETRIES = 3\ndb_host = 'prod-db.internal'",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Use environment variables for configuration, not hardcoded values"
+      "Use environment variables for configuration, not hardcoded values — hardcoded config prevents deployment to different environments and leaks secrets into source control"
     ],
     "should_not_match": [
-      "Send Enter after every tmux send-keys command"
+      "Always append Enter after tmux send-keys text — without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
     "difficulty": "medium",
     "event": "PostToolUse"
@@ -145,12 +143,13 @@
   {
     "id": "post-edit-mutable-dataclass",
     "query": "PostToolUse:Edit: src/models.py → @dataclass\nclass Config:\n    host: str\n    port: int\n    items: list[str]",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Use frozen dataclasses for immutable data"
+      "Use frozen dataclasses for immutable data — mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
+      "Never mutate function arguments or shared state — mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip"
+      "Use uv for all Python package operations, never pip — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "difficulty": "medium",
     "event": "PostToolUse"
@@ -158,12 +157,12 @@
   {
     "id": "post-edit-swallowed-exception",
     "query": "PostToolUse:Edit: src/api.py → try:\n    result = process(data)\nexcept Exception:\n    pass",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Always handle errors explicitly, never silently swallow exceptions"
+      "Always handle errors explicitly at every level, never silently swallow exceptions — empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "easy",
     "event": "PostToolUse"
@@ -171,12 +170,12 @@
   {
     "id": "post-bash-force-push-master",
     "query": "PostToolUse:Bash: git push --force origin master → To github.com:user/repo.git\n + abc1234...def5678 master -> master (forced update)",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Never force-push to main or master branch"
+      "Never force-push to main or master branch — force-push overwrites other developers' commits with no recovery path"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip"
+      "Use uv for all Python package operations, never pip — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "difficulty": "easy",
     "event": "PostToolUse"
@@ -184,12 +183,12 @@
   {
     "id": "post-edit-magic-numbers",
     "query": "PostToolUse:Edit: src/retry.py → def retry_request(url):\n    for i in range(5):\n        resp = requests.get(url, timeout=30)\n        if resp.status_code == 200:\n            return resp\n        time.sleep(2)",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
+      "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants — unnamed numbers scattered through code are impossible to find, update consistently, or understand the intent of"
     ],
     "should_not_match": [
-      "Never commit secrets (API keys, tokens, passwords) to git"
+      "Never commit secrets (API keys, tokens, passwords, connection strings) to git — once pushed, secrets are in the history forever and require rotation across all environments"
     ],
     "difficulty": "medium",
     "event": "PostToolUse"
@@ -197,12 +196,12 @@
   {
     "id": "post-write-no-docstring",
     "query": "PostToolUse:Write: src/public_api.py → def calculate_metrics(data: list[float], weights: list[float]) -> dict[str, float]:\n    total = sum(d * w for d, w in zip(data, weights))\n    return {'weighted_sum': total}",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Document all public API functions with docstrings"
+      "Document all public API functions with docstrings — undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
     ],
     "should_not_match": [
-      "Send Enter after every tmux send-keys command"
+      "Always append Enter after tmux send-keys text — without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
     "difficulty": "hard",
     "event": "PostToolUse"
@@ -210,12 +209,12 @@
   {
     "id": "post-edit-unclosed-resource",
     "query": "PostToolUse:Edit: src/loader.py → def load_data(path):\n    f = open(path)\n    data = json.load(f)\n    return data",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
+      "Always close file handles, database connections, and HTTP sessions after use — unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "medium",
     "event": "PostToolUse"
@@ -223,12 +222,13 @@
   {
     "id": "post-edit-no-input-validation",
     "query": "PostToolUse:Edit: src/api.py → @app.post('/users')\ndef create_user(request):\n    name = request.json['name']\n    email = request.json['email']\n    db.insert(name, email)\n    return {'status': 'ok'}",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Always validate user input at system boundaries"
+      "Always validate user input at system boundaries — unvalidated input propagates corrupted data through the entire system, causing failures far from the source",
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
     ],
     "should_not_match": [
-      "Use frozen dataclasses for immutable data"
+      "Use frozen dataclasses for immutable data — mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
     "difficulty": "hard",
     "event": "PostToolUse"
@@ -236,25 +236,23 @@
   {
     "id": "post-bash-ruff-errors",
     "query": "PostToolUse:Bash: uv run ruff check src/ → src/api.py:12:1: F841 local variable 'x' is assigned to but never used\nsrc/utils.py:5:1: E401 multiple imports on one line\nFound 2 errors.",
-    "corpus": "rules_basic.txt",
-    "should_match": [
-      "Run ruff and mypy before committing Python code"
-    ],
+    "corpus": "rules_global.txt",
+    "should_match": [],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip"
+      "Use uv for all Python package operations, never pip — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "PostToolUse"
   },
   {
     "id": "post-edit-csrf-missing",
     "query": "PostToolUse:Edit: src/views.py → @app.route('/transfer', methods=['POST'])\ndef transfer_funds():\n    amount = request.form['amount']\n    to_account = request.form['to']\n    do_transfer(amount, to_account)\n    return redirect('/dashboard')",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Enable CSRF protection on all forms and state-changing endpoints"
+      "Enable CSRF protection on all forms and state-changing endpoints — without it, malicious sites can trigger actions on behalf of authenticated users via forged requests"
     ],
     "should_not_match": [
-      "Send Enter after every tmux send-keys command"
+      "Always append Enter after tmux send-keys text — without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
     "difficulty": "hard",
     "event": "PostToolUse"
@@ -262,13 +260,14 @@
   {
     "id": "post-write-sensitive-file-perms",
     "query": "PostToolUse:Write: config/secrets.yaml → api_key: sk-abc123\ndb_password: hunter2\naws_secret: AKIA...",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Set file permissions to 0o600 for sensitive files",
-      "Never commit secrets (API keys, tokens, passwords) to git"
+      "Set file permissions to 0o600 for sensitive files (keys, configs, tokens) — world-readable secrets are the most common cloud breach vector",
+      "Never commit secrets (API keys, tokens, passwords, connection strings) to git — once pushed, secrets are in the history forever and require rotation across all environments",
+      "Use environment variables for configuration, not hardcoded values — hardcoded config prevents deployment to different environments and leaks secrets into source control"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "easy",
     "event": "PostToolUse"
@@ -276,13 +275,13 @@
   {
     "id": "post-bash-pip-audit-vuln",
     "query": "PostToolUse:Bash: pip install pyjwt==1.7.0 → Successfully installed pyjwt-1.7.0",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Review all dependencies for known vulnerabilities before adding",
-      "Use uv for all Python package operations, never pip"
+      "Review all dependencies for known vulnerabilities before adding — a vulnerable dependency in your supply chain is an open door that attackers actively scan for",
+      "Use uv for all Python package operations, never pip — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "should_not_match": [
-      "Send Enter after every tmux send-keys command"
+      "Always append Enter after tmux send-keys text — without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
     "difficulty": "medium",
     "event": "PostToolUse"
@@ -290,12 +289,12 @@
   {
     "id": "post-edit-thread-for-io",
     "query": "PostToolUse:Edit: src/fetcher.py → import threading\ndef fetch_all(urls):\n    threads = []\n    for url in urls:\n        t = threading.Thread(target=fetch, args=(url,))\n        threads.append(t)\n        t.start()",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Use asyncio for I/O-bound operations, not threads"
+      "Use asyncio for I/O-bound operations, not threads — threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
     ],
     "should_not_match": [
-      "Use parameterized queries to prevent SQL injection"
+      "Use parameterized queries to prevent SQL injection — string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
     ],
     "difficulty": "hard",
     "event": "PostToolUse"
@@ -303,12 +302,12 @@
   {
     "id": "post-bash-git-commit-no-conventional",
     "query": "PostToolUse:Bash: git commit -m 'updated stuff' → [feature def4567] updated stuff\n 5 files changed",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip"
+      "Use uv for all Python package operations, never pip — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "difficulty": "medium",
     "event": "PostToolUse"
@@ -316,12 +315,12 @@
   {
     "id": "post-edit-long-function",
     "query": "PostToolUse:Edit: src/processor.py → def process_all(items):\n    # ... 85 lines of nested logic with 6 levels of indentation\n    for item in items:\n        if item.valid:\n            for sub in item.children:\n                if sub.active:\n                    for dep in sub.deps:\n                        if dep.ready:\n                            result = compute(dep)",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Keep functions under 50 lines, files under 400 lines"
+      "Keep functions under 50 lines and source files under 800 lines (400 preferred) — large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes"
     ],
     "should_not_match": [
-      "Never commit secrets (API keys, tokens, passwords) to git"
+      "Never commit secrets (API keys, tokens, passwords, connection strings) to git — once pushed, secrets are in the history forever and require rotation across all environments"
     ],
     "difficulty": "hard",
     "event": "PostToolUse"
@@ -329,12 +328,12 @@
   {
     "id": "post-write-gitignore-missing",
     "query": "PostToolUse:Write: build/output.js → // generated bundle\nvar app = function() { ... }",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Add .gitignore entries for generated files and build artifacts"
+      "Add .gitignore entries for generated files and build artifacts — committed build artifacts bloat the repo and cause merge conflicts on every build"
     ],
     "should_not_match": [
-      "Use frozen dataclasses for immutable data"
+      "Use frozen dataclasses for immutable data — mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
     "difficulty": "hard",
     "event": "PostToolUse"
@@ -342,12 +341,14 @@
   {
     "id": "post-edit-secret-rotation",
     "query": "PostToolUse:Edit: src/auth.py → # Accidentally logged the API key\nlogger.info(f'Using key: {api_key}')\n# Key was visible in the CI logs",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Rotate any secrets that may have been exposed"
+      "Rotate any secrets that may have been exposed — exposed credentials remain valid until rotated, giving attackers a persistent access window that widens with every hour of delay",
+      "Never commit secrets (API keys, tokens, passwords, connection strings) to git — once pushed, secrets are in the history forever and require rotation across all environments",
+      "No console.log or print debug statements in production code — debug output clutters logs, leaks internal state, and makes real errors harder to find in production monitoring"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "hard",
     "event": "PostToolUse"
@@ -355,23 +356,21 @@
   {
     "id": "post-bash-branch-on-main",
     "query": "PostToolUse:Bash: git branch → * main\n  feature/auth\n  feature/search",
-    "corpus": "rules_basic.txt",
-    "should_match": [
-      "Always create a new branch for feature work"
-    ],
+    "corpus": "rules_global.txt",
+    "should_match": [],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip"
+      "Use uv for all Python package operations, never pip — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "hard",
+    "difficulty": "negative",
     "event": "PostToolUse"
   },
   {
     "id": "post-neg-read-config",
     "query": "PostToolUse:Read: pyproject.toml → [project]\nname = \"myapp\"\nversion = \"0.1.0\"\n[tool.ruff]\nline-length = 88",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip"
+      "Use uv for all Python package operations, never pip — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "difficulty": "negative",
     "event": "PostToolUse"
@@ -379,10 +378,10 @@
   {
     "id": "post-neg-glob-listing",
     "query": "PostToolUse:Glob: src/**/*.py → src/api.py\nsrc/models.py\nsrc/utils.py\nsrc/config.py",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Run ruff and mypy before committing Python code"
+      "Run ruff and mypy before committing Python code — type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
     ],
     "difficulty": "negative",
     "event": "PostToolUse"
@@ -390,10 +389,10 @@
   {
     "id": "post-neg-grep-search",
     "query": "PostToolUse:Grep: 'def test_' src/ → src/tests/test_api.py:10:def test_create_user\nsrc/tests/test_api.py:25:def test_delete_user",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "100% test coverage on all new code"
+      "Require 100% test coverage on all new code before committing — uncovered code is untested code, and untested code breaks silently in production"
     ],
     "difficulty": "negative",
     "event": "PostToolUse"
@@ -401,10 +400,10 @@
   {
     "id": "post-neg-read-readme",
     "query": "PostToolUse:Read: README.md → # MyApp\nA simple web application.\n## Setup\nRun `uv sync` to install.",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Document all public API functions with docstrings"
+      "Document all public API functions with docstrings — undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
     ],
     "difficulty": "negative",
     "event": "PostToolUse"
@@ -412,10 +411,10 @@
   {
     "id": "post-neg-bash-ls",
     "query": "PostToolUse:Bash: ls -la src/ → total 48\ndrwxr-xr-x 2 user user 4096 Apr 7 10:00 .\n-rw-r--r-- 1 user user 1200 Apr 7 10:00 api.py",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Set file permissions to 0o600 for sensitive files"
+      "Set file permissions to 0o600 for sensitive files (keys, configs, tokens) — world-readable secrets are the most common cloud breach vector"
     ],
     "difficulty": "negative",
     "event": "PostToolUse"
@@ -423,10 +422,10 @@
   {
     "id": "post-neg-bash-git-status",
     "query": "PostToolUse:Bash: git status → On branch feature/auth\nnothing to commit, working tree clean",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Run quality checks before every commit"
+      "Run quality checks before every commit — catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "difficulty": "negative",
     "event": "PostToolUse"
@@ -434,10 +433,10 @@
   {
     "id": "post-neg-bash-uv-run-pytest-pass",
     "query": "PostToolUse:Bash: uv run pytest → 42 passed in 3.21s\n\n---------- coverage: 100% ----------",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "100% test coverage on all new code"
+      "Require 100% test coverage on all new code before committing — uncovered code is untested code, and untested code breaks silently in production"
     ],
     "difficulty": "negative",
     "event": "PostToolUse"
@@ -445,11 +444,921 @@
   {
     "id": "post-neg-read-test-file",
     "query": "PostToolUse:Read: tests/test_models.py → import pytest\nfrom myapp.models import User\n\ndef test_user_creation():\n    user = User(name='Alice')\n    assert user.name == 'Alice'",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Write tests before implementation (TDD red-green-refactor)"
+      "Write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-python-version",
+    "query": "PostToolUse:Bash: python --version → Python 3.12.4",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-nvidia-smi",
+    "query": "PostToolUse:Bash: nvidia-smi → NVIDIA-SMI 560.35.03  Driver Version: 560.35.03  CUDA Version: 12.6\n| GPU  Name     Persistence-M| Bus-Id    Disp.A | Volatile Uncorr. ECC |\n|  0  RTX 5090        On      | 00000000:01:00.0 Off |                    0 |\n| 45%   52C    P2    85W / 450W |  18432MiB / 32768MiB |     12%      Default |",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use environment variables for configuration, not hardcoded values — hardcoded config prevents deployment to different environments and leaks secrets into source control"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-df",
+    "query": "PostToolUse:Bash: df -h → Filesystem      Size  Used Avail Use% Mounted on\n/dev/nvme0n1p2  932G  412G  473G  47% /\ntmpfs            32G   12M   32G   1% /dev/shm",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants — unnamed numbers scattered through code are impossible to find, update consistently, or understand the intent of"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-whoami",
+    "query": "PostToolUse:Bash: whoami → turiya",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never commit secrets (API keys, tokens, passwords, connection strings) to git — once pushed, secrets are in the history forever and require rotation across all environments"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-uv-sync",
+    "query": "PostToolUse:Bash: uv sync → Resolved 45 packages in 1.2s\nInstalled 3 packages in 0.8s\n + httpx==0.27.0\n + anyio==4.4.0\n + sniffio==1.3.1",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
+      "Review all dependencies for known vulnerabilities before adding — a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-git-log",
+    "query": "PostToolUse:Bash: git log --oneline -5 → a1b2c3d feat: add user authentication\nb4e5f6g fix: resolve race condition in cache\nc7d8e9f refactor: extract validation logic\nd0e1f2a docs: update API reference\ne3f4a5b test: add integration tests for auth",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-git-diff-clean",
+    "query": "PostToolUse:Bash: git diff src/models.py → diff --git a/src/models.py b/src/models.py\n+from dataclasses import dataclass, field\n+@dataclass(frozen=True)\n+class User:\n+    name: str\n+    email: str\n+    role: str = 'viewer'",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data — mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-docker-build",
+    "query": "PostToolUse:Bash: docker build -t myapp . → [+] Building 12.3s (8/8) FINISHED\n => [internal] load build definition from Dockerfile\n => [2/5] COPY requirements.txt .\n => [5/5] COPY . .\n => exporting to image\n => => naming to docker.io/library/myapp:latest",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Add .gitignore entries for generated files and build artifacts — committed build artifacts bloat the repo and cause merge conflicts on every build"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-git-pull",
+    "query": "PostToolUse:Bash: git pull origin main → Already up to date.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never force-push to main or master branch — force-push overwrites other developers' commits with no recovery path"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-ruff-clean",
+    "query": "PostToolUse:Bash: uv run ruff check src/ → All checks passed!",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run ruff and mypy before committing Python code — type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-mypy-clean",
+    "query": "PostToolUse:Bash: uv run mypy src/ → Success: no issues found in 12 source files",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run ruff and mypy before committing Python code — type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-read-clean-code",
+    "query": "PostToolUse:Read: src/service.py → from dataclasses import dataclass\nimport logging\n\nlogger = logging.getLogger(__name__)\n\n@dataclass(frozen=True)\nclass Result:\n    value: float\n    status: str\n\ndef compute(x: float, y: float) -> Result:\n    \"\"\"Compute weighted result.\"\"\"\n    return Result(value=x * y, status='ok')",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data — mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
+      "Document all public API functions with docstrings — undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse",
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-edit-clean-refactor",
+    "query": "PostToolUse:Edit: src/utils.py → def parse_config(path: Path) -> Config:\n    \"\"\"Parse and validate configuration file.\"\"\"\n    with open(path) as f:\n        data = json.load(f)\n    return Config(**data)",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always close file handles, database connections, and HTTP sessions after use — unclosed resources leak memory and exhaust connection pools, eventually crashing the service",
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-write-normal-config",
+    "query": "PostToolUse:Write: pyproject.toml → [project]\nname = \"myapp\"\nversion = \"1.0.0\"\nrequires-python = \">=3.11\"\n\n[tool.ruff]\nline-length = 88\ntarget-version = \"py311\"",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use environment variables for configuration, not hardcoded values — hardcoded config prevents deployment to different environments and leaks secrets into source control"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-pip-list",
+    "query": "PostToolUse:Bash: pip list → Package         Version\n--------------- -------\nfastembed       0.3.1\nnumpy           1.26.4\ntyper            0.12.3\nrich            13.7.1",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use uv for all Python package operations, never pip — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-cat-env-example",
+    "query": "PostToolUse:Bash: cat .env.example → # Database\nDB_HOST=localhost\nDB_PORT=5432\nDB_NAME=myapp\n# API\nAPI_KEY=your-key-here",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never commit secrets (API keys, tokens, passwords, connection strings) to git — once pushed, secrets are in the history forever and require rotation across all environments",
+      "Use environment variables for configuration, not hardcoded values — hardcoded config prevents deployment to different environments and leaks secrets into source control"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-git-checkout-branch",
+    "query": "PostToolUse:Bash: git checkout -b feature/add-search → Switched to a new branch 'feature/add-search'",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always create a new branch for feature work — working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-grep-import-search",
+    "query": "PostToolUse:Grep: 'import asyncio' src/ → src/fetcher.py:1:import asyncio\nsrc/server.py:3:import asyncio",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use asyncio for I/O-bound operations, not threads — threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-wc-lines",
+    "query": "PostToolUse:Bash: wc -l src/*.py → 120 src/api.py\n  85 src/models.py\n  45 src/utils.py\n 250 total",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Keep functions under 50 lines and source files under 800 lines (400 preferred) — large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-git-push-feature",
+    "query": "PostToolUse:Bash: git push -u origin feature/auth → To github.com:user/repo.git\n * [new branch]      feature/auth -> feature/auth\nBranch 'feature/auth' set up to track remote branch 'feature/auth'.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never force-push to main or master branch — force-push overwrites other developers' commits with no recovery path"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-write-gitignore",
+    "query": "PostToolUse:Write: .gitignore → __pycache__/\n*.pyc\n.env\n.venv/\ndist/\nbuild/\n*.egg-info/\n.coverage\nhtmlcov/",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Add .gitignore entries for generated files and build artifacts — committed build artifacts bloat the repo and cause merge conflicts on every build"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-curl-health",
+    "query": "PostToolUse:Bash: curl -s http://localhost:8080/health → {\"status\": \"ok\", \"uptime\": 3600}",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always validate user input at system boundaries — unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-bash-date",
+    "query": "PostToolUse:Bash: date → Mon Apr  7 14:32:01 CDT 2026",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-read-license",
+    "query": "PostToolUse:Read: LICENSE → MIT License\n\nCopyright (c) 2026 Turiya\n\nPermission is hereby granted, free of charge, to any person obtaining a copy...",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-neg-edit-add-test",
+    "query": "PostToolUse:Edit: tests/test_auth.py → def test_login_success(client: TestClient) -> None:\n    \"\"\"Test successful login with valid credentials.\"\"\"\n    response = client.post('/login', json={'user': 'alice', 'pass': 'secret'})\n    assert response.status_code == 200\n    assert 'token' in response.json()",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
+      "Require 100% test coverage on all new code before committing — uncovered code is untested code, and untested code breaks silently in production"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-read-secrets-in-source",
+    "query": "PostToolUse:Read: src/config.py → DATABASE_URL = 'postgresql://admin:p4ssw0rd@db.prod.example.com/myapp'\nAWS_SECRET_KEY = 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'\nSTRIPE_KEY = 'sk_live_abc123def456'",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never commit secrets (API keys, tokens, passwords, connection strings) to git — once pushed, secrets are in the history forever and require rotation across all environments",
+      "Use environment variables for configuration, not hardcoded values — hardcoded config prevents deployment to different environments and leaks secrets into source control"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-glob-sensitive-paths",
+    "query": "PostToolUse:Glob: **/*.pem → certs/server.pem\ncerts/private-key.pem\ndeploy/tls.pem",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Set file permissions to 0o600 for sensitive files (keys, configs, tokens) — world-readable secrets are the most common cloud breach vector",
+      "Never commit secrets (API keys, tokens, passwords, connection strings) to git — once pushed, secrets are in the history forever and require rotation across all environments"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-eval-in-template",
+    "query": "PostToolUse:Edit: src/templating.py → def render(template_str: str, context: dict) -> str:\n    \"\"\"Render template with context.\"\"\"\n    return eval(f\"f'{template_str}'\", context)",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never use eval(), exec(), or shell=True in production code — these execute arbitrary input as code, enabling remote code execution attacks"
+    ],
+    "should_not_match": [
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-write-mutable-plus-no-hints-plus-magic",
+    "query": "PostToolUse:Write: src/cache.py → from dataclasses import dataclass\n\n@dataclass\nclass CacheEntry:\n    key: str\n    value: object\n    hits: int = 0\n\ndef evict(cache):\n    expired = []\n    for k, v in cache.items():\n        if v.hits < 3:\n            expired.append(k)\n    for k in expired:\n        del cache[k]\n    if len(cache) > 1000:\n        cache.clear()",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use frozen dataclasses for immutable data — mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime",
+      "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants — unnamed numbers scattered through code are impossible to find, update consistently, or understand the intent of",
+      "Never mutate function arguments or shared state — mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-bash-mypy-errors",
+    "query": "PostToolUse:Bash: uv run mypy src/ → src/api.py:15: error: Function is missing a type annotation [no-untyped-def]\nsrc/api.py:28: error: Argument 1 to \"process\" has incompatible type \"str\"; expected \"int\" [arg-type]\nFound 2 errors in 1 file (checked 8 source files)",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Run ruff and mypy before committing Python code — type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-bare-except-with-print",
+    "query": "PostToolUse:Edit: src/worker.py → def process_job(job_id):\n    try:\n        result = run_task(job_id)\n        print(f'DEBUG job {job_id}: {result}')\n    except:\n        print('something went wrong')",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always handle errors explicitly at every level, never silently swallow exceptions — empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
+      "No console.log or print debug statements in production code — debug output clutters logs, leaks internal state, and makes real errors harder to find in production monitoring",
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-write-html-no-sanitize-no-csrf",
+    "query": "PostToolUse:Write: templates/comment.html → <form action=\"/comment\" method=\"POST\">\n  <textarea name=\"body\">{{ comment.body | safe }}</textarea>\n  <button type=\"submit\">Post</button>\n</form>\n<div class=\"preview\">{{ comment.body | safe }}</div>",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Sanitize all HTML output to prevent XSS — unsanitized user content rendered as HTML lets attackers inject scripts that steal session tokens, redirect users, or deface the page",
+      "Enable CSRF protection on all forms and state-changing endpoints — without it, malicious sites can trigger actions on behalf of authenticated users via forged requests"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-bash-git-commit-on-main-no-tests",
+    "query": "PostToolUse:Bash: git commit -m 'quick fix' → [main 9a8b7c6] quick fix\n 1 file changed, 3 insertions(+), 1 deletion(-)",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless",
+      "Always create a new branch for feature work — working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-sql-concat-with-unclosed-conn",
+    "query": "PostToolUse:Edit: src/repo.py → import sqlite3\n\ndef find_orders(customer_name):\n    conn = sqlite3.connect('orders.db')\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM orders WHERE customer = '\" + customer_name + \"'\")\n    return cursor.fetchall()",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use parameterized queries to prevent SQL injection — string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input",
+      "Always close file handles, database connections, and HTTP sessions after use — unclosed resources leak memory and exhaust connection pools, eventually crashing the service",
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-bash-tmux-no-enter",
+    "query": "PostToolUse:Bash: tmux send-keys -t dev 'uv run pytest' → (no output)",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always append Enter after tmux send-keys text — without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-bash-pip-install-multiple",
+    "query": "PostToolUse:Bash: pip install flask sqlalchemy redis → Successfully installed flask-3.0.0 sqlalchemy-2.0.30 redis-5.0.7 jinja2-3.1.4 werkzeug-3.0.3",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use uv for all Python package operations, never pip — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
+      "Review all dependencies for known vulnerabilities before adding — a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-read-env-file-with-real-secrets",
+    "query": "PostToolUse:Read: .env → DB_PASSWORD=SuperSecretPass123!\nAWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\nAWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\nSTRIPE_SECRET_KEY=sk_live_51abc123",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never commit secrets (API keys, tokens, passwords, connection strings) to git — once pushed, secrets are in the history forever and require rotation across all environments",
+      "Rotate any secrets that may have been exposed — exposed credentials remain valid until rotated, giving attackers a persistent access window that widens with every hour of delay"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-almost-correct-missing-docstring",
+    "query": "PostToolUse:Edit: src/api.py → @dataclass(frozen=True)\nclass SearchResult:\n    query: str\n    hits: list[str]\n    score: float\n\ndef search(query: str, limit: int = 10) -> SearchResult:\n    results = index.query(query, top_k=limit)\n    return SearchResult(query=query, hits=results, score=0.95)",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Document all public API functions with docstrings — undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data — mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+    ],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-write-exec-disguised",
+    "query": "PostToolUse:Write: src/plugin.py → import importlib\n\ndef load_plugin(name: str, code: str) -> None:\n    \"\"\"Load a plugin from user-provided code.\"\"\"\n    exec(compile(code, f'<plugin:{name}>', 'exec'), {'__builtins__': __builtins__})",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never use eval(), exec(), or shell=True in production code — these execute arbitrary input as code, enabling remote code execution attacks"
+    ],
+    "should_not_match": [
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime",
+      "Document all public API functions with docstrings — undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-bash-test-zero-coverage",
+    "query": "PostToolUse:Bash: uv run pytest --cov=src → 8 passed\nName              Stmts   Miss  Cover\nsrc/new_module.py    45     45     0%\nTOTAL               120     50    58%\nFAIL Required test coverage of 100% not reached.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Require 100% test coverage on all new code before committing — uncovered code is untested code, and untested code breaks silently in production",
+      "Write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-edit-hardcoded-secret-in-env-var-name",
+    "query": "PostToolUse:Edit: src/auth.py → def get_token() -> str:\n    \"\"\"Get auth token.\"\"\"\n    return 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkw'",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never commit secrets (API keys, tokens, passwords, connection strings) to git — once pushed, secrets are in the history forever and require rotation across all environments",
+      "Use environment variables for configuration, not hardcoded values — hardcoded config prevents deployment to different environments and leaks secrets into source control"
+    ],
+    "should_not_match": [
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime",
+      "Document all public API functions with docstrings — undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-bash-force-push-main-verbose",
+    "query": "PostToolUse:Bash: git push origin main --force-with-lease → To github.com:org/core-api.git\n + 7f3a2b1...e4c5d6f main -> main (forced update)",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never force-push to main or master branch — force-push overwrites other developers' commits with no recovery path"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-write-thread-pool-io",
+    "query": "PostToolUse:Write: src/scraper.py → from concurrent.futures import ThreadPoolExecutor\nimport requests\n\ndef scrape_all(urls: list[str]) -> list[str]:\n    \"\"\"Scrape all URLs concurrently.\"\"\"\n    with ThreadPoolExecutor(max_workers=10) as pool:\n        results = list(pool.map(requests.get, urls))\n    return [r.text for r in results]",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use asyncio for I/O-bound operations, not threads — threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
+    ],
+    "should_not_match": [
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime",
+      "Document all public API functions with docstrings — undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+    ],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-bash-git-commit-env-credentials",
+    "query": "PostToolUse:Bash: git add -A && git commit -m 'chore: update config' → [feature/config 3a4b5c6] chore: update config\n 4 files changed\n .env.production | 5 +++++\n credentials.json | 12 ++++++++++++",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never commit secrets (API keys, tokens, passwords, connection strings) to git — once pushed, secrets are in the history forever and require rotation across all environments"
+    ],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-mutate-dict-inplace",
+    "query": "PostToolUse:Edit: src/cache.py old_string='def update_config' → Modified function to call config.update(new_settings) mutating the shared config dict in place instead of returning a new copy",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never mutate function arguments or shared state — mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-large-function-written",
+    "query": "PostToolUse:Edit: src/analyzer.py old_string='def analyze' → Function now spans 120 lines with 6 levels of nested if/else handling validation, transformation, scoring, formatting, caching, and error recovery",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Keep functions under 50 lines and source files under 800 lines (400 preferred) — large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-silent-fallback-detected",
+    "query": "PostToolUse:Edit: src/pipeline.py old_string='cross_encoder_rerank' → Added except block that silently falls back to embedding scores when cross-encoder fails, no logging or warning emitted",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never use silent fallbacks — if a pipeline stage falls back to an alternative (backup data source, simpler model, cached result), log it loudly and surface it in the output so the user knows the result is degraded, not just different"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-api-call-no-logging",
+    "query": "PostToolUse:Edit: src/openbb_client.py old_string='def fetch_financials' → Added requests.get call to Yahoo Finance API but no latency tracking, status code check, or response size logging",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Log every external API call with latency, status code, and response size — without observability on external dependencies, production debugging becomes guesswork and intermittent failures go undetected"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-composite-score-multiply",
+    "query": "PostToolUse:Edit: src/technicals.py old_string='def compute_signal' → Final score computed as rsi_direction * rsi_confidence * macd_direction * macd_confidence, producing near-zero for any indicator near midpoint",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When composing scores from multiple signals, separate direction from magnitude — multiplying direction × confidence double-counts the signal and produces near-zero results for uncertain inputs"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "post-nan-truthy-bug",
+    "query": "PostToolUse:Bash: uv run python -c \"import math; v = float('nan'); print(v or 0)\" → nan",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use a fallback chain with NaN-safe extraction for external data fields — API column names are unstable across providers, and float(NaN) is truthy so `value or default` silently passes NaN through"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "mock-external-calls-post-slow-suite",
+    "query": "PostToolUse:Bash: uv run pytest → FAILED tests/test_serve.py::test_daemon_health - requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=8081)\n18 passed, 1 failed in 42.31s",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always mock external calls (LLM, APIs, network, subprocesses) in unit tests — real calls make tests slow, flaky, and non-deterministic; a test suite that takes 18 minutes instead of 1 second because background tasks run real LLM calls is a test suite nobody runs",
+      "The full unit test suite must complete in under 5 seconds — if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests because slow tests get skipped and skipped tests hide bugs"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "no-real-background-task-post-subprocess",
+    "query": "PostToolUse:Bash: uv run pytest tests/test_cli.py → test_expand_command spawned subprocess llama-server\nWARNING: test hit real LLM endpoint at localhost:8081\n3 passed in 8.21s",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never let a test trigger a real background task, HTTP request, or subprocess — mock at the boundary so the test exercises YOUR code, not the external service; if the mock is wrong, that's what integration tests are for",
+      "Always mock external calls (LLM, APIs, network, subprocesses) in unit tests — real calls make tests slow, flaky, and non-deterministic; a test suite that takes 18 minutes instead of 1 second because background tasks run real LLM calls is a test suite nobody runs"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "test-suite-under-5s-post-slow",
+    "query": "PostToolUse:Bash: uv run pytest → 847 passed in 18.42s",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "The full unit test suite must complete in under 5 seconds — if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests because slow tests get skipped and skipped tests hide bugs"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "test-suite-under-5s-neg-fast",
+    "query": "PostToolUse:Bash: uv run pytest → 731 passed in 2.84s",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "The full unit test suite must complete in under 5 seconds — if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests because slow tests get skipped and skipped tests hide bugs"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "mark-slow-tests-post-output",
+    "query": "PostToolUse:Bash: uv run pytest tests/test_integration.py → test_real_embedding_model downloads BAAI/bge-small-en-v1.5\ntest_llm_reranker_live calls localhost:8081\n5 passed in 34.12s",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Mark tests that require real services with @pytest.mark.slow or @pytest.mark.e2e and exclude them from the default test run — the default `pytest` invocation must always be fast, deterministic, and offline"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "single-test-over-1s-post",
+    "query": "PostToolUse:Bash: uv run pytest tests/test_expander.py::test_expand_single_rule -v → PASSED in 3.42s",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "If a single test takes more than 1 second, it is either testing too much or hitting a real service — split it or mock the slow dependency"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "single-test-over-1s-neg-fast",
+    "query": "PostToolUse:Bash: uv run pytest tests/test_retriever.py::test_cosine_similarity -v → PASSED in 0.03s",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "If a single test takes more than 1 second, it is either testing too much or hitting a real service — split it or mock the slow dependency"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "no-sleep-in-tests-post-flaky",
+    "query": "PostToolUse:Edit: tests/test_daemon.py → added asyncio.sleep(0.5) between start_server() and assert_healthy()",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never use time.sleep() in tests to wait for async operations — use mock clocks, manual event triggers, or synchronous test helpers instead, because sleep-based tests are both slow and flaky"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "llama-server-np-slots-post-400-error",
+    "query": "PostToolUse:Bash: curl -s http://localhost:8081/v1/chat/completions -d '{\"messages\":[...]}' → {\"error\":{\"code\":400,\"message\":\"slot unavailable\"}}",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When using llama-server with -np N parallel slots, total context is divided by N — ensure every prompt fits within (total_ctx / np) tokens per slot, because exceeding it returns a cryptic 400 error with no useful diagnostic"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "daemon-same-code-paths-post",
+    "query": "PostToolUse:Bash: curl -s http://localhost:8452/retrieve -d '{\"query\":\"Bash: git commit\"}' → {\"rules\": [{\"text\": \"Use conventional commit format\"}]} but direct cuecard retrieve --query 'Bash: git commit' returns 3 rules including affinity-filtered ones",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Verify the daemon/fast path exercises the same code paths as the inline/slow path — daemon shortcuts silently bypass features (event masks, affinity filtering, tool_name routing) that work perfectly in direct mode, making the core feature inoperative in production"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "daemon-same-code-paths-neg-test-passing",
+    "query": "PostToolUse:Bash: uv run pytest tests/test_serve.py -v → 12 passed in 1.84s",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Verify the daemon/fast path exercises the same code paths as the inline/slow path — daemon shortcuts silently bypass features (event masks, affinity filtering, tool_name routing) that work perfectly in direct mode, making the core feature inoperative in production"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "llm-json-retry-post-parse-fail",
+    "query": "PostToolUse:Bash: uv run pytest tests/test_llm_reranker.py -v → FAILED test_parse_markdown_fenced_json - json.JSONDecodeError: Expecting value: line 1 column 1 (char 0)\nResponse was: ```json\n{\"relevant_rules\": [1, 3]}\n```",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When LLM JSON parsing fails, retry up to 2 times before falling back — intermittent parse errors from code fences or formatting are recovered by a simple retry; three consecutive failures indicate a prompt problem, not a fluke"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "llm-json-retry-neg-successful-parse",
+    "query": "PostToolUse:Bash: uv run pytest tests/test_llm_reranker.py -v → 12 passed in 1.23s",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When LLM JSON parsing fails, retry up to 2 times before falling back — intermittent parse errors from code fences or formatting are recovered by a simple retry; three consecutive failures indicate a prompt problem, not a fluke"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "audit-ground-truth-post-eval-failure",
+    "query": "PostToolUse:Bash: uv run python -m cuecard eval → hard tier recall dropped from 0.61 to 0.48 after adding 30 new fixtures",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Audit your ground truth before blaming the model — wrong test expectations and fixture errors are indistinguishable from model failures, and removing wrong expectations is a free quality improvement with zero code change"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "control-eval-methodology-post-comparison",
+    "query": "PostToolUse:Bash: python tools/bench_models.py --model qwen-9b --corpus eval/corpora/enriched_basic_qwen-35b/ → F2=0.682 (vs 35B F2=0.750 on same corpus)",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Control your evaluation methodology before trusting results — if you benchmark model A against model B's artifacts, model B wins by default; always evaluate the full pipeline end-to-end with each model generating its own inputs"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "investigate-10x-slowness-post",
+    "query": "PostToolUse:Bash: time curl -s http://localhost:8081/v1/chat/completions -d '{...}' → real 32.4s (expected ~3s for single rerank call)",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "If a tool call or LLM response takes 10x longer than expected, investigate immediately — normalized slowness compounds across thousands of calls into hours of wasted time"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "investigate-10x-neg-normal-latency",
+    "query": "PostToolUse:Bash: uv run pytest → 847 passed in 2.41s",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "If a tool call or LLM response takes 10x longer than expected, investigate immediately — normalized slowness compounds across thousands of calls into hours of wasted time"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "tool-fail-read-error-post",
+    "query": "PostToolUse:Bash: uv run mypy src/ → src/cuecard/pipeline.py:142: error: Argument 1 to \"run_pipeline\" has incompatible type \"str | None\"; expected \"str\"  [arg-type]\nFound 1 error in 1 file (checked 18 source files)",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When a tool fails, read the full error and search docs before retrying — blind retries waste time and hide the root cause, while the fix is usually in the error message"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "tool-fail-read-error-neg-success",
+    "query": "PostToolUse:Bash: uv run ruff check src/ → All checks passed!",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When a tool fails, read the full error and search docs before retrying — blind retries waste time and hide the root cause, while the fix is usually in the error message"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-bash-pytest-all-pass",
+    "query": "PostToolUse:Bash: uv run pytest -x -q 2>&1 | tail -5 → 826 passed in 4.32s",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Require 100% test coverage on all new code before committing — uncovered code is untested code, and untested code breaks silently in production"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-bash-pytest-failures",
+    "query": "PostToolUse:Bash: uv run pytest tests/test_serve.py -q --tb=short 2>&1 → FAILED tests/test_serve.py::TestDaemon::test_start_server - AssertionError: expected call to run_pipeline\n2 failed, 14 passed in 1.2s",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-bash-mypy-errors",
+    "query": "PostToolUse:Bash: uv run mypy src/ 2>&1 → src/cuecard/serve.py:45: error: Argument 1 to \"run_pipeline\" has incompatible type \"str | None\"; expected \"str\"  [arg-type]\nFound 3 errors in 2 files",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+    ],
+    "should_not_match": [
+      "Run ruff and mypy before committing Python code — type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
+    ],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-bash-ruff-clean",
+    "query": "PostToolUse:Bash: uv run ruff check src/ tests/ 2>&1 → All checks passed!",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run ruff and mypy before committing Python code — type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-bash-coverage-missing",
+    "query": "PostToolUse:Bash: uv run pytest --cov=cuecard --cov-fail-under=100 -q 2>&1 → FAIL Required test coverage of 100% not reached. Total coverage: 94.3%\nsrc/cuecard/serve.py    78%   42-58, 71-83",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Require 100% test coverage on all new code before committing — uncovered code is untested code, and untested code breaks silently in production"
+    ],
+    "should_not_match": [
+      "Write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+    ],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-bash-git-status-untracked",
+    "query": "PostToolUse:Bash: git status 2>&1 → On branch feat/closed-loop-hooks\nChanges not staged for commit:\n  modified: src/cuecard/models.py\n  modified: src/cuecard/parser.py\nUntracked files:\n  src/cuecard/affinity.py\n  tests/test_affinity.py",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always create a new branch for feature work — working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation",
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-bash-git-log",
+    "query": "PostToolUse:Bash: git log --oneline -5 → 22d9aa1 refactor: split 7 oversized test files into 27 focused modules\n3bcfe8e fix: daemon reliability — config-aware timeout, fast hook dispatch\nd89ab59 refactor: E2E benchmarking, Gemma 4 default",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-edit-add-frozen-dataclass",
+    "query": "PostToolUse:Edit: src/cuecard/models.py old: class AffinityEntry → Edit successful",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-write-new-module",
+    "query": "PostToolUse:Write: src/cuecard/affinity.py → File written successfully (187 lines)",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime",
+      "Document all public API functions with docstrings — undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse",
+      "Require 100% test coverage on all new code before committing — uncovered code is untested code, and untested code breaks silently in production"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "v3-post-read-adapter",
+    "query": "PostToolUse:Read: src/cuecard/adapters/claude_code.py → (file contents displayed)",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
     "difficulty": "negative",
     "event": "PostToolUse"
   }

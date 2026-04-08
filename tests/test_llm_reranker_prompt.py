@@ -42,7 +42,7 @@ class TestBuildPrompt:
         candidates = _make_candidates(1)
         system, _ = _build_prompt(candidates, "test", "nonce1")
         assert "REASONING PRINCIPLES:" in system
-        assert "When in doubt, include" in system
+        assert "When in doubt about CONCRETE rules" in system
         assert "tangential" in system
 
     def test_system_prompt_has_empty_rules_example(self) -> None:

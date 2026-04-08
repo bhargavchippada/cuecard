@@ -2,27 +2,27 @@
   {
     "id": "stop-git-commit-made",
     "query": "Stop: Committed changes with git commit -m 'fix: resolve auth bug' and pushed to feature branch",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Run quality checks before every commit",
-      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
+      "Run ruff and mypy before committing Python code \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
     ],
     "should_not_match": [
-      "Send Enter after every tmux send-keys command"
+      "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "easy",
+    "difficulty": "medium",
     "event": "Stop"
   },
   {
     "id": "stop-git-commit-secrets-risk",
     "query": "Stop: Edited .env file and committed all changes with git add -A && git commit",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Never commit secrets (API keys, tokens, passwords) to git",
-      "Run quality checks before every commit"
+      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
+      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip"
+      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "difficulty": "medium",
     "event": "Stop"
@@ -30,28 +30,26 @@
   {
     "id": "stop-file-edits-python",
     "query": "Stop: Edited src/api.py and src/models.py to add new user creation endpoint",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Use type hints on all function signatures",
-      "Always validate user input at system boundaries"
+      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production",
+      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
     ],
     "should_not_match": [
-      "Send Enter after every tmux send-keys command"
+      "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "medium",
+    "difficulty": "hard",
     "event": "Stop"
   },
   {
     "id": "stop-wrote-new-module",
     "query": "Stop: Created new file src/cache.py with CacheManager class and helper functions",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Use type hints on all function signatures",
-      "Document all public API functions with docstrings",
-      "100% test coverage on all new code"
+      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "medium",
     "event": "Stop"
@@ -59,13 +57,12 @@
   {
     "id": "stop-tests-written",
     "query": "Stop: Wrote test_api.py with 15 test cases covering the new endpoint, all passing with 95% coverage",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "100% test coverage on all new code",
-      "Write tests before implementation (TDD red-green-refactor)"
+      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip"
+      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "difficulty": "medium",
     "event": "Stop"
@@ -73,13 +70,13 @@
   {
     "id": "stop-pip-install-used",
     "query": "Stop: Installed httpx and pydantic using pip install, added them to requirements.txt",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Use uv for all Python package operations, never pip",
-      "Review all dependencies for known vulnerabilities before adding"
+      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
+      "Review all dependencies for known vulnerabilities before adding \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
     ],
     "should_not_match": [
-      "Send Enter after every tmux send-keys command"
+      "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
     "difficulty": "easy",
     "event": "Stop"
@@ -87,12 +84,12 @@
   {
     "id": "stop-database-query-added",
     "query": "Stop: Added database queries in src/db.py using string formatting for SQL queries",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Use parameterized queries to prevent SQL injection"
+      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
     ],
     "should_not_match": [
-      "Use frozen dataclasses for immutable data"
+      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
     "difficulty": "medium",
     "event": "Stop"
@@ -100,12 +97,12 @@
   {
     "id": "stop-html-template-created",
     "query": "Stop: Created HTML templates for user profile page with dynamic content rendering",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Sanitize all HTML output to prevent XSS"
+      "Sanitize all HTML output to prevent XSS \u2014 unsanitized user content rendered as HTML lets attackers inject scripts that steal session tokens, redirect users, or deface the page"
     ],
     "should_not_match": [
-      "Use asyncio for I/O-bound operations, not threads"
+      "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
     ],
     "difficulty": "hard",
     "event": "Stop"
@@ -113,12 +110,12 @@
   {
     "id": "stop-force-pushed-main",
     "query": "Stop: Force pushed to main branch to fix a bad merge commit",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Never force-push to main or master branch"
+      "Never force-push to main or master branch \u2014 force-push overwrites other developers' commits with no recovery path"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip"
+      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "difficulty": "easy",
     "event": "Stop"
@@ -126,27 +123,28 @@
   {
     "id": "stop-refactored-dataclasses",
     "query": "Stop: Refactored models.py to use dataclasses instead of plain dicts for data transfer objects",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Use frozen dataclasses for immutable data",
-      "Prefer immutable data structures over mutable ones"
+      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
+      "Prefer immutable data structures over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency",
+      "Never mutate function arguments or shared state \u2014 mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere"
     ],
     "should_not_match": [
-      "Send Enter after every tmux send-keys command"
+      "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "medium",
+    "difficulty": "hard",
     "event": "Stop"
   },
   {
     "id": "stop-form-endpoint-added",
     "query": "Stop: Added POST /settings endpoint that processes form data to update user preferences",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Enable CSRF protection on all forms and state-changing endpoints",
-      "Always validate user input at system boundaries"
+      "Enable CSRF protection on all forms and state-changing endpoints \u2014 without it, malicious sites can trigger actions on behalf of authenticated users via forged requests",
+      "Always validate user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip"
+      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "difficulty": "hard",
     "event": "Stop"
@@ -154,13 +152,13 @@
   {
     "id": "stop-env-vars-hardcoded",
     "query": "Stop: Configured the API client with hardcoded URL and timeout values in src/client.py",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Use environment variables for configuration, not hardcoded values",
-      "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants"
+      "Use environment variables for configuration, not hardcoded values \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
+      "Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants \u2014 unnamed numbers scattered through code are impossible to find, update consistently, or understand the intent of"
     ],
     "should_not_match": [
-      "Send Enter after every tmux send-keys command"
+      "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
     "difficulty": "medium",
     "event": "Stop"
@@ -168,12 +166,12 @@
   {
     "id": "stop-error-handling-added",
     "query": "Stop: Added try/except blocks around API calls in src/service.py with empty except clauses",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Always handle errors explicitly, never silently swallow exceptions"
+      "Always handle errors explicitly at every level, never silently swallow exceptions \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "medium",
     "event": "Stop"
@@ -181,12 +179,12 @@
   {
     "id": "stop-tmux-delegation",
     "query": "Stop: Sent commands to cody via tmux send-keys to run the test suite",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Send Enter after every tmux send-keys command"
+      "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip"
+      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "difficulty": "easy",
     "event": "Stop"
@@ -194,13 +192,14 @@
   {
     "id": "stop-sensitive-file-created",
     "query": "Stop: Created config/credentials.yaml with database passwords and API keys for deployment",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Set file permissions to 0o600 for sensitive files",
-      "Never commit secrets (API keys, tokens, passwords) to git"
+      "Set file permissions to 0o600 for sensitive files (keys, configs, tokens) \u2014 world-readable secrets are the most common cloud breach vector",
+      "Never commit secrets (API keys, tokens, passwords, connection strings) to git \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
+      "Use environment variables for configuration, not hardcoded values \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
     ],
     "should_not_match": [
-      "Use frozen dataclasses for immutable data"
+      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
     "difficulty": "easy",
     "event": "Stop"
@@ -208,12 +207,12 @@
   {
     "id": "stop-async-network-calls",
     "query": "Stop: Implemented concurrent HTTP fetcher using threading.Thread to download multiple URLs in parallel",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Use asyncio for I/O-bound operations, not threads"
+      "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
     ],
     "should_not_match": [
-      "Use parameterized queries to prevent SQL injection"
+      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
     ],
     "difficulty": "hard",
     "event": "Stop"
@@ -221,13 +220,13 @@
   {
     "id": "stop-linting-skipped",
     "query": "Stop: Committed Python changes without running linter or type checker",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Run ruff and mypy before committing Python code",
-      "Run quality checks before every commit"
+      "Run ruff and mypy before committing Python code \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
+      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [
-      "Use uv for all Python package operations, never pip"
+      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "difficulty": "medium",
     "event": "Stop"
@@ -235,12 +234,12 @@
   {
     "id": "stop-branch-not-created",
     "query": "Stop: Implemented feature directly on main branch without creating a feature branch",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Always create a new branch for feature work"
+      "Always create a new branch for feature work \u2014 working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation"
     ],
     "should_not_match": [
-      "Send Enter after every tmux send-keys command"
+      "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
     "difficulty": "easy",
     "event": "Stop"
@@ -248,12 +247,12 @@
   {
     "id": "stop-dependency-added-no-audit",
     "query": "Stop: Added pyjwt and cryptography packages to the project for authentication",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Review all dependencies for known vulnerabilities before adding"
+      "Review all dependencies for known vulnerabilities before adding \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
     ],
     "should_not_match": [
-      "Send Enter after every tmux send-keys command"
+      "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
     "difficulty": "hard",
     "event": "Stop"
@@ -261,12 +260,12 @@
   {
     "id": "stop-resource-leak",
     "query": "Stop: Wrote file processing code that opens files without using context managers or closing them",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Always close file handles, database connections, network sockets, HTTP sessions, and other resources"
+      "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
     ],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "medium",
     "event": "Stop"
@@ -274,12 +273,12 @@
   {
     "id": "stop-gitignore-missing",
     "query": "Stop: Generated build artifacts in dist/ and compiled .pyc files but did not update .gitignore",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Add .gitignore entries for generated files and build artifacts"
+      "Add .gitignore entries for generated files and build artifacts \u2014 committed build artifacts bloat the repo and cause merge conflicts on every build"
     ],
     "should_not_match": [
-      "Use frozen dataclasses for immutable data"
+      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
     "difficulty": "medium",
     "event": "Stop"
@@ -287,13 +286,12 @@
   {
     "id": "stop-secret-exposed-in-logs",
     "query": "Stop: Logged the full request including Authorization header to debug an API issue",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [
-      "Rotate any secrets that may have been exposed",
-      "Never commit secrets (API keys, tokens, passwords) to git"
+      "Rotate any secrets that may have been exposed \u2014 exposed credentials remain valid until rotated, giving attackers a persistent access window that widens with every hour of delay"
     ],
     "should_not_match": [
-      "Use asyncio for I/O-bound operations, not threads"
+      "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
     ],
     "difficulty": "hard",
     "event": "Stop"
@@ -301,10 +299,10 @@
   {
     "id": "stop-neg-read-only",
     "query": "Stop: Read several configuration files and source code to understand the project structure",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Run quality checks before every commit"
+      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "difficulty": "negative",
     "event": "Stop"
@@ -312,10 +310,10 @@
   {
     "id": "stop-neg-grep-search",
     "query": "Stop: Searched for all usages of the deprecated function across the codebase using grep",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use type hints on all function signatures"
+      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
     ],
     "difficulty": "negative",
     "event": "Stop"
@@ -323,10 +321,10 @@
   {
     "id": "stop-neg-listed-files",
     "query": "Stop: Listed directory contents and checked git log to understand recent changes",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "100% test coverage on all new code"
+      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
     "difficulty": "negative",
     "event": "Stop"
@@ -334,10 +332,10 @@
   {
     "id": "stop-neg-git-status-check",
     "query": "Stop: Checked git status and git diff to review uncommitted changes",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Run quality checks before every commit"
+      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "difficulty": "negative",
     "event": "Stop"
@@ -345,10 +343,10 @@
   {
     "id": "stop-neg-read-docs",
     "query": "Stop: Read the README.md and CLAUDE.md documentation files to understand project conventions",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Document all public API functions with docstrings"
+      "Document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
     ],
     "difficulty": "negative",
     "event": "Stop"
@@ -356,10 +354,10 @@
   {
     "id": "stop-neg-answered-question",
     "query": "Stop: Answered user's question about how the retrieval pipeline works based on reading the source code",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Write tests before implementation (TDD red-green-refactor)"
+      "Write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "difficulty": "negative",
     "event": "Stop"
@@ -367,10 +365,10 @@
   {
     "id": "stop-neg-browsed-tests",
     "query": "Stop: Read through test files to understand existing test patterns and coverage",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "100% test coverage on all new code"
+      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
     "difficulty": "negative",
     "event": "Stop"
@@ -378,12 +376,583 @@
   {
     "id": "stop-neg-git-log-review",
     "query": "Stop: Reviewed git log history and commit messages to understand the development timeline",
-    "corpus": "rules_basic.txt",
+    "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [
-      "Use conventional commit format (feat:, fix:, refactor:, etc.)"
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-explained-architecture",
+    "query": "Stop: Explained how the multi-stage retrieval pipeline works including dense, sparse, and LLM reranking stages",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-created-plan",
+    "query": "Stop: Created an implementation plan for the new caching layer, outlining phases, risks, and dependencies",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-ran-tests-passed",
+    "query": "Stop: Ran the full test suite with pytest and all 847 tests passed with 100% coverage",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-checked-server-logs",
+    "query": "Stop: Read the server logs and checked error traces to diagnose why the API was returning 500 errors",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always handle errors explicitly at every level, never silently swallow exceptions \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-compared-libraries",
+    "query": "Stop: Compared fastembed, sentence-transformers, and openai embeddings for latency and quality tradeoffs",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "For new libraries or APIs, research alternatives, verify documentation, audit maintenance status, and benchmark before adopting"
+    ],
+    "should_not_match": [
+      "Review all dependencies for known vulnerabilities before adding \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-reviewed-pr",
+    "query": "Stop: Reviewed pull request #42 and left comments on code quality and test coverage gaps",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-ran-benchmark",
+    "query": "Stop: Ran the E2E benchmark script and recorded latency metrics for the 9B and 35B models",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-discussed-design",
+    "query": "Stop: Discussed the tradeoffs between event-mask filtering and query-time affinity with the user",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Prefer immutable data structures over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-read-error-output",
+    "query": "Stop: Read the mypy error output and identified 3 type annotation issues in src/pipeline.py",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run ruff and mypy before committing Python code \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-checked-ci-status",
+    "query": "Stop: Checked the CI pipeline status on GitHub Actions and reviewed the failing job logs",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-inspected-docker",
+    "query": "Stop: Inspected the Docker container logs and checked port mappings to debug a connection refused error",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-checked-git-blame",
+    "query": "Stop: Used git blame and git log to trace when and why the retry logic was removed from the HTTP client",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-listed-processes",
+    "query": "Stop: Checked running processes with ps aux and verified the llama-server was listening on port 8081",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-summarized-session",
+    "query": "Stop: Summarized what was accomplished in this session and outlined next steps for the user",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-curl-health-check",
+    "query": "Stop: Sent a curl request to the health endpoint to verify the server was responding correctly",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always validate user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-multi-violation-commit",
+    "query": "Stop: Added new endpoint in src/api.py with pip-installed flask, committed directly on main without tests or linting",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
+      "Always create a new branch for feature work \u2014 working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation",
+      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production",
+      "Run ruff and mypy before committing Python code \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
+      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+    ],
+    "should_not_match": [
+      "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
+    ],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-multi-security-violations",
+    "query": "Stop: Built a login form endpoint that takes user credentials, stores them in the database with string-concatenated SQL, and renders error messages with raw HTML",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always validate user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source",
+      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input",
+      "Sanitize all HTML output to prevent XSS \u2014 unsanitized user content rendered as HTML lets attackers inject scripts that steal session tokens, redirect users, or deface the page",
+      "Enable CSRF protection on all forms and state-changing endpoints \u2014 without it, malicious sites can trigger actions on behalf of authenticated users via forged requests"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-eval-usage-in-code",
+    "query": "Stop: Created a dynamic configuration loader in src/config.py that uses eval() to parse user-provided expressions",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never use eval(), exec(), or shell=True in production code \u2014 these execute arbitrary input as code, enabling remote code execution attacks",
+      "Always validate user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
+    ],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-large-function-written",
+    "query": "Stop: Wrote a 200-line process_data() function in src/etl.py that handles parsing, validation, transformation, and output in a single block",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Keep functions under 50 lines and source files under 800 lines (400 preferred) \u2014 large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mutable-dict-config",
+    "query": "Stop: Created the Settings class as a plain dict that gets mutated throughout request handling in src/server.py",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
+      "Prefer immutable data structures over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency",
+      "Never mutate function arguments or shared state \u2014 mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere"
+    ],
+    "should_not_match": [
+      "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-debug-prints-left",
+    "query": "Stop: Finished implementing the search feature in src/search.py but left several print(f'DEBUG: {query}') statements in the code",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "No console.log or print debug statements in production code \u2014 debug output clutters logs, leaks internal state, and makes real errors harder to find in production monitoring"
+    ],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
+    ],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-hard-new-module-no-tests",
+    "query": "Stop: Created src/scheduler.py with task scheduling functionality",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production",
+      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime",
+      "Document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+    ],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-hard-db-pool-no-cleanup",
+    "query": "Stop: Added database connection pooling in src/db.py that creates connections on demand",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-hard-committed-nonfmt",
+    "query": "Stop: Committed the refactored parser module after running tests but before checking types",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Run ruff and mypy before committing Python code \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
+      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-hard-network-with-threads",
+    "query": "Stop: Added a background task in src/worker.py that polls three APIs concurrently using ThreadPoolExecutor",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use asyncio for I/O-bound operations, not threads \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread",
+      "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
+    ],
+    "should_not_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-hard-partial-gitignore",
+    "query": "Stop: Set up the project build pipeline which outputs compiled assets to build/ and .cache/",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Add .gitignore entries for generated files and build artifacts \u2014 committed build artifacts bloat the repo and cause merge conflicts on every build"
+    ],
+    "should_not_match": [
+      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-hard-env-in-code",
+    "query": "Stop: Configured the email service with SMTP host smtp.gmail.com and port 587 directly in src/email.py",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use environment variables for configuration, not hardcoded values \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
+    ],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-hard-test-after-code",
+    "query": "Stop: Implemented the full OAuth flow in src/auth.py then wrote tests for it afterward",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-hard-ambiguous-function-untyped",
+    "query": "Stop: Added helper functions to src/utils.py for data transformation and string formatting",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+    ],
+    "should_not_match": [
+      "Use parameterized queries to prevent SQL injection \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-commit-no-conventional",
+    "query": "Stop: Committed the bug fix with message 'fixed the broken login page'",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless",
+      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+    ],
+    "should_not_match": [
+      "Use type hints on all function signatures \u2014 untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-sensitive-perms-wrong",
+    "query": "Stop: Created the SSH key pair and saved private key to config/deploy_key with default file permissions",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Set file permissions to 0o600 for sensitive files (keys, configs, tokens) \u2014 world-readable secrets are the most common cloud breach vector"
+    ],
+    "should_not_match": [
+      "Use frozen dataclasses for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
+    ],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-hard-swallowed-error",
+    "query": "Stop: Wrapped the payment processing call in a try/except that catches Exception and returns None",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always handle errors explicitly at every level, never silently swallow exceptions \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
+    ],
+    "should_not_match": [
+      "Use uv for all Python package operations, never pip \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+    ],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-neg-read-test-output",
+    "query": "Stop: Read the pytest output to check which 3 tests were failing and analyzed the assertion errors",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-test-real-data",
+    "query": "Stop: Completed the data pipeline implementation with 100% mocked test coverage but did not run against the live OpenBB API",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always test with real external data after mocked tests pass \u2014 NaN values, missing columns, empty strings, and API format differences only surface with live data, never with synthetic fixtures"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-rule-explain-why",
+    "query": "Stop: Wrote 15 new rules for the project guidelines document, each rule states the command but none explain why the rule matters or what goes wrong without it",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Write rules and instructions that explain consequences, not just commands \u2014 agents follow rules they understand (\"without Enter, text is never submitted\") but ignore rules that just say what to do (\"always send Enter\")"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "convergence-reviews-stop-milestone",
+    "query": "Stop: Completed Phase 3 implementation with all tests passing and ready for review",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Run convergence reviews (code + security agents in parallel) after each implementation milestone \u2014 a single end-of-project review misses bugs that compound across phases, while per-phase reviews catch them when they're cheap to fix"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "convergence-reviews-neg-mid-phase",
+    "query": "Stop: Implemented 3 of 7 functions in the retriever module, continuing next turn",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run convergence reviews (code + security agents in parallel) after each implementation milestone \u2014 a single end-of-project review misses bugs that compound across phases, while per-phase reviews catch them when they're cheap to fix"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "commit-per-phase-stop",
+    "query": "Stop: Finished implementing Phase 2 (sparse retriever + BM25 + RRF fusion) with 42 new tests all passing",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Commit after each implementation phase completes \u2014 atomic tested commits prevent compound debt, enable bisection for regressions, and give reviewers digestible chunks instead of monolithic diffs"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "test-plan-after-milestone-stop",
+    "query": "Stop: Phase 1 core pipeline implementation complete with all features working, need to plan testing strategy",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After each milestone, create a comprehensive test plan before testing \u2014 the test plan itself should be reviewed by subagents (architect for coverage gaps, security for attack vectors, code quality for edge cases) because an incomplete test plan produces false confidence"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "three-layer-quality-gate-stop",
+    "query": "Stop: Completed full implementation of the expansion system including PRD review, code review, and test plan review",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Follow the three-layer quality gate: PRD + reviews \u2192 Implementation + reviews \u2192 Test plan + reviews \u2014 skipping any layer compounds risk; a reviewed PRD catches design gaps, reviewed code catches bugs, a reviewed test plan catches blind spots that both missed"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "v3-stop-prd-review-complete",
+    "query": "Stop: Completed PRD review for closed-loop hooks with 4 parallel reviewer agents. Addressed 2 CRITICAL, 14 HIGH, and 12 MEDIUM findings. PRD converged at v1.2.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "v3-stop-tests-pass-coverage-100",
+    "query": "Stop: All 826 tests pass with 100% coverage. Ruff and mypy clean. Ready for commit.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
+      "Use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "v3-stop-implemented-toml-parser",
+    "query": "Stop: Implemented TOML rule parser with events and tools frozenset fields, added migrate CLI command to convert .txt to .toml, wrote 47 new tests.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
+      "Require 100% test coverage on all new code before committing \u2014 uncovered code is untested code, and untested code breaks silently in production"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "v3-stop-reading-existing-code",
+    "query": "Stop: Read and analyzed existing codebase structure including models.py, parser.py, indexer.py, and loader.py to understand current architecture.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run quality checks before every commit \u2014 catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "v3-stop-expansion-validation",
+    "query": "Stop: Ran expansion validation script comparing raw vs enriched cosine similarity. Average delta +0.371 across 8 hard fixtures.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "v3-stop-git-repo-created-pushed",
+    "query": "Stop: Created private GitHub repo bhargavchippada/alphaloom, pushed to origin, renamed branch master to main.",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never force-push to main or master branch \u2014 force-push overwrites other developers' commits with no recovery path"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "v3-stop-daemon-bug-fixes",
+    "query": "Stop: Fixed 7 daemon bugs including 500ms timeout (changed to config-aware), Typer CLI import overhead in hook path, and stop_server not checking process death.",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always handle errors explicitly at every level, never silently swallow exceptions \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
+      "Always close file handles, database connections, and HTTP sessions after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
     "event": "Stop"
   }
 ]

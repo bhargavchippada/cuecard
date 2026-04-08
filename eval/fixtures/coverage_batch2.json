@@ -1,0 +1,798 @@
+[
+  {
+    "id": "mock-external-calls-unit-test-llm",
+    "query": "Edit: tests/test_pipeline.py replacing real LLM call with mock response",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always mock external calls (LLM, APIs, network, subprocesses) in unit tests — real calls make tests slow, flaky, and non-deterministic; a test suite that takes 18 minutes instead of 1 second because background tasks run real LLM calls is a test suite nobody runs"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mock-external-calls-post-slow-suite",
+    "query": "PostToolUse:Bash: uv run pytest → FAILED tests/test_serve.py::test_daemon_health - requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=8081)\n18 passed, 1 failed in 42.31s",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always mock external calls (LLM, APIs, network, subprocesses) in unit tests — real calls make tests slow, flaky, and non-deterministic; a test suite that takes 18 minutes instead of 1 second because background tasks run real LLM calls is a test suite nobody runs",
+      "The full unit test suite must complete in under 5 seconds — if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests because slow tests get skipped and skipped tests hide bugs"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "mock-external-calls-user-asks",
+    "query": "UserPromptSubmit: why are tests hitting the real OpenAI API? they keep failing with rate limit errors",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always mock external calls (LLM, APIs, network, subprocesses) in unit tests — real calls make tests slow, flaky, and non-deterministic; a test suite that takes 18 minutes instead of 1 second because background tasks run real LLM calls is a test suite nobody runs"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "mock-external-neg-reading-test",
+    "query": "Read: tests/test_retriever.py",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always mock external calls (LLM, APIs, network, subprocesses) in unit tests — real calls make tests slow, flaky, and non-deterministic; a test suite that takes 18 minutes instead of 1 second because background tasks run real LLM calls is a test suite nobody runs"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "no-real-background-task-test-write",
+    "query": "Edit: tests/test_server.py adding test for POST /analyze endpoint that calls _run_analysis_background",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never let a test trigger a real background task, HTTP request, or subprocess — mock at the boundary so the test exercises YOUR code, not the external service; if the mock is wrong, that's what integration tests are for"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "no-real-background-task-post-subprocess",
+    "query": "PostToolUse:Bash: uv run pytest tests/test_cli.py → test_expand_command spawned subprocess llama-server\nWARNING: test hit real LLM endpoint at localhost:8081\n3 passed in 8.21s",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never let a test trigger a real background task, HTTP request, or subprocess — mock at the boundary so the test exercises YOUR code, not the external service; if the mock is wrong, that's what integration tests are for",
+      "Always mock external calls (LLM, APIs, network, subprocesses) in unit tests — real calls make tests slow, flaky, and non-deterministic; a test suite that takes 18 minutes instead of 1 second because background tasks run real LLM calls is a test suite nobody runs"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "no-real-background-neg-integration-test",
+    "query": "Bash: uv run pytest -m slow tests/test_integration.py",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never let a test trigger a real background task, HTTP request, or subprocess — mock at the boundary so the test exercises YOUR code, not the external service; if the mock is wrong, that's what integration tests are for"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "test-suite-under-5s-post-slow",
+    "query": "PostToolUse:Bash: uv run pytest → 847 passed in 18.42s",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "The full unit test suite must complete in under 5 seconds — if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests because slow tests get skipped and skipped tests hide bugs"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "test-suite-under-5s-user-normalize",
+    "query": "UserPromptSubmit: the tests take about 30 seconds now but that seems fine since there are 900+ tests",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "The full unit test suite must complete in under 5 seconds — if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests because slow tests get skipped and skipped tests hide bugs"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "test-suite-under-5s-neg-fast",
+    "query": "PostToolUse:Bash: uv run pytest → 731 passed in 2.84s",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "The full unit test suite must complete in under 5 seconds — if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests because slow tests get skipped and skipped tests hide bugs"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "mark-slow-tests-write",
+    "query": "Edit: tests/test_indexer.py adding test that downloads real BGE model and embeds 100 rules",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Mark tests that require real services with @pytest.mark.slow or @pytest.mark.e2e and exclude them from the default test run — the default `pytest` invocation must always be fast, deterministic, and offline"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "mark-slow-tests-post-output",
+    "query": "PostToolUse:Bash: uv run pytest tests/test_integration.py → test_real_embedding_model downloads BAAI/bge-small-en-v1.5\ntest_llm_reranker_live calls localhost:8081\n5 passed in 34.12s",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Mark tests that require real services with @pytest.mark.slow or @pytest.mark.e2e and exclude them from the default test run — the default `pytest` invocation must always be fast, deterministic, and offline"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "mark-slow-neg-already-marked",
+    "query": "Edit: tests/test_indexer.py adding @pytest.mark.slow decorator to test_real_model_embedding",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Mark tests that require real services with @pytest.mark.slow or @pytest.mark.e2e and exclude them from the default test run — the default `pytest` invocation must always be fast, deterministic, and offline"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "single-test-over-1s-post",
+    "query": "PostToolUse:Bash: uv run pytest tests/test_expander.py::test_expand_single_rule -v → PASSED in 3.42s",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "If a single test takes more than 1 second, it is either testing too much or hitting a real service — split it or mock the slow dependency"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "single-test-over-1s-user",
+    "query": "UserPromptSubmit: test_full_pipeline_integration takes 4.5 seconds by itself, can you figure out why?",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "If a single test takes more than 1 second, it is either testing too much or hitting a real service — split it or mock the slow dependency"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "single-test-over-1s-neg-fast",
+    "query": "PostToolUse:Bash: uv run pytest tests/test_retriever.py::test_cosine_similarity -v → PASSED in 0.03s",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "If a single test takes more than 1 second, it is either testing too much or hitting a real service — split it or mock the slow dependency"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "no-sleep-in-tests-edit",
+    "query": "Edit: tests/test_serve.py adding time.sleep(2) to wait for server startup before health check",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never use time.sleep() in tests to wait for async operations — use mock clocks, manual event triggers, or synchronous test helpers instead, because sleep-based tests are both slow and flaky"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "no-sleep-in-tests-post-flaky",
+    "query": "PostToolUse:Edit: tests/test_daemon.py → added asyncio.sleep(0.5) between start_server() and assert_healthy()",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Never use time.sleep() in tests to wait for async operations — use mock clocks, manual event triggers, or synchronous test helpers instead, because sleep-based tests are both slow and flaky"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "no-sleep-neg-production-code",
+    "query": "Edit: src/cuecard/serve.py adding time.sleep(0.1) for retry backoff in server health polling",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Never use time.sleep() in tests to wait for async operations — use mock clocks, manual event triggers, or synchronous test helpers instead, because sleep-based tests are both slow and flaky"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "llama-server-np-slots-edit-config",
+    "query": "Edit: src/cuecard/llm_utils.py setting max_tokens=32768 for local LLM call with llama-server running -np 5 -c 32768",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When using llama-server with -np N parallel slots, total context is divided by N — ensure every prompt fits within (total_ctx / np) tokens per slot, because exceeding it returns a cryptic 400 error with no useful diagnostic"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "llama-server-np-slots-post-400-error",
+    "query": "PostToolUse:Bash: curl -s http://localhost:8081/v1/chat/completions -d '{\"messages\":[...]}' → {\"error\":{\"code\":400,\"message\":\"slot unavailable\"}}",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When using llama-server with -np N parallel slots, total context is divided by N — ensure every prompt fits within (total_ctx / np) tokens per slot, because exceeding it returns a cryptic 400 error with no useful diagnostic"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "llama-server-np-slots-user-configure",
+    "query": "UserPromptSubmit: I'm launching llama-server with -np 8 and -c 65536, what's the max tokens per request?",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When using llama-server with -np N parallel slots, total context is divided by N — ensure every prompt fits within (total_ctx / np) tokens per slot, because exceeding it returns a cryptic 400 error with no useful diagnostic"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "llama-server-np-neg-no-slots",
+    "query": "Bash: llama-server -m ~/models/gemma-4-E4B-it-Q8_0.gguf --port 8081 -ngl 99 -c 98304 --jinja",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When using llama-server with -np N parallel slots, total context is divided by N — ensure every prompt fits within (total_ctx / np) tokens per slot, because exceeding it returns a cryptic 400 error with no useful diagnostic"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "daemon-same-code-paths-post",
+    "query": "PostToolUse:Bash: curl -s http://localhost:8452/retrieve -d '{\"query\":\"Bash: git commit\"}' → {\"rules\": [{\"text\": \"Use conventional commit format\"}]} but direct cuecard retrieve --query 'Bash: git commit' returns 3 rules including affinity-filtered ones",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Verify the daemon/fast path exercises the same code paths as the inline/slow path — daemon shortcuts silently bypass features (event masks, affinity filtering, tool_name routing) that work perfectly in direct mode, making the core feature inoperative in production"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "daemon-same-code-paths-user",
+    "query": "UserPromptSubmit: the daemon returns different results than the CLI for the same query, fewer rules and no event filtering",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Verify the daemon/fast path exercises the same code paths as the inline/slow path — daemon shortcuts silently bypass features (event masks, affinity filtering, tool_name routing) that work perfectly in direct mode, making the core feature inoperative in production"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "daemon-same-code-paths-neg-test-passing",
+    "query": "PostToolUse:Bash: uv run pytest tests/test_serve.py -v → 12 passed in 1.84s",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Verify the daemon/fast path exercises the same code paths as the inline/slow path — daemon shortcuts silently bypass features (event masks, affinity filtering, tool_name routing) that work perfectly in direct mode, making the core feature inoperative in production"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "new-event-type-grep-callsites",
+    "query": "Edit: src/cuecard/adapters/claude_code.py adding handler for new NotebookCellRun event type",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When extending a system to support new event types or modes, grep for every call site that dispatches on the old set — hardcoded event lists (e.g. a 2-event frozenset) silently reject new events instead of erroring, and the failure appears as \"feature doesn't work\" not \"event rejected\""
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "new-event-type-subagent-implementation",
+    "query": "SubagentStart:builder: Implement SubagentStart event support in the adapter, adding query construction and hook output formatting for the new event type",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When extending a system to support new event types or modes, grep for every call site that dispatches on the old set — hardcoded event lists (e.g. a 2-event frozenset) silently reject new events instead of erroring, and the failure appears as \"feature doesn't work\" not \"event rejected\""
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "new-event-type-neg-existing-handler",
+    "query": "Edit: src/cuecard/adapters/claude_code.py fixing bug in existing PreToolUse query truncation",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When extending a system to support new event types or modes, grep for every call site that dispatches on the old set — hardcoded event lists (e.g. a 2-event frozenset) silently reject new events instead of erroring, and the failure appears as \"feature doesn't work\" not \"event rejected\""
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "reasoning-before-decision-edit-prompt",
+    "query": "Edit: src/cuecard/llm_reranker.py updating JSON format to {\"signal\": \"buy\", \"reasoning\": \"RSI indicates oversold\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Put reasoning BEFORE decision in LLM JSON output format — when the signal/action field comes first, the model commits to a default (e.g. \"hold\") before thinking; when reasoning comes first, the model analyzes the data and makes an informed decision, producing dramatically better outputs without needing thinking mode",
+      "Use \"reasoning-first\" JSON: {\"reasoning\": \"...\", \"signal\": \"...\"} not {\"signal\": \"...\", \"reasoning\": \"...\"} — field order in JSON prompts determines whether the model thinks before deciding; this is the cheapest quality upgrade available"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "reasoning-before-decision-user-asks",
+    "query": "UserPromptSubmit: design a JSON output format for the analyst agent with fields for action, confidence, and explanation",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Put reasoning BEFORE decision in LLM JSON output format — when the signal/action field comes first, the model commits to a default (e.g. \"hold\") before thinking; when reasoning comes first, the model analyzes the data and makes an informed decision, producing dramatically better outputs without needing thinking mode"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "reasoning-first-json-subagent",
+    "query": "SubagentStart:builder: Create the LLM prompt template for sentiment analysis with output schema {\"sentiment\": \"positive|negative|neutral\", \"reasoning\": \"...\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Use \"reasoning-first\" JSON: {\"reasoning\": \"...\", \"signal\": \"...\"} not {\"signal\": \"...\", \"reasoning\": \"...\"} — field order in JSON prompts determines whether the model thinks before deciding; this is the cheapest quality upgrade available"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "reasoning-first-neg-reading-output",
+    "query": "Read: eval/results/gemma_e4b_benchmark.json",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Put reasoning BEFORE decision in LLM JSON output format — when the signal/action field comes first, the model commits to a default (e.g. \"hold\") before thinking; when reasoning comes first, the model analyzes the data and makes an informed decision, producing dramatically better outputs without needing thinking mode"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "thinking-mode-vs-reasoning-user",
+    "query": "UserPromptSubmit: should I enable thinking mode for the reranker or is reasoning-first JSON enough?",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Thinking mode (hidden CoT) produces the most decisive outputs but costs 10x tokens and time — reasoning-first JSON format recovers 80% of the quality at 3x the speed; use thinking for live analysis, reasoning-first for backtesting"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "thinking-mode-edit-config",
+    "query": "Edit: src/cuecard/llm_reranker.py adding enable_thinking=True to all llama-server calls for better accuracy",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Thinking mode (hidden CoT) produces the most decisive outputs but costs 10x tokens and time — reasoning-first JSON format recovers 80% of the quality at 3x the speed; use thinking for live analysis, reasoning-first for backtesting"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "thinking-mode-neg-batch-processing",
+    "query": "Bash: python tools/bench_e2e.py --model gemma-e4b --sample 0.2",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Thinking mode (hidden CoT) produces the most decisive outputs but costs 10x tokens and time — reasoning-first JSON format recovers 80% of the quality at 3x the speed; use thinking for live analysis, reasoning-first for backtesting"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "example-json-in-prompt-edit",
+    "query": "Edit: src/cuecard/expander.py writing system prompt for expansion generation without showing example JSON output format",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always include an example JSON object in the prompt — models that see the exact format they should produce have near-zero parse errors; without an example, they improvise with markdown fences and free text"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "example-json-in-prompt-subagent",
+    "query": "SubagentStart:builder: Create a prompt template for the technicals agent that returns {\"signal\": \"buy\", \"confidence\": 0.8, \"reasoning\": \"...\"}",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Always include an example JSON object in the prompt — models that see the exact format they should produce have near-zero parse errors; without an example, they improvise with markdown fences and free text",
+      "Use \"reasoning-first\" JSON: {\"reasoning\": \"...\", \"signal\": \"...\"} not {\"signal\": \"...\", \"reasoning\": \"...\"} — field order in JSON prompts determines whether the model thinks before deciding; this is the cheapest quality upgrade available"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "example-json-neg-non-llm-code",
+    "query": "Edit: src/cuecard/config.py adding new TOML configuration field for sparse_weight parameter",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Always include an example JSON object in the prompt — models that see the exact format they should produce have near-zero parse errors; without an example, they improvise with markdown fences and free text"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "llm-json-retry-edit",
+    "query": "Edit: src/cuecard/llm_reranker.py handling json.JSONDecodeError from LLM response by raising immediately",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When LLM JSON parsing fails, retry up to 2 times before falling back — intermittent parse errors from code fences or formatting are recovered by a simple retry; three consecutive failures indicate a prompt problem, not a fluke"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "llm-json-retry-post-parse-fail",
+    "query": "PostToolUse:Bash: uv run pytest tests/test_llm_reranker.py -v → FAILED test_parse_markdown_fenced_json - json.JSONDecodeError: Expecting value: line 1 column 1 (char 0)\nResponse was: ```json\n{\"relevant_rules\": [1, 3]}\n```",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When LLM JSON parsing fails, retry up to 2 times before falling back — intermittent parse errors from code fences or formatting are recovered by a simple retry; three consecutive failures indicate a prompt problem, not a fluke"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "llm-json-retry-neg-successful-parse",
+    "query": "PostToolUse:Bash: uv run pytest tests/test_llm_reranker.py -v → 12 passed in 1.23s",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When LLM JSON parsing fails, retry up to 2 times before falling back — intermittent parse errors from code fences or formatting are recovered by a simple retry; three consecutive failures indicate a prompt problem, not a fluke"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "convergence-reviews-stop-milestone",
+    "query": "Stop: Completed Phase 3 implementation with all tests passing and ready for review",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Run convergence reviews (code + security agents in parallel) after each implementation milestone — a single end-of-project review misses bugs that compound across phases, while per-phase reviews catch them when they're cheap to fix"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "convergence-reviews-user-skip",
+    "query": "UserPromptSubmit: Phase 2 is done, let's skip the review and jump straight to Phase 3 since we're behind schedule",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Run convergence reviews (code + security agents in parallel) after each implementation milestone — a single end-of-project review misses bugs that compound across phases, while per-phase reviews catch them when they're cheap to fix"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "convergence-reviews-neg-mid-phase",
+    "query": "Stop: Implemented 3 of 7 functions in the retriever module, continuing next turn",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run convergence reviews (code + security agents in parallel) after each implementation milestone — a single end-of-project review misses bugs that compound across phases, while per-phase reviews catch them when they're cheap to fix"
+    ],
+    "difficulty": "negative",
+    "event": "Stop"
+  },
+  {
+    "id": "commit-per-phase-stop",
+    "query": "Stop: Finished implementing Phase 2 (sparse retriever + BM25 + RRF fusion) with 42 new tests all passing",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Commit after each implementation phase completes — atomic tested commits prevent compound debt, enable bisection for regressions, and give reviewers digestible chunks instead of monolithic diffs"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "commit-per-phase-user-batch",
+    "query": "UserPromptSubmit: let's finish all 5 phases first and then do one big commit at the end",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Commit after each implementation phase completes — atomic tested commits prevent compound debt, enable bisection for regressions, and give reviewers digestible chunks instead of monolithic diffs"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "commit-per-phase-neg-git-status",
+    "query": "Bash: git status",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Commit after each implementation phase completes — atomic tested commits prevent compound debt, enable bisection for regressions, and give reviewers digestible chunks instead of monolithic diffs"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "convergence-reviews-prd-subagent",
+    "query": "SubagentStart:architect: Review the updated PRD for Phase 4 closed-loop hooks, focusing on architectural soundness and completeness",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Run convergence reviews on PRD changes too, not just code — a design gap that survives review becomes an implementation bug that survives testing, because every downstream artifact inherits upstream ambiguity"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "convergence-reviews-prd-user",
+    "query": "UserPromptSubmit: I updated the PRD with the new caching architecture, should we review it or just start coding?",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Run convergence reviews on PRD changes too, not just code — a design gap that survives review becomes an implementation bug that survives testing, because every downstream artifact inherits upstream ambiguity"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "convergence-reviews-prd-neg-reading",
+    "query": "Read: artifacts/prd-v1.md",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Run convergence reviews on PRD changes too, not just code — a design gap that survives review becomes an implementation bug that survives testing, because every downstream artifact inherits upstream ambiguity"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "test-plan-after-milestone-stop",
+    "query": "Stop: Phase 1 core pipeline implementation complete with all features working, need to plan testing strategy",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After each milestone, create a comprehensive test plan before testing — the test plan itself should be reviewed by subagents (architect for coverage gaps, security for attack vectors, code quality for edge cases) because an incomplete test plan produces false confidence"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "test-plan-after-milestone-subagent",
+    "query": "SubagentStart:tdd-guide: Write tests for the new affinity inference module covering happy path, edge cases, and error handling",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After each milestone, create a comprehensive test plan before testing — the test plan itself should be reviewed by subagents (architect for coverage gaps, security for attack vectors, code quality for edge cases) because an incomplete test plan produces false confidence"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "test-plan-neg-running-existing-tests",
+    "query": "Bash: uv run pytest --cov=cuecard --cov-fail-under=100",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "After each milestone, create a comprehensive test plan before testing — the test plan itself should be reviewed by subagents (architect for coverage gaps, security for attack vectors, code quality for edge cases) because an incomplete test plan produces false confidence"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "three-layer-quality-gate-user",
+    "query": "UserPromptSubmit: we have the PRD done, let's skip straight to implementation and write tests at the end",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Follow the three-layer quality gate: PRD + reviews → Implementation + reviews → Test plan + reviews — skipping any layer compounds risk; a reviewed PRD catches design gaps, reviewed code catches bugs, a reviewed test plan catches blind spots that both missed"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "three-layer-quality-gate-stop",
+    "query": "Stop: Completed full implementation of the expansion system including PRD review, code review, and test plan review",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Follow the three-layer quality gate: PRD + reviews → Implementation + reviews → Test plan + reviews — skipping any layer compounds risk; a reviewed PRD catches design gaps, reviewed code catches bugs, a reviewed test plan catches blind spots that both missed"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "three-layer-neg-simple-fix",
+    "query": "Edit: src/cuecard/formatter.py fixing typo in docstring",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Follow the three-layer quality gate: PRD + reviews → Implementation + reviews → Test plan + reviews — skipping any layer compounds risk; a reviewed PRD catches design gaps, reviewed code catches bugs, a reviewed test plan catches blind spots that both missed"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "subagent-scope-boundaries-subagent",
+    "query": "SubagentStart:code-reviewer: Review all code in the project for quality issues, check every file in src/ and tests/",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Set subagent scope boundaries and terminate stale agents — an unbounded reviewer will find infinite speculative findings in any document, consuming context without improving quality"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "subagent-scope-boundaries-user",
+    "query": "UserPromptSubmit: launch a review agent to check the entire codebase for potential improvements",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Set subagent scope boundaries and terminate stale agents — an unbounded reviewer will find infinite speculative findings in any document, consuming context without improving quality"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "subagent-scope-neg-bounded",
+    "query": "SubagentStart:security-reviewer: Review ONLY src/cuecard/security.py and src/cuecard/adapters/claude_code.py for input validation and secret handling",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Set subagent scope boundaries and terminate stale agents — an unbounded reviewer will find infinite speculative findings in any document, consuming context without improving quality"
+    ],
+    "difficulty": "negative",
+    "event": "SubagentStart"
+  },
+  {
+    "id": "audit-ground-truth-post-eval-failure",
+    "query": "PostToolUse:Bash: uv run python -m cuecard eval → hard tier recall dropped from 0.61 to 0.48 after adding 30 new fixtures",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Audit your ground truth before blaming the model — wrong test expectations and fixture errors are indistinguishable from model failures, and removing wrong expectations is a free quality improvement with zero code change"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "audit-ground-truth-user-regression",
+    "query": "UserPromptSubmit: the model regressed badly on the new fixtures, we need to tune the prompt or try a bigger model",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Audit your ground truth before blaming the model — wrong test expectations and fixture errors are indistinguishable from model failures, and removing wrong expectations is a free quality improvement with zero code change"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "audit-ground-truth-neg-creating-fixtures",
+    "query": "Edit: eval/fixtures/basic.json adding 5 new positive fixtures for recently added rules",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Audit your ground truth before blaming the model — wrong test expectations and fixture errors are indistinguishable from model failures, and removing wrong expectations is a free quality improvement with zero code change"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "control-eval-methodology-user",
+    "query": "UserPromptSubmit: benchmark Qwen 9B against the expansions generated by Qwen 35B to see which reranker is better",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Control your evaluation methodology before trusting results — if you benchmark model A against model B's artifacts, model B wins by default; always evaluate the full pipeline end-to-end with each model generating its own inputs"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "control-eval-methodology-post-comparison",
+    "query": "PostToolUse:Bash: python tools/bench_models.py --model qwen-9b --corpus eval/corpora/enriched_basic_qwen-35b/ → F2=0.682 (vs 35B F2=0.750 on same corpus)",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Control your evaluation methodology before trusting results — if you benchmark model A against model B's artifacts, model B wins by default; always evaluate the full pipeline end-to-end with each model generating its own inputs"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "control-eval-methodology-neg-e2e-bench",
+    "query": "Bash: python tools/bench_e2e.py --model gemma-e4b --sample 0.2 --seed 42",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "Control your evaluation methodology before trusting results — if you benchmark model A against model B's artifacts, model B wins by default; always evaluate the full pipeline end-to-end with each model generating its own inputs"
+    ],
+    "difficulty": "negative",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "investigate-10x-slowness-post",
+    "query": "PostToolUse:Bash: time curl -s http://localhost:8081/v1/chat/completions -d '{...}' → real 32.4s (expected ~3s for single rerank call)",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "If a tool call or LLM response takes 10x longer than expected, investigate immediately — normalized slowness compounds across thousands of calls into hours of wasted time"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "investigate-10x-slowness-user",
+    "query": "UserPromptSubmit: the benchmark is taking 45 minutes per model now but it used to take 5 minutes, something must have changed",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "If a tool call or LLM response takes 10x longer than expected, investigate immediately — normalized slowness compounds across thousands of calls into hours of wasted time"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "investigate-10x-neg-normal-latency",
+    "query": "PostToolUse:Bash: uv run pytest → 847 passed in 2.41s",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "If a tool call or LLM response takes 10x longer than expected, investigate immediately — normalized slowness compounds across thousands of calls into hours of wasted time"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "tool-fail-read-error-post",
+    "query": "PostToolUse:Bash: uv run mypy src/ → src/cuecard/pipeline.py:142: error: Argument 1 to \"run_pipeline\" has incompatible type \"str | None\"; expected \"str\"  [arg-type]\nFound 1 error in 1 file (checked 18 source files)",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When a tool fails, read the full error and search docs before retrying — blind retries waste time and hide the root cause, while the fix is usually in the error message"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "PostToolUse"
+  },
+  {
+    "id": "tool-fail-read-error-user",
+    "query": "UserPromptSubmit: the build keeps failing with the same error, I've rerun it 3 times already",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When a tool fails, read the full error and search docs before retrying — blind retries waste time and hide the root cause, while the fix is usually in the error message"
+    ],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "UserPromptSubmit"
+  },
+  {
+    "id": "tool-fail-read-error-neg-success",
+    "query": "PostToolUse:Bash: uv run ruff check src/ → All checks passed!",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When a tool fails, read the full error and search docs before retrying — blind retries waste time and hide the root cause, while the fix is usually in the error message"
+    ],
+    "difficulty": "negative",
+    "event": "PostToolUse"
+  }
+]

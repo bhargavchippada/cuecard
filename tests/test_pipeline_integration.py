@@ -364,9 +364,9 @@ class TestRecallParams:
             )
 
         call_kwargs = mock_ret.call_args
-        # LLM modes use wider recall: top_k=20, threshold=0.20
-        assert call_kwargs.kwargs["top_k"] == 20
-        assert call_kwargs.kwargs["threshold"] == 0.20
+        # LLM modes use wider recall: top_k=12, threshold=0.25
+        assert call_kwargs.kwargs["top_k"] == 12
+        assert call_kwargs.kwargs["threshold"] == 0.25
 
     def test_rerank_mode_uses_defaults_without_retrieval_attr(
         self,
@@ -389,8 +389,8 @@ class TestRecallParams:
             )
 
         call_kwargs = mock_ret.call_args
-        assert call_kwargs.kwargs["top_k"] == 20
-        assert call_kwargs.kwargs["threshold"] == 0.20
+        assert call_kwargs.kwargs["top_k"] == 12
+        assert call_kwargs.kwargs["threshold"] == 0.25
 
 
 class TestModeOverride:

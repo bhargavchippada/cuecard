@@ -1,0 +1,115 @@
+# Global rules corpus for evaluation (extracted from ~/.cuecard/rules/global.txt)
+
+Never commit secrets (API keys, tokens, passwords, connection strings) to git — once pushed, secrets are in the history forever and require rotation across all environments
+Always validate user input at system boundaries — unvalidated input propagates corrupted data through the entire system, causing failures far from the source
+Never use eval(), exec(), or shell=True in production code — these execute arbitrary input as code, enabling remote code execution attacks
+Set file permissions to 0o600 for sensitive files (keys, configs, tokens) — world-readable secrets are the most common cloud breach vector
+Require 100% test coverage on all new code before committing — uncovered code is untested code, and untested code breaks silently in production
+Validate every phase against real data before moving to the next — synthetic tests pass when the real thing fails because mocks diverge from production behavior
+Always benchmark a single LLM call before launching a full pipeline run — a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow
+Establish baseline metrics before implementing any improvement — without before/after numbers you cannot distinguish real improvement from noise
+Use uv for all Python package operations, never pip — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution
+Run ruff and mypy before committing Python code — type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug
+Always handle errors explicitly at every level, never silently swallow exceptions — empty catch blocks hide bugs that surface later as mysterious failures with no stack trace
+Always close file handles, database connections, and HTTP sessions after use — unclosed resources leak memory and exhaust connection pools, eventually crashing the service
+Use environment variables for configuration, not hardcoded values — hardcoded config prevents deployment to different environments and leaks secrets into source control
+Never mutate function arguments or shared state — mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere
+Use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless
+Never force-push to main or master branch — force-push overwrites other developers' commits with no recovery path
+Update CLAUDE.md when project structure, architecture, or conventions change — without this, the next session starts with stale context and makes wrong assumptions
+Update README when user-facing behavior, setup steps, or dependencies change — outdated README causes every new contributor to fail on setup
+Add .gitignore entries for generated files and build artifacts — committed build artifacts bloat the repo and cause merge conflicts on every build
+Review PRDs with multiple specialist subagents (architect, security, database, code quality) in parallel — a single reviewer misses entire categories of issues that other specialists catch immediately
+Keep running review rounds until two consecutive rounds produce zero CRITICAL, HIGH, or MEDIUM findings — fixed round counts stop too early when issues cascade, and too late when code is already clean
+Always append Enter after tmux send-keys text — without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message
+Search GitHub for existing implementations and proven patterns before writing anything from scratch — 80% of problems are already solved, and battle-tested code has fewer bugs than fresh code
+Read 2-3 similar files in the codebase before writing new code — introducing a second pattern where one exists creates permanent inconsistency that confuses every future reader
+Fix the pipeline stage that produces bad output, do not patch downstream — downstream patches accumulate into unmaintainable complexity while the root cause keeps generating bad data
+Each pipeline stage must be independently high quality — relying on downstream stages to rescue upstream failures means any stage failure cascades through the entire system
+If a tool call or LLM response takes 10x longer than expected, investigate immediately — normalized slowness compounds across thousands of calls into hours of wasted time
+Use Context7 for library documentation lookups, Exa for broader web research, mgrep for semantic code search — wrong search tool returns irrelevant results and wastes time on false leads
+When a tool fails, read the full error and search docs before retrying — blind retries waste time and hide the root cause, while the fix is usually in the error message
+Keep functions under 50 lines and source files under 800 lines (400 preferred) — large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes
+Never use silent fallbacks — if a pipeline stage falls back to an alternative (backup data source, simpler model, cached result), log it loudly and surface it in the output so the user knows the result is degraded, not just different
+Never trust LLM-generated confidence scores — use evidence counts, ensemble agreement, or historical track record instead, because LLMs produce plausible numbers that are poorly calibrated and create false certainty
+Log every external API call with latency, status code, and response size — without observability on external dependencies, production debugging becomes guesswork and intermittent failures go undetected
+Cache expensive external data with explicit TTL — stale cache is a silent data bug that corrupts downstream analysis, and no cache is a performance bug that makes the system unusably slow
+Design module interfaces as Protocols — concrete implementations can be swapped without refactoring callers, enabling testing with fakes and future provider changes without cascading code changes
+Spike-test risky integrations before building on them — if a dependency is unvalidated (new library, untested API, custom wrapper), spend 2 hours proving it works before designing an architecture around it, because discovering it fails after building 3 layers on top wastes days
+Prefer mature extensible frameworks over building from scratch — if LangGraph, FastAPI, or similar battle-tested projects provide the feature (routing, checkpointing, streaming), use them even if a simpler stdlib approach works today, because refactoring from simple to framework later costs more than starting with the framework
+Reuse popular open-source components for each layer of the system — only build custom code for what doesn't exist, because mature projects provide stability, community support, and extensibility that hand-rolled code cannot match
+Always test with real external data after mocked tests pass — NaN values, missing columns, empty strings, and API format differences only surface with live data, never with synthetic fixtures
+When composing scores from multiple signals, separate direction from magnitude — multiplying direction × confidence double-counts the signal and produces near-zero results for uncertain inputs
+Use a fallback chain with NaN-safe extraction for external data fields — API column names are unstable across providers, and float(NaN) is truthy so `value or default` silently passes NaN through
+Set subagent scope boundaries and terminate stale agents — an unbounded reviewer will find infinite speculative findings in any document, consuming context without improving quality
+Make data models accept defaults for optional data sources — crypto has no income statements, new companies have no history, some providers lack certain fields — hardcoded required fields silently exclude valid use cases
+Audit your ground truth before blaming the model — wrong test expectations and fixture errors are indistinguishable from model failures, and removing wrong expectations is a free quality improvement with zero code change
+Write rules and instructions that explain consequences, not just commands — agents follow rules they understand ("without Enter, text is never submitted") but ignore rules that just say what to do ("always send Enter")
+Control your evaluation methodology before trusting results — if you benchmark model A against model B's artifacts, model B wins by default; always evaluate the full pipeline end-to-end with each model generating its own inputs
+Run convergence reviews (code + security agents in parallel) after each implementation milestone — a single end-of-project review misses bugs that compound across phases, while per-phase reviews catch them when they're cheap to fix
+Commit after each implementation phase completes — atomic tested commits prevent compound debt, enable bisection for regressions, and give reviewers digestible chunks instead of monolithic diffs
+Run convergence reviews on PRD changes too, not just code — a design gap that survives review becomes an implementation bug that survives testing, because every downstream artifact inherits upstream ambiguity
+After each milestone, create a comprehensive test plan before testing — the test plan itself should be reviewed by subagents (architect for coverage gaps, security for attack vectors, code quality for edge cases) because an incomplete test plan produces false confidence
+Follow the three-layer quality gate: PRD + reviews → Implementation + reviews → Test plan + reviews — skipping any layer compounds risk; a reviewed PRD catches design gaps, reviewed code catches bugs, a reviewed test plan catches blind spots that both missed
+Always mock external calls (LLM, APIs, network, subprocesses) in unit tests — real calls make tests slow, flaky, and non-deterministic; a test suite that takes 18 minutes instead of 1 second because background tasks run real LLM calls is a test suite nobody runs
+Never let a test trigger a real background task, HTTP request, or subprocess — mock at the boundary so the test exercises YOUR code, not the external service; if the mock is wrong, that's what integration tests are for
+The full unit test suite must complete in under 5 seconds — if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests because slow tests get skipped and skipped tests hide bugs
+Mark tests that require real services with @pytest.mark.slow or @pytest.mark.e2e and exclude them from the default test run — the default `pytest` invocation must always be fast, deterministic, and offline
+If a single test takes more than 1 second, it is either testing too much or hitting a real service — split it or mock the slow dependency
+Never use time.sleep() in tests to wait for async operations — use mock clocks, manual event triggers, or synchronous test helpers instead, because sleep-based tests are both slow and flaky
+When using llama-server with -np N parallel slots, total context is divided by N — ensure every prompt fits within (total_ctx / np) tokens per slot, because exceeding it returns a cryptic 400 error with no useful diagnostic
+Verify the daemon/fast path exercises the same code paths as the inline/slow path — daemon shortcuts silently bypass features (event masks, affinity filtering, tool_name routing) that work perfectly in direct mode, making the core feature inoperative in production
+When extending a system to support new event types or modes, grep for every call site that dispatches on the old set — hardcoded event lists (e.g. a 2-event frozenset) silently reject new events instead of erroring, and the failure appears as "feature doesn't work" not "event rejected"
+Put reasoning BEFORE decision in LLM JSON output format — when the signal/action field comes first, the model commits to a default (e.g. "hold") before thinking; when reasoning comes first, the model analyzes the data and makes an informed decision, producing dramatically better outputs without needing thinking mode
+Use "reasoning-first" JSON: {"reasoning": "...", "signal": "..."} not {"signal": "...", "reasoning": "..."} — field order in JSON prompts determines whether the model thinks before deciding; this is the cheapest quality upgrade available
+Thinking mode (hidden CoT) produces the most decisive outputs but costs 10x tokens and time — reasoning-first JSON format recovers 80% of the quality at 3x the speed; use thinking for live analysis, reasoning-first for backtesting
+Always include an example JSON object in the prompt — models that see the exact format they should produce have near-zero parse errors; without an example, they improvise with markdown fences and free text
+When LLM JSON parsing fails, retry up to 2 times before falling back — intermittent parse errors from code fences or formatting are recovered by a simple retry; three consecutive failures indicate a prompt problem, not a fluke
+
+# === CODING STANDARDS (from original basic corpus, not yet in global.txt) ===
+Always create a new branch for feature work — working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation
+Document all public API functions with docstrings — undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse
+Enable CSRF protection on all forms and state-changing endpoints — without it, malicious sites can trigger actions on behalf of authenticated users via forged requests
+Extract magic numbers (hardcoded timeouts, limits, sizes, counts) into named constants — unnamed numbers scattered through code are impossible to find, update consistently, or understand the intent of
+No console.log or print debug statements in production code — debug output clutters logs, leaks internal state, and makes real errors harder to find in production monitoring
+Prefer immutable data structures over mutable ones — immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency
+Review all dependencies for known vulnerabilities before adding — a vulnerable dependency in your supply chain is an open door that attackers actively scan for
+Rotate any secrets that may have been exposed — exposed credentials remain valid until rotated, giving attackers a persistent access window that widens with every hour of delay
+Run quality checks before every commit — catching lint, type, and test failures at commit time prevents broken code from reaching shared branches where it blocks the entire team
+Sanitize all HTML output to prevent XSS — unsanitized user content rendered as HTML lets attackers inject scripts that steal session tokens, redirect users, or deface the page
+Use asyncio for I/O-bound operations, not threads — threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread
+Use frozen dataclasses for immutable data — mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts
+Use parameterized queries to prevent SQL injection — string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables via crafted input
+Use type hints on all function signatures — untyped functions force callers to read the implementation to understand inputs and outputs, and prevent static analysis from catching type errors before runtime
+Write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test
+
+# === WORKFLOW & METHODOLOGY (from original workflow corpus) ===
+Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting — state the assessment explicitly with reasoning
+SIMPLE tasks (1-2 files, low risk) can proceed without a plan — just implement and verify
+MEDIUM tasks (3-10 files) require an inline plan, research, tests alongside code, and agent review after implementation
+COMPLEX tasks (10+ files, architecture changes) require a full PRD written to artifacts/ before any implementation begins
+Use the planner agent for complex features, architect agent for system design decisions, tdd-guide agent for new features and bug fixes
+Launch parallel subagents for independent review tasks — never run them sequentially when they can run simultaneously
+Run code review with 3 parallel agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean
+Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling
+Tell delegated agents to report back via tmux send-keys to your session instead of polling for completion
+Monitor agent context usage in tmux — compact when context remaining drops below 67 percent
+Run iterative PRD reviews until a round comes back clean — typical convergence is 4 rounds
+Write tests before implementation following TDD red-green-refactor cycle
+Manually inspect LLM output after every classification wave — read actual output, do not trust confidence scores
+Never trust small sample benchmark results — run the full dataset before drawing conclusions
+Never build infrastructure around unproven techniques — test hypotheses in controlled experiments first, implement only winners
+Use lightweight deterministic approaches first, add LLM stages only when they demonstrably improve quality
+After the parallel LLM phase, retry failed items sequentially one at a time to avoid rate limiting contention
+After every batch LLM response, diff sent IDs against returned IDs to detect silently dropped items
+Use semantic similarity (embeddings or LLMs) for text deduplication — never use lexical or word-based matching
+Save LLM-generated artifacts (pickles, checkpoints) before overwriting — never destroy a baseline during experiments
+Store all predictions, reasoning, and grounding in benchmark results for later reanalysis — not just numeric scores
+Filter pipeline noise at multiple independent stages with configurable thresholds — no single filter point
+When schema or cardinality changes, audit every consumer (views, queries, CLI, exports, tests) before implementing
+Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers
+When running A/B benchmark comparisons on LLM artifacts, use the same pre-built artifact and change only one variable
+Run the original paper code first when reproducing published results — do not theorize about score gaps without evidence
+Score gaps between models on routine tasks usually indicate code or config differences, not model quality differences
+For new libraries or APIs, research alternatives, verify documentation, audit maintenance status, and benchmark before adopting
+After 2 failed fix attempts on the same error, stop and ask the user for guidance instead of spiraling
