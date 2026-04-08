@@ -148,7 +148,7 @@ class TestLoadConfig:
         home.mkdir()
         config = load_config(home_dir=home)
         assert isinstance(config, ResolvedConfig)
-        assert config.top_k == 5
+        assert config.top_k == 7
         assert config.threshold == 0.30
         assert config.dedup_threshold == 0.95
         assert config.query_max_length == 500

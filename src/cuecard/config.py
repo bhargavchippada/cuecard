@@ -36,7 +36,7 @@ _VALID_HOOK_EVENTS: frozenset[str] = (
 # --- Defaults ---
 
 _DEFAULTS: dict[str, Any] = {
-    "top_k": 5,
+    "top_k": 7,
     "threshold": 0.30,
     "dedup_threshold": 0.95,
     "query_max_length": 500,

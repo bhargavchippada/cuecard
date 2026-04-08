@@ -149,7 +149,7 @@ def setup(
             '[embedding]\n'
             f'model = "{model}"\n\n'
             '[retrieval]\n'
-            'top_k = 5\n'
+            'top_k = 7\n'
             'threshold = 0.30\n'
             '# fusion_k = 60                   '
             '# RRF parameter\n'
