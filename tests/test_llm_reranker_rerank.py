@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import secrets
+import socket
 from unittest.mock import MagicMock, patch
 
 import httpx
@@ -260,7 +261,11 @@ class TestRerankLLM:
 
     def test_ssrf_validation(self) -> None:
         candidates = _make_candidates(1)
-        with pytest.raises(ConfigError, match="loopback"):
+        fake = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0))]
+        with (
+            patch("cuecard.llm_utils.socket.getaddrinfo", return_value=fake),
+            pytest.raises(ConfigError, match="loopback"),
+        ):
             rerank_llm(
                 candidates,
                 "test",

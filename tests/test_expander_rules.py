@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import secrets
+import socket
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -40,7 +41,11 @@ class TestExpandRules:
             )
 
     def test_local_validates_endpoint(self) -> None:
-        with pytest.raises(ConfigError, match="loopback"):
+        fake = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0))]
+        with (
+            patch("cuecard.llm_utils.socket.getaddrinfo", return_value=fake),
+            pytest.raises(ConfigError, match="loopback"),
+        ):
             expand_rules(
                 [_make_rule()],
                 backend="local",
@@ -174,7 +179,11 @@ class TestExpandRules:
 
     def test_config_error_propagates(self) -> None:
         """ConfigError from validate_endpoint should propagate, not be caught."""
-        with pytest.raises(ConfigError):
+        fake = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0))]
+        with (
+            patch("cuecard.llm_utils.socket.getaddrinfo", return_value=fake),
+            pytest.raises(ConfigError),
+        ):
             expand_rules(
                 [_make_rule()],
                 backend="local",

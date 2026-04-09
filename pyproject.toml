@@ -43,6 +43,8 @@ packages = ["src/cuecard"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+timeout = 1
+timeout_method = "thread"
 markers = [
     "slow: marks tests that use real embedding model (deselect with '-m \"not slow\"')",
 ]
@@ -87,6 +89,7 @@ dev = [
     "mypy>=1.20.0",
     "pytest>=9.0.2",
     "pytest-cov>=7.1.0",
+    "pytest-timeout>=2.4.0",
     "ruff>=0.15.8",
     "types-tqdm>=4.67.3.20260402",
 ]

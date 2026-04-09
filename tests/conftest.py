@@ -2,10 +2,52 @@
 
 from __future__ import annotations
 
+import socket
+from typing import Any
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 
 from cuecard.models import Index, Provenance, Rule, SourceMeta
+
+# ---------------------------------------------------------------------------
+# Network guard — block all real outbound connections
+# ---------------------------------------------------------------------------
+
+_ALLOWED_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
+
+_real_create_connection = socket.create_connection
+_real_getaddrinfo = socket.getaddrinfo
+
+
+def _guarded_create_connection(
+    address: tuple[str, int], *args: Any, **kwargs: Any,
+) -> socket.socket:
+    host = str(address[0])
+    if host not in _ALLOWED_HOSTS:
+        msg = f"Test attempted real network connection to {host!r}"
+        raise RuntimeError(msg)
+    return _real_create_connection(address, *args, **kwargs)
+
+
+def _guarded_getaddrinfo(
+    host: str | None, *args: Any, **kwargs: Any,
+) -> list[Any]:
+    if host is not None and str(host) not in _ALLOWED_HOSTS:
+        msg = f"Test attempted DNS lookup for {host!r}"
+        raise RuntimeError(msg)
+    return _real_getaddrinfo(host, *args, **kwargs)
+
+
+@pytest.fixture(autouse=True)
+def _block_network() -> Any:  # noqa: PT004
+    """Prevent tests from making real outbound network connections."""
+    with (
+        patch("socket.create_connection", side_effect=_guarded_create_connection),
+        patch("socket.getaddrinfo", side_effect=_guarded_getaddrinfo),
+    ):
+        yield
 
 
 @pytest.fixture

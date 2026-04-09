@@ -5,8 +5,6 @@ from __future__ import annotations
 import http.client
 import json
 import threading
-from collections.abc import Iterator
-from http.server import HTTPServer
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
@@ -31,6 +29,8 @@ from cuecard.serve import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from http.server import HTTPServer
     from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -115,7 +115,9 @@ def _start_test_server(
 
 class TestHTTPIntegration:
     @pytest.fixture(autouse=True, scope="class")
-    def _server(self, tmp_path_factory: pytest.TempPathFactory) -> Iterator[tuple[HTTPServer, int]]:
+    def _server(
+        self, tmp_path_factory: pytest.TempPathFactory,
+    ) -> Iterator[tuple[HTTPServer, int]]:
         """Shared server for all HTTP integration tests."""
         tmp_path = tmp_path_factory.mktemp("serve_http")
         server, port = _start_test_server(tmp_path)
