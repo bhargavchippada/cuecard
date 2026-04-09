@@ -209,7 +209,7 @@ def _parse_affinity_response(
     reasoning = ""
     raw_reasoning = parsed.get("reasoning")
     if isinstance(raw_reasoning, str):
-        reasoning = raw_reasoning.strip()[:500]
+        reasoning = scrub_secrets(raw_reasoning.strip()[:500])
 
     # Parse category (singular or list) and map to events
     raw_category = parsed.get("category")

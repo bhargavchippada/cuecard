@@ -21,6 +21,7 @@ from cuecard.models import (
     MAX_EXPANSION_LENGTH,
     MAX_EXPANSIONS_PER_RULE,
     AffinityIndex,
+    AffinitySource,
     Index,
     Provenance,
     Rule,
@@ -198,18 +199,24 @@ def load_rules_json(
         if isinstance(raw_aff, dict):
             has_affinity = True
             text_hash = hashlib.sha256(text.encode()).hexdigest()
+            from cuecard.models import KNOWN_HOOK_EVENTS
             aff_events = frozenset(
-                e for e in raw_aff.get("events", []) if isinstance(e, str)
+                e for e in raw_aff.get("events", [])
+                if isinstance(e, str) and e in KNOWN_HOOK_EVENTS
             )
             aff_tools = frozenset(
-                t for t in raw_aff.get("tools", []) if isinstance(t, str)
+                t[:50] for t in raw_aff.get("tools", [])
+                if isinstance(t, str) and t.strip() and len(t) <= 50
             )
             raw_source = raw_aff.get("source", "inferred")
             _valid_sources = ("inferred", "explicit", "explicit+inferred", "default")
-            aff_source = raw_source if raw_source in _valid_sources else "inferred"
+            aff_source: AffinitySource = (
+                raw_source if raw_source in _valid_sources else "inferred"
+            )
             raw_reasoning = raw_aff.get("reasoning", "")
             aff_reasoning = (
-                raw_reasoning.strip()[:500] if isinstance(raw_reasoning, str) else ""
+                scrub_secrets(raw_reasoning.strip()[:500])
+                if isinstance(raw_reasoning, str) else ""
             )
             affinities.append((text_hash, RuleAffinity(
                 events=aff_events,

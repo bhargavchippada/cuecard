@@ -308,6 +308,11 @@ def main() -> None:
         print(f"Model not found: {args.model_path}")
         sys.exit(1)
 
+    import re
+    if not re.match(r"^[a-zA-Z0-9_\-]+$", args.label):
+        print(f"Invalid label: {args.label!r} — only alphanumeric, dash, underscore")
+        sys.exit(1)
+
     os.environ.setdefault("CUECARD_LLM_ENDPOINT", ENDPOINT)
 
     proc = None
