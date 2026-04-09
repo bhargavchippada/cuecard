@@ -180,6 +180,11 @@ def merge_indexes(*indexes: Index) -> Index:
     # If ANY index lacks bm25_corpus, discard BM25 for the merged result
     # (avoids misalignment between rule_map and bm25_corpus lengths)
     all_have_bm25 = all(idx.bm25_corpus is not None for idx in indexes)
+    if not all_have_bm25:
+        logger.warning(
+            "BM25 corpus missing in some indexes — sparse retrieval"
+            " disabled for merged result",
+        )
 
     seen_texts: set[str] = set()
     keep_rules: list[Rule] = []

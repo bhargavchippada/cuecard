@@ -173,88 +173,103 @@ def _detect_event(data: dict[str, object]) -> str:
     return raw_event if raw_event in KNOWN_HOOK_EVENTS else "PreToolUse"
 
 
+def _run_pipeline_path(
+    data: dict[str, object],
+    event: str,
+    query: str,
+    tool_name: str,
+) -> dict[str, object]:
+    """Load config, run pipeline, return enriched output dict."""
+    start = time.monotonic()
+
+    config = load_config(project_dir=Path.cwd())
+
+    from fastembed import TextEmbedding
+
+    model = TextEmbedding(model_name=config.model_name)
+    loaded = load_or_build(config, model)  # type: ignore[arg-type]
+
+    # Build hook output — separate from input data
+    raw_hook_output = data.get("hookSpecificOutput")
+    hook_output: dict[str, object] = (
+        dict(raw_hook_output)
+        if isinstance(raw_hook_output, dict) else {}
+    )
+    hook_output["hookEventName"] = event
+    if event == "PreToolUse":
+        hook_output["permissionDecision"] = "allow"
+
+    results: Sequence[RankedResult] = []
+    index = loaded.index if loaded is not None else None
+    affinity = loaded.affinity if loaded is not None else None
+
+    if index is not None and index.size > 0:
+        from cuecard.pipeline import run_pipeline
+
+        label = _EVENT_LABELS.get(event, _LABEL_PREVENT)
+        pipeline_result = run_pipeline(
+            query, index, config,
+            embedding_model=model, mode=config.pipeline.mode,
+            event=event, tool_name=tool_name,
+            affinity=affinity,
+        )
+        results = pipeline_result.results
+        if results:
+            hook_output["additionalContext"] = format_rules(
+                results, label=label,
+            )
+
+    latency_ms = (time.monotonic() - start) * 1000
+    if index is not None:
+        log_retrieval(
+            event=event,
+            tool_name=tool_name,
+            query=query,
+            results=list(results),
+            total_rules=index.size if index else 0,
+            index_rebuilt=False,
+            latency_ms=latency_ms,
+            model=config.model_name,
+            redact=config.redact,
+            max_query_length=config.query_max_length,
+            max_log_size_mb=config.max_log_size_mb,
+            verbose=config.verbose,
+        )
+
+    return {**data, "hookSpecificOutput": hook_output}
+
+
 def main() -> None:
     """Read hook JSON from stdin, retrieve rules, inject into context."""
-    data: dict[str, object] = {}
+    import logging as _logging
+
+    _logger = _logging.getLogger(__name__)
+
+    output: dict[str, object] = {}
 
     try:
         raw = sys.stdin.read(_MAX_STDIN)
-        data = json.loads(raw)
+        output = json.loads(raw)
 
         # Fast path: try daemon first
-        daemon_result = _try_daemon(data)
+        daemon_result = _try_daemon(output)
         if daemon_result is not None:
             print(json.dumps(daemon_result))
             return
 
         # Detect event and dispatch to handler
-        event = _detect_event(data)
+        event = _detect_event(output)
         handler = _EVENT_HANDLERS.get(event, _handle_pre_tool_use)
-        query, tool_name, event = handler(data)
+        query, tool_name, event = handler(output)
 
-        start = time.monotonic()
+        # Slow path: full pipeline (output only updated on success)
+        output = _run_pipeline_path(output, event, query, tool_name)
 
-        config = load_config(project_dir=Path.cwd())
-
-        from fastembed import TextEmbedding
-
-        model = TextEmbedding(model_name=config.model_name)
-        loaded = load_or_build(config, model)  # type: ignore[arg-type]
-
-        # Always set hook output fields (even if no rules indexed)
-        raw_hook_output = data.get("hookSpecificOutput")
-        hook_output: dict[str, object] = (
-            dict(raw_hook_output)
-            if isinstance(raw_hook_output, dict) else {}
-        )
-        hook_output["hookEventName"] = event
-        if event == "PreToolUse":
-            hook_output["permissionDecision"] = "allow"
-        data = {**data, "hookSpecificOutput": hook_output}
-
-        results: Sequence[RankedResult] = []
-        index = loaded.index if loaded is not None else None
-        affinity = loaded.affinity if loaded is not None else None
-
-        if index is not None and index.size > 0:
-            pipeline_mode = config.pipeline.mode
-
-            from cuecard.pipeline import run_pipeline
-
-            label = _EVENT_LABELS.get(event, _LABEL_PREVENT)
-
-            pipeline_result = run_pipeline(
-                query, index, config,
-                embedding_model=model, mode=pipeline_mode,
-                event=event, tool_name=tool_name,
-                affinity=affinity,
-            )
-            results = pipeline_result.results
-
-            if results:
-                context = format_rules(results, label=label)
-                hook_output["additionalContext"] = context
-
-        latency_ms = (time.monotonic() - start) * 1000
-        if index is not None:
-            log_retrieval(
-                event=event,
-                tool_name=tool_name,
-                query=query,
-                results=list(results),
-                total_rules=index.size if index else 0,
-                index_rebuilt=False,
-                latency_ms=latency_ms,
-                model=config.model_name,
-                redact=config.redact,
-                max_query_length=config.query_max_length,
-                max_log_size_mb=config.max_log_size_mb,
-                verbose=config.verbose,
-            )
     except Exception as exc:
+        _logger.exception("Hook failed")
         print(f"[cuecard] Error: {exc}", file=sys.stderr)
 
-    print(json.dumps(data))
+    print(json.dumps(output))
 
 
 if __name__ == "__main__":

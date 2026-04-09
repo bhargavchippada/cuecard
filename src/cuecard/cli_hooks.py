@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+import os
+import tempfile
 from pathlib import Path
 from typing import Annotated
 
@@ -25,20 +28,18 @@ def _claude_settings_path() -> Path:
 
 def _load_claude_settings(path: Path) -> dict[str, object]:
     """Load Claude Code settings.json, returning empty dict if missing."""
-    import json
-
     if not path.exists():
         return {}
-    result: dict[str, object] = json.loads(path.read_text())
+    try:
+        result: dict[str, object] = json.loads(path.read_text())
+    except json.JSONDecodeError as exc:
+        msg = f"Malformed settings.json at {path}: {exc}"
+        raise typer.Exit(1) from ValueError(msg)
     return result
 
 
 def _save_claude_settings(path: Path, data: dict[str, object]) -> None:
     """Write Claude Code settings.json atomically."""
-    import json
-    import os
-    import tempfile
-
     from cuecard.security import ensure_directory
 
     ensure_directory(path.parent)

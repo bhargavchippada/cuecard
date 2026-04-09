@@ -86,6 +86,7 @@ class _ConfigWithRetrieval:
     sparse_enabled: bool = True
     fusion_k: int = 60
     llm_candidates: int = 12
+    llm_recall_threshold: float = 0.25
     retrieval: _FakeRetrieval = _FakeRetrieval()
 
 

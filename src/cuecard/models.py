@@ -203,6 +203,9 @@ class ResolvedConfig:
     expansion_dedup_threshold: float = field(
         default=0.80, metadata={"min": 0.0, "max": 1.0},
     )
+    llm_recall_threshold: float = field(
+        default=0.25, metadata={"min": 0.0, "max": 1.0},
+    )
     affinity_mode: str = "infer"
 
 

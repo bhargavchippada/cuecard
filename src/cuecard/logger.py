@@ -151,10 +151,10 @@ def rotate_log(log_path: Path, max_size_mb: int) -> None:
     Uses fcntl.flock to prevent concurrent writers from losing entries
     during the rename gap.
     """
-    if not log_path.exists():
+    try:
+        size_mb = log_path.stat().st_size / (1024 * 1024)
+    except FileNotFoundError:
         return
-
-    size_mb = log_path.stat().st_size / (1024 * 1024)
     if size_mb <= max_size_mb:
         return
 
@@ -166,9 +166,10 @@ def rotate_log(log_path: Path, max_size_mb: int) -> None:
         try:
             # Re-check after acquiring lock — another process may have
             # already rotated.
-            if not log_path.exists():
+            try:
+                size_mb = log_path.stat().st_size / (1024 * 1024)
+            except FileNotFoundError:
                 return
-            size_mb = log_path.stat().st_size / (1024 * 1024)
             if size_mb <= max_size_mb:
                 return
 

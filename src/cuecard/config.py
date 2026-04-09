@@ -133,7 +133,8 @@ def _extract_flat(raw: dict[str, Any]) -> dict[str, Any]:
     retrieval = raw.get("retrieval", {})
     for key in (
         "top_k", "threshold", "dedup_threshold",
-        "fusion_k", "llm_candidates", "sparse_enabled", "affinity_mode",
+        "fusion_k", "llm_candidates", "sparse_enabled",
+        "affinity_mode", "llm_recall_threshold",
     ):
         if key in retrieval:
             flat[key] = retrieval[key]

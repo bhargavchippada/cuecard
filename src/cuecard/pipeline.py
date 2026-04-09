@@ -119,12 +119,7 @@ def run_pipeline(
 
 def _resolve_mode(mode: str | None, config: ResolvedConfig) -> str:
     """Determine effective pipeline mode from explicit override or config."""
-    if mode is not None:
-        effective = mode
-    elif hasattr(config, "pipeline") and hasattr(config.pipeline, "mode"):
-        effective = config.pipeline.mode
-    else:
-        effective = "embedding"
+    effective = mode if mode is not None else config.pipeline.mode
 
     if effective not in VALID_MODES:
         capped = effective[:50] if isinstance(effective, str) else str(effective)[:50]
@@ -141,7 +136,7 @@ def _retrieval_params(
     if effective_mode == "embedding":
         return config.top_k, config.threshold
     # LLM modes use wider recall to give the reranker more candidates
-    return config.llm_candidates, 0.25
+    return config.llm_candidates, config.llm_recall_threshold
 
 
 def _run_sparse(
@@ -320,13 +315,13 @@ def _run_llm_stage(
     try:
         from cuecard import llm_reranker
 
-        llm_kwargs: dict[str, object] = {"backend": backend}
-        if hasattr(config, "pipeline"):
-            llm_kwargs["endpoint"] = config.pipeline.local_endpoint
-            llm_kwargs["haiku_model"] = config.pipeline.haiku_model
-            llm_kwargs["thinking"] = config.pipeline.thinking
         results = llm_reranker.rerank_llm(
-            candidates, query, **llm_kwargs,  # type: ignore[arg-type]
+            candidates,
+            query,
+            backend=backend,
+            endpoint=config.pipeline.local_endpoint,
+            haiku_model=config.pipeline.haiku_model,
+            thinking=config.pipeline.thinking,
         )
         latency_ms = (time.monotonic() - t0) * 1000.0
         return results, StageTrace(

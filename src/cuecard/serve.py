@@ -9,6 +9,7 @@ to ~50ms by avoiding repeated model loads.
 from __future__ import annotations
 
 import contextlib
+import http.client
 import json
 import logging
 import os
@@ -411,15 +412,11 @@ def query_daemon(
     unreachable or times out.  Timeout defaults to 5s for LLM modes
     (llm-local/llm-haiku) and 0.5s for embedding mode.
     """
-    import http.client
-
     if timeout is None:
         from cuecard.config import load_config
 
         cfg = load_config(project_dir=Path.cwd())
-        mode = getattr(
-            getattr(cfg, "pipeline", None), "mode", "embedding",
-        )
+        mode = cfg.pipeline.mode
         timeout = 5.0 if mode in {"llm-local", "llm-haiku"} else 0.5
 
     body = json.dumps(payload).encode()

@@ -386,6 +386,44 @@ def _semantic_dedup(
     return [expansions[i] for i in keep]
 
 
+def _expand_single_rule(
+    rule: Rule,
+    backend: str,
+    endpoint: str,
+    haiku_model: str,
+    event_type: str,
+    dedup_threshold: float,
+) -> tuple[Rule, int]:
+    """Generate expansions for a single rule. Returns (rule, expansion_count)."""
+    nonce = secrets.token_hex(6)
+    system_prompt, user_prompt = _build_expansion_prompt(
+        rule.text, nonce, event_type=event_type,
+    )
+
+    try:
+        if backend == "local":
+            raw = call_local(
+                system_prompt, user_prompt, endpoint, False,
+                temperature=0.7,
+            )
+        else:
+            raw = call_haiku(system_prompt, user_prompt, haiku_model)
+
+        expansions = _parse_expansion_response(raw)
+        expansions = _semantic_dedup(expansions, threshold=dedup_threshold)
+        return replace(rule, expansions=tuple(expansions)), len(expansions)
+
+    except (ConfigError, ValueError):
+        raise
+    except Exception as exc:
+        logger.warning(
+            "Expansion failed for rule: %s; keeping original. Error: %s",
+            scrub_secrets(rule.text[:80]),
+            type(exc).__name__,
+        )
+        return rule, 0
+
+
 def expand_rules(
     rules: list[Rule],
     backend: str,
@@ -466,39 +504,12 @@ def expand_rules(
             result.append(rule)
             continue
 
-        nonce = secrets.token_hex(6)
-        system_prompt, user_prompt = _build_expansion_prompt(
-            rule.text, nonce, event_type=event_type,
+        expanded, count = _expand_single_rule(
+            rule, backend, endpoint, haiku_model,
+            event_type, dedup_threshold,
         )
-
-        try:
-            if backend == "local":
-                raw = call_local(
-                    system_prompt,
-                    user_prompt,
-                    endpoint,
-                    False,
-                    temperature=0.7,
-                )
-            else:
-                raw = call_haiku(
-                    system_prompt, user_prompt, haiku_model,
-                )
-
-            expansions = _parse_expansion_response(raw)
-            expansions = _semantic_dedup(expansions, threshold=dedup_threshold)
-            total_expansions += len(expansions)
-            result.append(replace(rule, expansions=tuple(expansions)))
-
-        except (ConfigError, ValueError):
-            raise
-        except Exception as exc:
-            logger.warning(
-                "Expansion failed for rule: %s; keeping original. Error: %s",
-                scrub_secrets(rule.text[:80]),
-                type(exc).__name__,
-            )
-            result.append(rule)
+        total_expansions += count
+        result.append(expanded)
 
         if on_progress is not None:
             on_progress(_ExpandProgress(

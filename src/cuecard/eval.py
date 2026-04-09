@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import logging
-import math
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -15,12 +14,52 @@ if TYPE_CHECKING:
 
     from cuecard.models import AffinityIndex, Index, RankedResult, Rule
 
-import numpy as np
+# Re-export metric functions so existing callers (tests, CLI, bench) keep working
+from cuecard.eval_metrics import (  # noqa: F401
+    _mean,
+    _percentile,
+    anti_precision,
+    context_waste_ratio,
+    mrr,
+    ndcg_at_k,
+    noise_ratio,
+    precision_at_k,
+    quality_score,
+    recall_at_k,
+)
 
+# Re-export report functions so existing callers keep working
+from cuecard.eval_report import (  # noqa: F401
+    _compute_tier_summaries,
+    evaluate_per_event,
+    format_eval_report,
+    format_per_event_report,
+)
 from cuecard.indexer import build_index
 from cuecard.parser import parse_rules
 
 logger = logging.getLogger(__name__)
+
+__all__ = [
+    "EvalSummary",
+    "Fixture",
+    "FixtureResult",
+    "PerEventMetrics",
+    "TierSummary",
+    "anti_precision",
+    "context_waste_ratio",
+    "evaluate_per_event",
+    "format_eval_report",
+    "format_per_event_report",
+    "load_fixtures",
+    "mrr",
+    "ndcg_at_k",
+    "noise_ratio",
+    "precision_at_k",
+    "quality_score",
+    "recall_at_k",
+    "run_eval",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -117,146 +156,6 @@ class PerEventMetrics:
 
 
 # ---------------------------------------------------------------------------
-# Metric functions
-# ---------------------------------------------------------------------------
-
-
-def precision_at_k(retrieved: list[str], relevant: set[str]) -> float:
-    """Fraction of retrieved items that are relevant.
-
-    Returns 0.0 if retrieved is empty.
-    """
-    if not retrieved:
-        return 0.0
-    hits = sum(1 for r in retrieved if r in relevant)
-    return hits / len(retrieved)
-
-
-def recall_at_k(retrieved: list[str], relevant: set[str]) -> float:
-    """Fraction of relevant items that appear in retrieved.
-
-    Returns 0.0 if relevant is empty.
-    """
-    if not relevant:
-        return 0.0
-    hits = sum(1 for r in retrieved if r in relevant)
-    return hits / len(relevant)
-
-
-def mrr(retrieved: list[str], relevant: set[str]) -> float:
-    """Mean Reciprocal Rank: 1/rank of the first relevant result.
-
-    Returns 0.0 if no relevant result is found.
-    """
-    for i, item in enumerate(retrieved, start=1):
-        if item in relevant:
-            return 1.0 / i
-    return 0.0
-
-
-def ndcg_at_k(retrieved: list[str], relevant: set[str]) -> float:
-    """Normalized Discounted Cumulative Gain with binary relevance.
-
-    Uses DCG formula: sum(rel_i / log2(i+1)) for i=1..k.
-    Returns 0.0 if no relevant items exist.
-    """
-    if not relevant or not retrieved:
-        return 0.0
-
-    # DCG of the actual ranking
-    dcg = 0.0
-    for i, item in enumerate(retrieved, start=1):
-        if item in relevant:
-            dcg += 1.0 / math.log2(i + 1)
-
-    # Ideal DCG: all relevant items ranked first
-    n_relevant_in_k = min(len(relevant), len(retrieved))
-    idcg = 0.0
-    for i in range(1, n_relevant_in_k + 1):
-        idcg += 1.0 / math.log2(i + 1)
-
-    # idcg > 0 guaranteed: we early-return when relevant or retrieved is empty
-    return dcg / idcg
-
-
-def anti_precision(retrieved: list[str], anti_relevant: set[str]) -> float:
-    """Fraction of retrieved items that are in the anti-relevant set.
-
-    Desired value is always 0.0. Returns 0.0 if retrieved is empty.
-    """
-    if not retrieved:
-        return 0.0
-    hits = sum(1 for r in retrieved if r in anti_relevant)
-    return hits / len(retrieved)
-
-
-def noise_ratio(retrieved: list[str], relevant: set[str]) -> float:
-    """Fraction of retrieved items that are NOT relevant.
-
-    Returns 0.0 if retrieved is empty.
-    """
-    if not retrieved:
-        return 0.0
-    irrelevant = sum(1 for r in retrieved if r not in relevant)
-    return irrelevant / len(retrieved)
-
-
-def context_waste_ratio(retrieved: list[str], relevant: set[str]) -> float:
-    """Char-weighted waste: fraction of injected chars that are irrelevant.
-
-    Returns 0.0 if retrieved is empty or total chars is 0.
-    """
-    if not retrieved:
-        return 0.0
-    total_chars = sum(len(r) for r in retrieved)
-    if total_chars == 0:
-        return 0.0
-    waste_chars = sum(len(r) for r in retrieved if r not in relevant)
-    return waste_chars / total_chars
-
-
-def quality_score(
-    retrieved: list[str],
-    relevant: set[str],
-    is_negative: bool,
-) -> float:
-    """Single quality score per fixture: F2 with correct-abstention convention.
-
-    Uses F-beta with beta=2 (recall-weighted), extended with the
-    empty-set convention for retrieval systems with negative queries.
-
-    For positive fixtures (has should_match):
-        F2 = 5 * P * R / (4P + R), where:
-          P = precision (hits / retrieved)
-          R = recall (hits / relevant)
-        Returns 0.0 if both P and R are 0.
-
-    For negative fixtures (no should_match):
-        1.0 if silent (correct abstention), 0.0 otherwise.
-        This is the standard empty-set convention — correct silence
-        is a perfect retrieval outcome.
-
-    The F2 formulation naturally penalizes noise (low precision) while
-    weighting recall 4x higher than precision. It handles partial
-    matches and noisy retrieval in a single principled number.
-    """
-    if is_negative:
-        return 1.0 if not retrieved else 0.0
-
-    if not relevant:
-        return 1.0 if not retrieved else 0.0
-
-    p = precision_at_k(retrieved, relevant)
-    r = recall_at_k(retrieved, relevant)
-
-    if p == 0.0 and r == 0.0:
-        return 0.0
-
-    # F2: beta=2 → (1 + 4) * P * R / (4 * P + R)
-    return 5.0 * p * r / (4.0 * p + r)
-
-
-# ---------------------------------------------------------------------------
 # Fixture loading
 # ---------------------------------------------------------------------------
 
@@ -336,12 +235,6 @@ def load_fixtures(path: str) -> list[Fixture]:
 # ---------------------------------------------------------------------------
 
 
-def _percentile(values: list[float], pct: float) -> float:
-    """Compute a percentile from a non-empty list of values."""
-    arr = np.array(sorted(values), dtype=np.float64)
-    return float(np.percentile(arr, pct))
-
-
 @dataclass(frozen=True)
 class _EvalConfig:
     """Minimal config stub for pipeline calls from eval harness."""
@@ -406,23 +299,7 @@ def run_eval(
     """
     # Stratified sampling: preserve tier distribution
     if sample_ratio < 1.0:
-        import random
-
-        rng = random.Random(seed)
-        by_tier: dict[str, list[Fixture]] = {}
-        for fx in fixtures:
-            by_tier.setdefault(fx.difficulty, []).append(fx)
-        sampled: list[Fixture] = []
-        for tier_fixtures in by_tier.values():
-            n = max(1, int(len(tier_fixtures) * sample_ratio))
-            sampled.extend(rng.sample(tier_fixtures, min(n, len(tier_fixtures))))
-        rng.shuffle(sampled)
-        fixtures = sampled
-        total = sum(len(v) for v in by_tier.values())
-        logger.info(
-            "Sampled %d/%d fixtures (ratio=%.2f)",
-            len(sampled), total, sample_ratio,
-        )
+        fixtures = _sample_fixtures(fixtures, sample_ratio, seed)
 
     results: list[FixtureResult] = []
 
@@ -508,42 +385,89 @@ def run_eval(
     use_parallel = effective_mode != "embedding" and len(fixtures) > 1
 
     if use_parallel:
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-
-        max_workers = 5  # match llama-server -np 5
-
-        try:
-            from tqdm import tqdm
-            pbar: Any = tqdm(
-                total=len(fixtures), desc=effective_mode, unit="fix",
-            )
-        except ImportError:
-            pbar = None
-
-        with ThreadPoolExecutor(max_workers=max_workers) as pool:
-            futures = {
-                pool.submit(_eval_one, fx): fx for fx in fixtures
-            }
-            for future in as_completed(futures):
-                results.append(future.result())
-                if pbar is not None:
-                    pbar.update(1)
-
-        if pbar is not None:
-            pbar.close()
+        _run_parallel(fixtures, _eval_one, results, effective_mode)
     else:
-        try:
-            from tqdm import tqdm
-            fixture_iter: Iterable[Fixture] = tqdm(
-                fixtures, desc=effective_mode, unit="fix",
-            )
-        except ImportError:
-            fixture_iter = fixtures
+        _run_sequential(fixtures, _eval_one, results, effective_mode)
 
-        for fixture in fixture_iter:
-            results.append(_eval_one(fixture))
+    return _build_summary(results)
 
-    latencies = [r.latency_ms for r in results]
+
+def _sample_fixtures(
+    fixtures: list[Fixture], sample_ratio: float, seed: int,
+) -> list[Fixture]:
+    """Stratified sampling: preserve tier distribution."""
+    import random
+
+    rng = random.Random(seed)
+    by_tier: dict[str, list[Fixture]] = {}
+    for fx in fixtures:
+        by_tier.setdefault(fx.difficulty, []).append(fx)
+    sampled: list[Fixture] = []
+    for tier_fixtures in by_tier.values():
+        n = max(1, int(len(tier_fixtures) * sample_ratio))
+        sampled.extend(rng.sample(tier_fixtures, min(n, len(tier_fixtures))))
+    rng.shuffle(sampled)
+    total = sum(len(v) for v in by_tier.values())
+    logger.info(
+        "Sampled %d/%d fixtures (ratio=%.2f)",
+        len(sampled), total, sample_ratio,
+    )
+    return sampled
+
+
+def _run_parallel(
+    fixtures: list[Fixture],
+    eval_one: Any,
+    results: list[FixtureResult],
+    mode_label: str,
+) -> None:
+    """Run eval in parallel using ThreadPoolExecutor."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    max_workers = 5  # match llama-server -np 5
+
+    try:
+        from tqdm import tqdm
+        pbar: Any = tqdm(
+            total=len(fixtures), desc=mode_label, unit="fix",
+        )
+    except ImportError:
+        pbar = None
+
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = {
+            pool.submit(eval_one, fx): fx for fx in fixtures
+        }
+        for future in as_completed(futures):
+            results.append(future.result())
+            if pbar is not None:
+                pbar.update(1)
+
+    if pbar is not None:
+        pbar.close()
+
+
+def _run_sequential(
+    fixtures: list[Fixture],
+    eval_one: Any,
+    results: list[FixtureResult],
+    mode_label: str,
+) -> None:
+    """Run eval sequentially with optional progress bar."""
+    try:
+        from tqdm import tqdm
+        fixture_iter: Iterable[Fixture] = tqdm(
+            fixtures, desc=mode_label, unit="fix",
+        )
+    except ImportError:
+        fixture_iter = fixtures
+
+    for fixture in fixture_iter:
+        results.append(eval_one(fixture))
+
+
+def _build_summary(results: list[FixtureResult]) -> EvalSummary:
+    """Aggregate per-fixture results into an EvalSummary."""
     fixture_count = len(results)
 
     if fixture_count == 0:
@@ -568,6 +492,7 @@ def run_eval(
             per_tier=(),
         )
 
+    latencies = [r.latency_ms for r in results]
     negatives = [r for r in results if r.difficulty == "negative"]
     positives = [r for r in results if r.difficulty != "negative"]
     neg_silent = sum(1 for r in negatives if r.retrieved_count == 0)
@@ -575,8 +500,6 @@ def run_eval(
         neg_silent / len(negatives) if negatives else 1.0
     )
 
-    # positive_recall / positive_quality: averaged only over positive
-    # fixtures (negatives have their own metric — negative_silence_rate)
     pos_recall = (
         _mean(r.recall_at_k for r in positives)
         if positives
@@ -614,290 +537,3 @@ def run_eval(
         per_fixture=tuple(results),
         per_tier=tuple(tier_summaries),
     )
-
-
-def _mean(values: Iterable[float]) -> float:
-    """Compute mean from an iterable. Returns 0.0 for empty input."""
-    items = list(values)
-    return sum(items) / len(items) if items else 0.0
-
-
-_TIER_ORDER = ("easy", "medium", "hard", "negative")
-
-
-def _compute_tier_summaries(
-    results: list[FixtureResult],
-) -> list[TierSummary]:
-    """Group results by difficulty tier and compute per-tier metrics."""
-    from collections import defaultdict
-
-    by_tier: dict[str, list[FixtureResult]] = defaultdict(list)
-    for r in results:
-        by_tier[r.difficulty].append(r)
-
-    summaries: list[TierSummary] = []
-    for tier in _TIER_ORDER:
-        tier_results = by_tier.get(tier, [])
-        if not tier_results:
-            continue
-        summaries.append(
-            _make_tier_summary(tier, tier_results),
-        )
-
-    # Include any tiers not in _TIER_ORDER (e.g., "unknown")
-    for tier in sorted(by_tier.keys()):
-        if tier not in _TIER_ORDER:
-            summaries.append(
-                _make_tier_summary(tier, by_tier[tier]),
-            )
-
-    return summaries
-
-
-def _make_tier_summary(
-    tier: str, tier_results: list[FixtureResult],
-) -> TierSummary:
-    """Build a TierSummary for a single tier."""
-    n = len(tier_results)
-    neg_silent = sum(
-        1 for r in tier_results if r.retrieved_count == 0
-    )
-    return TierSummary(
-        tier=tier,
-        count=n,
-        mean_precision=_mean(
-            r.precision_at_k for r in tier_results
-        ),
-        mean_recall=_mean(
-            r.recall_at_k for r in tier_results
-        ),
-        mean_mrr=_mean(r.mrr for r in tier_results),
-        mean_noise_ratio=_mean(
-            r.noise_ratio for r in tier_results
-        ),
-        mean_context_waste_ratio=_mean(
-            r.context_waste_ratio for r in tier_results
-        ),
-        silence_rate=neg_silent / n,
-        mean_retrieved_count=_mean(
-            float(r.retrieved_count) for r in tier_results
-        ),
-        mean_quality=_mean(
-            r.quality_score for r in tier_results
-        ),
-    )
-
-
-# ---------------------------------------------------------------------------
-# Per-event metrics
-# ---------------------------------------------------------------------------
-
-_EVENT_ORDER = (
-    "PreToolUse", "PostToolUse", "UserPromptSubmit",
-    "SubagentStart", "Stop",
-)
-
-
-def evaluate_per_event(
-    results: list[FixtureResult],
-    fixtures: list[Fixture],
-) -> list[PerEventMetrics]:
-    """Group fixtures by event and compute quality metrics per group.
-
-    Fixtures without an event field are treated as PreToolUse (backwards compat).
-    Returns metrics sorted by _EVENT_ORDER, then alphabetically for unknowns.
-    """
-    from collections import defaultdict
-
-    # Build fixture lookup: id -> Fixture
-    fixture_by_id: dict[str, Fixture] = {f.id: f for f in fixtures}
-
-    # Group results by event
-    by_event: dict[str, list[tuple[FixtureResult, Fixture]]] = defaultdict(list)
-    for r in results:
-        fx = fixture_by_id.get(r.fixture_id)
-        event = fx.event if fx is not None else _DEFAULT_EVENT
-        by_event[event].append((r, fx or Fixture(
-            id=r.fixture_id, query=r.query, corpus="",
-            should_match=(), should_not_match=(),
-            difficulty=r.difficulty, event=event,
-        )))
-
-    metrics: list[PerEventMetrics] = []
-    # Process in canonical order first
-    for event in _EVENT_ORDER:
-        if event in by_event:
-            metrics.append(_make_event_metrics(event, by_event[event]))
-    # Then any unknown events alphabetically
-    for event in sorted(by_event.keys()):
-        if event not in _EVENT_ORDER:
-            metrics.append(_make_event_metrics(event, by_event[event]))
-
-    return metrics
-
-
-def _make_event_metrics(
-    event: str,
-    pairs: list[tuple[FixtureResult, Fixture]],
-) -> PerEventMetrics:
-    """Build PerEventMetrics for a single event type."""
-    results_only = [r for r, _ in pairs]
-    positives = [r for r, fx in pairs if fx.difficulty != "negative"]
-    negatives = [r for r, fx in pairs if fx.difficulty == "negative"]
-
-    neg_silent = sum(1 for r in negatives if r.retrieved_count == 0)
-    neg_silence = neg_silent / len(negatives) if negatives else 1.0
-
-    pos_recall = (
-        _mean(r.recall_at_k for r in positives) if positives else 0.0
-    )
-
-    return PerEventMetrics(
-        event=event,
-        fixture_count=len(results_only),
-        quality=_mean(r.quality_score for r in results_only),
-        positive_recall=pos_recall,
-        noise_ratio=_mean(r.noise_ratio for r in results_only),
-        negative_silence=neg_silence,
-    )
-
-
-# ---------------------------------------------------------------------------
-# Report formatting
-# ---------------------------------------------------------------------------
-
-_HEADER_FMT = (
-    "{:<25s} {:>6s} {:>6s} {:>6s} {:>6s}"
-    " {:>6s} {:>6s} {:>6s} {:>4s} {:>10s}"
-)
-_ROW_FMT = (
-    "{:<25s} {:>6.3f} {:>6.3f} {:>6.3f} {:>6.3f}"
-    " {:>6.3f} {:>6.3f} {:>6.3f} {:>4d} {:>10.1f}"
-)
-_TIER_HEADER_FMT = (
-    "{:<10s} {:>5s} {:>6s} {:>6s} {:>6s}"
-    " {:>6s} {:>6s} {:>6s} {:>5s} {:>6s}"
-)
-_TIER_ROW_FMT = (
-    "{:<10s} {:>5d} {:>6.3f} {:>6.3f} {:>6.3f}"
-    " {:>6.3f} {:>6.3f} {:>6.3f} {:>5.1f} {:>6.3f}"
-)
-
-
-def format_eval_report(summary: EvalSummary) -> str:
-    """Format an EvalSummary into a human-readable text report.
-
-    Includes per-fixture table, per-tier breakdown, and aggregates.
-    """
-    lines: list[str] = []
-    lines.append("=" * 95)
-    lines.append("Evaluation Report")
-    lines.append("=" * 95)
-    lines.append("")
-
-    # Per-fixture table
-    header = _HEADER_FMT.format(
-        "Fixture", "P@k", "R@k", "MRR", "nDCG",
-        "Noise", "Waste", "AntiP", "#Ret", "Lat(ms)",
-    )
-    lines.append(header)
-    lines.append("-" * 95)
-
-    for fr in summary.per_fixture:
-        fixture_id = fr.fixture_id[:25]
-        row = _ROW_FMT.format(
-            fixture_id,
-            fr.precision_at_k,
-            fr.recall_at_k,
-            fr.mrr,
-            fr.ndcg_at_k,
-            fr.noise_ratio,
-            fr.context_waste_ratio,
-            fr.anti_precision,
-            fr.retrieved_count,
-            fr.latency_ms,
-        )
-        lines.append(row)
-
-    lines.append("-" * 95)
-    lines.append("")
-
-    # Per-tier breakdown
-    if summary.per_tier:
-        lines.append("Per-Tier Breakdown")
-        tier_header = _TIER_HEADER_FMT.format(
-            "Tier", "N", "P@k", "R@k", "MRR",
-            "Noise", "Waste", "Silen", "AvgRt", "F2",
-        )
-        lines.append(tier_header)
-        lines.append("-" * 78)
-        for ts in summary.per_tier:
-            row = _TIER_ROW_FMT.format(
-                ts.tier,
-                ts.count,
-                ts.mean_precision,
-                ts.mean_recall,
-                ts.mean_mrr,
-                ts.mean_noise_ratio,
-                ts.mean_context_waste_ratio,
-                ts.silence_rate,
-                ts.mean_retrieved_count,
-                ts.mean_quality,
-            )
-            lines.append(row)
-        lines.append("")
-
-    # Aggregates
-    lines.append("Aggregate Metrics")
-    lines.append(f"  Fixtures:             {summary.fixture_count}")
-    lines.append(f"  Quality (F2):         {summary.mean_quality:.3f}")
-    lines.append(f"  Positive Quality:     {summary.positive_quality:.3f}")
-    lines.append(f"  Positive Recall@k:    {summary.positive_recall:.3f}")
-    lines.append(f"  Mean Precision@k:     {summary.mean_precision:.3f}")
-    lines.append(f"  Mean Recall@k:        {summary.mean_recall:.3f}")
-    lines.append(f"  Mean MRR:             {summary.mean_mrr:.3f}")
-    lines.append(f"  Mean nDCG@k:          {summary.mean_ndcg:.3f}")
-    lines.append(f"  Mean Anti-P:          {summary.mean_anti_precision:.3f}")
-    lines.append(f"  Mean Noise Ratio:     {summary.mean_noise_ratio:.3f}")
-    lines.append(f"  Mean Context Waste:   {summary.mean_context_waste_ratio:.3f}")
-    lines.append(f"  Neg Silence Rate:     {summary.negative_silence_rate:.3f}")
-    lines.append(f"  Mean Retrieved Count: {summary.mean_retrieved_count:.1f}")
-    lines.append(f"  Latency p50:          {summary.latency_p50_ms:.1f} ms")
-    lines.append(f"  Latency p95:          {summary.latency_p95_ms:.1f} ms")
-    lines.append(f"  Latency p99:          {summary.latency_p99_ms:.1f} ms")
-    lines.append("")
-
-    return "\n".join(lines)
-
-
-_EVENT_HEADER_FMT = (
-    "{:<20s} {:>5s} {:>6s} {:>8s} {:>6s} {:>6s}"
-)
-_EVENT_ROW_FMT = (
-    "{:<20s} {:>5d} {:>6.3f} {:>8.3f} {:>6.3f} {:>6.3f}"
-)
-
-
-def format_per_event_report(
-    per_event: list[PerEventMetrics],
-) -> str:
-    """Format per-event metrics into a human-readable text table."""
-    lines: list[str] = []
-    lines.append("Per-Event Breakdown")
-    header = _EVENT_HEADER_FMT.format(
-        "Event", "N", "F2", "PosRecal", "Noise", "NegSil",
-    )
-    lines.append(header)
-    lines.append("-" * 58)
-    for em in per_event:
-        row = _EVENT_ROW_FMT.format(
-            em.event[:20],
-            em.fixture_count,
-            em.quality,
-            em.positive_recall,
-            em.noise_ratio,
-            em.negative_silence,
-        )
-        lines.append(row)
-    lines.append("")
-    return "\n".join(lines)
