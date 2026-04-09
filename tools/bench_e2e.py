@@ -217,37 +217,25 @@ def run_benchmark(label: str, *, sample_ratio: float = 0.2, seed: int = 42) -> d
     """Run basic + workflow eval against model-specific corpora."""
     from fastembed import TextEmbedding
 
-    from cuecard.indexing.indexer import load_rules_json
     from cuecard.retrieval.affinity import infer_affinities
 
     print(f"\nLoading embedding model: {EMBEDDING_MODEL}")
     embedding_model = TextEmbedding(model_name=EMBEDDING_MODEL)
 
-    # Always infer affinity so event masks are applied (not strict mode)
+    # Always infer affinity via LLM — never use ground truth labels
+    # (ground truth is for accuracy comparison only, not for event masking)
     from cuecard.models import PipelineConfig, ResolvedConfig
 
-    # Try loading inferred affinity from inline rules.json first
-    affinity = None
-    first_corpus = CORPORA_DIR / f"enriched_basic_{label}" / "rules.json"
-    if first_corpus.exists():
-        result = load_rules_json(str(first_corpus.parent))
-        if result is not None:
-            _rules, affinity = result
-            if affinity is not None and affinity.mode != "strict":
-                print(f"Loaded inferred affinity: {len(affinity.items)} entries")
-
-    # If no inferred affinity (strict or missing), infer via LLM
-    if affinity is None or affinity.mode == "strict":
-        print("Inferring affinity via LLM...")
-        first_rules_txt = list(SOURCE_FILES.values())[0]["rules_txt"]
-        aff_rules = parse_rules((str(first_rules_txt),))
-        aff_config = ResolvedConfig(
-            source_paths=(), global_source_paths=(),
-            project_source_paths=(), global_cache_dir="",
-            pipeline=PipelineConfig(mode="llm-local"),
-        )
-        affinity = infer_affinities(aff_rules, aff_config)
-        print(f"Inferred affinity: {affinity.mode}, {len(affinity.items)} entries")
+    print("Inferring affinity via LLM...")
+    first_rules_txt = list(SOURCE_FILES.values())[0]["rules_txt"]
+    aff_rules = parse_rules((str(first_rules_txt),))
+    aff_config = ResolvedConfig(
+        source_paths=(), global_source_paths=(),
+        project_source_paths=(), global_cache_dir="",
+        pipeline=PipelineConfig(mode="llm-local"),
+    )
+    affinity = infer_affinities(aff_rules, aff_config)
+    print(f"Inferred affinity: {affinity.mode}, {len(affinity.items)} entries")
 
     results = {}
     for tier, cfg in SOURCE_FILES.items():
