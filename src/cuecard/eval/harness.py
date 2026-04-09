@@ -38,6 +38,7 @@ from cuecard.eval.report import (  # noqa: F401
 from cuecard.indexing.indexer import build_index
 from cuecard.indexing.parser import parse_rules
 from cuecard.models import DEFAULT_HOOK_EVENT as _DEFAULT_EVENT
+from cuecard.models import ResolvedConfig
 
 logger = logging.getLogger(__name__)
 
@@ -233,17 +234,24 @@ def load_fixtures(path: str) -> list[Fixture]:
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True)
-class _EvalConfig:
-    """Minimal config stub for pipeline calls from eval harness."""
-
-    top_k: int = 7
-    threshold: float = 0.30
-    dedup_threshold: float = 0.95
-    query_max_length: int = 500
-    sparse_enabled: bool = True
-    fusion_k: int = 10
-    llm_candidates: int = 12
+def _make_eval_config(
+    *,
+    top_k: int = 7,
+    threshold: float = 0.30,
+    dedup_threshold: float = 0.95,
+    query_max_length: int = 500,
+) -> ResolvedConfig:
+    """Build a ResolvedConfig for eval with dummy computed fields."""
+    return ResolvedConfig(
+        source_paths=(),
+        global_source_paths=(),
+        project_source_paths=(),
+        global_cache_dir="",
+        top_k=top_k,
+        threshold=threshold,
+        dedup_threshold=dedup_threshold,
+        query_max_length=query_max_length,
+    )
 
 
 def run_eval(
@@ -305,7 +313,7 @@ def run_eval(
     _index_cache: dict[tuple[str, ...], tuple[tuple[Rule, ...], Index]] = {}
 
     effective_mode = mode if mode is not None else "embedding"
-    eval_config = _EvalConfig(
+    eval_config = _make_eval_config(
         top_k=top_k,
         threshold=threshold,
         dedup_threshold=dedup_threshold,
