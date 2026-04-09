@@ -45,6 +45,7 @@ packages = ["src/cuecard"]
 testpaths = ["tests"]
 timeout = 1
 timeout_method = "thread"
+addopts = "-m 'not slow'"
 markers = [
     "slow: marks tests that use real embedding model (deselect with '-m \"not slow\"')",
 ]
