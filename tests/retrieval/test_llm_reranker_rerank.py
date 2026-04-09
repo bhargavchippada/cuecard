@@ -99,7 +99,11 @@ class TestComputeOrdinalDangerousMutants:
 
 class TestRerankLLM:
     def test_empty_candidates(self) -> None:
-        assert rerank_llm([], "test query") == []
+        assert rerank_llm(
+            [], "test query",
+            backend="local", endpoint="http://localhost:8081/v1",
+            haiku_model="claude-haiku-4-5", top_k=5,
+        ) == []
 
     def test_local_backend_success(self) -> None:
         candidates = _make_candidates(5)
@@ -116,6 +120,8 @@ class TestRerankLLM:
                 "test query",
                 backend="local",
                 endpoint="http://localhost:8081/v1",
+                haiku_model="claude-haiku-4-5",
+                top_k=5,
             )
             assert len(result) == 2
             assert result[0].rule.text == "Rule 1 text"
@@ -129,7 +135,9 @@ class TestRerankLLM:
             return_value='{"rules": [2]}',
         ):
             result = rerank_llm(
-                candidates, "test query", backend="haiku"
+                candidates, "test query", backend="haiku",
+                endpoint="http://localhost:8081/v1",
+                haiku_model="claude-haiku-4-5", top_k=5,
             )
             assert len(result) == 1
             assert result[0].rule.text == "Rule 2 text"
@@ -144,6 +152,7 @@ class TestRerankLLM:
                 "test query",
                 backend="local",
                 endpoint="http://localhost:8081/v1",
+                haiku_model="claude-haiku-4-5",
                 top_k=3,
             )
             assert len(result) == 3
@@ -160,6 +169,7 @@ class TestRerankLLM:
                 "test query",
                 backend="local",
                 endpoint="http://localhost:8081/v1",
+                haiku_model="claude-haiku-4-5",
                 top_k=2,
             )
             assert len(result) == 2
@@ -167,7 +177,11 @@ class TestRerankLLM:
     def test_invalid_backend_raises(self) -> None:
         candidates = _make_candidates(1)
         with pytest.raises(ValueError, match="Invalid backend"):
-            rerank_llm(candidates, "test", backend="openai")
+            rerank_llm(
+                candidates, "test", backend="openai",
+                endpoint="http://localhost:8081/v1",
+                haiku_model="claude-haiku-4-5", top_k=5,
+            )
 
     def test_haiku_model_allowlist_rejects_opus(self) -> None:
         candidates = _make_candidates(1)
@@ -175,6 +189,7 @@ class TestRerankLLM:
             rerank_llm(
                 candidates, "test",
                 backend="haiku", haiku_model="claude-opus-4-5",
+                endpoint="http://localhost:8081/v1", top_k=5,
             )
 
     def test_haiku_model_allowlist_rejects_arbitrary(self) -> None:
@@ -183,6 +198,7 @@ class TestRerankLLM:
             rerank_llm(
                 candidates, "test",
                 backend="haiku", haiku_model="gpt-4o",
+                endpoint="http://localhost:8081/v1", top_k=5,
             )
 
     def test_secrets_scrubbed_from_query(self) -> None:
@@ -199,6 +215,8 @@ class TestRerankLLM:
                 "install sk_live_abc123456789012345678901",
                 backend="local",
                 endpoint="http://localhost:8081/v1",
+                haiku_model="claude-haiku-4-5",
+                top_k=5,
             )
             call_args = mock_post.call_args
             body = call_args.kwargs["json"]
@@ -233,10 +251,12 @@ class TestRerankLLM:
             rerank_llm(
                 candidates, "q1", backend="local",
                 endpoint="http://localhost:8081/v1",
+                haiku_model="claude-haiku-4-5", top_k=5,
             )
             rerank_llm(
                 candidates, "q2", backend="local",
                 endpoint="http://localhost:8081/v1",
+                haiku_model="claude-haiku-4-5", top_k=5,
             )
 
         assert len(nonces) == 2
@@ -258,6 +278,7 @@ class TestRerankLLM:
                 "test",
                 backend="local",
                 endpoint="http://localhost:8081/v1",
+                haiku_model="claude-haiku-4-5",
                 top_k=3,
             )
             assert len(result) <= 3
@@ -274,6 +295,8 @@ class TestRerankLLM:
                 "test",
                 backend="local",
                 endpoint="http://evil.com:8081/v1",
+                haiku_model="claude-haiku-4-5",
+                top_k=5,
             )
 
     def test_haiku_import_error_returns_fallback(self) -> None:
@@ -283,7 +306,9 @@ class TestRerankLLM:
             side_effect=ImportError("no claude_agent_sdk"),
         ):
             result = rerank_llm(
-                candidates, "test", backend="haiku", top_k=2
+                candidates, "test", backend="haiku", top_k=2,
+                endpoint="http://localhost:8081/v1",
+                haiku_model="claude-haiku-4-5",
             )
             assert len(result) == 2
             assert result[0].rule.text == "Rule 1 text"
@@ -304,6 +329,7 @@ class TestRerankLLM:
                 "test",
                 backend="local",
                 endpoint="http://localhost:8081/v1",
+                haiku_model="claude-haiku-4-5",
                 top_k=2,
             )
             # Both calls return unparseable -> fallback after retry
@@ -337,7 +363,8 @@ class TestRerankLLM:
         ):
             result = rerank_llm(
                 candidates, "test", backend="local",
-                endpoint="http://localhost:8081/v1", top_k=3,
+                endpoint="http://localhost:8081/v1",
+                haiku_model="claude-haiku-4-5", top_k=3,
             )
             assert len(result) == 1
             assert result[0].rule.text == "Rule 1 text"
@@ -357,6 +384,7 @@ class TestRerankLLM:
         ):
             result = rerank_llm(
                 candidates, "test", backend="haiku",
+                endpoint="http://localhost:8081/v1",
                 haiku_model="claude-haiku-4-5", top_k=2,
             )
             assert len(result) == 1
@@ -387,6 +415,7 @@ class TestRetryArgumentVerification:
             result = rerank_llm(
                 candidates, "test", backend="local",
                 endpoint="http://localhost:8081/v1",
+                haiku_model="claude-haiku-4-5", top_k=5,
             )
 
         assert len(call_args_list) == 2
@@ -414,7 +443,8 @@ class TestRetryArgumentVerification:
             ):
             result = rerank_llm(
                 candidates, "test", backend="haiku",
-                haiku_model="claude-haiku-4-5",
+                endpoint="http://localhost:8081/v1",
+                haiku_model="claude-haiku-4-5", top_k=5,
             )
 
         assert len(call_args_list) == 2

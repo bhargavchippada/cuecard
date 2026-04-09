@@ -6,6 +6,7 @@ from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from cuecard.eval.metrics import _mean
+from cuecard.models import DEFAULT_HOOK_EVENT as _DEFAULT_EVENT
 
 if TYPE_CHECKING:
     from cuecard.eval.harness import (
@@ -90,8 +91,6 @@ def _make_tier_summary(
 # ---------------------------------------------------------------------------
 # Per-event metrics
 # ---------------------------------------------------------------------------
-
-_DEFAULT_EVENT = "PreToolUse"
 
 _EVENT_ORDER = (
     "PreToolUse", "PostToolUse", "UserPromptSubmit",

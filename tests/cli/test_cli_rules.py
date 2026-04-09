@@ -535,7 +535,9 @@ class TestRulesExpand:
                 rules,
                 backend="local",
                 endpoint="http://localhost:8081/v1",
+                haiku_model="claude-haiku-4-5",
                 missing_only=True,
+                dedup_threshold=0.80,
             )
         assert len(result) == 1
         assert result[0].expansions == ("existing",)

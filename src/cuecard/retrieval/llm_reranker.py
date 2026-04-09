@@ -22,7 +22,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_MAX_TOKENS = 1024
 _NUMBER_LIST_PATTERN = re.compile(r"^\s*\[?\s*(\d+\s*[,\s]\s*)*\d+\s*\]?\s*$")
 
 _SYSTEM_PROMPT_TEMPLATE = """\
@@ -203,11 +202,11 @@ def rerank_llm(
     candidates: list[RankedResult],
     query: str,
     *,
-    backend: str = "local",
-    endpoint: str = "http://localhost:8081/v1",
-    haiku_model: str = "claude-haiku-4-5",
+    backend: str,
+    endpoint: str,
+    haiku_model: str,
     thinking: bool = False,
-    top_k: int = 7,
+    top_k: int,
 ) -> list[RankedResult]:
     """Re-rank candidates using an LLM to select truly relevant rules.
 

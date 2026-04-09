@@ -173,7 +173,9 @@ def generate_expansions_for_label(label: str, *, force: bool = False) -> None:
             rules,
             backend="local",
             endpoint=ENDPOINT,
+            haiku_model="claude-haiku-4-5",
             event_type=cfg["event_type"],
+            dedup_threshold=0.80,
         )
         elapsed = time.monotonic() - t0
         total = sum(len(r.expansions) for r in expanded)

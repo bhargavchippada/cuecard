@@ -30,14 +30,16 @@ def _make_rule(text: str = "Never commit secrets", **kwargs: object) -> Rule:
 class TestExpandRules:
     def test_invalid_backend_raises(self) -> None:
         with pytest.raises(ValueError, match="Invalid backend"):
-            expand_rules([_make_rule()], backend="openai")
+            expand_rules(
+                [_make_rule()], "openai", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
+            )
 
     def test_haiku_model_not_in_allowlist_raises(self) -> None:
         with pytest.raises(ValueError, match="not in allowlist"):
             expand_rules(
-                [_make_rule()],
-                backend="haiku",
-                haiku_model="gpt-4o",
+                [_make_rule()], "haiku", "http://localhost:8081/v1",
+                "gpt-4o", dedup_threshold=0.80,
             )
 
     def test_local_validates_endpoint(self) -> None:
@@ -47,19 +49,16 @@ class TestExpandRules:
             pytest.raises(ConfigError, match="loopback"),
         ):
             expand_rules(
-                [_make_rule()],
-                backend="local",
-                endpoint="http://evil.com:8081/v1",
+                [_make_rule()], "local", "http://evil.com:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
             )
 
     def test_dry_run_does_not_call_llm(self) -> None:
         rules = [_make_rule()]
         with patch("cuecard.indexing.expander.call_local") as mock_call:
             result = expand_rules(
-                rules,
-                backend="local",
-                endpoint="http://localhost:8081/v1",
-                dry_run=True,
+                rules, "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dry_run=True, dedup_threshold=0.80,
             )
             mock_call.assert_not_called()
         assert len(result) == 1
@@ -84,10 +83,9 @@ class TestExpandRules:
             return_value='{"expansions": ["new one"]}',
         ):
             result = expand_rules(
-                rules,
-                backend="local",
-                endpoint="http://localhost:8081/v1",
-                missing_only=True,
+                rules, "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", missing_only=True,
+                dedup_threshold=0.80,
             )
 
         assert result[0].expansions == ("existing",)
@@ -103,9 +101,8 @@ class TestExpandRules:
             ),
         ):
             result = expand_rules(
-                rules,
-                backend="local",
-                endpoint="http://localhost:8081/v1",
+                rules, "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
             )
 
         assert len(result) == 1
@@ -119,7 +116,8 @@ class TestExpandRules:
             return_value='{"expansions": ["haiku phrase"]}',
         ):
             result = expand_rules(
-                rules, backend="haiku",
+                rules, "haiku", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
             )
 
         assert len(result) == 1
@@ -133,9 +131,8 @@ class TestExpandRules:
             side_effect=RuntimeError("connection failed"),
         ):
             result = expand_rules(
-                rules,
-                backend="local",
-                endpoint="http://localhost:8081/v1",
+                rules, "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
             )
 
         assert len(result) == 1
@@ -163,9 +160,8 @@ class TestExpandRules:
             ),
         ):
             expand_rules(
-                rules,
-                backend="local",
-                endpoint="http://localhost:8081/v1",
+                rules, "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
             )
 
         assert len(nonces) == 2
@@ -173,7 +169,8 @@ class TestExpandRules:
 
     def test_empty_rules_list(self) -> None:
         result = expand_rules(
-            [], backend="local", endpoint="http://localhost:8081/v1",
+            [], "local", "http://localhost:8081/v1",
+            "claude-haiku-4-5", dedup_threshold=0.80,
         )
         assert result == []
 
@@ -185,15 +182,17 @@ class TestExpandRules:
             pytest.raises(ConfigError),
         ):
             expand_rules(
-                [_make_rule()],
-                backend="local",
-                endpoint="http://evil.com/v1",
+                [_make_rule()], "local", "http://evil.com/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
             )
 
     def test_value_error_propagates(self) -> None:
         """ValueError for invalid backend should propagate."""
         with pytest.raises(ValueError):
-            expand_rules([_make_rule()], backend="invalid")
+            expand_rules(
+                [_make_rule()], "invalid", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
+            )
 
     def test_replaces_existing_expansions(self) -> None:
         """Without missing_only, existing expansions are overwritten."""
@@ -204,9 +203,8 @@ class TestExpandRules:
             return_value='{"expansions": ["new"]}',
         ):
             result = expand_rules(
-                rules,
-                backend="local",
-                endpoint="http://localhost:8081/v1",
+                rules, "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
             )
 
         assert result[0].expansions == ("new",)
@@ -223,9 +221,8 @@ class TestExpandRules:
             pytest.raises(ValueError, match="bad response format"),
         ):
             expand_rules(
-                    rules,
-                    backend="local",
-                    endpoint="http://localhost:8081/v1",
+                    rules, "local", "http://localhost:8081/v1",
+                    "claude-haiku-4-5", dedup_threshold=0.80,
                 )
 
     def test_returns_new_rule_objects(self) -> None:
@@ -237,9 +234,8 @@ class TestExpandRules:
             return_value='{"expansions": ["x"]}',
         ):
             result = expand_rules(
-                [original],
-                backend="local",
-                endpoint="http://localhost:8081/v1",
+                [original], "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
             )
 
         assert result[0] is not original
@@ -249,10 +245,9 @@ class TestExpandRules:
     def test_invalid_event_type_raises(self) -> None:
         with pytest.raises(ValueError, match="Invalid event_type"):
             expand_rules(
-                [_make_rule()],
-                backend="local",
-                endpoint="http://localhost:8081/v1",
-                event_type="InvalidEvent",
+                [_make_rule()], "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5",
+                event_type="InvalidEvent", dedup_threshold=0.80,
             )
 
     def test_event_type_passed_to_prompt(self) -> None:
@@ -272,10 +267,9 @@ class TestExpandRules:
             ),
         ):
             expand_rules(
-                [_make_rule()],
-                backend="local",
-                endpoint="http://localhost:8081/v1",
-                event_type="UserPromptSubmit",
+                [_make_rule()], "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5",
+                event_type="UserPromptSubmit", dedup_threshold=0.80,
             )
             _, kwargs = mock_build.call_args
             assert kwargs.get("event_type") == "UserPromptSubmit"
@@ -293,9 +287,8 @@ class TestExpandRules:
             ) as mock_dedup,
         ):
             result = expand_rules(
-                [_make_rule()],
-                backend="local",
-                endpoint="http://localhost:8081/v1",
+                [_make_rule()], "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
             )
             mock_dedup.assert_called_once_with(["a", "b", "c"], threshold=0.8)
             assert result[0].expansions == ("a", "c")
@@ -314,9 +307,8 @@ class TestExpandRules:
             return_value='{"expansions": ["x"]}',
         ):
             expand_rules(
-                rules,
-                backend="local",
-                endpoint="http://localhost:8081/v1",
+                rules, "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
                 on_progress=updates.append,
             )
 
@@ -340,10 +332,9 @@ class TestExpandRules:
             return_value='{"expansions": ["new"]}',
         ):
             expand_rules(
-                rules,
-                backend="local",
-                endpoint="http://localhost:8081/v1",
-                missing_only=True,
+                rules, "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", missing_only=True,
+                dedup_threshold=0.80,
                 on_progress=updates.append,
             )
 
@@ -360,8 +351,7 @@ class TestExpandRules:
             return_value='{"expansions": ["x"]}',
         ):
             result = expand_rules(
-                [_make_rule()],
-                backend="local",
-                endpoint="http://localhost:8081/v1",
+                [_make_rule()], "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
             )
         assert len(result) == 1

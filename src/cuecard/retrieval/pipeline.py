@@ -272,7 +272,9 @@ def _run_rerank_stage(
     try:
         from cuecard.retrieval import reranker
 
-        results = reranker.rerank(candidates, query, config=config)
+        results = reranker.rerank(
+            candidates, query, top_k=config.top_k, config=config,
+        )
         latency_ms = (time.monotonic() - t0) * 1000.0
         return results, StageTrace(
             stage="rerank",
@@ -322,6 +324,7 @@ def _run_llm_stage(
             endpoint=config.pipeline.local_endpoint,
             haiku_model=config.pipeline.haiku_model,
             thinking=config.pipeline.thinking,
+            top_k=config.top_k,
         )
         latency_ms = (time.monotonic() - t0) * 1000.0
         return results, StageTrace(

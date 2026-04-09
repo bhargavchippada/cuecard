@@ -40,10 +40,10 @@ def retrieve(
     index: Index,
     query: str,
     *,
-    top_k: int = 5,
-    threshold: float = 0.30,
-    dedup_threshold: float = 0.95,
-    max_query_length: int = 500,
+    top_k: int,
+    threshold: float,
+    dedup_threshold: float,
+    max_query_length: int,
     model: TextEmbedding | None = None,
 ) -> list[RankedResult]:
     """Retrieve the top-k rules most relevant to *query*.

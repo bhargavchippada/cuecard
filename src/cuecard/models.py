@@ -20,6 +20,17 @@ MAX_RULES_PER_FILE = 500
 MAX_REQUEST_BYTES = 1_000_000
 MAX_TOOL_NAME_LENGTH = 200
 
+# Architectural defaults — single source of truth for non-TOML constants.
+DEFAULT_EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
+DEFAULT_EMBEDDING_DIM = 384
+DEFAULT_RERANKER_MODEL = "Xenova/ms-marco-MiniLM-L-6-v2"
+DEFAULT_LLM_ENDPOINT = "http://localhost:8081/v1"
+DEFAULT_HAIKU_MODEL = "claude-haiku-4-5"
+DEFAULT_SERVE_PORT = 8452
+LLM_MAX_TOKENS = 1024
+LLM_TIMEOUT = 60.0
+DEFAULT_HOOK_EVENT = "PreToolUse"
+
 KNOWN_HOOK_EVENTS: frozenset[str] = frozenset({
     "PreToolUse", "PostToolUse", "UserPromptSubmit", "SubagentStart", "Stop",
 })
@@ -179,7 +190,7 @@ class ResolvedConfig:
     # TOML-configurable — defaults are the single source of truth
     project_cache_dir: str | None = None
     allowed_dirs: tuple[str, ...] = ()
-    model_name: str = "BAAI/bge-small-en-v1.5"
+    model_name: str = DEFAULT_EMBEDDING_MODEL
     top_k: int = field(default=7, metadata={"min": 1, "max": 50})
     threshold: float = field(default=0.30, metadata={"min": 0.0, "max": 1.0})
     dedup_threshold: float = field(

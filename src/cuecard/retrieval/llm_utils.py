@@ -9,6 +9,8 @@ from urllib.parse import urlparse
 
 import httpx
 
+from cuecard.models import LLM_MAX_TOKENS
+from cuecard.models import LLM_TIMEOUT as _TIMEOUT
 from cuecard.security import ConfigError
 
 logger = logging.getLogger(__name__)
@@ -17,7 +19,6 @@ _ALLOWED_HAIKU_MODELS: frozenset[str] = frozenset({
     "claude-haiku-4-5",
     "claude-haiku-4-5-20251001",
 })
-_TIMEOUT = 60.0
 
 
 def _is_loopback(hostname: str) -> bool:
@@ -61,7 +62,7 @@ def call_local(
     endpoint: str,
     thinking: bool,
     *,
-    max_tokens: int = 1024,
+    max_tokens: int = LLM_MAX_TOKENS,
     temperature: float = 0.0,
     stop: tuple[str, ...] | None = ("\n\n",),
 ) -> str:

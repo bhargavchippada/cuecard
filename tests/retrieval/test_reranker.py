@@ -75,7 +75,7 @@ class TestRerankBasic:
 
     def test_rerank_empty_candidates(self) -> None:
         """Empty list returns empty list without touching the model."""
-        result = rerank([], "test query")
+        result = rerank([], "test query", top_k=5)
         assert result == []
 
     def test_rerank_single_candidate(self) -> None:
@@ -160,6 +160,7 @@ class TestRerankModelAllowlist:
                 "test query",
                 model_name="evil/malicious-model",
                 model=_make_mock_model([0.5]),
+                top_k=5,
             )
 
     def test_rerank_all_allowed_models_accepted(self) -> None:
@@ -173,6 +174,7 @@ class TestRerankModelAllowlist:
                 "test query",
                 model_name=model_name,
                 model=mock_model,
+                top_k=5,
             )
             assert len(result) == 1
 
@@ -190,7 +192,7 @@ class TestRerankModelLoading:
         mock_model = _make_mock_model([0.5, 0.3])
 
         with patch("cuecard.retrieval.reranker._load_model") as load_mock:
-            rerank(candidates, "test query", model=mock_model)
+            rerank(candidates, "test query", model=mock_model, top_k=5)
             load_mock.assert_not_called()
 
     def test_rerank_creates_model_when_none(self) -> None:
@@ -201,7 +203,7 @@ class TestRerankModelLoading:
         with patch(
             "cuecard.retrieval.reranker._load_model", return_value=mock_model,
         ) as load_mock:
-            result = rerank(candidates, "test query")
+            result = rerank(candidates, "test query", top_k=5)
             load_mock.assert_called_once_with(DEFAULT_RERANKER_MODEL)
             assert len(result) == 2
 
@@ -217,6 +219,7 @@ class TestRerankConfig:
 
         result = rerank(
             candidates, "test query", model=mock_model, config=mock_config,
+            top_k=5,
         )
         assert len(result) == 2
 

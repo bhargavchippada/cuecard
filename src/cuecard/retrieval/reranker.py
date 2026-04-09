@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
     from cuecard.models import ResolvedConfig
 
-from cuecard.models import RankedResult
+from cuecard.models import DEFAULT_RERANKER_MODEL, RankedResult
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,6 @@ ALLOWED_RERANKER_MODELS: frozenset[str] = frozenset({
     "BAAI/bge-reranker-base",
 })
 
-DEFAULT_RERANKER_MODEL = "Xenova/ms-marco-MiniLM-L-6-v2"
 
 
 def rerank(
@@ -31,7 +30,7 @@ def rerank(
     query: str,
     *,
     model_name: str = DEFAULT_RERANKER_MODEL,
-    top_k: int = 5,
+    top_k: int,
     model: TextCrossEncoder | None = None,
     config: ResolvedConfig | None = None,
 ) -> list[RankedResult]:

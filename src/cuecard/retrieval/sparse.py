@@ -105,8 +105,8 @@ class SparseRetriever:
         query: str,
         index: Index,
         *,
-        top_k: int = 5,
-        threshold: float = 0.0,
+        top_k: int,
+        threshold: float,
         mask: npt.NDArray[np.bool_] | None = None,
     ) -> list[ScoredCandidate]:
         """Retrieve top-k rules via BM25 scoring with parent collapse."""

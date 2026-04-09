@@ -37,6 +37,7 @@ from cuecard.eval.report import (  # noqa: F401
 )
 from cuecard.indexing.indexer import build_index
 from cuecard.indexing.parser import parse_rules
+from cuecard.models import DEFAULT_HOOK_EVENT as _DEFAULT_EVENT
 
 logger = logging.getLogger(__name__)
 
@@ -65,9 +66,6 @@ __all__ = [
 # ---------------------------------------------------------------------------
 # Data model
 # ---------------------------------------------------------------------------
-
-
-_DEFAULT_EVENT = "PreToolUse"
 
 
 @dataclass(frozen=True)

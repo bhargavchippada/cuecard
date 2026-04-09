@@ -18,6 +18,9 @@ import numpy.typing as npt
 from cuecard._math import l2_normalize
 from cuecard.indexing.freshness import compute_file_hash
 from cuecard.models import (
+    DEFAULT_EMBEDDING_DIM as _DEFAULT_DIM,
+)
+from cuecard.models import (
     KNOWN_HOOK_EVENTS,
     MAX_EXPANSION_LENGTH,
     MAX_EXPANSIONS_PER_RULE,
@@ -38,7 +41,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_DIM = 384
+
 _METADATA_VERSION = 1
 _METADATA_VERSION_V2 = 2
 _FILE_PERMS = 0o600

@@ -4,18 +4,16 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from cuecard.indexing.expander import (
-    DEDUP_COSINE_THRESHOLD,
-    _semantic_dedup,
-)
+from cuecard.indexing.expander import _semantic_dedup
+from cuecard.models import ResolvedConfig
 
 
 class TestSemanticDedup:
     def test_empty_list(self) -> None:
-        assert _semantic_dedup([]) == []
+        assert _semantic_dedup([], threshold=0.80) == []
 
     def test_single_item(self) -> None:
-        assert _semantic_dedup(["hello"]) == ["hello"]
+        assert _semantic_dedup(["hello"], threshold=0.80) == ["hello"]
 
     def test_preserves_order(self) -> None:
         """Non-duplicate items are returned in original order."""
@@ -27,7 +25,7 @@ class TestSemanticDedup:
             mock_np.where.return_value = MagicMock()
 
             # Just test the short-circuit paths
-            result = _semantic_dedup(["a"])
+            result = _semantic_dedup(["a"], threshold=0.80)
             assert result == ["a"]
 
     def test_fastembed_import_failure_returns_original(self) -> None:
@@ -47,7 +45,7 @@ class TestSemanticDedup:
                 ),
             ),
         ):
-            result = _semantic_dedup(items)
+            result = _semantic_dedup(items, threshold=0.80)
         assert result == items
 
     def test_embedding_failure_returns_original(self) -> None:
@@ -59,11 +57,13 @@ class TestSemanticDedup:
             "fastembed.TextEmbedding",
             return_value=mock_model,
         ):
-            result = _semantic_dedup(items)
+            result = _semantic_dedup(items, threshold=0.80)
         assert result == items
 
-    def test_threshold_constant(self) -> None:
-        assert DEDUP_COSINE_THRESHOLD == 0.80
+    def test_threshold_default(self) -> None:
+        assert ResolvedConfig.__dataclass_fields__[
+            "expansion_dedup_threshold"
+        ].default == 0.80
 
     def test_drops_near_duplicate(self) -> None:
         """Expansions with cosine > 0.85 are dropped."""
@@ -77,7 +77,7 @@ class TestSemanticDedup:
         mock_model = MagicMock()
         mock_model.passage_embed.return_value = [base, near]
         with patch("fastembed.TextEmbedding", return_value=mock_model):
-            result = _semantic_dedup(items)
+            result = _semantic_dedup(items, threshold=0.80)
         assert len(result) == 1
         assert result[0] == "pip install requests"
 
@@ -93,7 +93,7 @@ class TestSemanticDedup:
         mock_model = MagicMock()
         mock_model.passage_embed.return_value = [vec_a, vec_b, vec_c]
         with patch("fastembed.TextEmbedding", return_value=mock_model):
-            result = _semantic_dedup(items)
+            result = _semantic_dedup(items, threshold=0.80)
         # B should be dropped (similar to A), A and C kept
         assert len(result) == 2
         assert result[0] == "phrase A"
@@ -120,7 +120,7 @@ class TestSemanticDedup:
         mock_model = MagicMock()
         mock_model.passage_embed.return_value = [vec_a, vec_b]
         with patch("fastembed.TextEmbedding", return_value=mock_model):
-            result = _semantic_dedup(items)
+            result = _semantic_dedup(items, threshold=0.80)
         # After proper normalization: cosine ~0.95 > 0.85 → B dropped
         assert len(result) == 1
         assert result[0] == "item A"
@@ -134,7 +134,7 @@ class TestSemanticDedup:
         mock_model = MagicMock()
         mock_model.passage_embed.return_value = [vec, vec]
         with patch("fastembed.TextEmbedding", return_value=mock_model) as mock_cls:
-            _semantic_dedup(items)
+            _semantic_dedup(items, threshold=0.80)
             mock_cls.assert_called_once_with("BAAI/bge-small-en-v1.5")
 
     def test_passage_embed_receives_expansions(self) -> None:
@@ -146,13 +146,13 @@ class TestSemanticDedup:
         mock_model = MagicMock()
         mock_model.passage_embed.return_value = [vec, vec]
         with patch("fastembed.TextEmbedding", return_value=mock_model):
-            _semantic_dedup(items)
+            _semantic_dedup(items, threshold=0.80)
             mock_model.passage_embed.assert_called_once_with(items)
 
     def test_single_item_returned_unchanged(self) -> None:
         """A single-item list must short-circuit without embedding."""
         with patch("fastembed.TextEmbedding") as mock_cls:
-            result = _semantic_dedup(["only one"])
+            result = _semantic_dedup(["only one"], threshold=0.80)
             assert result == ["only one"]
             assert len(result) == 1
             # Must NOT call TextEmbedding — short-circuit on len <= 1
@@ -173,7 +173,7 @@ class TestSemanticDedup:
         mock_model = MagicMock()
         mock_model.passage_embed.return_value = [vec_zero, vec_normal]
         with patch("fastembed.TextEmbedding", return_value=mock_model):
-            result = _semantic_dedup(items)
+            result = _semantic_dedup(items, threshold=0.80)
         # Should not crash; zero-norm guard replaces 0 with 1.0
         assert len(result) == 2
 
@@ -193,7 +193,7 @@ class TestSemanticDedup:
         mock_model = MagicMock()
         mock_model.passage_embed.return_value = [vec_a, vec_b, vec_c]
         with patch("fastembed.TextEmbedding", return_value=mock_model):
-            result = _semantic_dedup(items)
+            result = _semantic_dedup(items, threshold=0.80)
         # B is near-duplicate of A, C is distinct
         assert len(result) == 2
         assert result[0] == "item A"
@@ -209,7 +209,7 @@ class TestSemanticDedup:
         mock_model = MagicMock()
         mock_model.passage_embed.return_value = [vec, vec]
         with patch("fastembed.TextEmbedding", return_value=mock_model):
-            result = _semantic_dedup(items)
+            result = _semantic_dedup(items, threshold=0.80)
         assert len(result) == 1
         assert result[0] == "first"
 
@@ -224,7 +224,7 @@ class TestSemanticDedup:
         mock_model = MagicMock()
         mock_model.passage_embed.return_value = [vec_a, vec_b]
         with patch("fastembed.TextEmbedding", return_value=mock_model):
-            result = _semantic_dedup(items)
+            result = _semantic_dedup(items, threshold=0.80)
         assert len(result) == 2
         assert result[0] == "item A"
         assert result[1] == "item B"

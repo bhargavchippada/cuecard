@@ -9,6 +9,8 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from cuecard.models import DEFAULT_EMBEDDING_MODEL
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
@@ -28,7 +30,7 @@ err_console = Console(stderr=True)
 
 # --- Defaults ---
 
-_DEFAULT_MODEL = "BAAI/bge-small-en-v1.5"
+_DEFAULT_MODEL = DEFAULT_EMBEDDING_MODEL
 _SETUP_NOT_DONE = "[cuecard] Not set up. Run 'cuecard setup'."
 
 

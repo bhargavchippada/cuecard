@@ -30,9 +30,7 @@ from cuecard.models import MAX_EXPANSION_LENGTH, MAX_EXPANSIONS_PER_RULE
 logger = logging.getLogger(__name__)
 
 # Default dedup threshold — matches ResolvedConfig.expansion_dedup_threshold.
-# Configurable via [expansion] dedup_threshold in cuecard.toml.
-# Used as fallback when expand_rules() is called without config.
-DEDUP_COSINE_THRESHOLD = 0.80
+# Removed: DEDUP_COSINE_THRESHOLD — use ResolvedConfig.expansion_dedup_threshold
 
 # Valid event types for expansion prompt targeting
 _VALID_EVENT_TYPES = KNOWN_HOOK_EVENTS
@@ -329,7 +327,7 @@ def _parse_expansion_response(response: str) -> list[str]:
 
 def _semantic_dedup(
     expansions: list[str],
-    threshold: float = DEDUP_COSINE_THRESHOLD,
+    threshold: float,
 ) -> list[str]:
     """Remove near-duplicate expansions using cosine similarity.
 
@@ -427,13 +425,13 @@ def _expand_single_rule(
 def expand_rules(
     rules: list[Rule],
     backend: str,
-    endpoint: str = "http://localhost:8081/v1",
-    haiku_model: str = "claude-haiku-4-5",
+    endpoint: str,
+    haiku_model: str,
     *,
     missing_only: bool = False,
     dry_run: bool = False,
     event_type: str = "PreToolUse",
-    dedup_threshold: float = DEDUP_COSINE_THRESHOLD,
+    dedup_threshold: float,
     on_progress: Callable[[ExpandProgress], None] | None = None,
 ) -> list[Rule]:
     """Generate LLM expansions for rules.

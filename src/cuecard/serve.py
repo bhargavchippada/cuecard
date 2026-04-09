@@ -20,6 +20,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from cuecard.models import DEFAULT_SERVE_PORT as DEFAULT_PORT
 from cuecard.models import MAX_REQUEST_BYTES
 
 if TYPE_CHECKING:
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_PORT = 8452
+
 _PID_FILE = "serve.pid"
 _LOG_FILE = "serve.log"
 

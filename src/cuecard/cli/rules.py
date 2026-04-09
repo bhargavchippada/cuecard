@@ -238,9 +238,10 @@ def _expand_with_progress(
     rules: list[Rule],
     *,
     backend: str,
-    endpoint: str = "http://localhost:8081/v1",
+    endpoint: str,
+    haiku_model: str,
     missing_only: bool = False,
-    dedup_threshold: float = 0.80,
+    dedup_threshold: float,
 ) -> list[Rule]:
     """Run expand_rules with a Rich progress display on stderr."""
     from cuecard.indexing.expander import expand_rules
@@ -276,6 +277,7 @@ def _expand_with_progress(
             rules,
             backend=backend,
             endpoint=endpoint,
+            haiku_model=haiku_model,
             missing_only=missing_only,
             dedup_threshold=dedup_threshold,
             on_progress=_on_progress,
@@ -351,6 +353,7 @@ def expand(
                 rules,
                 backend=backend,
                 endpoint=endpoint,
+                haiku_model=cfg.pipeline.haiku_model,
                 missing_only=missing_only,
                 dedup_threshold=cfg.expansion_dedup_threshold,
             )

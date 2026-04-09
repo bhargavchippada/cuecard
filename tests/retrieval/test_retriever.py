@@ -69,7 +69,10 @@ class TestRetrieve:
         query_vec = sample_embeddings[0].copy()
         model = _make_model(query_vec)
 
-        results = retrieve(sample_index, "test query", model=model, threshold=0.0)
+        results = retrieve(
+            sample_index, "test query", model=model, threshold=0.0,
+            top_k=5, dedup_threshold=0.95, max_query_length=500,
+        )
 
         assert len(results) > 0
         scores = [r.score for r in results]
@@ -89,9 +92,11 @@ class TestRetrieve:
 
         all_results = retrieve(
             sample_index, "q", model=model, threshold=0.0,
+            top_k=5, dedup_threshold=0.95, max_query_length=500,
         )
         strict_results = retrieve(
             sample_index, "q", model=model, threshold=0.99,
+            top_k=5, dedup_threshold=0.95, max_query_length=500,
         )
 
         assert len(strict_results) < len(all_results)
@@ -109,6 +114,7 @@ class TestRetrieve:
 
         results = retrieve(
             sample_index, "q", model=model, top_k=2, threshold=0.0,
+            dedup_threshold=0.95, max_query_length=500,
         )
         assert len(results) <= 2
 
@@ -121,7 +127,10 @@ class TestRetrieve:
             dim=384,
             sources={},
         )
-        results = retrieve(empty_idx, "anything")
+        results = retrieve(
+            empty_idx, "anything",
+            top_k=5, threshold=0.30, dedup_threshold=0.95, max_query_length=500,
+        )
         assert results == []
 
     def test_semantic_dedup_removes_near_duplicates(self) -> None:
@@ -140,6 +149,7 @@ class TestRetrieve:
 
         results = retrieve(
             idx, "q", model=model, threshold=0.0, dedup_threshold=0.95,
+            top_k=5, max_query_length=500,
         )
 
         result_texts = [r.rule.text for r in results]
@@ -157,7 +167,10 @@ class TestRetrieve:
         raw_query = np.array([5.0, 0, 0, 0], dtype=np.float32)
         model = _make_model(raw_query)
 
-        results = retrieve(idx, "q", model=model, threshold=0.0)
+        results = retrieve(
+            idx, "q", model=model, threshold=0.0,
+            top_k=5, dedup_threshold=0.95, max_query_length=500,
+        )
         assert len(results) == 1
         # After normalization, dot product should be 1.0
         assert results[0].score == pytest.approx(1.0, abs=1e-5)
@@ -172,7 +185,10 @@ class TestRetrieve:
         model = _make_model(query_vec)
         model.passage_embed = MagicMock()
 
-        retrieve(sample_index, "my query", model=model, threshold=0.0)
+        retrieve(
+            sample_index, "my query", model=model, threshold=0.0,
+            top_k=5, dedup_threshold=0.95, max_query_length=500,
+        )
 
         model.query_embed.assert_called_once_with(["my query"])
         model.passage_embed.assert_not_called()
@@ -189,6 +205,7 @@ class TestRetrieve:
 
         results = retrieve(
             sample_index, "q", model=model, threshold=2.0,
+            top_k=5, dedup_threshold=0.95, max_query_length=500,
         )
         assert results == []
 
@@ -198,7 +215,10 @@ class TestRetrieve:
     ) -> None:
         """ValueError raised when model is None but index is non-empty."""
         with pytest.raises(ValueError, match="model is required"):
-            retrieve(sample_index, "query")
+            retrieve(
+                sample_index, "query",
+                top_k=5, threshold=0.30, dedup_threshold=0.95, max_query_length=500,
+            )
 
     def test_long_query_truncated(
         self,
@@ -217,6 +237,7 @@ class TestRetrieve:
             retrieve(
                 sample_index, long_query, model=model,
                 threshold=0.0, max_query_length=100,
+                top_k=5, dedup_threshold=0.95,
             )
 
         assert "truncated" in caplog.text.lower()
@@ -240,6 +261,7 @@ class TestRetrieve:
             retrieve(
                 sample_index, "short query", model=model,
                 threshold=0.0, max_query_length=500,
+                top_k=5, dedup_threshold=0.95,
             )
 
         assert "truncated" not in caplog.text.lower()
@@ -275,7 +297,10 @@ class TestRetrieve:
         query_vec[2] = 1.0
         model = _make_model(query_vec)
 
-        results = retrieve(idx, "q", model=model, threshold=0.0)
+        results = retrieve(
+            idx, "q", model=model, threshold=0.0,
+            top_k=5, dedup_threshold=0.95, max_query_length=500,
+        )
 
         assert len(results) == 1
         assert results[0].rule.text == "parent rule"
@@ -306,7 +331,10 @@ class TestRetrieve:
         query_vec = np.array([1, 0, 0, 0], dtype=np.float32)
         model = _make_model(query_vec)
 
-        results = retrieve(idx, "q", model=model, threshold=0.0)
+        results = retrieve(
+            idx, "q", model=model, threshold=0.0,
+            top_k=5, dedup_threshold=0.95, max_query_length=500,
+        )
 
         assert len(results) == 1
         # MAX should give ≈ 1.0, MEAN would give ≈ 0.5
@@ -342,7 +370,7 @@ class TestRetrieve:
 
         results = retrieve(
             idx, "q", model=model, threshold=0.0,
-            dedup_threshold=0.95, top_k=10,
+            dedup_threshold=0.95, top_k=10, max_query_length=500,
         )
 
         result_texts = [r.rule.text for r in results]

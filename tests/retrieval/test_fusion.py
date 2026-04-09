@@ -55,7 +55,7 @@ class TestFuseEmpty:
     """Edge cases for fuse()."""
 
     def test_empty_input(self) -> None:
-        assert fuse([]) == []
+        assert fuse([], k=10) == []
 
     def test_single_retriever(self) -> None:
         r1 = _rule("r1")
@@ -68,7 +68,7 @@ class TestFuseEmpty:
         assert abs(result[0].score - 1.0 / 61) < 1e-9
 
     def test_single_empty_list(self) -> None:
-        result = fuse([[]])
+        result = fuse([[]], k=10)
         assert result == []
 
 
@@ -158,7 +158,7 @@ class TestFuseBasic:
         dense = [ScoredCandidate(rule=r1a, score=0.9, retriever="dense")]
         sparse = [ScoredCandidate(rule=r1b, score=5.0, retriever="sparse")]
 
-        result = fuse([dense, sparse])
+        result = fuse([dense, sparse], k=10)
         assert result[0].rule.provenance.file == "/a.txt"
 
     def test_custom_k_parameter(self) -> None:

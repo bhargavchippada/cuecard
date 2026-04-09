@@ -44,8 +44,8 @@ class DenseRetriever:
         query: str,
         index: Index,
         *,
-        top_k: int = 5,
-        threshold: float = 0.30,
+        top_k: int,
+        threshold: float,
         mask: npt.NDArray[np.bool_] | None = None,
     ) -> list[ScoredCandidate]:
         """Retrieve top-k rules via dense cosine similarity.
