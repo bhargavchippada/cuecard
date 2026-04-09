@@ -81,7 +81,7 @@ show_missing = true
 paths_to_mutate = ["src/cuecard/"]
 tests_dir = ["tests/"]
 runner = "python -m pytest -x -q --tb=no"
-pytest_add_cli_args_test_selection = ["tests/", "--deselect", "tests/test_cli.py::TestAdapterMainGuard::test_main_guard"]
+pytest_add_cli_args_test_selection = ["tests/", "--deselect", "tests/cli/test_cli_hooks.py::TestAdapterMainGuard::test_main_guard"]
 do_not_mutate = ["*__pycache__*", "*test_*"]
 
 [dependency-groups]
