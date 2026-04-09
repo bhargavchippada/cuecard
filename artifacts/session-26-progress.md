@@ -88,8 +88,47 @@
 | Stop | 0.426 | 0.486 | +6.0 | 0.542 | 0.500 |
 | SubagentStart | 0.248 | 0.432 | +18.4 | 0.786 | 0.316 |
 
+### 10. Inline Affinity in rules.json
+- Removed sidecar dependency — affinity now stored inline per rule in rules.json
+- `save_rules_json` accepts optional `AffinityIndex`, writes affinity dict per entry
+- `load_rules_json` returns `(rules, AffinityIndex | None)` tuple
+- Loader prefers inline, falls back to sidecar for backwards compat
+- Security hardened: KNOWN_HOOK_EVENTS filter, reasoning scrubbed+capped, source validated
+
+### 11. RRF fusion_k Tuning
+- Swept k={5, 10, 15, 20, 30, 40, 60} — 20% sample was misleading
+- Full sample (441 PreToolUse): k=10 wins on ALL metrics (+1.7 F2, +1.8 recall, -1.6 noise)
+- Default changed from 60→10 — sharper fusion for 107-rule corpus
+
+### 12. Configurable llm_candidates
+- New config field `llm_candidates` (default 12) controls how many candidates reach LLM reranker
+- Wired through config.py, models.py, eval.py, pipeline.py
+
+### 13. Parallel Eval with ThreadPoolExecutor
+- 5 workers matching llama-server -np 5 slots
+- ~4-5x speedup on full benchmarks
+- Sequential fallback for embedding-only mode
+
+### 14. Security Review (converged)
+- 3 HIGH + 4 MEDIUM findings from security reviewer
+- All fixed: reasoning capped+scrubbed, events validated against KNOWN_HOOK_EVENTS,
+  affinity_mode/model validated, tool names capped, bench_e2e label sanitized
+
+## Final Commits (10 total)
+1. `b0e2476` — V2 rules, affinity prompt, fixture overhaul
+2. `088fc6c` — Reranker prompt rewrite + top_k 5→7
+3. `ee84430` — Query-shaped expansion prompt
+4. `ebd11bd` — Session progress + benchmark results
+5. `5bc99f8` — Inline affinity in rules.json
+6. `57a6b6d` — Security fix: validate inline affinity fields
+7. `fee3e45` — Security fix: KNOWN_HOOK_EVENTS, scrub reasoning, sanitize label
+8. `7f5e961` — Configurable llm_candidates, revert fusion_k to 60
+9. `77695bf` — Parallel eval with ThreadPoolExecutor
+10. `520fcb0` — fusion_k 60→10 (full-sample confirmed)
+
 ## Remaining Work
-1. **Affinity in rules.json** — architectural refactor (sidecar → inline), noted but not started
-2. **Expansion quality improvement** — recall diagnostic shows embedding quality is the remaining bottleneck
-3. **Phase 6 implementation** — completion gate Stop hook (PRD converged)
-4. **LLM affinity prompt** — 93.5% accuracy but could be used in production instead of ground truth
+1. **Expansion quality** — more expansions (MAX 10→12, dedup 0.85→0.80)
+2. **Flash Rank / Jina-ColBERT V2** — Stage 2 reranker upgrade (biggest expected impact)
+3. **Jina-embeddings-v3** — embedding model upgrade with task LoRA
+4. **Phase 6 implementation** — completion gate Stop hook (PRD converged)
+5. **PostToolUse/SubagentStart** — event-specific expansion tuning (currently optimized for PreToolUse)
