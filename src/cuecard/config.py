@@ -57,6 +57,7 @@ _VALIDATORS: dict[str, tuple[type, float | int | None, float | int | None]] = {
     "query_max_length": (int, 50, 2000),
     "max_log_size_mb": (int, 1, 1000),
     "fusion_k": (int, 1, 1000),
+    "llm_candidates": (int, 1, 100),
     "expansion_max_per_rule": (int, 1, 100),
     "expansion_max_length": (int, 10, 2000),
 }
@@ -141,8 +142,8 @@ def _extract_flat(raw: dict[str, Any]) -> dict[str, Any]:
     if "allowed_dirs" in sources:
         flat["allowed_dirs"] = sources["allowed_dirs"]
 
-    # Retrieval: fusion_k, sparse_enabled, affinity_mode
-    for key in ("fusion_k", "sparse_enabled", "affinity_mode"):
+    # Retrieval: fusion_k, llm_candidates, sparse_enabled, affinity_mode
+    for key in ("fusion_k", "llm_candidates", "sparse_enabled", "affinity_mode"):
         if key in retrieval:
             flat[key] = retrieval[key]
 
@@ -394,6 +395,7 @@ def load_config(
     # Resolve enriched retrieval fields (project wins → global → default)
     _enriched_defaults: dict[str, int | bool | str] = {
         "fusion_k": 60,
+        "llm_candidates": 12,
         "sparse_enabled": True,
         "expansion_max_per_rule": 10,
         "expansion_max_length": 200,
@@ -409,7 +411,10 @@ def load_config(
             enriched[key] = default
 
     # Validate enriched fields
-    for key in ("fusion_k", "expansion_max_per_rule", "expansion_max_length"):
+    for key in (
+        "fusion_k", "llm_candidates",
+        "expansion_max_per_rule", "expansion_max_length",
+    ):
         _validate_field(key, enriched[key])
     _validate_bool("sparse_enabled", enriched["sparse_enabled"])
 
@@ -444,6 +449,7 @@ def load_config(
         allowed_dirs=all_allowed,
         pipeline=pipeline_config,
         fusion_k=enriched["fusion_k"],
+        llm_candidates=enriched["llm_candidates"],
         sparse_enabled=enriched["sparse_enabled"],
         expansion_max_per_rule=enriched["expansion_max_per_rule"],
         expansion_max_length=enriched["expansion_max_length"],

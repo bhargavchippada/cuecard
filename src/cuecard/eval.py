@@ -346,12 +346,13 @@ def _percentile(values: list[float], pct: float) -> float:
 class _EvalConfig:
     """Minimal config stub for pipeline calls from eval harness."""
 
-    top_k: int = 5
+    top_k: int = 7
     threshold: float = 0.30
     dedup_threshold: float = 0.95
     query_max_length: int = 500
     sparse_enabled: bool = True
     fusion_k: int = 60
+    llm_candidates: int = 12
 
 
 def run_eval(

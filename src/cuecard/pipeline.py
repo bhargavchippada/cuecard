@@ -160,8 +160,7 @@ def _run_retrieval_stage(
         threshold = config.threshold
     else:
         # LLM modes use wider recall to give the reranker more candidates
-        # Reduced from 20/0.20 to 12/0.25 for 109-rule corpus (less noise surface)
-        top_k = 12
+        top_k = config.llm_candidates
         threshold = 0.25
 
     input_count = index.size

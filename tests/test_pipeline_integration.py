@@ -84,6 +84,7 @@ class _ConfigWithRetrieval:
     allowed_dirs: tuple[str, ...] = ()
     sparse_enabled: bool = True
     fusion_k: int = 60
+    llm_candidates: int = 12
     retrieval: _FakeRetrieval = _FakeRetrieval()
 
 
@@ -203,6 +204,7 @@ class TestModeFromConfig:
             query_max_length: int = 500
             sparse_enabled: bool = True
             fusion_k: int = 60
+            llm_candidates: int = 12
 
         cfg = _BareConfig()
         with patch(
@@ -494,6 +496,7 @@ class TestSparseRetrieverIntegration:
             query_max_length: int = 500
             sparse_enabled: bool = False
             fusion_k: int = 60
+            llm_candidates: int = 12
 
         rules = tuple(
             Rule(
