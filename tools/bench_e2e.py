@@ -150,22 +150,20 @@ def generate_expansions_for_label(label: str, *, force: bool = False) -> None:
     Infers affinity via LLM and embeds inline in each rules.json.
     Skips generation if corpus already exists and --force is not set.
     """
-    from cuecard.retrieval.affinity import infer_affinities, load_affinity
     from cuecard.models import PipelineConfig, ResolvedConfig
+    from cuecard.retrieval.affinity import infer_affinities
 
-    # Try loading existing affinity; if empty/strict, infer from rules
-    affinity = load_affinity(str(CORPORA_DIR))
-    if affinity is None or len(affinity.items) == 0:
-        print("  Inferring affinity from rules via LLM...")
-        first_rules_txt = list(SOURCE_FILES.values())[0]["rules_txt"]
-        rules_for_aff = parse_rules((str(first_rules_txt),))
-        aff_config = ResolvedConfig(
-            source_paths=(), global_source_paths=(),
-            project_source_paths=(), global_cache_dir="",
-            pipeline=PipelineConfig(mode="llm-local"),
-        )
-        affinity = infer_affinities(rules_for_aff, aff_config)
-        print(f"  Inferred affinity: {len(affinity.items)} entries")
+    # Always infer affinity — strict mode doesn't apply event masks
+    print("  Inferring affinity from rules via LLM...")
+    first_rules_txt = list(SOURCE_FILES.values())[0]["rules_txt"]
+    rules_for_aff = parse_rules((str(first_rules_txt),))
+    aff_config = ResolvedConfig(
+        source_paths=(), global_source_paths=(),
+        project_source_paths=(), global_cache_dir="",
+        pipeline=PipelineConfig(mode="llm-local"),
+    )
+    affinity = infer_affinities(rules_for_aff, aff_config)
+    print(f"  Inferred affinity: {affinity.mode}, {len(affinity.items)} entries")
 
     for tier, cfg in SOURCE_FILES.items():
         out_dir = CORPORA_DIR / f"enriched_{tier}_{label}"
@@ -219,24 +217,27 @@ def run_benchmark(label: str, *, sample_ratio: float = 0.2, seed: int = 42) -> d
     """Run basic + workflow eval against model-specific corpora."""
     from fastembed import TextEmbedding
 
-    from cuecard.retrieval.affinity import infer_affinities, load_affinity
     from cuecard.indexing.indexer import load_rules_json
+    from cuecard.retrieval.affinity import infer_affinities
 
     print(f"\nLoading embedding model: {EMBEDDING_MODEL}")
     embedding_model = TextEmbedding(model_name=EMBEDDING_MODEL)
 
-    # Load affinity: prefer inline from rules.json, fall back to sidecar, then infer
+    # Always infer affinity so event masks are applied (not strict mode)
+    from cuecard.models import PipelineConfig, ResolvedConfig
+
+    # Try loading inferred affinity from inline rules.json first
     affinity = None
     first_corpus = CORPORA_DIR / f"enriched_basic_{label}" / "rules.json"
     if first_corpus.exists():
         result = load_rules_json(str(first_corpus.parent))
         if result is not None:
             _rules, affinity = result
-    if affinity is None or len(affinity.items) == 0:
-        affinity = load_affinity(str(CORPORA_DIR))
-    if affinity is None or len(affinity.items) == 0:
-        # Infer affinity from rules
-        from cuecard.models import PipelineConfig, ResolvedConfig
+            if affinity is not None and affinity.mode != "strict":
+                print(f"Loaded inferred affinity: {len(affinity.items)} entries")
+
+    # If no inferred affinity (strict or missing), infer via LLM
+    if affinity is None or affinity.mode == "strict":
         print("Inferring affinity via LLM...")
         first_rules_txt = list(SOURCE_FILES.values())[0]["rules_txt"]
         aff_rules = parse_rules((str(first_rules_txt),))
@@ -246,10 +247,7 @@ def run_benchmark(label: str, *, sample_ratio: float = 0.2, seed: int = 42) -> d
             pipeline=PipelineConfig(mode="llm-local"),
         )
         affinity = infer_affinities(aff_rules, aff_config)
-    if affinity and len(affinity.items) > 0:
-        print(f"Loaded affinity index: {affinity.mode}, {len(affinity.items)} entries")
-    else:
-        print("No affinity index — event mask disabled")
+        print(f"Inferred affinity: {affinity.mode}, {len(affinity.items)} entries")
 
     results = {}
     for tier, cfg in SOURCE_FILES.items():
