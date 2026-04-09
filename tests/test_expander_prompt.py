@@ -199,7 +199,7 @@ class TestParseExpansionResponse:
         assert "[REDACTED]" in result[0]
 
     def test_max_length_enforced(self) -> None:
-        long_text = "x" * 300
+        long_text = "x" * 600
         response = json.dumps({"expansions": [long_text]})
         result = _parse_expansion_response(response)
         assert len(result) == 1

@@ -2,23 +2,30 @@
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
     import numpy.typing as npt
 
+# Safety caps — upper bounds enforced at parse/generation time.
+# Operational defaults live in ResolvedConfig (tuned via cuecard.toml).
 MAX_RULE_LENGTH = 500
-MAX_EXPANSION_LENGTH = 200
+MAX_EXPANSION_LENGTH = MAX_RULE_LENGTH
 MAX_EXPANSIONS_PER_RULE = 10
+MAX_RULES_PER_FILE = 500
 
 KNOWN_HOOK_EVENTS: frozenset[str] = frozenset({
     "PreToolUse", "PostToolUse", "UserPromptSubmit", "SubagentStart", "Stop",
 })
 
 AffinitySource = Literal["explicit", "inferred", "explicit+inferred", "default"]
+VALID_AFFINITY_SOURCES: frozenset[str] = frozenset(
+    {"explicit", "inferred", "explicit+inferred", "default"},
+)
 
 
 def _hash_rule_text(text: str) -> str:
@@ -27,8 +34,6 @@ def _hash_rule_text(text: str) -> str:
     Uses UTF-8 encoding, lowercase hex, no prefix.
     Stored in affinity.json as bare hex string (NOT "sha256:..." prefixed).
     """
-    import hashlib
-
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
@@ -51,7 +56,7 @@ class AffinityIndex:
     Treated as immutable after construction (same pattern as Index).
     """
 
-    __slots__ = ("version", "mode", "model", "_lookup", "_items")
+    __slots__ = ("version", "mode", "model", "_lookup")
     __hash__ = None  # type: ignore[assignment]
 
     def __init__(
@@ -64,7 +69,6 @@ class AffinityIndex:
         self.version = version
         self.mode = mode
         self.model = model
-        self._items = affinities
         self._lookup: dict[str, RuleAffinity] = dict(affinities)
 
     def get(self, rule: Rule) -> RuleAffinity | None:
@@ -78,7 +82,7 @@ class AffinityIndex:
     @property
     def items(self) -> tuple[tuple[str, RuleAffinity], ...]:
         """Serializable representation."""
-        return self._items
+        return tuple(self._lookup.items())
 
     def __repr__(self) -> str:
         return f"AffinityIndex(mode={self.mode!r}, rules={len(self._lookup)})"
@@ -114,7 +118,7 @@ class Rule:
     events: frozenset[str] = field(default_factory=frozenset)
     tools: frozenset[str] = field(default_factory=frozenset)
 
-    MAX_LENGTH: int = field(default=500, init=False, repr=False, compare=False)
+    MAX_LENGTH: ClassVar[int] = MAX_RULE_LENGTH
 
 
 @dataclass(frozen=True)
@@ -157,29 +161,48 @@ class PipelineConfig:
 
 @dataclass(frozen=True)
 class ResolvedConfig:
-    """Fully resolved and validated configuration."""
+    """Fully resolved and validated configuration.
 
+    Computed fields (no default) are set by load_config().
+    TOML-configurable fields have defaults — the single source of truth.
+    Numeric fields carry min/max in metadata for validation.
+    """
+
+    # Computed by load_config() — always provided
     source_paths: tuple[str, ...]
     global_source_paths: tuple[str, ...]
     project_source_paths: tuple[str, ...]
-    model_name: str
-    top_k: int
-    threshold: float
-    dedup_threshold: float
-    query_max_length: int
-    hook_events: tuple[str, ...]
-    verbose: bool
-    redact: bool
-    max_log_size_mb: int
     global_cache_dir: str
-    project_cache_dir: str | None
-    allowed_dirs: tuple[str, ...]
+
+    # TOML-configurable — defaults are the single source of truth
+    project_cache_dir: str | None = None
+    allowed_dirs: tuple[str, ...] = ()
+    model_name: str = "BAAI/bge-small-en-v1.5"
+    top_k: int = field(default=7, metadata={"min": 1, "max": 50})
+    threshold: float = field(default=0.30, metadata={"min": 0.0, "max": 1.0})
+    dedup_threshold: float = field(
+        default=0.95, metadata={"min": 0.0, "max": 1.0},
+    )
+    query_max_length: int = field(
+        default=500, metadata={"min": 50, "max": 2000},
+    )
+    hook_events: tuple[str, ...] = ("PreToolUse",)
+    verbose: bool = False
+    redact: bool = True
+    max_log_size_mb: int = field(default=10, metadata={"min": 1, "max": 1000})
     pipeline: PipelineConfig = field(default_factory=PipelineConfig)
-    fusion_k: int = 10
-    llm_candidates: int = 12
+    fusion_k: int = field(default=10, metadata={"min": 1, "max": 1000})
+    llm_candidates: int = field(default=12, metadata={"min": 1, "max": 100})
     sparse_enabled: bool = True
-    expansion_max_per_rule: int = 10
-    expansion_max_length: int = 200
+    expansion_max_per_rule: int = field(
+        default=5, metadata={"min": 1, "max": 100},
+    )
+    expansion_max_length: int = field(
+        default=MAX_RULE_LENGTH, metadata={"min": 10, "max": 2000},
+    )
+    expansion_dedup_threshold: float = field(
+        default=0.80, metadata={"min": 0.0, "max": 1.0},
+    )
     affinity_mode: str = "infer"
 
 
@@ -240,6 +263,7 @@ class Index:
         "rule_map",
         "bm25_corpus",
     )
+    __hash__ = None  # type: ignore[assignment]
 
     def __init__(
         self,
@@ -261,7 +285,7 @@ class Index:
                 f"must match rule_map length ({len(rule_map)})"
             )
             raise ValueError(msg)
-        if rule_map and not all(0 <= i < len(rules) for i in rule_map):
+        if not all(0 <= i < len(rules) for i in rule_map):
             msg = (
                 f"All rule_map indices must be in range [0, {len(rules)})"
             )

@@ -7,10 +7,8 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from cuecard.indexer import (
-    _compute_checksum,
-    build_index,
-)
+from cuecard.freshness import compute_file_hash
+from cuecard.indexer import build_index
 from cuecard.models import Provenance, Rule, SourceMeta
 
 
@@ -138,7 +136,7 @@ class TestComputeChecksum:
         content = b"hello world"
         test_file.write_bytes(content)
 
-        result = _compute_checksum(str(test_file))
+        result = compute_file_hash(str(test_file))
 
         expected_hash = hashlib.sha256(content).hexdigest()
         assert result == f"sha256:{expected_hash}"
@@ -149,7 +147,7 @@ class TestComputeChecksum:
         test_file = tmp_path / "empty.bin"  # type: ignore[operator]
         test_file.write_bytes(b"")
 
-        result = _compute_checksum(str(test_file))
+        result = compute_file_hash(str(test_file))
 
         expected_hash = hashlib.sha256(b"").hexdigest()
         assert result == f"sha256:{expected_hash}"
@@ -158,8 +156,8 @@ class TestComputeChecksum:
         test_file = tmp_path / "det.bin"  # type: ignore[operator]
         test_file.write_bytes(b"deterministic content")
 
-        first = _compute_checksum(str(test_file))
-        second = _compute_checksum(str(test_file))
+        first = compute_file_hash(str(test_file))
+        second = compute_file_hash(str(test_file))
         assert first == second
 
     def test_different_content_different_checksum(self, tmp_path: object) -> None:
@@ -168,7 +166,7 @@ class TestComputeChecksum:
         file_a.write_bytes(b"content A")
         file_b.write_bytes(b"content B")
 
-        assert _compute_checksum(str(file_a)) != _compute_checksum(str(file_b))
+        assert compute_file_hash(str(file_a)) != compute_file_hash(str(file_b))
 
 
 class TestBuildIndexExpansions:

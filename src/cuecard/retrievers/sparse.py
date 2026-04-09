@@ -134,7 +134,7 @@ class SparseRetriever:
         parent_scores = np.full(num_rules, -np.inf, dtype=np.float64)
         np.maximum.at(parent_scores, list(index.rule_map), doc_scores)
 
-        # Threshold filter
+        # Threshold filter (strict > not >= : BM25 0.0 = no term overlap)
         above_threshold = parent_scores > threshold
         candidate_parent_idxs = np.where(above_threshold)[0]
 

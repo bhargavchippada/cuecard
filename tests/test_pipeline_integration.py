@@ -12,6 +12,7 @@ import pytest
 from cuecard.models import (
     Provenance,
     RankedResult,
+    ResolvedConfig,
     RetrievalStageTrace,
     Rule,
 )
@@ -19,7 +20,7 @@ from cuecard.pipeline import run_pipeline
 from cuecard.retrievers import ScoredCandidate
 
 if TYPE_CHECKING:
-    from cuecard.models import Index, ResolvedConfig
+    from cuecard.models import Index
 
 
 # --- helpers ---
@@ -192,27 +193,19 @@ class TestModeFromConfig:
         sample_index: Index,
         fake_candidates: list[ScoredCandidate],
     ) -> None:
-        """Config with neither pipeline nor retrieval falls back to embedding."""
-
-        @dataclass(frozen=True)
-        class _BareConfig:
-            source_paths: tuple[str, ...] = ()
-            model_name: str = "test"
-            top_k: int = 5
-            threshold: float = 0.30
-            dedup_threshold: float = 0.95
-            query_max_length: int = 500
-            sparse_enabled: bool = True
-            fusion_k: int = 60
-            llm_candidates: int = 12
-
-        cfg = _BareConfig()
+        """Config with all defaults falls back to embedding via pipeline."""
+        cfg = ResolvedConfig(
+            source_paths=(),
+            global_source_paths=(),
+            project_source_paths=(),
+            global_cache_dir="/tmp/test",
+        )
         with patch(
             "cuecard.retrievers.dense.DenseRetriever.retrieve",
             return_value=fake_candidates,
         ):
             result = run_pipeline(
-                "test query", sample_index, cfg, mode=None,  # type: ignore[arg-type]
+                "test query", sample_index, cfg, mode=None,
             )
         assert result.mode == "embedding"
 

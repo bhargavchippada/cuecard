@@ -5,6 +5,8 @@ from __future__ import annotations
 from os.path import basename
 from typing import TYPE_CHECKING
 
+from cuecard.security import scrub_secrets
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
@@ -39,8 +41,6 @@ def format_rules(
     """
     if not results:
         return ""
-
-    from cuecard.security import scrub_secrets
 
     lines: list[str] = [label if label is not None else _BOUNDARY_LABEL]
     for r in results:

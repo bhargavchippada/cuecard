@@ -548,8 +548,8 @@ class TestEnrichedRetrievalConfig:
         assert config.fusion_k == 10
         assert config.llm_candidates == 12
         assert config.sparse_enabled is True
-        assert config.expansion_max_per_rule == 10
-        assert config.expansion_max_length == 200
+        assert config.expansion_max_per_rule == 5
+        assert config.expansion_max_length == 500
 
     def test_from_global_toml(self, tmp_path: Path) -> None:
         """Enriched fields are read from [retrieval] and [expansion]."""

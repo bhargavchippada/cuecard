@@ -123,6 +123,33 @@ class TestScrubSecrets:
     def test_empty_string(self) -> None:
         assert scrub_secrets("") == ""
 
+    def test_ssh_private_key(self) -> None:
+        text = (
+            "-----BEGIN RSA PRIVATE KEY-----\n"
+            "MIIEpAIBAAKCAQEA0Z3VS5JJcds3xfn\n"
+            "-----END RSA PRIVATE KEY-----"
+        )
+        result = scrub_secrets(text)
+        assert "BEGIN" not in result
+        assert "[REDACTED]" in result
+
+    def test_ssh_partial_pem_not_matched(self) -> None:
+        text = "-----BEGIN RSA PRIVATE KEY-----"
+        result = scrub_secrets(text)
+        assert result == text  # partial block passes through
+
+    def test_generic_openai_legacy_key(self) -> None:
+        key = "sk-" + "a" * 48
+        result = scrub_secrets(f"key {key}")
+        assert key not in result
+        assert "[REDACTED]" in result
+
+    def test_ant_prefix_caught_by_anthropic_pattern(self) -> None:
+        key = "sk-ant-" + "a" * 25
+        result = scrub_secrets(f"key {key}")
+        assert key not in result
+        assert "[REDACTED]" in result
+
 
 class TestValidateSourcePath:
     def test_valid_project_path(self, tmp_path: Path) -> None:

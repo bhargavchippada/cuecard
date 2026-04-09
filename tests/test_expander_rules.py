@@ -40,7 +40,7 @@ class TestExpandRules:
             )
 
     def test_local_validates_endpoint(self) -> None:
-        with pytest.raises(ConfigError, match="localhost"):
+        with pytest.raises(ConfigError, match="loopback"):
             expand_rules(
                 [_make_rule()],
                 backend="local",
@@ -93,7 +93,9 @@ class TestExpandRules:
 
         with patch(
             "cuecard.expander.call_local",
-            return_value='{"expansions": ["phrase a", "phrase b"]}',
+            return_value=(
+                '{"expansions": ["docker build image", "run pytest coverage"]}'
+            ),
         ):
             result = expand_rules(
                 rules,
@@ -102,7 +104,7 @@ class TestExpandRules:
             )
 
         assert len(result) == 1
-        assert result[0].expansions == ("phrase a", "phrase b")
+        assert result[0].expansions == ("docker build image", "run pytest coverage")
 
     def test_haiku_backend_success(self) -> None:
         rules = [_make_rule()]
@@ -286,7 +288,7 @@ class TestExpandRules:
                 backend="local",
                 endpoint="http://localhost:8081/v1",
             )
-            mock_dedup.assert_called_once_with(["a", "b", "c"])
+            mock_dedup.assert_called_once_with(["a", "b", "c"], threshold=0.8)
             assert result[0].expansions == ("a", "c")
 
     def test_valid_event_types_constant(self) -> None:

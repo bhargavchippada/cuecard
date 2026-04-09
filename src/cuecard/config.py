@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import glob as glob_module
 import logging
 import os
@@ -33,34 +34,47 @@ _VALID_HOOK_EVENTS: frozenset[str] = (
     KNOWN_HOOK_EVENTS | {"SessionStart"}
 )
 
-# --- Defaults ---
+# --- Defaults and validators derived from ResolvedConfig ---
 
-_DEFAULTS: dict[str, Any] = {
-    "top_k": 7,
-    "threshold": 0.30,
-    "dedup_threshold": 0.95,
-    "query_max_length": 500,
-    "max_log_size_mb": 10,
-    "verbose": False,
-    "redact": True,
-    "model": "BAAI/bge-small-en-v1.5",
-    "hook_events": ["PreToolUse"],
-}
+# TOML-configurable field names (flat keys used after _extract_flat).
+# "model" in TOML maps to "model_name" in ResolvedConfig.
+_TOML_TO_FIELD: dict[str, str] = {"model": "model_name"}
+_FIELD_TO_TOML: dict[str, str] = {"model_name": "model"}
+
+# Fields that participate in TOML merge (project wins → global → default).
+# Derived from ResolvedConfig fields that have defaults.
+_TOML_DEFAULTS: dict[str, Any] = {}
+for _f in dataclasses.fields(ResolvedConfig):
+    if _f.default is not dataclasses.MISSING:
+        _toml_key = _FIELD_TO_TOML.get(_f.name, _f.name)
+        _TOML_DEFAULTS[_toml_key] = _f.default
+    elif _f.default_factory is not dataclasses.MISSING:
+        _toml_key = _FIELD_TO_TOML.get(_f.name, _f.name)
+        _TOML_DEFAULTS[_toml_key] = _f.default_factory()
+
+# Range validators derived from field metadata {"min": ..., "max": ...}.
+_VALIDATORS: dict[str, tuple[type, float | int, float | int]] = {}
+for _f in dataclasses.fields(ResolvedConfig):
+    if "min" in _f.metadata:
+        _toml_key = _FIELD_TO_TOML.get(_f.name, _f.name)
+        # Resolve type from default value (annotation is str due to __future__).
+        # Falls back to int if default_factory — no current field hits this,
+        # but if one does, add explicit type resolution here.
+        _val_type = type(_f.default) if _f.default is not dataclasses.MISSING else int
+        _VALIDATORS[_toml_key] = (_val_type, _f.metadata["min"], _f.metadata["max"])
+
+# Global-only fields: project config cannot override these.
+_GLOBAL_ONLY: frozenset[str] = frozenset({"redact"})
+
+# Fields excluded from the generic merge loop (computed or special-cased).
+_SKIP_IN_MERGE: frozenset[str] = frozenset({
+    "source_paths", "global_source_paths", "project_source_paths",
+    "global_cache_dir", "project_cache_dir", "allowed_dirs",
+    "pipeline", "source_rules",
+})
 
 
 # --- Validation ---
-
-_VALIDATORS: dict[str, tuple[type, float | int | None, float | int | None]] = {
-    "top_k": (int, 1, 50),
-    "threshold": (float, 0.0, 1.0),
-    "dedup_threshold": (float, 0.0, 1.0),
-    "query_max_length": (int, 50, 2000),
-    "max_log_size_mb": (int, 1, 1000),
-    "fusion_k": (int, 1, 1000),
-    "llm_candidates": (int, 1, 100),
-    "expansion_max_per_rule": (int, 1, 100),
-    "expansion_max_length": (int, 10, 2000),
-}
 
 
 def _validate_field(name: str, value: object) -> None:
@@ -117,7 +131,10 @@ def _extract_flat(raw: dict[str, Any]) -> dict[str, Any]:
     flat: dict[str, Any] = {}
 
     retrieval = raw.get("retrieval", {})
-    for key in ("top_k", "threshold", "dedup_threshold"):
+    for key in (
+        "top_k", "threshold", "dedup_threshold",
+        "fusion_k", "llm_candidates", "sparse_enabled", "affinity_mode",
+    ):
         if key in retrieval:
             flat[key] = retrieval[key]
 
@@ -142,14 +159,8 @@ def _extract_flat(raw: dict[str, Any]) -> dict[str, Any]:
     if "allowed_dirs" in sources:
         flat["allowed_dirs"] = sources["allowed_dirs"]
 
-    # Retrieval: fusion_k, llm_candidates, sparse_enabled, affinity_mode
-    for key in ("fusion_k", "llm_candidates", "sparse_enabled", "affinity_mode"):
-        if key in retrieval:
-            flat[key] = retrieval[key]
-
-    # Expansion section
     expansion = raw.get("expansion", {})
-    for key in ("max_per_rule", "max_length"):
+    for key in ("max_per_rule", "max_length", "dedup_threshold"):
         if key in expansion:
             flat[f"expansion_{key}"] = expansion[key]
 
@@ -256,11 +267,12 @@ def load_config(
     global_flat = _extract_flat(global_raw)
     project_flat = _extract_flat(project_raw)
 
-    # Merge scalars: project wins, then global, then defaults
+    # Merge all TOML-configurable fields: project wins → global → default
     merged: dict[str, Any] = {}
-    for key, default in _DEFAULTS.items():
-        if key == "redact":
-            # Global-only field: project cannot override
+    for key, default in _TOML_DEFAULTS.items():
+        if key in _SKIP_IN_MERGE:
+            continue
+        if key in _GLOBAL_ONLY:
             merged[key] = global_flat.get(key, default)
         elif key in project_flat:
             merged[key] = project_flat[key]
@@ -269,14 +281,17 @@ def load_config(
         else:
             merged[key] = default
 
-    # Validate all fields
-    for key in (
-        "top_k", "threshold", "dedup_threshold",
-        "query_max_length", "max_log_size_mb",
-    ):
-        _validate_field(key, merged[key])
-    _validate_bool("verbose", merged["verbose"])
-    _validate_bool("redact", merged["redact"])
+    # Validate all range-checked fields
+    for key in _VALIDATORS:
+        if key in merged:
+            _validate_field(key, merged[key])
+
+    # Validate bool fields
+    for key in ("verbose", "redact", "sparse_enabled"):
+        if key in merged:
+            _validate_bool(key, merged[key])
+
+    # Validate string fields
     _validate_str("model", merged["model"])
 
     # Validate model against allowlist
@@ -289,8 +304,11 @@ def load_config(
 
     # Validate hook_events
     events = merged["hook_events"]
-    if not isinstance(events, list):
-        msg = f"Config field 'hook_events' must be a list, got {type(events).__name__}"
+    if not isinstance(events, (list, tuple)):
+        msg = (
+            f"Config field 'hook_events' must be a list,"
+            f" got {type(events).__name__}"
+        )
         raise ConfigError(msg)
     for event in events:
         if event not in _VALID_HOOK_EVENTS:
@@ -299,6 +317,19 @@ def load_config(
                 f"Valid events: {sorted(_VALID_HOOK_EVENTS)}"
             )
             raise ConfigError(msg)
+
+    # Validate affinity_mode
+    valid_affinity_modes = ("infer", "strict")
+    affinity_mode = merged["affinity_mode"]
+    if (
+        not isinstance(affinity_mode, str)
+        or affinity_mode not in valid_affinity_modes
+    ):
+        msg = (
+            f"Config field 'affinity_mode' must be one of"
+            f" {valid_affinity_modes}, got {affinity_mode!r}"
+        )
+        raise ConfigError(msg)
 
     # Merge allowed_dirs
     global_allowed = global_flat.get("allowed_dirs", [])
@@ -392,49 +423,13 @@ def load_config(
         thinking=pipeline_thinking,
     )
 
-    # Resolve enriched retrieval fields (project wins → global → default)
-    _enriched_defaults: dict[str, int | bool | str] = {
-        "fusion_k": 10,
-        "llm_candidates": 12,
-        "sparse_enabled": True,
-        "expansion_max_per_rule": 10,
-        "expansion_max_length": 200,
-        "affinity_mode": "infer",
-    }
-    enriched: dict[str, Any] = {}
-    for key, default in _enriched_defaults.items():
-        if key in project_flat:
-            enriched[key] = project_flat[key]
-        elif key in global_flat:
-            enriched[key] = global_flat[key]
-        else:
-            enriched[key] = default
-
-    # Validate enriched fields
-    for key in (
-        "fusion_k", "llm_candidates",
-        "expansion_max_per_rule", "expansion_max_length",
-    ):
-        _validate_field(key, enriched[key])
-    _validate_bool("sparse_enabled", enriched["sparse_enabled"])
-
-    # Validate affinity_mode
-    valid_affinity_modes = ("infer", "strict")
-    affinity_mode = enriched["affinity_mode"]
-    if (
-        not isinstance(affinity_mode, str)
-        or affinity_mode not in valid_affinity_modes
-    ):
-        msg = (
-            f"Config field 'affinity_mode' must be one of"
-            f" {valid_affinity_modes}, got {affinity_mode!r}"
-        )
-        raise ConfigError(msg)
-
     return ResolvedConfig(
         source_paths=tuple(all_paths),
         global_source_paths=global_resolved,
         project_source_paths=project_resolved,
+        global_cache_dir=global_cache,
+        project_cache_dir=project_cache,
+        allowed_dirs=all_allowed,
         model_name=merged["model"],
         top_k=merged["top_k"],
         threshold=float(merged["threshold"]),
@@ -444,14 +439,11 @@ def load_config(
         verbose=merged["verbose"],
         redact=merged["redact"],
         max_log_size_mb=merged["max_log_size_mb"],
-        global_cache_dir=global_cache,
-        project_cache_dir=project_cache,
-        allowed_dirs=all_allowed,
         pipeline=pipeline_config,
-        fusion_k=enriched["fusion_k"],
-        llm_candidates=enriched["llm_candidates"],
-        sparse_enabled=enriched["sparse_enabled"],
-        expansion_max_per_rule=enriched["expansion_max_per_rule"],
-        expansion_max_length=enriched["expansion_max_length"],
-        affinity_mode=enriched["affinity_mode"],
+        fusion_k=merged["fusion_k"],
+        llm_candidates=merged["llm_candidates"],
+        sparse_enabled=merged["sparse_enabled"],
+        expansion_max_per_rule=merged["expansion_max_per_rule"],
+        expansion_max_length=merged["expansion_max_length"],
+        affinity_mode=merged["affinity_mode"],
     )

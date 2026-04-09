@@ -240,6 +240,7 @@ def _expand_with_progress(
     backend: str,
     endpoint: str = "http://localhost:8081/v1",
     missing_only: bool = False,
+    dedup_threshold: float = 0.80,
 ) -> list[Rule]:
     """Run expand_rules with a Rich progress display on stderr."""
     from cuecard.expander import expand_rules
@@ -276,6 +277,7 @@ def _expand_with_progress(
             backend=backend,
             endpoint=endpoint,
             missing_only=missing_only,
+            dedup_threshold=dedup_threshold,
             on_progress=_on_progress,
         )
 
@@ -346,6 +348,7 @@ def expand(
                 backend=backend,
                 endpoint=endpoint,
                 missing_only=missing_only,
+                dedup_threshold=cfg.expansion_dedup_threshold,
             )
         except Exception as exc:
             err_console.print(f"[red]Expansion failed: {exc}[/red]")

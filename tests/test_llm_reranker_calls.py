@@ -22,11 +22,11 @@ class TestValidateEndpoint:
         validate_endpoint("http://[::1]:8081/v1")
 
     def test_external_host_raises(self) -> None:
-        with pytest.raises(ConfigError, match="localhost"):
+        with pytest.raises(ConfigError, match="loopback"):
             validate_endpoint("http://evil.com:8081/v1")
 
     def test_ip_address_raises(self) -> None:
-        with pytest.raises(ConfigError, match="localhost"):
+        with pytest.raises(ConfigError, match="loopback"):
             validate_endpoint("http://10.0.0.1:8081/v1")
 
     def test_userinfo_bypass_raises(self) -> None:

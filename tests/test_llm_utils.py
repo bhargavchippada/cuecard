@@ -9,7 +9,6 @@ import pytest
 
 from cuecard.llm_utils import (
     _ALLOWED_HAIKU_MODELS,
-    _ALLOWED_LLM_HOSTS,
     call_haiku,
     call_local,
     validate_endpoint,
@@ -28,11 +27,11 @@ class TestValidateEndpoint:
         validate_endpoint("http://[::1]:8081/v1")
 
     def test_external_host_raises(self) -> None:
-        with pytest.raises(ConfigError, match="localhost"):
+        with pytest.raises(ConfigError, match="loopback"):
             validate_endpoint("http://evil.com:8081/v1")
 
     def test_ip_address_raises(self) -> None:
-        with pytest.raises(ConfigError, match="localhost"):
+        with pytest.raises(ConfigError, match="loopback"):
             validate_endpoint("http://10.0.0.1:8081/v1")
 
     def test_userinfo_bypass_raises(self) -> None:
@@ -243,7 +242,7 @@ class TestCallLocalRequestBody:
             call_local("sys", "usr", "http://localhost:8081/v1", False)
             body = mock_post.call_args.kwargs["json"]
             assert "model" in body
-            assert body["model"] == "qwen"
+            assert body["model"] == "default"
 
     def test_message_structure(self) -> None:
         with patch.object(
@@ -448,10 +447,11 @@ class TestCallHaikuOptionsPassedToQuery:
 
 
 class TestConstants:
-    def test_allowed_hosts(self) -> None:
-        assert "localhost" in _ALLOWED_LLM_HOSTS
-        assert "127.0.0.1" in _ALLOWED_LLM_HOSTS
-        assert "::1" in _ALLOWED_LLM_HOSTS
+    def test_loopback_hosts_accepted(self) -> None:
+        """Verify validate_endpoint accepts all loopback addresses."""
+        validate_endpoint("http://localhost:8081/v1")
+        validate_endpoint("http://127.0.0.1:8081/v1")
+        validate_endpoint("http://[::1]:8081/v1")
 
     def test_allowed_haiku_models(self) -> None:
         assert "claude-haiku-4-5" in _ALLOWED_HAIKU_MODELS

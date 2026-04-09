@@ -11,8 +11,8 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
+from cuecard.freshness import compute_file_hash
 from cuecard.indexer import (
-    _compute_checksum,
     load_index,
     save_index,
 )
@@ -100,7 +100,7 @@ class TestSaveIndex:
         with open(Path(cache_dir) / "metadata.json") as f:
             meta = json.load(f)
 
-        actual = _compute_checksum(str(Path(cache_dir) / "embeddings.npz"))
+        actual = compute_file_hash(str(Path(cache_dir) / "embeddings.npz"))
         assert meta["checksum"] == actual
 
     def test_atomic_overwrite(self, tmp_path: Path, sample_index: Index) -> None:
@@ -276,7 +276,7 @@ class TestLoadIndex:
         # Keep only 2 rules but embeddings still has 5 rows
         meta["rules"] = meta["rules"][:2]
         # Fix the checksum so checksum check passes
-        meta["checksum"] = _compute_checksum(
+        meta["checksum"] = compute_file_hash(
             str(Path(cache_dir) / "embeddings.npz"),
         )
         with open(meta_path, "w") as f:
@@ -369,7 +369,7 @@ class TestSaveLoadV2:
         del meta["rule_map"]
         del meta["bm25_corpus"]
         # Fix checksum
-        meta["checksum"] = _compute_checksum(
+        meta["checksum"] = compute_file_hash(
             str(Path(cache_dir) / "embeddings.npz"),
         )
         with open(meta_path, "w") as f:
@@ -407,7 +407,7 @@ class TestSaveLoadV2:
             meta = json.load(f)
         meta["rule_map"] = [5]  # out of range
         # Fix checksum
-        meta["checksum"] = _compute_checksum(
+        meta["checksum"] = compute_file_hash(
             str(Path(cache_dir) / "embeddings.npz"),
         )
         with open(meta_path, "w") as f:
@@ -444,7 +444,7 @@ class TestSaveLoadV2:
         with open(meta_path) as f:
             meta = json.load(f)
         meta["rule_map"] = [0, 0, 0]  # length 3 but only 1 embedding
-        meta["checksum"] = _compute_checksum(
+        meta["checksum"] = compute_file_hash(
             str(Path(cache_dir) / "embeddings.npz"),
         )
         with open(meta_path, "w") as f:
@@ -469,7 +469,7 @@ class TestSaveLoadV2:
         del meta["bm25_corpus"]
         # Keep only 2 rules but embeddings still has 5 rows
         meta["rules"] = meta["rules"][:2]
-        meta["checksum"] = _compute_checksum(
+        meta["checksum"] = compute_file_hash(
             str(Path(cache_dir) / "embeddings.npz"),
         )
         with open(meta_path, "w") as f:

@@ -39,8 +39,15 @@ _SECRET_PATTERNS: tuple[tuple[str, str], ...] = (
     (r"sk-ant-[A-Za-z0-9-]{20,}", "[REDACTED]"),
     # OpenAI project keys
     (r"sk-proj-[A-Za-z0-9]{20,}", "[REDACTED]"),
-    # OpenAI legacy keys
-    (r"sk-[A-Za-z0-9]{40,}", "[REDACTED]"),
+    # OpenAI legacy keys (exclude sk-ant-, sk-proj- matched above)
+    (r"sk-(?!ant-|proj-)[A-Za-z0-9]{40,}", "[REDACTED]"),
+    # SSH/PEM private keys
+    (
+        r"-----BEGIN[A-Z ]*PRIVATE KEY-----"
+        r"[\s\S]*?"
+        r"-----END[A-Z ]*PRIVATE KEY-----",
+        "[REDACTED]",
+    ),
     # Slack bot tokens
     (r"xoxb-[0-9]+-[0-9]+-[A-Za-z0-9]+", "[REDACTED]"),
     # Google OAuth tokens

@@ -63,7 +63,7 @@ class TestSemanticDedup:
         assert result == items
 
     def test_threshold_constant(self) -> None:
-        assert DEDUP_COSINE_THRESHOLD == 0.85
+        assert DEDUP_COSINE_THRESHOLD == 0.80
 
     def test_drops_near_duplicate(self) -> None:
         """Expansions with cosine > 0.85 are dropped."""

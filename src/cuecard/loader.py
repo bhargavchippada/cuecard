@@ -140,8 +140,8 @@ def _load_and_merge_affinity(
 
     return AffinityIndex(
         version=global_aff.version,
-        mode=project_aff.mode if project_aff.mode else global_aff.mode,
-        model=project_aff.model if project_aff.model else global_aff.model,
+        mode=project_aff.mode if project_aff.mode != "" else global_aff.mode,
+        model=project_aff.model if project_aff.model != "" else global_aff.model,
         affinities=tuple(merged.items()),
     )
 

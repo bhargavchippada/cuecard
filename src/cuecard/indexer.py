@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import contextlib
 import fcntl
-import hashlib
 import json
 import logging
 import os
@@ -17,9 +16,12 @@ import numpy as np
 import numpy.typing as npt
 
 from cuecard._math import l2_normalize
+from cuecard.freshness import compute_file_hash
 from cuecard.models import (
+    KNOWN_HOOK_EVENTS,
     MAX_EXPANSION_LENGTH,
     MAX_EXPANSIONS_PER_RULE,
+    VALID_AFFINITY_SOURCES,
     AffinityIndex,
     AffinitySource,
     Index,
@@ -27,6 +29,7 @@ from cuecard.models import (
     Rule,
     RuleAffinity,
     SourceMeta,
+    _hash_rule_text,
 )
 from cuecard.security import scrub_secrets
 
@@ -48,16 +51,6 @@ class EmbeddingModel(Protocol):
     def passage_embed(
         self, texts: Iterable[str], **kwargs: Any,
     ) -> Iterable[npt.NDArray[np.floating]]: ...
-
-
-def _compute_checksum(path: str) -> str:
-    """Compute sha256 hex digest of a file, prefixed with 'sha256:'."""
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(8192), b""):
-            h.update(chunk)
-    return f"sha256:{h.hexdigest()}"
-
 
 
 _RULES_JSON_VERSION = 2
@@ -98,7 +91,7 @@ def save_rules_json(
             },
         }
         # Inline affinity if available for this rule
-        text_hash = hashlib.sha256(r.text.encode()).hexdigest()
+        text_hash = _hash_rule_text(r.text)
         ra = aff_lookup.get(text_hash)
         if ra is not None:
             entry["affinity"] = {
@@ -198,8 +191,7 @@ def load_rules_json(
         raw_aff = entry.get("affinity")
         if isinstance(raw_aff, dict):
             has_affinity = True
-            text_hash = hashlib.sha256(text.encode()).hexdigest()
-            from cuecard.models import KNOWN_HOOK_EVENTS
+            text_hash = _hash_rule_text(text)
             aff_events = frozenset(
                 e for e in raw_aff.get("events", [])
                 if isinstance(e, str) and e in KNOWN_HOOK_EVENTS
@@ -209,9 +201,9 @@ def load_rules_json(
                 if isinstance(t, str) and t.strip() and len(t) <= 50
             )
             raw_source = raw_aff.get("source", "inferred")
-            _valid_sources = ("inferred", "explicit", "explicit+inferred", "default")
             aff_source: AffinitySource = (
-                raw_source if raw_source in _valid_sources else "inferred"
+                raw_source if raw_source in VALID_AFFINITY_SOURCES
+                else "inferred"
             )
             raw_reasoning = raw_aff.get("reasoning", "")
             aff_reasoning = (
@@ -378,7 +370,7 @@ def save_index(index: Index, cache_dir: str) -> None:
             tmp_npz_path = None  # successfully replaced
 
             # Compute checksum of the written npz
-            checksum = _compute_checksum(str(npz_path))
+            checksum = compute_file_hash(str(npz_path))
 
             # Build metadata
             rules_list = [
@@ -468,7 +460,7 @@ def load_index(cache_dir: str) -> Index | None:
 
     # Integrity: checksum
     expected_checksum = metadata.get("checksum", "")
-    actual_checksum = _compute_checksum(str(npz_path))
+    actual_checksum = compute_file_hash(str(npz_path))
     if actual_checksum != expected_checksum:
         logger.warning(
             "Checksum mismatch in %s: expected %s, got %s",
@@ -491,7 +483,7 @@ def load_index(cache_dir: str) -> Index | None:
         rule_map: tuple[int, ...] = tuple(rule_map_data)
         # Validate rule_map indices against rules count
         n_rules = len(rules_data)
-        if rule_map and not all(0 <= i < n_rules for i in rule_map):
+        if not all(0 <= i < n_rules for i in rule_map):
             logger.warning(
                 "rule_map contains out-of-range indices in %s", cache_dir,
             )

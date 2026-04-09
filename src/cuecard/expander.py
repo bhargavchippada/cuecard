@@ -29,8 +29,10 @@ from cuecard.models import MAX_EXPANSION_LENGTH, MAX_EXPANSIONS_PER_RULE
 
 logger = logging.getLogger(__name__)
 
-# Semantic dedup threshold — drop expansions with cosine > this to a neighbor
-DEDUP_COSINE_THRESHOLD = 0.85
+# Default dedup threshold — matches ResolvedConfig.expansion_dedup_threshold.
+# Configurable via [expansion] dedup_threshold in cuecard.toml.
+# Used as fallback when expand_rules() is called without config.
+DEDUP_COSINE_THRESHOLD = 0.80
 
 # Valid event types for expansion prompt targeting
 _VALID_EVENT_TYPES = KNOWN_HOOK_EVENTS
@@ -393,6 +395,7 @@ def expand_rules(
     missing_only: bool = False,
     dry_run: bool = False,
     event_type: str = "PreToolUse",
+    dedup_threshold: float = DEDUP_COSINE_THRESHOLD,
     on_progress: Callable[[ExpandProgress], None] | None = None,
 ) -> list[Rule]:
     """Generate LLM expansions for rules.
@@ -483,7 +486,7 @@ def expand_rules(
                 )
 
             expansions = _parse_expansion_response(raw)
-            expansions = _semantic_dedup(expansions)
+            expansions = _semantic_dedup(expansions, threshold=dedup_threshold)
             total_expansions += len(expansions)
             result.append(replace(rule, expansions=tuple(expansions)))
 

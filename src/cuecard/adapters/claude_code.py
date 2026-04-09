@@ -217,9 +217,7 @@ def main() -> None:
         affinity = loaded.affinity if loaded is not None else None
 
         if index is not None and index.size > 0:
-            pipeline_mode = getattr(
-                getattr(config, "pipeline", None), "mode", "embedding",
-            )
+            pipeline_mode = config.pipeline.mode
 
             from cuecard.pipeline import run_pipeline
 

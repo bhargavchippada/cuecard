@@ -12,13 +12,12 @@ from cuecard.models import (
     MAX_EXPANSION_LENGTH,
     MAX_EXPANSIONS_PER_RULE,
     MAX_RULE_LENGTH,
+    MAX_RULES_PER_FILE,
     Provenance,
     Rule,
 )
 
 logger = logging.getLogger(__name__)
-
-_MAX_RULES_PER_FILE = 500
 
 
 def parse_rules(paths: tuple[str, ...]) -> list[Rule]:
@@ -73,6 +72,13 @@ def _parse_json(path: str) -> list[Rule]:
         raise ValueError(msg)
 
     rules_data = data.get("rules", [])
+    if len(rules_data) > MAX_RULES_PER_FILE:
+        logger.warning(
+            "Rule file %s has %d rules, capped at %d",
+            path, len(rules_data), MAX_RULES_PER_FILE,
+        )
+        rules_data = rules_data[:MAX_RULES_PER_FILE]
+
     rules: list[Rule] = []
 
     for entry in rules_data:
@@ -164,6 +170,13 @@ def _parse_txt(path: str) -> list[Rule]:
             if not line or line.startswith("#"):
                 continue
 
+            if len(rules) >= MAX_RULES_PER_FILE:
+                logger.warning(
+                    "Rule file %s has >%d rules, capped",
+                    path, MAX_RULES_PER_FILE,
+                )
+                break
+
             # Enforce length limit
             if len(line) > MAX_RULE_LENGTH:
                 logger.warning(
@@ -209,12 +222,12 @@ def _parse_toml(path: str) -> list[Rule]:
         raise ValueError(msg) from exc
 
     rules_data = data.get("rules", [])
-    if len(rules_data) > _MAX_RULES_PER_FILE:
+    if len(rules_data) > MAX_RULES_PER_FILE:
         logger.warning(
             "Rule file %s has %d rules, capped at %d",
-            path, len(rules_data), _MAX_RULES_PER_FILE,
+            path, len(rules_data), MAX_RULES_PER_FILE,
         )
-        rules_data = rules_data[:_MAX_RULES_PER_FILE]
+        rules_data = rules_data[:MAX_RULES_PER_FILE]
 
     rules: list[Rule] = []
     for i, entry in enumerate(rules_data):

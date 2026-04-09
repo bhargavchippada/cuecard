@@ -260,7 +260,7 @@ class TestRerankLLM:
 
     def test_ssrf_validation(self) -> None:
         candidates = _make_candidates(1)
-        with pytest.raises(ConfigError, match="localhost"):
+        with pytest.raises(ConfigError, match="loopback"):
             rerank_llm(
                 candidates,
                 "test",

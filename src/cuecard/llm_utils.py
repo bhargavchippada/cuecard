@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import ipaddress
 import logging
+import socket
+from urllib.parse import urlparse
 
 import httpx
 
@@ -10,7 +13,6 @@ from cuecard.security import ConfigError
 
 logger = logging.getLogger(__name__)
 
-_ALLOWED_LLM_HOSTS: frozenset[str] = frozenset({"localhost", "127.0.0.1", "::1"})
 _ALLOWED_HAIKU_MODELS: frozenset[str] = frozenset({
     "claude-haiku-4-5",
     "claude-haiku-4-5-20251001",
@@ -18,19 +20,38 @@ _ALLOWED_HAIKU_MODELS: frozenset[str] = frozenset({
 _TIMEOUT = 60.0
 
 
+def _is_loopback(hostname: str) -> bool:
+    """Resolve hostname via DNS and verify all addresses are loopback."""
+    try:
+        results = socket.getaddrinfo(hostname, None, proto=socket.IPPROTO_TCP)
+    except socket.gaierror:
+        return False
+    if not results:
+        return False
+    return all(
+        ipaddress.ip_address(addr[4][0]).is_loopback
+        for addr in results
+    )
+
+
 def validate_endpoint(endpoint: str) -> None:
     """Validate that endpoint points to localhost only. Raises ConfigError."""
-    from urllib.parse import urlparse
-
     parsed = urlparse(endpoint)
     if parsed.scheme not in ("http", "https"):
-        msg = f"llm.local_endpoint must use http/https, got {parsed.scheme!r}"
+        msg = (
+            f"llm.local_endpoint must use http/https,"
+            f" got {parsed.scheme!r}"
+        )
         raise ConfigError(msg)
     if parsed.username or parsed.password:
         msg = "llm.local_endpoint must not contain userinfo (@ in URL)"
         raise ConfigError(msg)
-    if parsed.hostname not in _ALLOWED_LLM_HOSTS:
-        msg = f"llm.local_endpoint must be localhost, got {parsed.hostname!r}"
+    hostname = parsed.hostname or ""
+    if not _is_loopback(hostname):
+        msg = (
+            f"llm.local_endpoint must resolve to loopback,"
+            f" got {hostname!r}"
+        )
         raise ConfigError(msg)
 
 
@@ -47,7 +68,7 @@ def call_local(
     """Call a local OpenAI-compatible LLM endpoint."""
     validate_endpoint(endpoint)
     body: dict[str, object] = {
-        "model": "qwen",
+        "model": "default",
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},

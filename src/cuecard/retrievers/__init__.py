@@ -40,7 +40,7 @@ class Retriever(Protocol):
 def fuse(
     results: list[list[ScoredCandidate]],
     *,
-    k: int = 60,
+    k: int = 10,
     top_k: int | None = None,
 ) -> list[ScoredCandidate]:
     """Reciprocal Rank Fusion across multiple retriever result lists.
@@ -50,7 +50,7 @@ def fuse(
 
     Args:
         results: One list of ScoredCandidates per retriever.
-        k: RRF smoothing parameter (default 60).
+        k: RRF smoothing parameter (default 10).
         top_k: If set, truncate output to this many results.
 
     Returns:

@@ -303,6 +303,49 @@ def build_strict_affinity(rules: list[Rule]) -> AffinityIndex:
     )
 
 
+def _infer_single_rule(
+    rule: Rule,
+    backend: str,
+    endpoint: str,
+    haiku_model: str,
+) -> tuple[str, RuleAffinity]:
+    """Infer affinity for a single rule via LLM."""
+    text_hash = _hash_rule_text(rule.text)
+    explicit_events = frozenset(rule.events)
+    explicit_tools = frozenset(rule.tools)
+
+    nonce = secrets.token_hex(6)
+    system_prompt, user_prompt = _build_affinity_prompt(
+        rule.text, nonce, explicit_events, explicit_tools,
+    )
+
+    if backend == "local":
+        raw = call_local(
+            system_prompt, user_prompt, endpoint, False,
+            temperature=0.0, stop=None,
+        )
+    else:
+        raw = call_haiku(system_prompt, user_prompt, haiku_model)
+
+    events, tools, reasoning = _parse_affinity_response(
+        raw, explicit_events, explicit_tools,
+    )
+
+    source: AffinitySource = (
+        "explicit+inferred" if explicit_events or explicit_tools
+        else "inferred"
+    )
+
+    return text_hash, RuleAffinity(
+        events=events,
+        tools=tools,
+        source=source,
+        explicit_events=explicit_events,
+        explicit_tools=explicit_tools,
+        reasoning=reasoning,
+    )
+
+
 def infer_affinities(
     rules: list[Rule],
     config: ResolvedConfig,
@@ -313,7 +356,8 @@ def infer_affinities(
     """
     backend = "local" if "local" in config.pipeline.mode else "haiku"
     endpoint = config.pipeline.local_endpoint
-    model_name = "local" if backend == "local" else config.pipeline.haiku_model
+    haiku_model = config.pipeline.haiku_model
+    model_name = "local" if backend == "local" else haiku_model
 
     if backend == "local":
         try:
@@ -327,50 +371,10 @@ def infer_affinities(
 
     affinities: list[tuple[str, RuleAffinity]] = []
     for rule in rules:
-        text_hash = _hash_rule_text(rule.text)
-        explicit_events = frozenset(rule.events)
-        explicit_tools = frozenset(rule.tools)
-
-        nonce = secrets.token_hex(6)
-        system_prompt, user_prompt = _build_affinity_prompt(
-            rule.text, nonce, explicit_events, explicit_tools,
-        )
-
         try:
-            if backend == "local":
-                raw = call_local(
-                    system_prompt,
-                    user_prompt,
-                    endpoint,
-                    False,
-                    temperature=0.0,
-                    stop=None,
-                )
-            else:
-                raw = call_haiku(
-                    system_prompt,
-                    user_prompt,
-                    config.pipeline.haiku_model,
-                )
-
-            events, tools, reasoning = _parse_affinity_response(
-                raw, explicit_events, explicit_tools,
+            affinities.append(
+                _infer_single_rule(rule, backend, endpoint, haiku_model),
             )
-
-            if explicit_events or explicit_tools:
-                source: AffinitySource = "explicit+inferred"
-            else:
-                source = "inferred"
-
-            affinities.append((text_hash, RuleAffinity(
-                events=events,
-                tools=tools,
-                source=source,
-                explicit_events=explicit_events,
-                explicit_tools=explicit_tools,
-                reasoning=reasoning,
-            )))
-
         except (ConfigError, ValueError):
             raise
         except Exception as exc:
@@ -380,6 +384,7 @@ def infer_affinities(
                 scrub_secrets(rule.text[:80]),
                 type(exc).__name__,
             )
+            text_hash = _hash_rule_text(rule.text)
             affinities.append((text_hash, _strict_affinity(rule)))
 
     return AffinityIndex(

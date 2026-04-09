@@ -237,36 +237,24 @@ def rerank_llm(
         nonce = secrets.token_hex(6)
         system_prompt, user_prompt = _build_prompt(candidates, query, nonce)
 
-        if backend == "local":
-            raw = call_local(
-                system_prompt, user_prompt, endpoint, thinking,
-                stop=None,
+        # First attempt + single retry on parse failure
+        for attempt in range(2):
+            result = _call_and_parse(
+                system_prompt, user_prompt,
+                backend, endpoint, haiku_model, thinking,
+                len(candidates),
             )
-        else:
-            raw = call_haiku(system_prompt, user_prompt, haiku_model)
+            if result.indices is not None:
+                return _compute_ordinal_scores(
+                    result.indices, candidates,
+                )[:top_k]
+            if attempt == 0:
+                logger.info("LLM response unparseable, retrying once")
 
-        parse_result = _parse_llm_response(raw, len(candidates))
-        if parse_result.reasoning:
-            logger.debug("LLM reasoning: %s", parse_result.reasoning)
-        if parse_result.indices is not None:
-            return _compute_ordinal_scores(parse_result.indices, candidates)[:top_k]
-
-        # Single retry on parse failure
-        logger.info("LLM response unparseable, retrying once")
-        if backend == "local":
-            raw = call_local(
-                system_prompt, user_prompt, endpoint, thinking,
-                stop=None,
-            )
-        else:
-            raw = call_haiku(system_prompt, user_prompt, haiku_model)
-        parse_result = _parse_llm_response(raw, len(candidates))
-        if parse_result.reasoning:
-            logger.debug("LLM reasoning (retry): %s", parse_result.reasoning)
-        if parse_result.indices is not None:
-            return _compute_ordinal_scores(parse_result.indices, candidates)[:top_k]
-
-        logger.warning("LLM returned unparseable response after retry; returning fallback")
+        logger.warning(
+            "LLM returned unparseable response after retry;"
+            " returning fallback",
+        )
         return fallback
 
     except (ConfigError, ValueError):
@@ -274,6 +262,30 @@ def rerank_llm(
     except Exception:
         logger.warning("LLM re-rank failed; returning fallback")
         return fallback
+
+
+def _call_and_parse(
+    system_prompt: str,
+    user_prompt: str,
+    backend: str,
+    endpoint: str,
+    haiku_model: str,
+    thinking: bool,
+    num_candidates: int,
+) -> LLMParseResult:
+    """Call LLM and parse the response into rule indices."""
+    if backend == "local":
+        raw = call_local(
+            system_prompt, user_prompt, endpoint, thinking,
+            stop=None,
+        )
+    else:
+        raw = call_haiku(system_prompt, user_prompt, haiku_model)
+
+    result = _parse_llm_response(raw, num_candidates)
+    if result.reasoning:
+        logger.debug("LLM reasoning: %s", result.reasoning)
+    return result
 
 
 def _build_prompt(

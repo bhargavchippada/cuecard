@@ -61,6 +61,19 @@ class TestParseTxtSkipping:
 
         assert len(rules) == 1
 
+    def test_max_rules_cap(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        f = tmp_path / "rules.txt"
+        lines = "\n".join(f"Rule {i}" for i in range(510))
+        f.write_text(lines + "\n")
+
+        with caplog.at_level(logging.WARNING, logger="cuecard.parser"):
+            rules = parse_rules((str(f),))
+
+        assert len(rules) == 500
+        assert "capped" in caplog.text
+
 
 class TestRuleTruncation:
     def test_long_rule_truncated(
@@ -182,7 +195,7 @@ class TestParseJson:
         self, tmp_path: Path, caplog: pytest.LogCaptureFixture,
     ) -> None:
         f = tmp_path / "rules.json"
-        long_exp = "x" * 300
+        long_exp = "x" * 600
         data = {
             "version": 1,
             "rules": [
@@ -195,8 +208,8 @@ class TestParseJson:
             rules = parse_rules((str(f),))
 
         assert len(rules[0].expansions) == 1
-        assert len(rules[0].expansions[0]) == 200
-        assert "exceeds 200 chars" in caplog.text
+        assert len(rules[0].expansions[0]) == 500
+        assert "exceeds 500 chars" in caplog.text
 
     def test_max_expansions_enforced(
         self, tmp_path: Path, caplog: pytest.LogCaptureFixture,
@@ -288,6 +301,25 @@ class TestParseJson:
 
         assert rules[0].provenance.file == str(f.resolve())
         assert rules[0].provenance.line_start == 0
+
+    def test_max_rules_cap(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        f = tmp_path / "rules.json"
+        data = {
+            "version": 1,
+            "rules": [
+                {"text": f"Rule {i}", "expansions": [], "source": {}}
+                for i in range(510)
+            ],
+        }
+        f.write_text(json.dumps(data))
+
+        with caplog.at_level(logging.WARNING, logger="cuecard.parser"):
+            rules = parse_rules((str(f),))
+
+        assert len(rules) == 500
+        assert "capped at 500" in caplog.text
 
 
 class TestProvenance:

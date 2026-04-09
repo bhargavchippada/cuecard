@@ -105,7 +105,7 @@ class TestLoadRulesJson:
             "rules": [
                 {
                     "text": "A rule",
-                    "expansions": ["x" * 300],
+                    "expansions": ["x" * 600],
                     "source": {"file": "/tmp/r.txt", "line_start": 1, "line_end": 1},
                 },
             ],
@@ -115,7 +115,7 @@ class TestLoadRulesJson:
         result = load_rules_json(str(tmp_path))
         assert result is not None
         rules, _aff = result
-        assert len(rules[0].expansions[0]) == 200
+        assert len(rules[0].expansions[0]) == 500
 
     def test_expansion_count_capped(self, tmp_path: Path) -> None:
         data = {
