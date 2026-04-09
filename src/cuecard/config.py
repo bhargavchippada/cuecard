@@ -394,7 +394,7 @@ def load_config(
 
     # Resolve enriched retrieval fields (project wins → global → default)
     _enriched_defaults: dict[str, int | bool | str] = {
-        "fusion_k": 60,
+        "fusion_k": 10,
         "llm_candidates": 12,
         "sparse_enabled": True,
         "expansion_max_per_rule": 10,

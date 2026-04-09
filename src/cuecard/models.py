@@ -175,7 +175,7 @@ class ResolvedConfig:
     project_cache_dir: str | None
     allowed_dirs: tuple[str, ...]
     pipeline: PipelineConfig = field(default_factory=PipelineConfig)
-    fusion_k: int = 60
+    fusion_k: int = 10
     llm_candidates: int = 12
     sparse_enabled: bool = True
     expansion_max_per_rule: int = 10

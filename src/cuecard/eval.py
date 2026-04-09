@@ -351,7 +351,7 @@ class _EvalConfig:
     dedup_threshold: float = 0.95
     query_max_length: int = 500
     sparse_enabled: bool = True
-    fusion_k: int = 60
+    fusion_k: int = 10
     llm_candidates: int = 12
 
 

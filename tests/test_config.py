@@ -545,7 +545,7 @@ class TestEnrichedRetrievalConfig:
         home = tmp_path / "home"
         (home / ".cuecard").mkdir(parents=True)
         config = load_config(home_dir=home)
-        assert config.fusion_k == 60
+        assert config.fusion_k == 10
         assert config.llm_candidates == 12
         assert config.sparse_enabled is True
         assert config.expansion_max_per_rule == 10

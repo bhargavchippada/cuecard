@@ -208,8 +208,9 @@ See `artifacts/prd-v1.md` Section 17 (Decisions) and `artifacts/enriched-retriev
 Critical ones:
 - D1: Semantic embeddings from day one (not keyword-based)
 - D4: Max-score parent collapse (not mean, not weighted)
-- D5: RRF over learned fusion (simple, no training data needed)
+- D5: RRF over learned fusion (simple, no training data needed), fusion_k=10 (was 60 — full-sample sweep showed k=10 wins on all metrics for 107-rule corpus)
 - D6: Top-k=7, threshold=0.30 (was 5/0.35 — top_k=5 caused crowding drops on multi-rule events like git commit)
+- D25: LLM receives `llm_candidates` rules (default 12) — configurable in TOML `[retrieval] llm_candidates = 12`
 - D7a: Asymmetric encoding (query_embed vs passage_embed)
 - D10: Full rebuild on change (no incremental splice corruption)
 - D12: rule_map always present (identity for old indexes)
