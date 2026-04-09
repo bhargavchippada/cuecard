@@ -8,7 +8,7 @@ import math
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -429,16 +429,16 @@ def run_eval(
     # Index cache: corpus key -> (rules, index)
     _index_cache: dict[tuple[str, ...], tuple[tuple[Rule, ...], Index]] = {}
 
-    # Progress bar (tqdm if available, otherwise silent)
-    try:
-        from tqdm import tqdm
-        fixture_iter: Iterable[Fixture] = tqdm(
-            fixtures, desc=mode or "embedding", unit="fix",
-        )
-    except ImportError:
-        fixture_iter = fixtures
+    effective_mode = mode if mode is not None else "embedding"
+    eval_config = _EvalConfig(
+        top_k=top_k,
+        threshold=threshold,
+        dedup_threshold=dedup_threshold,
+        query_max_length=query_max_length,
+    )
 
-    for fixture in fixture_iter:
+    # Pre-build all indexes (not parallelizable — depends on corpus_key)
+    for fixture in fixtures:
         if corpus_override is not None:
             corpus_key = corpus_override
         else:
@@ -455,25 +455,21 @@ def run_eval(
             )
             _index_cache[corpus_key] = (rules, idx)
 
-        _cached_rules, index = _index_cache[corpus_key]
+    from cuecard.pipeline import run_pipeline
 
-        effective_mode = mode if mode is not None else "embedding"
-
-        start = time.perf_counter()
-        from cuecard.pipeline import run_pipeline
-
-        # Extract event type from fixture for event mask filtering
+    def _eval_one(fixture: Fixture) -> FixtureResult:
+        if corpus_override is not None:
+            ckey = corpus_override
+        else:
+            ckey = (str(Path(corpus_dir) / fixture.corpus),)
+        _cached_rules, index = _index_cache[ckey]
         event = fixture.event if fixture.event else ""
 
+        start = time.perf_counter()
         pipeline_result = run_pipeline(
             fixture.query,
             index,
-            _EvalConfig(
-                top_k=top_k,
-                threshold=threshold,
-                dedup_threshold=dedup_threshold,
-                query_max_length=query_max_length,
-            ),  # type: ignore[arg-type]
+            eval_config,  # type: ignore[arg-type]
             embedding_model=model,  # type: ignore[arg-type]
             mode=effective_mode,
             event=event,
@@ -485,9 +481,9 @@ def run_eval(
         retrieved_texts = [r.rule.text for r in ranked]
         relevant = set(fixture.should_match)
         anti_rel = set(fixture.should_not_match)
-
         is_negative = fixture.difficulty == "negative"
-        result = FixtureResult(
+
+        return FixtureResult(
             fixture_id=fixture.id,
             query=fixture.query,
             difficulty=fixture.difficulty,
@@ -507,7 +503,45 @@ def run_eval(
                 retrieved_texts, relevant, is_negative,
             ),
         )
-        results.append(result)
+
+    # Parallel execution for LLM modes (bottleneck is LLM call ~1-2s each)
+    use_parallel = effective_mode != "embedding" and len(fixtures) > 1
+
+    if use_parallel:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        max_workers = 5  # match llama-server -np 5
+
+        try:
+            from tqdm import tqdm
+            pbar: Any = tqdm(
+                total=len(fixtures), desc=effective_mode, unit="fix",
+            )
+        except ImportError:
+            pbar = None
+
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            futures = {
+                pool.submit(_eval_one, fx): fx for fx in fixtures
+            }
+            for future in as_completed(futures):
+                results.append(future.result())
+                if pbar is not None:
+                    pbar.update(1)
+
+        if pbar is not None:
+            pbar.close()
+    else:
+        try:
+            from tqdm import tqdm
+            fixture_iter: Iterable[Fixture] = tqdm(
+                fixtures, desc=effective_mode, unit="fix",
+            )
+        except ImportError:
+            fixture_iter = fixtures
+
+        for fixture in fixture_iter:
+            results.append(_eval_one(fixture))
 
     latencies = [r.latency_ms for r in results]
     fixture_count = len(results)
