@@ -204,19 +204,33 @@ def load_rules_json(
             aff_tools = frozenset(
                 t for t in raw_aff.get("tools", []) if isinstance(t, str)
             )
+            raw_source = raw_aff.get("source", "inferred")
+            _valid_sources = ("inferred", "explicit", "explicit+inferred", "default")
+            aff_source = raw_source if raw_source in _valid_sources else "inferred"
+            raw_reasoning = raw_aff.get("reasoning", "")
+            aff_reasoning = (
+                raw_reasoning.strip()[:500] if isinstance(raw_reasoning, str) else ""
+            )
             affinities.append((text_hash, RuleAffinity(
                 events=aff_events,
                 tools=aff_tools,
-                source=raw_aff.get("source", "inferred"),
-                reasoning=raw_aff.get("reasoning", ""),
+                source=aff_source,
+                reasoning=aff_reasoning,
             )))
 
     affinity_index: AffinityIndex | None = None
     if has_affinity and affinities:
+        raw_mode = data.get("affinity_mode", "inferred")
+        raw_model = data.get("affinity_model", "")
+        aff_mode = (
+            raw_mode if isinstance(raw_mode, str) and len(raw_mode) <= 50
+            else "inferred"
+        )
+        aff_model = raw_model[:100] if isinstance(raw_model, str) else ""
         affinity_index = AffinityIndex(
             version=1,
-            mode=data.get("affinity_mode", "inferred"),
-            model=data.get("affinity_model", ""),
+            mode=aff_mode,
+            model=aff_model,
             affinities=tuple(affinities),
         )
 
