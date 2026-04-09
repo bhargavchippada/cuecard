@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import socket
 from unittest.mock import MagicMock, patch
 
 import httpx
@@ -27,12 +28,17 @@ class TestValidateEndpoint:
         validate_endpoint("http://[::1]:8081/v1")
 
     def test_external_host_raises(self) -> None:
-        with pytest.raises(ConfigError, match="loopback"):
-            validate_endpoint("http://evil.com:8081/v1")
+        # Mock DNS to avoid real network lookup
+        fake_result = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0))]
+        with patch("cuecard.llm_utils.socket.getaddrinfo", return_value=fake_result):
+            with pytest.raises(ConfigError, match="loopback"):
+                validate_endpoint("http://evil.com:8081/v1")
 
     def test_ip_address_raises(self) -> None:
-        with pytest.raises(ConfigError, match="loopback"):
-            validate_endpoint("http://10.0.0.1:8081/v1")
+        fake_result = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("10.0.0.1", 0))]
+        with patch("cuecard.llm_utils.socket.getaddrinfo", return_value=fake_result):
+            with pytest.raises(ConfigError, match="loopback"):
+                validate_endpoint("http://10.0.0.1:8081/v1")
 
     def test_userinfo_bypass_raises(self) -> None:
         with pytest.raises(ConfigError, match="userinfo"):

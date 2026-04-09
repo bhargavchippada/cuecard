@@ -45,7 +45,19 @@ class TestServeCLI:
         write_pid(os.getpid(), tmp_path)
 
         cli_runner = CliRunner()
-        with patch("cuecard.serve.os.kill"):
+
+        call_count = 0
+
+        def _fake_kill(_pid: int, sig: int) -> None:
+            nonlocal call_count
+            call_count += 1
+            # 1st: is_pid_alive check (sig 0) → alive
+            # 2nd: SIGTERM → ok
+            # 3rd: liveness poll (sig 0) → dead
+            if sig == 0 and call_count > 2:
+                raise ProcessLookupError
+
+        with patch("cuecard.serve.os.kill", side_effect=_fake_kill):
             result = cli_runner.invoke(app, ["serve", "--stop"])
         assert result.exit_code == 0
         assert "Daemon stopped" in result.output

@@ -5,10 +5,13 @@ from __future__ import annotations
 import http.client
 import json
 import threading
+from collections.abc import Iterator
+from http.server import HTTPServer
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import numpy as np
+import pytest
 
 from cuecard.models import (
     Index,
@@ -28,7 +31,6 @@ from cuecard.serve import (
 )
 
 if TYPE_CHECKING:
-    from http.server import HTTPServer
     from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -112,9 +114,22 @@ def _start_test_server(
 
 
 class TestHTTPIntegration:
-    def test_post_retrieve(self, tmp_path: Path) -> None:
+    @pytest.fixture(autouse=True, scope="class")
+    def _server(self, tmp_path_factory: pytest.TempPathFactory) -> Iterator[tuple[HTTPServer, int]]:
+        """Shared server for all HTTP integration tests."""
+        tmp_path = tmp_path_factory.mktemp("serve_http")
         server, port = _start_test_server(tmp_path)
+        self.__class__._port = port  # type: ignore[attr-defined]
+        self.__class__._tmp_path = tmp_path  # type: ignore[attr-defined]
+        yield server, port
+        server.shutdown()
+        server.server_close()
+        remove_pid(tmp_path)
 
+    def _conn(self) -> http.client.HTTPConnection:
+        return http.client.HTTPConnection("127.0.0.1", self._port, timeout=5.0)
+
+    def test_post_retrieve(self) -> None:
         fake_pipeline = PipelineResult(
             results=(RankedResult(rule=_make_rule(), score=0.85),),
             stages=(StageTrace(
@@ -124,178 +139,117 @@ class TestHTTPIntegration:
             mode="embedding",
         )
 
-        try:
-            with patch(
-                "cuecard.pipeline.run_pipeline",
-                return_value=fake_pipeline,
-            ):
-                result = query_daemon(
-                    {"tool_name": "Bash", "tool_input": "ls"},
-                    port=port,
-                    timeout=5.0,
-                )
-
-            assert result is not None
-            assert "hookSpecificOutput" in result
-        finally:
-            server.shutdown()
-            server.server_close()
-            remove_pid(tmp_path)
-
-    def test_get_health(self, tmp_path: Path) -> None:
-        server, port = _start_test_server(tmp_path)
-
-        try:
-            conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5.0)
-            conn.request("GET", "/health")
-            resp = conn.getresponse()
-            assert resp.status == 200
-            data = json.loads(resp.read())
-            assert data["status"] == "ok"
-            conn.close()
-        finally:
-            server.shutdown()
-            server.server_close()
-            remove_pid(tmp_path)
-
-    def test_get_not_found(self, tmp_path: Path) -> None:
-        server, port = _start_test_server(tmp_path)
-
-        try:
-            conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5.0)
-            conn.request("GET", "/nonexistent")
-            resp = conn.getresponse()
-            assert resp.status == 404
-            conn.close()
-        finally:
-            server.shutdown()
-            server.server_close()
-            remove_pid(tmp_path)
-
-    def test_post_invalid_json(self, tmp_path: Path) -> None:
-        server, port = _start_test_server(tmp_path)
-
-        try:
-            conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5.0)
-            conn.request(
-                "POST", "/retrieve",
-                body=b"not json",
-                headers={
-                    "Content-Type": "application/json",
-                    "Content-Length": "8",
-                },
+        with patch(
+            "cuecard.pipeline.run_pipeline",
+            return_value=fake_pipeline,
+        ):
+            result = query_daemon(
+                {"tool_name": "Bash", "tool_input": "ls"},
+                port=self._port,
+                timeout=5.0,
             )
-            resp = conn.getresponse()
-            assert resp.status == 400
-            data = json.loads(resp.read())
-            assert "Invalid JSON" in data["error"]
-            conn.close()
-        finally:
-            server.shutdown()
-            server.server_close()
-            remove_pid(tmp_path)
 
-    def test_post_not_object(self, tmp_path: Path) -> None:
-        server, port = _start_test_server(tmp_path)
+        assert result is not None
+        assert "hookSpecificOutput" in result
 
-        try:
-            body = b"[1,2,3]"
-            conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5.0)
-            conn.request(
-                "POST", "/retrieve",
-                body=body,
-                headers={
-                    "Content-Type": "application/json",
-                    "Content-Length": str(len(body)),
-                },
-            )
-            resp = conn.getresponse()
-            assert resp.status == 400
-            data = json.loads(resp.read())
-            assert "Expected JSON object" in data["error"]
-            conn.close()
-        finally:
-            server.shutdown()
-            server.server_close()
-            remove_pid(tmp_path)
+    def test_get_health(self) -> None:
+        conn = self._conn()
+        conn.request("GET", "/health")
+        resp = conn.getresponse()
+        assert resp.status == 200
+        data = json.loads(resp.read())
+        assert data["status"] == "ok"
+        conn.close()
 
-    def test_post_too_large(self, tmp_path: Path) -> None:
-        server, port = _start_test_server(tmp_path)
+    def test_get_not_found(self) -> None:
+        conn = self._conn()
+        conn.request("GET", "/nonexistent")
+        resp = conn.getresponse()
+        assert resp.status == 404
+        conn.close()
 
-        try:
-            conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5.0)
-            # Claim a huge Content-Length but don't actually send it
-            conn.request(
-                "POST", "/retrieve",
-                body=b"{}",
-                headers={
-                    "Content-Type": "application/json",
-                    "Content-Length": "2000000",
-                },
-            )
-            resp = conn.getresponse()
-            assert resp.status == 413
-            conn.close()
-        finally:
-            server.shutdown()
-            server.server_close()
-            remove_pid(tmp_path)
-
-    def test_post_invalid_content_length(self, tmp_path: Path) -> None:
-        server, port = _start_test_server(tmp_path)
-
-        try:
-            conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5.0)
-            conn.request(
-                "POST", "/retrieve",
-                body=b"{}",
-                headers={
-                    "Content-Type": "application/json",
-                    "Content-Length": "not-a-number",
-                },
-            )
-            resp = conn.getresponse()
-            assert resp.status == 400
-            data = json.loads(resp.read())
-            assert "Invalid Content-Length" in data["error"]
-            conn.close()
-        finally:
-            server.shutdown()
-            server.server_close()
-            remove_pid(tmp_path)
-
-    def test_post_wrong_path(self, tmp_path: Path) -> None:
-        server, port = _start_test_server(tmp_path)
-
-        try:
-            conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5.0)
-            conn.request("POST", "/admin", body=b"{}", headers={
+    def test_post_invalid_json(self) -> None:
+        conn = self._conn()
+        conn.request(
+            "POST", "/retrieve",
+            body=b"not json",
+            headers={
                 "Content-Type": "application/json",
-                "Content-Length": "2",
-            })
-            resp = conn.getresponse()
-            assert resp.status == 404
-            conn.close()
-        finally:
-            server.shutdown()
-            server.server_close()
-            remove_pid(tmp_path)
+                "Content-Length": "8",
+            },
+        )
+        resp = conn.getresponse()
+        assert resp.status == 400
+        data = json.loads(resp.read())
+        assert "Invalid JSON" in data["error"]
+        conn.close()
 
-    def test_post_negative_content_length(self, tmp_path: Path) -> None:
-        server, port = _start_test_server(tmp_path)
-
-        try:
-            conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5.0)
-            conn.request("POST", "/retrieve", body=b"", headers={
+    def test_post_not_object(self) -> None:
+        body = b"[1,2,3]"
+        conn = self._conn()
+        conn.request(
+            "POST", "/retrieve",
+            body=body,
+            headers={
                 "Content-Type": "application/json",
-                "Content-Length": "-1",
-            })
-            resp = conn.getresponse()
-            assert resp.status == 400
-            data = json.loads(resp.read())
-            assert "Invalid Content-Length" in data["error"]
-            conn.close()
-        finally:
-            server.shutdown()
-            server.server_close()
-            remove_pid(tmp_path)
+                "Content-Length": str(len(body)),
+            },
+        )
+        resp = conn.getresponse()
+        assert resp.status == 400
+        data = json.loads(resp.read())
+        assert "Expected JSON object" in data["error"]
+        conn.close()
+
+    def test_post_too_large(self) -> None:
+        conn = self._conn()
+        # Claim a huge Content-Length but don't actually send it
+        conn.request(
+            "POST", "/retrieve",
+            body=b"{}",
+            headers={
+                "Content-Type": "application/json",
+                "Content-Length": "2000000",
+            },
+        )
+        resp = conn.getresponse()
+        assert resp.status == 413
+        conn.close()
+
+    def test_post_invalid_content_length(self) -> None:
+        conn = self._conn()
+        conn.request(
+            "POST", "/retrieve",
+            body=b"{}",
+            headers={
+                "Content-Type": "application/json",
+                "Content-Length": "not-a-number",
+            },
+        )
+        resp = conn.getresponse()
+        assert resp.status == 400
+        data = json.loads(resp.read())
+        assert "Invalid Content-Length" in data["error"]
+        conn.close()
+
+    def test_post_wrong_path(self) -> None:
+        conn = self._conn()
+        conn.request("POST", "/admin", body=b"{}", headers={
+            "Content-Type": "application/json",
+            "Content-Length": "2",
+        })
+        resp = conn.getresponse()
+        assert resp.status == 404
+        conn.close()
+
+    def test_post_negative_content_length(self) -> None:
+        conn = self._conn()
+        conn.request("POST", "/retrieve", body=b"", headers={
+            "Content-Type": "application/json",
+            "Content-Length": "-1",
+        })
+        resp = conn.getresponse()
+        assert resp.status == 400
+        data = json.loads(resp.read())
+        assert "Invalid Content-Length" in data["error"]
+        conn.close()
