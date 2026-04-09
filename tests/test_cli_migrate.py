@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from typer.testing import CliRunner
 
-from cuecard.cli import app
+from cuecard.cli.main import app
 
 if TYPE_CHECKING:
     from pathlib import Path

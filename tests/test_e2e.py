@@ -17,9 +17,9 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from cuecard.indexer import build_index, save_index
+from cuecard.indexing.indexer import build_index, save_index
+from cuecard.indexing.parser import parse_rules
 from cuecard.models import SourceMeta
-from cuecard.parser import parse_rules
 
 if TYPE_CHECKING:
     from pathlib import Path

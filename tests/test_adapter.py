@@ -130,7 +130,7 @@ def _make_pipeline_result(
 
 
 _MOD = "cuecard.adapters.claude_code"
-_PIPELINE = "cuecard.pipeline.run_pipeline"
+_PIPELINE = "cuecard.retrieval.pipeline.run_pipeline"
 
 
 class TestAdapterMain:
@@ -973,7 +973,7 @@ class TestEntryPoint:
     def test_non_hook_dispatches_to_typer(self) -> None:
         with (
             patch("sys.argv", ["cuecard", "status"]),
-            patch("cuecard.cli.app") as mock_app,
+            patch("cuecard.cli.main.app") as mock_app,
         ):
             from cuecard._entry import main as entry_main
 
@@ -983,7 +983,7 @@ class TestEntryPoint:
     def test_no_args_dispatches_to_typer(self) -> None:
         with (
             patch("sys.argv", ["cuecard"]),
-            patch("cuecard.cli.app") as mock_app,
+            patch("cuecard.cli.main.app") as mock_app,
         ):
             from cuecard._entry import main as entry_main
 

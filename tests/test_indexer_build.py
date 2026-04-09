@@ -7,8 +7,8 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from cuecard.freshness import compute_file_hash
-from cuecard.indexer import build_index
+from cuecard.indexing.freshness import compute_file_hash
+from cuecard.indexing.indexer import build_index
 from cuecard.models import Provenance, Rule, SourceMeta
 
 

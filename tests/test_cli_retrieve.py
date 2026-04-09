@@ -10,7 +10,7 @@ import pytest
 from typer.testing import CliRunner
 
 import cuecard.security as security_module
-from cuecard.cli import app
+from cuecard.cli.main import app
 from cuecard.models import (
     Index,
     LoadedIndex,
@@ -100,7 +100,7 @@ def _setup_home(tmp_path: Path) -> Path:
 
 
 def _patch_home(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setattr("cuecard.cli._home_dir", lambda: tmp_path)
+    monkeypatch.setattr("cuecard.cli.main._home_dir", lambda: tmp_path)
 
 
 @pytest.fixture(autouse=True)
@@ -140,9 +140,15 @@ class TestRetrieve:
 
         mock_model = MagicMock()
         with (
-            patch("cuecard.loader.load_or_build", return_value=LoadedIndex(index=idx)),
+            patch(
+                "cuecard.indexing.loader.load_or_build",
+                return_value=LoadedIndex(index=idx),
+            ),
             patch("fastembed.TextEmbedding", return_value=mock_model),
-            patch("cuecard.pipeline.run_pipeline", return_value=fake_pipeline),
+            patch(
+                "cuecard.retrieval.pipeline.run_pipeline",
+                return_value=fake_pipeline,
+            ),
         ):
             result = runner.invoke(app, ["retrieve", "secrets"])
 
@@ -170,10 +176,13 @@ class TestRetrieve:
         )
 
         with (
-            patch("cuecard.loader.load_or_build", return_value=LoadedIndex(index=idx)),
+            patch(
+                "cuecard.indexing.loader.load_or_build",
+                return_value=LoadedIndex(index=idx),
+            ),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch(
-                "cuecard.pipeline.run_pipeline",
+                "cuecard.retrieval.pipeline.run_pipeline",
                 return_value=fake_pipeline,
             ) as mock_pipe,
         ):
@@ -192,7 +201,7 @@ class TestRetrieve:
         _setup_home(tmp_path)
         monkeypatch.chdir(tmp_path)
 
-        with patch("cuecard.loader.load_or_build", return_value=None):
+        with patch("cuecard.indexing.loader.load_or_build", return_value=None):
             result = runner.invoke(app, ["retrieve", "test"])
 
         assert result.exit_code == 1
@@ -220,10 +229,13 @@ class TestRetrieve:
         )
 
         with (
-            patch("cuecard.loader.load_or_build", return_value=LoadedIndex(index=idx)),
+            patch(
+                "cuecard.indexing.loader.load_or_build",
+                return_value=LoadedIndex(index=idx),
+            ),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch(
-                "cuecard.pipeline.run_pipeline",
+                "cuecard.retrieval.pipeline.run_pipeline",
                 return_value=fake_pipeline,
             ) as mock_pipe,
         ):
@@ -245,7 +257,10 @@ class TestRetrieve:
         mock_model = MagicMock()
 
         with (
-            patch("cuecard.loader.load_or_build", return_value=LoadedIndex(index=idx)),
+            patch(
+                "cuecard.indexing.loader.load_or_build",
+                return_value=LoadedIndex(index=idx),
+            ),
             patch("fastembed.TextEmbedding", return_value=mock_model),
         ):
             result = runner.invoke(
@@ -282,10 +297,13 @@ class TestRetrieve:
         )
 
         with (
-            patch("cuecard.loader.load_or_build", return_value=LoadedIndex(index=idx)),
+            patch(
+                "cuecard.indexing.loader.load_or_build",
+                return_value=LoadedIndex(index=idx),
+            ),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch(
-                "cuecard.pipeline.run_pipeline",
+                "cuecard.retrieval.pipeline.run_pipeline",
                 return_value=fake_pipeline,
             ) as mock_pipe,
         ):
@@ -324,9 +342,15 @@ class TestFormat:
         )
 
         with (
-            patch("cuecard.loader.load_or_build", return_value=LoadedIndex(index=idx)),
+            patch(
+                "cuecard.indexing.loader.load_or_build",
+                return_value=LoadedIndex(index=idx),
+            ),
             patch("fastembed.TextEmbedding", return_value=mock_model),
-            patch("cuecard.pipeline.run_pipeline", return_value=fake_pipeline),
+            patch(
+                "cuecard.retrieval.pipeline.run_pipeline",
+                return_value=fake_pipeline,
+            ),
         ):
             result = runner.invoke(app, ["format", "secrets"])
 
@@ -354,9 +378,15 @@ class TestFormat:
         )
 
         with (
-            patch("cuecard.loader.load_or_build", return_value=LoadedIndex(index=idx)),
+            patch(
+                "cuecard.indexing.loader.load_or_build",
+                return_value=LoadedIndex(index=idx),
+            ),
             patch("fastembed.TextEmbedding", return_value=mock_model),
-            patch("cuecard.pipeline.run_pipeline", return_value=fake_pipeline),
+            patch(
+                "cuecard.retrieval.pipeline.run_pipeline",
+                return_value=fake_pipeline,
+            ),
         ):
             result = runner.invoke(app, ["format", "nonexistent"])
 
@@ -370,7 +400,7 @@ class TestFormat:
         _setup_home(tmp_path)
         monkeypatch.chdir(tmp_path)
 
-        with patch("cuecard.loader.load_or_build", return_value=None):
+        with patch("cuecard.indexing.loader.load_or_build", return_value=None):
             result = runner.invoke(app, ["format", "test"])
 
         assert result.exit_code == 1
@@ -397,7 +427,7 @@ class TestEmbed:
             embeddings=idx.embeddings,
         )
 
-        with patch("cuecard.indexer.load_index", return_value=idx):
+        with patch("cuecard.indexing.indexer.load_index", return_value=idx):
             result = runner.invoke(app, ["embed"])
 
         assert result.exit_code == 0
@@ -413,7 +443,7 @@ class TestEmbed:
         _setup_home(tmp_path)
         monkeypatch.chdir(tmp_path)
 
-        with patch("cuecard.indexer.load_index", return_value=None):
+        with patch("cuecard.indexing.indexer.load_index", return_value=None):
             result = runner.invoke(app, ["embed"])
 
         assert result.exit_code == 1
@@ -431,7 +461,7 @@ class TestEmbed:
         if npz_path.exists():
             npz_path.unlink()
 
-        with patch("cuecard.indexer.load_index", return_value=idx):
+        with patch("cuecard.indexing.indexer.load_index", return_value=idx):
             result = runner.invoke(app, ["embed"])
 
         assert result.exit_code == 0

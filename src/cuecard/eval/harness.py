@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from cuecard.models import AffinityIndex, Index, RankedResult, Rule
 
 # Re-export metric functions so existing callers (tests, CLI, bench) keep working
-from cuecard.eval_metrics import (  # noqa: F401
+from cuecard.eval.metrics import (  # noqa: F401
     _mean,
     _percentile,
     anti_precision,
@@ -29,14 +29,14 @@ from cuecard.eval_metrics import (  # noqa: F401
 )
 
 # Re-export report functions so existing callers keep working
-from cuecard.eval_report import (  # noqa: F401
+from cuecard.eval.report import (  # noqa: F401
     _compute_tier_summaries,
     evaluate_per_event,
     format_eval_report,
     format_per_event_report,
 )
-from cuecard.indexer import build_index
-from cuecard.parser import parse_rules
+from cuecard.indexing.indexer import build_index
+from cuecard.indexing.parser import parse_rules
 
 logger = logging.getLogger(__name__)
 
@@ -332,7 +332,7 @@ def run_eval(
             )
             _index_cache[corpus_key] = (rules, idx)
 
-    from cuecard.pipeline import run_pipeline
+    from cuecard.retrieval.pipeline import run_pipeline
 
     def _eval_one(fixture: Fixture) -> FixtureResult:
         if corpus_override is not None:

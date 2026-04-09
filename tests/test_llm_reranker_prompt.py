@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from cuecard.llm_reranker import _build_prompt
 from cuecard.models import Provenance, RankedResult, Rule
+from cuecard.retrieval.llm_reranker import _build_prompt
 
 
 def _make_candidates(n: int = 5) -> list[RankedResult]:

@@ -16,7 +16,7 @@ import numpy as np
 import numpy.typing as npt
 
 from cuecard._math import l2_normalize
-from cuecard.freshness import compute_file_hash
+from cuecard.indexing.freshness import compute_file_hash
 from cuecard.models import (
     KNOWN_HOOK_EVENTS,
     MAX_EXPANSION_LENGTH,

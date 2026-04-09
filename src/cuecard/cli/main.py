@@ -131,7 +131,7 @@ def parse() -> None:
     """Show all parsed rules with provenance."""
     cfg = _load_config_or_exit(project_dir=Path.cwd(), home_dir=_home_dir())
 
-    from cuecard.parser import parse_rules
+    from cuecard.indexing.parser import parse_rules
 
     rules = parse_rules(cfg.source_paths)
     if not rules:
@@ -159,7 +159,7 @@ def index(
     cfg = _load_config_or_exit(project_dir=Path.cwd(), home_dir=_home_dir())
 
     if status:
-        from cuecard.indexer import load_index
+        from cuecard.indexing.indexer import load_index
 
         for label, cache_dir in _iter_cache_dirs(cfg):
             idx = load_index(cache_dir)
@@ -182,15 +182,15 @@ def index(
     # Full rebuild per scope
     from fastembed import TextEmbedding
 
-    from cuecard.freshness import check_freshness
-    from cuecard.indexer import (
+    from cuecard.indexing.freshness import check_freshness
+    from cuecard.indexing.indexer import (
         build_index,
         load_rules_json,
         merge_rules_json,
         save_index,
         save_rules_json,
     )
-    from cuecard.parser import parse_rules
+    from cuecard.indexing.parser import parse_rules
 
     model = TextEmbedding(model_name=cfg.model_name)
     total_rules = 0
@@ -241,8 +241,8 @@ def retrieve(
 
     from fastembed import TextEmbedding
 
-    from cuecard.formatter import format_rules_verbose
-    from cuecard.loader import load_or_build
+    from cuecard.indexing.loader import load_or_build
+    from cuecard.retrieval.formatter import format_rules_verbose
 
     model = TextEmbedding(model_name=cfg.model_name)
     loaded = load_or_build(cfg, model)  # type: ignore[arg-type]
@@ -253,7 +253,7 @@ def retrieve(
     # Determine effective mode: explicit flag > config > default
     effective_mode = mode if mode else cfg.pipeline.mode
 
-    from cuecard.pipeline import VALID_MODES
+    from cuecard.retrieval.pipeline import VALID_MODES
     if effective_mode not in VALID_MODES:
         err_console.print(
             f"[red]Invalid mode {effective_mode!r}. "
@@ -261,7 +261,7 @@ def retrieve(
         )
         raise typer.Exit(1)
 
-    from cuecard.pipeline import run_pipeline
+    from cuecard.retrieval.pipeline import run_pipeline
 
     pipeline_result = run_pipeline(
         query, loaded.index, cfg,
@@ -285,9 +285,9 @@ def format_cmd(
 
     from fastembed import TextEmbedding
 
-    from cuecard.formatter import format_rules
-    from cuecard.loader import load_or_build
-    from cuecard.pipeline import run_pipeline
+    from cuecard.indexing.loader import load_or_build
+    from cuecard.retrieval.formatter import format_rules
+    from cuecard.retrieval.pipeline import run_pipeline
 
     model = TextEmbedding(model_name=cfg.model_name)
     loaded = load_or_build(cfg, model)  # type: ignore[arg-type]
@@ -315,7 +315,7 @@ def embed() -> None:
     """Show embedding stats (model, dim, count)."""
     cfg = _load_config_or_exit(project_dir=Path.cwd(), home_dir=_home_dir())
 
-    from cuecard.indexer import load_index
+    from cuecard.indexing.indexer import load_index
 
     found = False
     for label, cache_dir in _iter_cache_dirs(cfg):
@@ -454,7 +454,7 @@ def migrate(
     Comments are NOT preserved (tomllib has no comment API).
     The original .txt file is NOT deleted — switch when ready.
     """
-    from cuecard.parser import _parse_txt
+    from cuecard.indexing.parser import _parse_txt
 
     input_path = Path(input_file)
     if not input_path.exists():
@@ -505,18 +505,7 @@ def migrate(
 # These imports MUST be at the bottom so that app/rules_app are defined first.
 # Each submodule registers its commands on app or rules_app at import time.
 
-import cuecard.cli_eval as _cli_eval  # noqa: E402, F401
-import cuecard.cli_hooks as _cli_hooks  # noqa: E402, F401
-import cuecard.cli_rules as _cli_rules  # noqa: E402, F401
-import cuecard.cli_setup as _cli_setup  # noqa: E402, F401
-
-# Re-export hook helpers so existing imports from cuecard.cli keep working.
-_claude_settings_path = _cli_hooks._claude_settings_path
-_load_claude_settings = _cli_hooks._load_claude_settings
-_save_claude_settings = _cli_hooks._save_claude_settings
-_has_cuecard_hook = _cli_hooks._has_cuecard_hook
-
-# Re-export setup/configure helpers so existing imports from cuecard.cli keep working.
-_load_existing_global_config = _cli_setup._load_existing_global_config
-_format_rules_toml = _cli_setup._format_rules_toml
-_build_config_toml = _cli_setup._build_config_toml
+import cuecard.cli.eval_cmd as _cli_eval  # noqa: E402, F401
+import cuecard.cli.hooks as _cli_hooks  # noqa: E402, F401
+import cuecard.cli.rules as _cli_rules  # noqa: E402, F401
+import cuecard.cli.setup as _cli_setup  # noqa: E402, F401

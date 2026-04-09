@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from cuecard.models import Provenance, Rule
-from cuecard.retrievers import Retriever, ScoredCandidate, fuse
+from cuecard.retrieval.fusion import Retriever, ScoredCandidate, fuse
 
 
 def _rule(text: str) -> Rule:

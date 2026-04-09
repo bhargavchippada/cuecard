@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from cuecard.expander import (
+from cuecard.indexing.expander import (
     DEDUP_COSINE_THRESHOLD,
     _semantic_dedup,
 )
@@ -19,7 +19,7 @@ class TestSemanticDedup:
 
     def test_preserves_order(self) -> None:
         """Non-duplicate items are returned in original order."""
-        with patch("cuecard.expander.np") as mock_np:
+        with patch("cuecard.indexing.expander.np") as mock_np:
             # Mock numpy to simulate no duplicates
             mock_array = MagicMock()
             mock_np.array.return_value = mock_array

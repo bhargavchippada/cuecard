@@ -11,8 +11,8 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from cuecard.freshness import compute_file_hash
-from cuecard.indexer import (
+from cuecard.indexing.freshness import compute_file_hash
+from cuecard.indexing.indexer import (
     load_index,
     save_index,
 )

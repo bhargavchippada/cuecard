@@ -10,8 +10,8 @@ import pytest
 from typer.testing import CliRunner
 
 import cuecard.security as security_module
-from cuecard.cli import _home_dir, app
-from cuecard.freshness import FreshnessResult
+from cuecard.cli.main import _home_dir, app
+from cuecard.indexing.freshness import FreshnessResult
 from cuecard.models import SourceMeta
 
 runner = CliRunner()
@@ -64,7 +64,7 @@ def _setup_home(tmp_path: Path) -> Path:
 
 
 def _patch_home(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setattr("cuecard.cli._home_dir", lambda: tmp_path)
+    monkeypatch.setattr("cuecard.cli.main._home_dir", lambda: tmp_path)
 
 
 @pytest.fixture(autouse=True)
@@ -123,7 +123,10 @@ class TestSetup:
 
         with (
             patch("fastembed.TextEmbedding", return_value=mock_model),
-            patch("cuecard.freshness.check_freshness", return_value=fake_freshness),
+            patch(
+                "cuecard.indexing.freshness.check_freshness",
+                return_value=fake_freshness,
+            ),
         ):
             result = runner.invoke(app, ["setup"])
 

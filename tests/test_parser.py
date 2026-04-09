@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from cuecard.parser import parse_rules
+from cuecard.indexing.parser import parse_rules
 
 if TYPE_CHECKING:
     from pathlib import Path

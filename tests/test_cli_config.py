@@ -8,7 +8,7 @@ import pytest
 from typer.testing import CliRunner
 
 import cuecard.security as security_module
-from cuecard.cli import app
+from cuecard.cli.main import app
 
 runner = CliRunner()
 
@@ -60,7 +60,7 @@ def _setup_home(tmp_path: Path) -> Path:
 
 
 def _patch_home(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setattr("cuecard.cli._home_dir", lambda: tmp_path)
+    monkeypatch.setattr("cuecard.cli.main._home_dir", lambda: tmp_path)
 
 
 @pytest.fixture(autouse=True)
@@ -286,7 +286,7 @@ class TestConfigure:
 
 class TestBuildConfigToml:
     def test_embedding_mode_no_pipeline_llm(self) -> None:
-        from cuecard.cli import _build_config_toml
+        from cuecard.cli.setup import _build_config_toml
 
         content = _build_config_toml(
             mode="embedding",
@@ -301,7 +301,7 @@ class TestBuildConfigToml:
         assert 'mode = "embedding"' in content
 
     def test_llm_local_has_endpoint(self) -> None:
-        from cuecard.cli import _build_config_toml
+        from cuecard.cli.setup import _build_config_toml
 
         content = _build_config_toml(
             mode="llm-local",
@@ -317,7 +317,7 @@ class TestBuildConfigToml:
         assert "thinking = false" in content
 
     def test_llm_haiku_no_endpoint(self) -> None:
-        from cuecard.cli import _build_config_toml
+        from cuecard.cli.setup import _build_config_toml
 
         content = _build_config_toml(
             mode="llm-haiku",
@@ -335,12 +335,12 @@ class TestBuildConfigToml:
 
 class TestFormatRulesToml:
     def test_single_rule(self) -> None:
-        from cuecard.cli import _format_rules_toml
+        from cuecard.cli.setup import _format_rules_toml
 
         assert _format_rules_toml(["a.txt"]) == '["a.txt"]'
 
     def test_multiple_rules(self) -> None:
-        from cuecard.cli import _format_rules_toml
+        from cuecard.cli.setup import _format_rules_toml
 
         result = _format_rules_toml(["a.txt", "b.txt"])
         assert result == '["a.txt", "b.txt"]'
@@ -348,13 +348,13 @@ class TestFormatRulesToml:
 
 class TestLoadExistingGlobalConfig:
     def test_missing_config(self, tmp_path: Path) -> None:
-        from cuecard.cli import _load_existing_global_config
+        from cuecard.cli.setup import _load_existing_global_config
 
         result = _load_existing_global_config(tmp_path)
         assert result == {}
 
     def test_loads_all_fields(self, tmp_path: Path) -> None:
-        from cuecard.cli import _load_existing_global_config
+        from cuecard.cli.setup import _load_existing_global_config
 
         cuecard_dir = tmp_path / ".cuecard"
         cuecard_dir.mkdir()

@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cuecard.expander import (
+from cuecard.indexing.expander import (
     _VALID_EVENT_TYPES,
     _build_expansion_prompt,
     expand_rules,
@@ -43,7 +43,7 @@ class TestExpandRules:
     def test_local_validates_endpoint(self) -> None:
         fake = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0))]
         with (
-            patch("cuecard.llm_utils.socket.getaddrinfo", return_value=fake),
+            patch("cuecard.retrieval.llm_utils.socket.getaddrinfo", return_value=fake),
             pytest.raises(ConfigError, match="loopback"),
         ):
             expand_rules(
@@ -54,7 +54,7 @@ class TestExpandRules:
 
     def test_dry_run_does_not_call_llm(self) -> None:
         rules = [_make_rule()]
-        with patch("cuecard.expander.call_local") as mock_call:
+        with patch("cuecard.indexing.expander.call_local") as mock_call:
             result = expand_rules(
                 rules,
                 backend="local",
@@ -80,7 +80,7 @@ class TestExpandRules:
         mock_response.raise_for_status = MagicMock()
 
         with patch(
-            "cuecard.expander.call_local",
+            "cuecard.indexing.expander.call_local",
             return_value='{"expansions": ["new one"]}',
         ):
             result = expand_rules(
@@ -97,7 +97,7 @@ class TestExpandRules:
         rules = [_make_rule()]
 
         with patch(
-            "cuecard.expander.call_local",
+            "cuecard.indexing.expander.call_local",
             return_value=(
                 '{"expansions": ["docker build image", "run pytest coverage"]}'
             ),
@@ -115,7 +115,7 @@ class TestExpandRules:
         rules = [_make_rule()]
 
         with patch(
-            "cuecard.expander.call_haiku",
+            "cuecard.indexing.expander.call_haiku",
             return_value='{"expansions": ["haiku phrase"]}',
         ):
             result = expand_rules(
@@ -129,7 +129,7 @@ class TestExpandRules:
         rules = [_make_rule()]
 
         with patch(
-            "cuecard.expander.call_local",
+            "cuecard.indexing.expander.call_local",
             side_effect=RuntimeError("connection failed"),
         ):
             result = expand_rules(
@@ -154,11 +154,11 @@ class TestExpandRules:
 
         with (
             patch(
-                "cuecard.expander.call_local",
+                "cuecard.indexing.expander.call_local",
                 return_value='{"expansions": ["x"]}',
             ),
             patch(
-                "cuecard.expander.secrets.token_hex",
+                "cuecard.indexing.expander.secrets.token_hex",
                 side_effect=capture_nonce,
             ),
         ):
@@ -181,7 +181,7 @@ class TestExpandRules:
         """ConfigError from validate_endpoint should propagate, not be caught."""
         fake = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0))]
         with (
-            patch("cuecard.llm_utils.socket.getaddrinfo", return_value=fake),
+            patch("cuecard.retrieval.llm_utils.socket.getaddrinfo", return_value=fake),
             pytest.raises(ConfigError),
         ):
             expand_rules(
@@ -200,7 +200,7 @@ class TestExpandRules:
         rules = [_make_rule(expansions=("old",))]
 
         with patch(
-            "cuecard.expander.call_local",
+            "cuecard.indexing.expander.call_local",
             return_value='{"expansions": ["new"]}',
         ):
             result = expand_rules(
@@ -217,7 +217,7 @@ class TestExpandRules:
 
         with (
             patch(
-                "cuecard.expander.call_local",
+                "cuecard.indexing.expander.call_local",
                 side_effect=ValueError("bad response format"),
             ),
             pytest.raises(ValueError, match="bad response format"),
@@ -233,7 +233,7 @@ class TestExpandRules:
         original = _make_rule()
 
         with patch(
-            "cuecard.expander.call_local",
+            "cuecard.indexing.expander.call_local",
             return_value='{"expansions": ["x"]}',
         ):
             result = expand_rules(
@@ -259,15 +259,15 @@ class TestExpandRules:
         """event_type is forwarded to _build_expansion_prompt."""
         with (
             patch(
-                "cuecard.expander.call_local",
+                "cuecard.indexing.expander.call_local",
                 return_value='{"expansions": ["x"]}',
             ),
             patch(
-                "cuecard.expander._build_expansion_prompt",
+                "cuecard.indexing.expander._build_expansion_prompt",
                 wraps=_build_expansion_prompt,
             ) as mock_build,
             patch(
-                "cuecard.expander._semantic_dedup",
+                "cuecard.indexing.expander._semantic_dedup",
                 side_effect=lambda x, **kw: x,
             ),
         ):
@@ -284,11 +284,11 @@ class TestExpandRules:
         """expand_rules calls _semantic_dedup on parsed expansions."""
         with (
             patch(
-                "cuecard.expander.call_local",
+                "cuecard.indexing.expander.call_local",
                 return_value='{"expansions": ["a", "b", "c"]}',
             ),
             patch(
-                "cuecard.expander._semantic_dedup",
+                "cuecard.indexing.expander._semantic_dedup",
                 return_value=["a", "c"],
             ) as mock_dedup,
         ):
@@ -310,7 +310,7 @@ class TestExpandRules:
         updates: list[object] = []
 
         with patch(
-            "cuecard.expander.call_local",
+            "cuecard.indexing.expander.call_local",
             return_value='{"expansions": ["x"]}',
         ):
             expand_rules(
@@ -336,7 +336,7 @@ class TestExpandRules:
         updates: list[object] = []
 
         with patch(
-            "cuecard.expander.call_local",
+            "cuecard.indexing.expander.call_local",
             return_value='{"expansions": ["new"]}',
         ):
             expand_rules(
@@ -356,7 +356,7 @@ class TestExpandRules:
     def test_on_progress_not_called_when_none(self) -> None:
         """No error when on_progress is None (default)."""
         with patch(
-            "cuecard.expander.call_local",
+            "cuecard.indexing.expander.call_local",
             return_value='{"expansions": ["x"]}',
         ):
             result = expand_rules(

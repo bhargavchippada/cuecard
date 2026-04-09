@@ -10,9 +10,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from cuecard.affinity import load_affinity
-from cuecard.freshness import check_freshness
-from cuecard.indexer import (
+from cuecard.indexing.freshness import check_freshness
+from cuecard.indexing.indexer import (
     build_index,
     load_index,
     load_rules_json,
@@ -20,12 +19,13 @@ from cuecard.indexer import (
     save_index,
     save_rules_json,
 )
+from cuecard.indexing.parser import parse_rules
 from cuecard.models import AffinityIndex, LoadedIndex, RuleAffinity
-from cuecard.parser import parse_rules
-from cuecard.retriever import merge_indexes
+from cuecard.retrieval.affinity import load_affinity
+from cuecard.retrieval.retriever import merge_indexes
 
 if TYPE_CHECKING:
-    from cuecard.indexer import EmbeddingModel
+    from cuecard.indexing.indexer import EmbeddingModel
     from cuecard.models import Index, ResolvedConfig
 
 logger = logging.getLogger(__name__)

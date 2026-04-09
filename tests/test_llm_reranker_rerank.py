@@ -10,11 +10,11 @@ from unittest.mock import MagicMock, patch
 import httpx
 import pytest
 
-from cuecard.llm_reranker import (
+from cuecard.models import Provenance, RankedResult, Rule
+from cuecard.retrieval.llm_reranker import (
     _compute_ordinal_scores,
     rerank_llm,
 )
-from cuecard.models import Provenance, RankedResult, Rule
 from cuecard.security import ConfigError
 
 
@@ -125,7 +125,7 @@ class TestRerankLLM:
         candidates = _make_candidates(3)
 
         with patch(
-            "cuecard.llm_reranker.call_haiku",
+            "cuecard.retrieval.llm_reranker.call_haiku",
             return_value='{"rules": [2]}',
         ):
             result = rerank_llm(
@@ -225,7 +225,10 @@ class TestRerankLLM:
 
         with (
             patch.object(httpx, "post", return_value=mock_response),
-            patch("cuecard.llm_reranker.secrets.token_hex", side_effect=capture_nonce),
+            patch(
+                "cuecard.retrieval.llm_reranker.secrets.token_hex",
+                side_effect=capture_nonce,
+            ),
         ):
             rerank_llm(
                 candidates, "q1", backend="local",
@@ -263,7 +266,7 @@ class TestRerankLLM:
         candidates = _make_candidates(1)
         fake = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0))]
         with (
-            patch("cuecard.llm_utils.socket.getaddrinfo", return_value=fake),
+            patch("cuecard.retrieval.llm_utils.socket.getaddrinfo", return_value=fake),
             pytest.raises(ConfigError, match="loopback"),
         ):
             rerank_llm(
@@ -276,7 +279,7 @@ class TestRerankLLM:
     def test_haiku_import_error_returns_fallback(self) -> None:
         candidates = _make_candidates(3)
         with patch(
-            "cuecard.llm_reranker.call_haiku",
+            "cuecard.retrieval.llm_reranker.call_haiku",
             side_effect=ImportError("no claude_agent_sdk"),
         ):
             result = rerank_llm(
@@ -345,7 +348,7 @@ class TestRerankLLM:
 
         with (
             patch(
-                "cuecard.llm_reranker.call_haiku",
+                "cuecard.retrieval.llm_reranker.call_haiku",
                 side_effect=[
                     "garbage response",
                     json.dumps({"reasoning": "Retry OK.", "rules": [2]}),
@@ -377,7 +380,10 @@ class TestRetryArgumentVerification:
                 return "unparseable garbage"
             return json.dumps({"reasoning": "OK", "rules": [1]})
 
-        with patch("cuecard.llm_reranker.call_local", side_effect=capture_call_local):
+        with patch(
+                "cuecard.retrieval.llm_reranker.call_local",
+                side_effect=capture_call_local,
+            ):
             result = rerank_llm(
                 candidates, "test", backend="local",
                 endpoint="http://localhost:8081/v1",
@@ -402,7 +408,10 @@ class TestRetryArgumentVerification:
                 return "unparseable garbage"
             return json.dumps({"reasoning": "OK", "rules": [2]})
 
-        with patch("cuecard.llm_reranker.call_haiku", side_effect=capture_call_haiku):
+        with patch(
+                "cuecard.retrieval.llm_reranker.call_haiku",
+                side_effect=capture_call_haiku,
+            ):
             result = rerank_llm(
                 candidates, "test", backend="haiku",
                 haiku_model="claude-haiku-4-5",

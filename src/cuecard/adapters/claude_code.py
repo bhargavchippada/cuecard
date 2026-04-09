@@ -24,10 +24,10 @@ if TYPE_CHECKING:
     from cuecard.models import RankedResult
 
 from cuecard.config import load_config
-from cuecard.formatter import format_rules
-from cuecard.loader import load_or_build
+from cuecard.indexing.loader import load_or_build
 from cuecard.logger import log_retrieval
 from cuecard.models import KNOWN_HOOK_EVENTS, MAX_REQUEST_BYTES, MAX_TOOL_NAME_LENGTH
+from cuecard.retrieval.formatter import format_rules
 from cuecard.security import scrub_secrets
 
 _AGENT_TYPE_RE = re.compile(r"[^a-zA-Z0-9_-]")
@@ -201,7 +201,7 @@ def _run_pipeline_path(
     affinity = loaded.affinity if loaded is not None else None
 
     if index is not None and index.size > 0:
-        from cuecard.pipeline import run_pipeline
+        from cuecard.retrieval.pipeline import run_pipeline
 
         label = _EVENT_LABELS.get(event, _LABEL_PREVENT)
         pipeline_result = run_pipeline(

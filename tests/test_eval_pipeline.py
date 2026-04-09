@@ -9,7 +9,7 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from cuecard.eval import (
+from cuecard.eval.harness import (
     EvalSummary,
     Fixture,
     FixtureResult,
@@ -466,7 +466,7 @@ class TestRunEvalWithMode:
         )
 
         with patch(
-            "cuecard.pipeline.run_pipeline",
+            "cuecard.retrieval.pipeline.run_pipeline",
             return_value=fake_pipeline,
         ) as mock_pipe:
             summary = run_eval(

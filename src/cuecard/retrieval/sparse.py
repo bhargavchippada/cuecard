@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from cuecard.retriever import normalize_query
-from cuecard.retrievers import ScoredCandidate
+from cuecard.retrieval.fusion import ScoredCandidate
+from cuecard.retrieval.retriever import normalize_query
 
 if TYPE_CHECKING:
     import numpy.typing as npt

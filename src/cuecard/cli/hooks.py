@@ -11,8 +11,8 @@ from typing import Annotated
 import typer
 from rich.table import Table
 
-import cuecard.cli as _cli
-from cuecard.cli import app, console, err_console
+import cuecard.cli.main as _cli
+from cuecard.cli.main import app, console, err_console
 from cuecard.models import KNOWN_HOOK_EVENTS
 
 # --- hook helpers ---
@@ -201,7 +201,7 @@ def status() -> None:
         project_dir=Path.cwd(), home_dir=_cli._home_dir(),
     )
 
-    from cuecard.indexer import load_index
+    from cuecard.indexing.indexer import load_index
 
     found_any = False
     global_idx = load_index(cfg.global_cache_dir)

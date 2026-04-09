@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 
-from cuecard.freshness import FreshnessResult
-from cuecard.loader import _load_or_rebuild_scope, load_or_build
+from cuecard.indexing.freshness import FreshnessResult
+from cuecard.indexing.loader import _load_or_rebuild_scope, load_or_build
 from cuecard.models import (
     Index,
     LoadedIndex,
@@ -115,9 +115,9 @@ class TestLoadOrRebuildScope:
     def test_cached_fresh_returns_cached(self, tmp_path: Path) -> None:
         index = _make_index()
         with (
-            patch("cuecard.loader.load_index", return_value=index),
+            patch("cuecard.indexing.loader.load_index", return_value=index),
             patch(
-                "cuecard.loader.check_freshness",
+                "cuecard.indexing.loader.check_freshness",
                 return_value=_fresh_result(),
             ),
         ):
@@ -132,7 +132,7 @@ class TestLoadOrRebuildScope:
 
     def test_cached_no_reindex_returns_cached(self, tmp_path: Path) -> None:
         index = _make_index()
-        with patch("cuecard.loader.load_index", return_value=index):
+        with patch("cuecard.indexing.loader.load_index", return_value=index):
             result = _load_or_rebuild_scope(
                 str(tmp_path / "cache"),
                 ("/tmp/rules.txt",),
@@ -153,9 +153,9 @@ class TestLoadOrRebuildScope:
         }
 
         with (
-            patch("cuecard.loader.load_index", return_value=old_index),
+            patch("cuecard.indexing.loader.load_index", return_value=old_index),
             patch(
-                "cuecard.loader.check_freshness",
+                "cuecard.indexing.loader.check_freshness",
                 side_effect=[
                     _stale_result(),
                     FreshnessResult(
@@ -168,7 +168,7 @@ class TestLoadOrRebuildScope:
                 ],
             ),
             patch(
-                "cuecard.loader.parse_rules",
+                "cuecard.indexing.loader.parse_rules",
                 return_value=[
                     Rule(
                         text="New rule",
@@ -180,10 +180,10 @@ class TestLoadOrRebuildScope:
                 ],
             ),
             patch(
-                "cuecard.loader.build_index",
+                "cuecard.indexing.loader.build_index",
                 return_value=new_index,
             ) as mock_build,
-            patch("cuecard.loader.save_index") as mock_save,
+            patch("cuecard.indexing.loader.save_index") as mock_save,
         ):
             result = _load_or_rebuild_scope(
                 str(tmp_path / "cache"),
@@ -207,9 +207,9 @@ class TestLoadOrRebuildScope:
         }
 
         with (
-            patch("cuecard.loader.load_index", return_value=None),
+            patch("cuecard.indexing.loader.load_index", return_value=None),
             patch(
-                "cuecard.loader.check_freshness",
+                "cuecard.indexing.loader.check_freshness",
                 return_value=FreshnessResult(
                     is_stale=False,
                     updated_sources=MappingProxyType(sources),
@@ -219,7 +219,7 @@ class TestLoadOrRebuildScope:
                 ),
             ),
             patch(
-                "cuecard.loader.parse_rules",
+                "cuecard.indexing.loader.parse_rules",
                 return_value=[
                     Rule(
                         text="rule",
@@ -231,10 +231,10 @@ class TestLoadOrRebuildScope:
                 ],
             ),
             patch(
-                "cuecard.loader.build_index",
+                "cuecard.indexing.loader.build_index",
                 return_value=new_index,
             ),
-            patch("cuecard.loader.save_index"),
+            patch("cuecard.indexing.loader.save_index"),
         ):
             result = _load_or_rebuild_scope(
                 str(tmp_path / "cache"),
@@ -248,8 +248,8 @@ class TestLoadOrRebuildScope:
 
     def test_no_rules_parsed_returns_none(self, tmp_path: Path) -> None:
         with (
-            patch("cuecard.loader.load_index", return_value=None),
-            patch("cuecard.loader.parse_rules", return_value=[]),
+            patch("cuecard.indexing.loader.load_index", return_value=None),
+            patch("cuecard.indexing.loader.parse_rules", return_value=[]),
         ):
             result = _load_or_rebuild_scope(
                 str(tmp_path / "cache"),
@@ -262,9 +262,9 @@ class TestLoadOrRebuildScope:
 
     def test_no_model_returns_none(self, tmp_path: Path) -> None:
         with (
-            patch("cuecard.loader.load_index", return_value=None),
+            patch("cuecard.indexing.loader.load_index", return_value=None),
             patch(
-                "cuecard.loader.parse_rules",
+                "cuecard.indexing.loader.parse_rules",
                 return_value=[
                     Rule(
                         text="rule",
@@ -300,7 +300,7 @@ class TestLoadOrBuild:
             tmp_path, global_sources=("/tmp/rules.txt",),
         )
         with patch(
-            "cuecard.loader._load_or_rebuild_scope",
+            "cuecard.indexing.loader._load_or_rebuild_scope",
             return_value=index,
         ):
             result = load_or_build(cfg)
@@ -338,7 +338,7 @@ class TestLoadOrBuild:
         )
 
         with patch(
-            "cuecard.loader._load_or_rebuild_scope",
+            "cuecard.indexing.loader._load_or_rebuild_scope",
             side_effect=[global_idx, project_idx],
         ):
             result = load_or_build(cfg)
@@ -366,7 +366,7 @@ class TestLoadOrBuild:
             project_cache=None,  # No project cache dir
         )
         with patch(
-            "cuecard.loader._load_or_rebuild_scope",
+            "cuecard.indexing.loader._load_or_rebuild_scope",
             return_value=index,
         ) as mock_scope:
             result = load_or_build(cfg)
@@ -387,7 +387,7 @@ class TestLoadOrBuild:
             project_cache=str(tmp_path / "proj"),
         )
         with patch(
-            "cuecard.loader._load_or_rebuild_scope",
+            "cuecard.indexing.loader._load_or_rebuild_scope",
             return_value=index,
         ) as mock_scope:
             result = load_or_build(cfg)
@@ -406,7 +406,7 @@ class TestLoadOrBuild:
             project_cache=str(tmp_path / "proj"),
         )
         with patch(
-            "cuecard.loader._load_or_rebuild_scope",
+            "cuecard.indexing.loader._load_or_rebuild_scope",
             return_value=None,
         ):
             result = load_or_build(cfg)
@@ -418,7 +418,7 @@ class TestLoadOrBuild:
             tmp_path, global_sources=("/tmp/rules.txt",),
         )
         with patch(
-            "cuecard.loader._load_or_rebuild_scope",
+            "cuecard.indexing.loader._load_or_rebuild_scope",
             return_value=index,
         ) as mock_scope:
             load_or_build(cfg, reindex=False)
@@ -450,7 +450,7 @@ class TestLoadOrBuild:
         )
 
         with patch(
-            "cuecard.loader._load_or_rebuild_scope",
+            "cuecard.indexing.loader._load_or_rebuild_scope",
             side_effect=[global_idx, project_idx],
         ):
             result = load_or_build(cfg)
@@ -476,7 +476,7 @@ class TestLoadOrBuild:
         )
 
         with patch(
-            "cuecard.loader._load_or_rebuild_scope",
+            "cuecard.indexing.loader._load_or_rebuild_scope",
             side_effect=[empty_idx, empty_idx],
         ):
             result = load_or_build(cfg)
@@ -522,7 +522,7 @@ class TestCrossProjectIsolation:
         )
 
         with patch(
-            "cuecard.loader._load_or_rebuild_scope",
+            "cuecard.indexing.loader._load_or_rebuild_scope",
             side_effect=[global_idx, project_b_idx],
         ):
             result = load_or_build(cfg_b)
@@ -574,7 +574,7 @@ class TestRulesJsonIntegration:
         emb = rng.standard_normal((3, 384)).astype(np.float32)
         mock_model.passage_embed.return_value = iter(emb)
 
-        with patch("cuecard.loader.check_freshness") as mock_fresh:
+        with patch("cuecard.indexing.loader.check_freshness") as mock_fresh:
             mock_fresh.return_value = FreshnessResult(
                 is_stale=False,
                 changed_files=(),
@@ -597,7 +597,7 @@ class TestRulesJsonIntegration:
 
         assert result is not None
         # Verify the rules.json was updated with preserved expansions
-        from cuecard.indexer import load_rules_json
+        from cuecard.indexing.indexer import load_rules_json
 
         loaded_result = load_rules_json(cache_dir)
         assert loaded_result is not None

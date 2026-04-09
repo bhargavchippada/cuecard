@@ -11,13 +11,13 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from cuecard.llm_utils import (
+from cuecard.models import KNOWN_HOOK_EVENTS
+from cuecard.retrieval.llm_utils import (
     _ALLOWED_HAIKU_MODELS,
     call_haiku,
     call_local,
     validate_endpoint,
 )
-from cuecard.models import KNOWN_HOOK_EVENTS
 from cuecard.security import ConfigError, scrub_secrets
 
 if TYPE_CHECKING:

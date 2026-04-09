@@ -9,7 +9,15 @@ from unittest.mock import patch
 
 import pytest
 
-from cuecard.affinity import (
+from cuecard.models import (
+    KNOWN_HOOK_EVENTS,
+    AffinityIndex,
+    Provenance,
+    ResolvedConfig,
+    Rule,
+    RuleAffinity,
+)
+from cuecard.retrieval.affinity import (
     _build_affinity_prompt,
     _compute_checksum,
     _hash_rule_text,
@@ -19,14 +27,6 @@ from cuecard.affinity import (
     infer_affinities,
     load_affinity,
     save_affinity,
-)
-from cuecard.models import (
-    KNOWN_HOOK_EVENTS,
-    AffinityIndex,
-    Provenance,
-    ResolvedConfig,
-    Rule,
-    RuleAffinity,
 )
 
 if TYPE_CHECKING:
@@ -621,7 +621,7 @@ class TestSaveLoadAffinity:
         idx = build_strict_affinity([rule])
 
         with (
-            patch("cuecard.affinity.os.replace", side_effect=OSError("fail")),
+            patch("cuecard.retrieval.affinity.os.replace", side_effect=OSError("fail")),
             pytest.raises(OSError, match="fail"),
         ):
             save_affinity(idx, str(tmp_path))
@@ -732,7 +732,7 @@ class TestInferAffinities:
         })
 
         with patch(
-            "cuecard.affinity.call_local", return_value=llm_response,
+            "cuecard.retrieval.affinity.call_local", return_value=llm_response,
         ) as mock_call:
             idx = infer_affinities(rules, config)
 
@@ -754,7 +754,7 @@ class TestInferAffinities:
         })
 
         with patch(
-            "cuecard.affinity.call_local", return_value=llm_response,
+            "cuecard.retrieval.affinity.call_local", return_value=llm_response,
         ):
             idx = infer_affinities([rule], config)
 
@@ -776,7 +776,7 @@ class TestInferAffinities:
         })
 
         with patch(
-            "cuecard.affinity.call_local", return_value=llm_response,
+            "cuecard.retrieval.affinity.call_local", return_value=llm_response,
         ):
             idx = infer_affinities([rule], config)
 
@@ -789,7 +789,7 @@ class TestInferAffinities:
         config = _make_config()
 
         with patch(
-            "cuecard.affinity.validate_endpoint",
+            "cuecard.retrieval.affinity.validate_endpoint",
             side_effect=__import__(
                 "cuecard.security", fromlist=["ConfigError"],
             ).ConfigError("bad endpoint"),
@@ -803,7 +803,7 @@ class TestInferAffinities:
         config = _make_config()
 
         with patch(
-            "cuecard.affinity.call_local",
+            "cuecard.retrieval.affinity.call_local",
             side_effect=RuntimeError("LLM down"),
         ):
             idx = infer_affinities(rules, config)
@@ -831,7 +831,7 @@ class TestInferAffinities:
                 "reasoning": "",
             })
 
-        with patch("cuecard.affinity.call_local", side_effect=capture_call):
+        with patch("cuecard.retrieval.affinity.call_local", side_effect=capture_call):
             infer_affinities([rule], config)
 
         assert len(prompts_captured) == 1
@@ -853,7 +853,7 @@ class TestInferAffinities:
                 "reasoning": "",
             })
 
-        with patch("cuecard.affinity.call_local", side_effect=capture_call):
+        with patch("cuecard.retrieval.affinity.call_local", side_effect=capture_call):
             infer_affinities([rule], config)
 
         assert "sk-ant-" not in prompts_captured[0]
@@ -868,7 +868,7 @@ class TestInferAffinities:
         })
 
         with patch(
-            "cuecard.affinity.call_haiku",
+            "cuecard.retrieval.affinity.call_haiku",
             return_value=llm_response,
         ) as mock_haiku:
             idx = infer_affinities(rules, config)
@@ -884,7 +884,7 @@ class TestInferAffinities:
 
         with (
             patch(
-                "cuecard.affinity.call_local",
+                "cuecard.retrieval.affinity.call_local",
                 side_effect=ConfigError("bad"),
             ),
             pytest.raises(ConfigError),
@@ -897,7 +897,7 @@ class TestInferAffinities:
 
         with (
             patch(
-                "cuecard.affinity.call_local",
+                "cuecard.retrieval.affinity.call_local",
                 side_effect=ValueError("bad"),
             ),
             pytest.raises(ValueError, match="bad"),

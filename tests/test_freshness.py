@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from cuecard.freshness import (
+from cuecard.indexing.freshness import (
     FreshnessResult,
     check_freshness,
     compute_file_hash,

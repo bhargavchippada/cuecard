@@ -9,7 +9,7 @@ import pytest
 from typer.testing import CliRunner
 
 import cuecard.security as security_module
-from cuecard.cli import app
+from cuecard.cli.main import app
 
 runner = CliRunner()
 
@@ -20,7 +20,7 @@ runner = CliRunner()
 
 
 def _patch_home(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setattr("cuecard.cli._home_dir", lambda: tmp_path)
+    monkeypatch.setattr("cuecard.cli.main._home_dir", lambda: tmp_path)
 
 
 @pytest.fixture(autouse=True)
@@ -50,16 +50,16 @@ class TestEval:
 
         with (
             patch(
-                "cuecard.eval.load_fixtures",
+                "cuecard.eval.harness.load_fixtures",
                 return_value=fake_fixtures,
             ) as mock_load,
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch(
-                "cuecard.eval.run_eval",
+                "cuecard.eval.harness.run_eval",
                 return_value=fake_summary,
             ) as mock_run,
             patch(
-                "cuecard.eval.format_eval_report",
+                "cuecard.eval.harness.format_eval_report",
                 return_value="Report OK",
             ) as mock_fmt,
         ):
@@ -83,10 +83,13 @@ class TestEval:
         fake_summary = MagicMock()
 
         with (
-            patch("cuecard.eval.load_fixtures", return_value=[]),
+            patch("cuecard.eval.harness.load_fixtures", return_value=[]),
             patch("fastembed.TextEmbedding", return_value=mock_model) as mock_te,
-            patch("cuecard.eval.run_eval", return_value=fake_summary) as mock_run,
-            patch("cuecard.eval.format_eval_report", return_value="OK"),
+            patch(
+                "cuecard.eval.harness.run_eval",
+                return_value=fake_summary,
+            ) as mock_run,
+            patch("cuecard.eval.harness.format_eval_report", return_value="OK"),
         ):
             result = runner.invoke(app, [
                 "eval", str(fixture_file),
@@ -118,10 +121,13 @@ class TestEval:
         fake_summary = MagicMock()
 
         with (
-            patch("cuecard.eval.load_fixtures", return_value=[]),
+            patch("cuecard.eval.harness.load_fixtures", return_value=[]),
             patch("fastembed.TextEmbedding", return_value=mock_model),
-            patch("cuecard.eval.run_eval", return_value=fake_summary) as mock_run,
-            patch("cuecard.eval.format_eval_report", return_value="OK"),
+            patch(
+                "cuecard.eval.harness.run_eval",
+                return_value=fake_summary,
+            ) as mock_run,
+            patch("cuecard.eval.harness.format_eval_report", return_value="OK"),
         ):
             result = runner.invoke(app, ["eval", str(fixture_file)])
 
@@ -135,7 +141,7 @@ class TestEval:
         fixture_file.write_text("not json")
 
         with patch(
-            "cuecard.eval.load_fixtures",
+            "cuecard.eval.harness.load_fixtures",
             side_effect=ValueError("Invalid JSON"),
         ):
             result = runner.invoke(app, ["eval", str(fixture_file)])
@@ -150,7 +156,7 @@ class TestEval:
         fixture_file.write_text("[]")
 
         with (
-            patch("cuecard.eval.load_fixtures", return_value=[]),
+            patch("cuecard.eval.harness.load_fixtures", return_value=[]),
             patch(
                 "fastembed.TextEmbedding",
                 side_effect=RuntimeError("Model not found"),
@@ -170,10 +176,10 @@ class TestEval:
         mock_model = MagicMock()
 
         with (
-            patch("cuecard.eval.load_fixtures", return_value=[]),
+            patch("cuecard.eval.harness.load_fixtures", return_value=[]),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch(
-                "cuecard.eval.run_eval",
+                "cuecard.eval.harness.run_eval",
                 side_effect=RuntimeError("Eval crashed"),
             ),
         ):
@@ -192,13 +198,13 @@ class TestEval:
         fake_summary = MagicMock()
 
         with (
-            patch("cuecard.eval.load_fixtures", return_value=[]),
+            patch("cuecard.eval.harness.load_fixtures", return_value=[]),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch(
-                "cuecard.eval.run_eval",
+                "cuecard.eval.harness.run_eval",
                 return_value=fake_summary,
             ) as mock_run,
-            patch("cuecard.eval.format_eval_report", return_value="OK"),
+            patch("cuecard.eval.harness.format_eval_report", return_value="OK"),
         ):
             result = runner.invoke(app, [
                 "eval", str(fixture_file), "--mode", "rerank",
@@ -218,13 +224,13 @@ class TestEval:
         fake_summary = MagicMock()
 
         with (
-            patch("cuecard.eval.load_fixtures", return_value=[]),
+            patch("cuecard.eval.harness.load_fixtures", return_value=[]),
             patch("fastembed.TextEmbedding", return_value=mock_model),
             patch(
-                "cuecard.eval.run_eval",
+                "cuecard.eval.harness.run_eval",
                 return_value=fake_summary,
             ) as mock_run,
-            patch("cuecard.eval.format_eval_report", return_value="OK"),
+            patch("cuecard.eval.harness.format_eval_report", return_value="OK"),
         ):
             result = runner.invoke(app, [
                 "eval", str(fixture_file),

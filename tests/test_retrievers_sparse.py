@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 
 from cuecard.models import Index, Provenance, Rule
-from cuecard.retrievers import ScoredCandidate
-from cuecard.retrievers.sparse import BM25Okapi, SparseRetriever, _tokenize
+from cuecard.retrieval.fusion import ScoredCandidate
+from cuecard.retrieval.sparse import BM25Okapi, SparseRetriever, _tokenize
 
 
 def _make_rules(count: int) -> tuple[Rule, ...]:

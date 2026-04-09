@@ -118,7 +118,7 @@ class TestStartServer:
         model = MagicMock()
 
         with (
-            patch("cuecard.loader.load_or_build", return_value=None),
+            patch("cuecard.indexing.loader.load_or_build", return_value=None),
             pytest.raises(RuntimeError, match="No rules indexed"),
         ):
             start_server(
@@ -160,7 +160,7 @@ class TestStartServer:
             patch("cuecard.config.load_config", return_value=config),
             patch("fastembed.TextEmbedding", return_value=model),
             patch(
-                "cuecard.loader.load_or_build",
+                "cuecard.indexing.loader.load_or_build",
                 return_value=LoadedIndex(index=index),
             ),
         ):

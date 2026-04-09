@@ -15,8 +15,8 @@ from cuecard.models import (
     RetrievalStageTrace,
     Rule,
 )
-from cuecard.pipeline import run_pipeline
-from cuecard.retrievers import ScoredCandidate
+from cuecard.retrieval.fusion import ScoredCandidate
+from cuecard.retrieval.pipeline import run_pipeline
 
 if TYPE_CHECKING:
     from cuecard.models import Index, ResolvedConfig
@@ -87,7 +87,7 @@ class TestRetrievalStageMode:
         fake_candidates: list[ScoredCandidate],
     ) -> None:
         with patch(
-            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            "cuecard.retrieval.dense.DenseRetriever.retrieve",
             return_value=fake_candidates,
         ):
             result = run_pipeline(
@@ -110,7 +110,7 @@ class TestRetrievalStageMode:
         fake_candidates: list[ScoredCandidate],
     ) -> None:
         with patch(
-            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            "cuecard.retrieval.dense.DenseRetriever.retrieve",
             return_value=fake_candidates,
         ):
             result = run_pipeline(
@@ -133,25 +133,25 @@ class TestRerankModeGraceful:
         config: ResolvedConfig,
         fake_candidates: list[ScoredCandidate],
     ) -> None:
-        import cuecard
+        import cuecard.retrieval as _ret
 
-        real_mod = getattr(cuecard, "reranker", None)
+        real_mod = getattr(_ret, "reranker", None)
         with (
             patch(
-                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                "cuecard.retrieval.dense.DenseRetriever.retrieve",
                 return_value=fake_candidates,
             ),
-            patch.dict(sys.modules, {"cuecard.reranker": None}),
+            patch.dict(sys.modules, {"cuecard.retrieval.reranker": None}),
         ):
-            if hasattr(cuecard, "reranker"):
-                delattr(cuecard, "reranker")
+            if hasattr(_ret, "reranker"):
+                delattr(_ret, "reranker")
             try:
                 result = run_pipeline(
                     "test query", sample_index, config, mode="rerank",
                 )
             finally:
                 if real_mod is not None:
-                    cuecard.reranker = real_mod  # type: ignore[attr-defined]
+                    _ret.reranker = real_mod  # type: ignore[attr-defined]
 
         assert result.mode == "rerank"
         assert len(result.results) == len(fake_candidates)
@@ -172,25 +172,28 @@ class TestLLMModeGraceful:
         config: ResolvedConfig,
         fake_candidates: list[ScoredCandidate],
     ) -> None:
-        import cuecard
+        import cuecard.retrieval as _ret
 
         saved = {
-            "reranker": getattr(cuecard, "reranker", None),
-            "llm_reranker": getattr(cuecard, "llm_reranker", None),
+            "reranker": getattr(_ret, "reranker", None),
+            "llm_reranker": getattr(_ret, "llm_reranker", None),
         }
         with (
             patch(
-                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                "cuecard.retrieval.dense.DenseRetriever.retrieve",
                 return_value=fake_candidates,
             ),
             patch.dict(
                 sys.modules,
-                {"cuecard.reranker": None, "cuecard.llm_reranker": None},
+                {
+                    "cuecard.retrieval.reranker": None,
+                    "cuecard.retrieval.llm_reranker": None,
+                },
             ),
         ):
             for attr in ("reranker", "llm_reranker"):
-                if hasattr(cuecard, attr):
-                    delattr(cuecard, attr)
+                if hasattr(_ret, attr):
+                    delattr(_ret, attr)
             try:
                 result = run_pipeline(
                     "test query", sample_index, config,
@@ -199,7 +202,7 @@ class TestLLMModeGraceful:
             finally:
                 for attr, mod in saved.items():
                     if mod is not None:
-                        setattr(cuecard, attr, mod)
+                        setattr(_ret, attr, mod)
 
         assert result.mode == "rerank-llm-local"
         assert len(result.results) == len(fake_candidates)
@@ -214,25 +217,28 @@ class TestLLMModeGraceful:
         config: ResolvedConfig,
         fake_candidates: list[ScoredCandidate],
     ) -> None:
-        import cuecard
+        import cuecard.retrieval as _ret
 
         saved = {
-            "reranker": getattr(cuecard, "reranker", None),
-            "llm_reranker": getattr(cuecard, "llm_reranker", None),
+            "reranker": getattr(_ret, "reranker", None),
+            "llm_reranker": getattr(_ret, "llm_reranker", None),
         }
         with (
             patch(
-                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                "cuecard.retrieval.dense.DenseRetriever.retrieve",
                 return_value=fake_candidates,
             ),
             patch.dict(
                 sys.modules,
-                {"cuecard.reranker": None, "cuecard.llm_reranker": None},
+                {
+                    "cuecard.retrieval.reranker": None,
+                    "cuecard.retrieval.llm_reranker": None,
+                },
             ),
         ):
             for attr in ("reranker", "llm_reranker"):
-                if hasattr(cuecard, attr):
-                    delattr(cuecard, attr)
+                if hasattr(_ret, attr):
+                    delattr(_ret, attr)
             try:
                 result = run_pipeline(
                     "test query", sample_index, config,
@@ -241,7 +247,7 @@ class TestLLMModeGraceful:
             finally:
                 for attr, mod in saved.items():
                     if mod is not None:
-                        setattr(cuecard, attr, mod)
+                        setattr(_ret, attr, mod)
 
         assert result.mode == "rerank-llm-haiku"
         assert len(result.stages) == 3
@@ -293,7 +299,7 @@ class TestStageTraces:
         fake_candidates: list[ScoredCandidate],
     ) -> None:
         with patch(
-            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            "cuecard.retrieval.dense.DenseRetriever.retrieve",
             return_value=fake_candidates,
         ):
             result = run_pipeline(
@@ -313,7 +319,7 @@ class TestStageTraces:
         fake_candidates: list[ScoredCandidate],
     ) -> None:
         with patch(
-            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            "cuecard.retrieval.dense.DenseRetriever.retrieve",
             return_value=fake_candidates,
         ):
             result = run_pipeline(

@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from cuecard.models import Index, Provenance, Rule
-from cuecard.retriever import merge_indexes, normalize_query, retrieve
+from cuecard.retrieval.retriever import merge_indexes, normalize_query, retrieve
 
 # ---------------------------------------------------------------------------
 # Helpers

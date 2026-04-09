@@ -98,7 +98,10 @@ class TestProcessRequest:
             mode="embedding",
         )
 
-        with patch("cuecard.pipeline.run_pipeline", return_value=fake_pipeline):
+        with patch(
+                "cuecard.retrieval.pipeline.run_pipeline",
+                return_value=fake_pipeline,
+            ):
             result = _process_request(
                 {"tool_name": "Bash", "tool_input": "git status"},
                 index, config, model,
@@ -123,7 +126,10 @@ class TestProcessRequest:
             mode="embedding",
         )
 
-        with patch("cuecard.pipeline.run_pipeline", return_value=fake_pipeline):
+        with patch(
+                "cuecard.retrieval.pipeline.run_pipeline",
+                return_value=fake_pipeline,
+            ):
             result = _process_request(
                 {"event": "UserPromptSubmit", "prompt": "add auth"},
                 index, config, model,
@@ -150,7 +156,10 @@ class TestProcessRequest:
         )
 
         original = {"tool_name": "Read", "tool_input": "file.py"}
-        with patch("cuecard.pipeline.run_pipeline", return_value=fake_pipeline):
+        with patch(
+                "cuecard.retrieval.pipeline.run_pipeline",
+                return_value=fake_pipeline,
+            ):
             result = _process_request(original, index, config, model)
 
         # Original should not be mutated
@@ -176,7 +185,10 @@ class TestProcessRequest:
             "tool_input": "file.py",
             "hookSpecificOutput": {"existing": "value"},
         }
-        with patch("cuecard.pipeline.run_pipeline", return_value=fake_pipeline):
+        with patch(
+                "cuecard.retrieval.pipeline.run_pipeline",
+                return_value=fake_pipeline,
+            ):
             result = _process_request(data, index, config, model)
 
         hook_out = result["hookSpecificOutput"]

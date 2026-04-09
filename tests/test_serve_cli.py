@@ -26,9 +26,9 @@ class TestServeCLI:
     ) -> None:
         from typer.testing import CliRunner
 
-        from cuecard.cli import app
+        from cuecard.cli.main import app
 
-        monkeypatch.setattr("cuecard.cli._home_dir", lambda: tmp_path)
+        monkeypatch.setattr("cuecard.cli.main._home_dir", lambda: tmp_path)
         cli_runner = CliRunner()
         result = cli_runner.invoke(app, ["serve", "--stop"])
         assert result.exit_code == 0
@@ -39,9 +39,9 @@ class TestServeCLI:
     ) -> None:
         from typer.testing import CliRunner
 
-        from cuecard.cli import app
+        from cuecard.cli.main import app
 
-        monkeypatch.setattr("cuecard.cli._home_dir", lambda: tmp_path)
+        monkeypatch.setattr("cuecard.cli.main._home_dir", lambda: tmp_path)
         write_pid(os.getpid(), tmp_path)
 
         cli_runner = CliRunner()
@@ -67,9 +67,9 @@ class TestServeCLI:
     ) -> None:
         from typer.testing import CliRunner
 
-        from cuecard.cli import app
+        from cuecard.cli.main import app
 
-        monkeypatch.setattr("cuecard.cli._home_dir", lambda: tmp_path)
+        monkeypatch.setattr("cuecard.cli.main._home_dir", lambda: tmp_path)
         write_pid(os.getpid(), tmp_path)
 
         cli_runner = CliRunner()
@@ -82,12 +82,12 @@ class TestServeCLI:
     ) -> None:
         from typer.testing import CliRunner
 
-        from cuecard.cli import app
+        from cuecard.cli.main import app
 
-        monkeypatch.setattr("cuecard.cli._home_dir", lambda: tmp_path)
+        monkeypatch.setattr("cuecard.cli.main._home_dir", lambda: tmp_path)
 
         cli_runner = CliRunner()
-        with patch("cuecard.cli._fork_daemon") as mock_fork:
+        with patch("cuecard.cli.main._fork_daemon") as mock_fork:
             result = cli_runner.invoke(app, ["serve", "--daemon"])
         assert result.exit_code == 0
         mock_fork.assert_called_once()
@@ -96,7 +96,7 @@ class TestServeCLI:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Parent process (fork returns child PID) prints and returns."""
-        from cuecard.cli import _fork_daemon
+        from cuecard.cli.main import _fork_daemon
 
         monkeypatch.setattr("os.fork", lambda: 12345)
         _fork_daemon(8452, tmp_path)  # Should return without error
@@ -105,7 +105,7 @@ class TestServeCLI:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Child process (fork returns 0) detaches and runs server."""
-        from cuecard.cli import _fork_daemon
+        from cuecard.cli.main import _fork_daemon
 
         monkeypatch.setattr("os.fork", lambda: 0)
         monkeypatch.setattr("os.setsid", lambda: None)
@@ -122,7 +122,7 @@ class TestServeCLI:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Child process handles SystemExit gracefully."""
-        from cuecard.cli import _fork_daemon
+        from cuecard.cli.main import _fork_daemon
 
         monkeypatch.setattr("os.fork", lambda: 0)
         monkeypatch.setattr("os.setsid", lambda: None)
@@ -153,9 +153,9 @@ class TestForkDaemon:
     ) -> None:
         from typer.testing import CliRunner
 
-        from cuecard.cli import app
+        from cuecard.cli.main import app
 
-        monkeypatch.setattr("cuecard.cli._home_dir", lambda: tmp_path)
+        monkeypatch.setattr("cuecard.cli.main._home_dir", lambda: tmp_path)
 
         # Mock os.fork to return child PID (parent path)
         with patch("os.fork", return_value=42):
@@ -166,7 +166,7 @@ class TestForkDaemon:
 
     def test_fork_child_path(self, tmp_path: Path) -> None:
         """Test the child process path of _fork_daemon."""
-        from cuecard.cli import _fork_daemon
+        from cuecard.cli.main import _fork_daemon
 
         with (
             patch("os.fork", return_value=0),  # child
@@ -185,7 +185,7 @@ class TestForkDaemon:
 
     def test_fork_child_system_exit(self, tmp_path: Path) -> None:
         """Test the child process path catches SystemExit."""
-        from cuecard.cli import _fork_daemon
+        from cuecard.cli.main import _fork_daemon
 
         with (
             patch("os.fork", return_value=0),
@@ -210,9 +210,9 @@ class TestForkDaemon:
     ) -> None:
         from typer.testing import CliRunner
 
-        from cuecard.cli import app
+        from cuecard.cli.main import app
 
-        monkeypatch.setattr("cuecard.cli._home_dir", lambda: tmp_path)
+        monkeypatch.setattr("cuecard.cli.main._home_dir", lambda: tmp_path)
 
         cli_runner = CliRunner()
         with patch("cuecard.serve.run_server") as mock_run:
@@ -233,10 +233,10 @@ class TestStatusDaemon:
     ) -> None:
         from typer.testing import CliRunner
 
-        from cuecard.cli import app
+        from cuecard.cli.main import app
 
-        monkeypatch.setattr("cuecard.cli._home_dir", lambda: tmp_path)
-        monkeypatch.setattr("cuecard.cli_hooks._cli._home_dir", lambda: tmp_path)
+        monkeypatch.setattr("cuecard.cli.main._home_dir", lambda: tmp_path)
+        monkeypatch.setattr("cuecard.cli.hooks._cli._home_dir", lambda: tmp_path)
         cuecard_dir = tmp_path / ".cuecard"
         cuecard_dir.mkdir()
         config_path = cuecard_dir / "config.toml"
@@ -268,10 +268,10 @@ class TestStatusDaemon:
     ) -> None:
         from typer.testing import CliRunner
 
-        from cuecard.cli import app
+        from cuecard.cli.main import app
 
-        monkeypatch.setattr("cuecard.cli._home_dir", lambda: tmp_path)
-        monkeypatch.setattr("cuecard.cli_hooks._cli._home_dir", lambda: tmp_path)
+        monkeypatch.setattr("cuecard.cli.main._home_dir", lambda: tmp_path)
+        monkeypatch.setattr("cuecard.cli.hooks._cli._home_dir", lambda: tmp_path)
         cuecard_dir = tmp_path / ".cuecard"
         cuecard_dir.mkdir()
         config_path = cuecard_dir / "config.toml"

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
     import pytest
 
-from cuecard.indexer import (
+from cuecard.indexing.indexer import (
     load_rules_json,
     merge_rules_json,
     save_rules_json,

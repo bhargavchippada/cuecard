@@ -9,7 +9,7 @@ import secrets
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
-from cuecard.llm_utils import (
+from cuecard.retrieval.llm_utils import (
     _ALLOWED_HAIKU_MODELS,
     call_haiku,
     call_local,

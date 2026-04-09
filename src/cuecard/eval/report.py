@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
-from cuecard.eval_metrics import _mean
+from cuecard.eval.metrics import _mean
 
 if TYPE_CHECKING:
-    from cuecard.eval import (
+    from cuecard.eval.harness import (
         EvalSummary,
         Fixture,
         FixtureResult,
@@ -55,7 +55,7 @@ def _make_tier_summary(
     tier: str, tier_results: list[FixtureResult],
 ) -> TierSummary:
     """Build a TierSummary for a single tier."""
-    from cuecard.eval import TierSummary
+    from cuecard.eval.harness import TierSummary
 
     n = len(tier_results)
     neg_silent = sum(
@@ -108,8 +108,8 @@ def evaluate_per_event(
     Fixtures without an event field are treated as PreToolUse (backwards compat).
     Returns metrics sorted by _EVENT_ORDER, then alphabetically for unknowns.
     """
-    from cuecard.eval import Fixture as FixtureCls
-    from cuecard.eval import PerEventMetrics as PerEventMetricsType
+    from cuecard.eval.harness import Fixture as FixtureCls
+    from cuecard.eval.harness import PerEventMetrics as PerEventMetricsType
 
     # Build fixture lookup: id -> Fixture
     fixture_by_id: dict[str, Fixture] = {f.id: f for f in fixtures}
@@ -143,7 +143,7 @@ def _make_event_metrics(
     pairs: list[tuple[FixtureResult, Fixture]],
 ) -> PerEventMetrics:
     """Build PerEventMetrics for a single event type."""
-    from cuecard.eval import PerEventMetrics
+    from cuecard.eval.harness import PerEventMetrics
 
     results_only = [r for r, _ in pairs]
     positives = [r for r, fx in pairs if fx.difficulty != "negative"]

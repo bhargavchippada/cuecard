@@ -7,8 +7,8 @@ from typing import Annotated
 
 import typer
 
-import cuecard.cli as _cli
-from cuecard.cli import app, console, err_console
+import cuecard.cli.main as _cli
+from cuecard.cli.main import app, console, err_console
 
 
 @app.command(name="eval")
@@ -49,7 +49,7 @@ def eval_cmd(
     ] = 1.0,
 ) -> None:
     """Run evaluation against a fixture file."""
-    from cuecard.eval import format_eval_report, load_fixtures, run_eval
+    from cuecard.eval.harness import format_eval_report, load_fixtures, run_eval
 
     try:
         fixtures = load_fixtures(str(fixture_file))

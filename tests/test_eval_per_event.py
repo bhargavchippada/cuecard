@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from cuecard.eval import (
+from cuecard.eval.harness import (
     _DEFAULT_EVENT,
     Fixture,
     FixtureResult,

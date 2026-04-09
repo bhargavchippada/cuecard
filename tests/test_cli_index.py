@@ -10,8 +10,8 @@ import pytest
 from typer.testing import CliRunner
 
 import cuecard.security as security_module
-from cuecard.cli import app
-from cuecard.freshness import FreshnessResult
+from cuecard.cli.main import app
+from cuecard.indexing.freshness import FreshnessResult
 from cuecard.models import (
     Index,
     Provenance,
@@ -99,7 +99,7 @@ def _setup_home(tmp_path: Path) -> Path:
 
 
 def _patch_home(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setattr("cuecard.cli._home_dir", lambda: tmp_path)
+    monkeypatch.setattr("cuecard.cli.main._home_dir", lambda: tmp_path)
 
 
 @pytest.fixture(autouse=True)
@@ -174,7 +174,10 @@ class TestIndex:
 
         with (
             patch("fastembed.TextEmbedding", return_value=mock_model),
-            patch("cuecard.freshness.check_freshness", return_value=fake_freshness),
+            patch(
+                "cuecard.indexing.freshness.check_freshness",
+                return_value=fake_freshness,
+            ),
         ):
             result = runner.invoke(app, ["index"])
 
@@ -214,7 +217,7 @@ class TestIndex:
         )
 
         # Pre-populate rules.json with expansions for a matching rule
-        from cuecard.indexer import save_rules_json
+        from cuecard.indexing.indexer import save_rules_json
         from cuecard.models import Provenance, Rule
 
         cached_rules = [
@@ -230,7 +233,10 @@ class TestIndex:
 
         with (
             patch("fastembed.TextEmbedding", return_value=mock_model),
-            patch("cuecard.freshness.check_freshness", return_value=fake_freshness),
+            patch(
+                "cuecard.indexing.freshness.check_freshness",
+                return_value=fake_freshness,
+            ),
         ):
             result = runner.invoke(app, ["index"])
 
@@ -238,7 +244,7 @@ class TestIndex:
         assert "index rebuilt" in result.output.lower()
 
         # Verify rules.json was saved with merged content
-        from cuecard.indexer import load_rules_json
+        from cuecard.indexing.indexer import load_rules_json
 
         result = load_rules_json(cache_dir)
         assert result is not None
@@ -278,7 +284,7 @@ class TestIndex:
         monkeypatch.chdir(tmp_path)
 
         idx = _make_sample_index()
-        with patch("cuecard.indexer.load_index", return_value=idx):
+        with patch("cuecard.indexing.indexer.load_index", return_value=idx):
             result = runner.invoke(app, ["index", "--status"])
 
         assert result.exit_code == 0
@@ -293,7 +299,7 @@ class TestIndex:
         _setup_home(tmp_path)
         monkeypatch.chdir(tmp_path)
 
-        with patch("cuecard.indexer.load_index", return_value=None):
+        with patch("cuecard.indexing.indexer.load_index", return_value=None):
             result = runner.invoke(app, ["index", "--status"])
 
         assert result.exit_code == 0
@@ -339,7 +345,10 @@ class TestIndexWithProjectScope:
 
         with (
             patch("fastembed.TextEmbedding", return_value=mock_model),
-            patch("cuecard.freshness.check_freshness", return_value=fake_freshness),
+            patch(
+                "cuecard.indexing.freshness.check_freshness",
+                return_value=fake_freshness,
+            ),
         ):
             result = runner.invoke(app, ["index"])
 
@@ -367,7 +376,7 @@ class TestIndexWithProjectScope:
 
         idx = _make_sample_index()
 
-        with patch("cuecard.indexer.load_index", return_value=idx):
+        with patch("cuecard.indexing.indexer.load_index", return_value=idx):
             result = runner.invoke(app, ["index", "--status"])
 
         assert result.exit_code == 0

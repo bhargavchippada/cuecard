@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import httpx
 import pytest
 
-from cuecard.llm_utils import call_local, validate_endpoint
+from cuecard.retrieval.llm_utils import call_local, validate_endpoint
 from cuecard.security import ConfigError
 
 
@@ -25,7 +25,7 @@ class TestValidateEndpoint:
     def test_external_host_raises(self) -> None:
         fake = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0))]
         with (
-            patch("cuecard.llm_utils.socket.getaddrinfo", return_value=fake),
+            patch("cuecard.retrieval.llm_utils.socket.getaddrinfo", return_value=fake),
             pytest.raises(ConfigError, match="loopback"),
         ):
             validate_endpoint("http://evil.com:8081/v1")
@@ -33,7 +33,7 @@ class TestValidateEndpoint:
     def test_ip_address_raises(self) -> None:
         fake = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("10.0.0.1", 0))]
         with (
-            patch("cuecard.llm_utils.socket.getaddrinfo", return_value=fake),
+            patch("cuecard.retrieval.llm_utils.socket.getaddrinfo", return_value=fake),
             pytest.raises(ConfigError, match="loopback"),
         ):
             validate_endpoint("http://10.0.0.1:8081/v1")

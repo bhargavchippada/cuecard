@@ -18,6 +18,6 @@ def main() -> None:
 
         hook_main()
     else:
-        from cuecard.cli import app
+        from cuecard.cli.main import app
 
         app()

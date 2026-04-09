@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from cuecard.llm_reranker import (
+from cuecard.retrieval.llm_reranker import (
     _extract_rule_refs_from_prose,
     _parse_llm_response,
     _strip_thinking_tags,

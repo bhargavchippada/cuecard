@@ -6,7 +6,7 @@ import math
 
 import pytest
 
-from cuecard.eval import (
+from cuecard.eval.harness import (
     anti_precision,
     context_waste_ratio,
     mrr,

@@ -227,8 +227,8 @@ def _process_request(
         _detect_event,
         _handle_pre_tool_use,
     )
-    from cuecard.formatter import format_rules
-    from cuecard.pipeline import run_pipeline
+    from cuecard.retrieval.formatter import format_rules
+    from cuecard.retrieval.pipeline import run_pipeline
 
     event = _detect_event(data)
     handler = _EVENT_HANDLERS.get(event, _handle_pre_tool_use)
@@ -309,7 +309,7 @@ def start_server(
 
     affinity: AffinityIndex | None = None
     if index is None:
-        from cuecard.loader import load_or_build
+        from cuecard.indexing.loader import load_or_build
         loaded = load_or_build(config, embedding_model)  # type: ignore[arg-type]
         index = loaded.index if loaded is not None else None
         affinity = loaded.affinity if loaded is not None else None

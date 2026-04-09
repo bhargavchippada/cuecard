@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import pytest
 
-from cuecard.expander import (
+from cuecard.indexing.expander import (
     _build_expansion_prompt,
     _parse_expansion_response,
 )
@@ -230,7 +230,7 @@ class TestParseExpansionResponse:
         assert result == ["phrase 1", "phrase 2"]
 
     def test_reasoning_logged_at_debug(self, caplog: pytest.LogCaptureFixture) -> None:
-        with caplog.at_level(logging.DEBUG, logger="cuecard.expander"):
+        with caplog.at_level(logging.DEBUG, logger="cuecard.indexing.expander"):
             response = json.dumps({
                 "reasoning": "Wide gap between abstract rule and code.",
                 "expansions": ["phrase 1"],

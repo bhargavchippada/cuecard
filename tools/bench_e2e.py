@@ -31,16 +31,16 @@ import requests
 # Add project to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from cuecard.eval import (
+from cuecard.eval.harness import (
     EvalSummary,
     evaluate_per_event,
     format_per_event_report,
     load_fixtures,
     run_eval,
 )
-from cuecard.expander import expand_rules
-from cuecard.indexer import save_rules_json
-from cuecard.parser import parse_rules
+from cuecard.indexing.expander import expand_rules
+from cuecard.indexing.indexer import save_rules_json
+from cuecard.indexing.parser import parse_rules
 
 EVAL_DIR = Path(__file__).resolve().parent.parent / "eval"
 CORPORA_DIR = EVAL_DIR / "corpora"
@@ -150,7 +150,7 @@ def generate_expansions_for_label(label: str, *, force: bool = False) -> None:
     Includes inline affinity from eval/corpora/affinity.json if available.
     Skips generation if corpus already exists and --force is not set.
     """
-    from cuecard.affinity import load_affinity
+    from cuecard.retrieval.affinity import load_affinity
 
     # Load affinity once to embed inline in each rules.json
     affinity = load_affinity(str(CORPORA_DIR))
@@ -205,8 +205,8 @@ def run_benchmark(label: str, *, sample_ratio: float = 0.2, seed: int = 42) -> d
     """Run basic + workflow eval against model-specific corpora."""
     from fastembed import TextEmbedding
 
-    from cuecard.affinity import load_affinity
-    from cuecard.indexer import load_rules_json
+    from cuecard.retrieval.affinity import load_affinity
+    from cuecard.indexing.indexer import load_rules_json
 
     print(f"\nLoading embedding model: {EMBEDDING_MODEL}")
     embedding_model = TextEmbedding(model_name=EMBEDDING_MODEL)

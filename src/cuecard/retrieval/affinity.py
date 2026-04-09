@@ -10,13 +10,13 @@ import secrets
 import tempfile
 from typing import TYPE_CHECKING
 
-from cuecard.llm_utils import call_haiku, call_local, validate_endpoint
 from cuecard.models import (
     KNOWN_HOOK_EVENTS,
     AffinityIndex,
     RuleAffinity,
     _hash_rule_text,
 )
+from cuecard.retrieval.llm_utils import call_haiku, call_local, validate_endpoint
 from cuecard.security import ConfigError, scrub_secrets
 
 if TYPE_CHECKING:

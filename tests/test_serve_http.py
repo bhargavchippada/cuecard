@@ -142,7 +142,7 @@ class TestHTTPIntegration:
         )
 
         with patch(
-            "cuecard.pipeline.run_pipeline",
+            "cuecard.retrieval.pipeline.run_pipeline",
             return_value=fake_pipeline,
         ):
             result = query_daemon(

@@ -16,8 +16,8 @@ from rich.progress import (
     TimeElapsedColumn,
 )
 
-import cuecard.cli as _cli
-from cuecard.cli import console, err_console, rules_app
+import cuecard.cli.main as _cli
+from cuecard.cli.main import console, err_console, rules_app
 
 if TYPE_CHECKING:
     from cuecard.models import ExpandProgress, Rule
@@ -41,7 +41,7 @@ def rules_list(
         project_dir=Path.cwd(), home_dir=_cli._home_dir(),
     )
 
-    from cuecard.parser import parse_rules
+    from cuecard.indexing.parser import parse_rules
 
     home = _cli._home_dir()
     global_cache = str(home / ".cuecard")
@@ -135,7 +135,7 @@ def remove(
         project_dir=Path.cwd(), home_dir=_cli._home_dir(),
     )
 
-    from cuecard.parser import parse_rules
+    from cuecard.indexing.parser import parse_rules
 
     all_rules = parse_rules(cfg.source_paths)
     if number < 1 or number > len(all_rules):
@@ -201,7 +201,7 @@ def search(
         project_dir=Path.cwd(), home_dir=_cli._home_dir(),
     )
 
-    from cuecard.parser import parse_rules
+    from cuecard.indexing.parser import parse_rules
 
     home = _cli._home_dir()
     global_cache = str(home / ".cuecard")
@@ -243,7 +243,7 @@ def _expand_with_progress(
     dedup_threshold: float = 0.80,
 ) -> list[Rule]:
     """Run expand_rules with a Rich progress display on stderr."""
-    from cuecard.expander import expand_rules
+    from cuecard.indexing.expander import expand_rules
 
     skipped_count = 0
 
@@ -306,8 +306,12 @@ def expand(
     ] = False,
 ) -> None:
     """Generate LLM expansions for rules."""
-    from cuecard.indexer import load_rules_json, merge_rules_json, save_rules_json
-    from cuecard.parser import parse_rules
+    from cuecard.indexing.indexer import (
+        load_rules_json,
+        merge_rules_json,
+        save_rules_json,
+    )
+    from cuecard.indexing.parser import parse_rules
 
     cfg = _cli._load_config_or_exit(
         project_dir=Path.cwd(), home_dir=_cli._home_dir(),
@@ -368,8 +372,8 @@ def expand(
         # Auto-rebuild index with new expansions
         from fastembed import TextEmbedding
 
-        from cuecard.freshness import check_freshness
-        from cuecard.indexer import build_index, save_index
+        from cuecard.indexing.freshness import check_freshness
+        from cuecard.indexing.indexer import build_index, save_index
 
         console.print(f"[bold]{label}:[/bold] rebuilding index...")
         model = TextEmbedding(model_name=cfg.model_name)
@@ -392,7 +396,7 @@ def sources() -> None:
         project_dir=Path.cwd(), home_dir=_cli._home_dir(),
     )
 
-    from cuecard.parser import parse_rules
+    from cuecard.indexing.parser import parse_rules
 
     for path_str in cfg.source_paths:
         path = Path(path_str)

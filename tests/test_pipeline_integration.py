@@ -16,8 +16,8 @@ from cuecard.models import (
     RetrievalStageTrace,
     Rule,
 )
-from cuecard.pipeline import run_pipeline
-from cuecard.retrievers import ScoredCandidate
+from cuecard.retrieval.fusion import ScoredCandidate
+from cuecard.retrieval.pipeline import run_pipeline
 
 if TYPE_CHECKING:
     from cuecard.models import Index
@@ -161,11 +161,11 @@ class TestModeFromConfig:
         )
         with (
             patch(
-                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                "cuecard.retrieval.dense.DenseRetriever.retrieve",
                 return_value=fake_candidates,
             ),
             patch(
-                "cuecard.reranker.rerank",
+                "cuecard.retrieval.reranker.rerank",
                 side_effect=RuntimeError("stub"),
             ),
         ):
@@ -181,7 +181,7 @@ class TestModeFromConfig:
         fake_candidates: list[ScoredCandidate],
     ) -> None:
         with patch(
-            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            "cuecard.retrieval.dense.DenseRetriever.retrieve",
             return_value=fake_candidates,
         ):
             result = run_pipeline(
@@ -202,7 +202,7 @@ class TestModeFromConfig:
             global_cache_dir="/tmp/test",
         )
         with patch(
-            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            "cuecard.retrieval.dense.DenseRetriever.retrieve",
             return_value=fake_candidates,
         ):
             result = run_pipeline(
@@ -226,10 +226,10 @@ class TestMockReranker:
 
         with (
             patch(
-                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                "cuecard.retrieval.dense.DenseRetriever.retrieve",
                 return_value=fake_candidates,
             ),
-            patch("cuecard.reranker.rerank", mock_rerank),
+            patch("cuecard.retrieval.reranker.rerank", mock_rerank),
         ):
             result = run_pipeline(
                 "test query", sample_index, config, mode="rerank",
@@ -254,10 +254,10 @@ class TestMockReranker:
 
         with (
             patch(
-                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                "cuecard.retrieval.dense.DenseRetriever.retrieve",
                 return_value=fake_candidates,
             ),
-            patch("cuecard.reranker.rerank", mock_rerank),
+            patch("cuecard.retrieval.reranker.rerank", mock_rerank),
         ):
             result = run_pipeline(
                 "test query", sample_index, config, mode="rerank",
@@ -284,11 +284,11 @@ class TestMockLLMReranker:
 
         with (
             patch(
-                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                "cuecard.retrieval.dense.DenseRetriever.retrieve",
                 return_value=fake_candidates,
             ),
-            patch("cuecard.reranker.rerank", mock_rerank),
-            patch("cuecard.llm_reranker.rerank_llm", mock_llm_rerank),
+            patch("cuecard.retrieval.reranker.rerank", mock_rerank),
+            patch("cuecard.retrieval.llm_reranker.rerank_llm", mock_llm_rerank),
         ):
             result = run_pipeline(
                 "test query", sample_index, config, mode="rerank-llm-local",
@@ -317,11 +317,11 @@ class TestMockLLMReranker:
 
         with (
             patch(
-                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                "cuecard.retrieval.dense.DenseRetriever.retrieve",
                 return_value=fake_candidates,
             ),
-            patch("cuecard.reranker.rerank", mock_rerank),
-            patch("cuecard.llm_reranker.rerank_llm", mock_llm_rerank),
+            patch("cuecard.retrieval.reranker.rerank", mock_rerank),
+            patch("cuecard.retrieval.llm_reranker.rerank_llm", mock_llm_rerank),
         ):
             result = run_pipeline(
                 "test query", sample_index, config, mode="rerank-llm-haiku",
@@ -347,11 +347,11 @@ class TestRecallParams:
         )
         with (
             patch(
-                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                "cuecard.retrieval.dense.DenseRetriever.retrieve",
                 return_value=fake_candidates,
             ) as mock_ret,
             patch(
-                "cuecard.reranker.rerank",
+                "cuecard.retrieval.reranker.rerank",
                 side_effect=RuntimeError("stub"),
             ),
         ):
@@ -372,11 +372,11 @@ class TestRecallParams:
     ) -> None:
         with (
             patch(
-                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                "cuecard.retrieval.dense.DenseRetriever.retrieve",
                 return_value=fake_candidates,
             ) as mock_ret,
             patch(
-                "cuecard.reranker.rerank",
+                "cuecard.retrieval.reranker.rerank",
                 side_effect=RuntimeError("stub"),
             ),
         ):
@@ -399,7 +399,7 @@ class TestModeOverride:
     ) -> None:
         cfg = _ConfigWithRetrieval(retrieval=_FakeRetrieval(mode="rerank"))
         with patch(
-            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            "cuecard.retrieval.dense.DenseRetriever.retrieve",
             return_value=fake_candidates,
         ):
             result = run_pipeline(
@@ -453,11 +453,11 @@ class TestSparseRetrieverIntegration:
 
         with (
             patch(
-                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                "cuecard.retrieval.dense.DenseRetriever.retrieve",
                 return_value=dense_cands,
             ),
             patch(
-                "cuecard.retrievers.sparse.SparseRetriever.retrieve",
+                "cuecard.retrieval.sparse.SparseRetriever.retrieve",
                 return_value=sparse_cands,
             ),
         ):
@@ -513,7 +513,7 @@ class TestSparseRetrieverIntegration:
 
         dense_cands = _make_scored_candidates(2)
         with patch(
-            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            "cuecard.retrieval.dense.DenseRetriever.retrieve",
             return_value=dense_cands,
         ):
             result = run_pipeline(
@@ -557,11 +557,11 @@ class TestSparseRetrieverIntegration:
 
         with (
             patch(
-                "cuecard.retrievers.dense.DenseRetriever.retrieve",
+                "cuecard.retrieval.dense.DenseRetriever.retrieve",
                 return_value=fake_candidates,
             ),
             patch(
-                "cuecard.retrievers.sparse.SparseRetriever.retrieve",
+                "cuecard.retrieval.sparse.SparseRetriever.retrieve",
                 side_effect=RuntimeError("BM25 crashed"),
             ),
         ):

@@ -12,7 +12,7 @@ import pytest
 from typer.testing import CliRunner
 
 import cuecard.security as security_module
-from cuecard.cli import app
+from cuecard.cli.main import app
 from cuecard.models import (
     Index,
     Provenance,
@@ -100,7 +100,7 @@ def _setup_home(tmp_path: Path) -> Path:
 
 
 def _patch_home(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setattr("cuecard.cli._home_dir", lambda: tmp_path)
+    monkeypatch.setattr("cuecard.cli.main._home_dir", lambda: tmp_path)
 
 
 @pytest.fixture(autouse=True)
@@ -323,7 +323,7 @@ class TestStatus:
         (claude_dir / "settings.json").write_text(json.dumps(settings))
 
         idx = _make_sample_index()
-        with patch("cuecard.indexer.load_index", return_value=idx):
+        with patch("cuecard.indexing.indexer.load_index", return_value=idx):
             result = runner.invoke(app, ["status"])
 
         assert result.exit_code == 0
@@ -338,7 +338,7 @@ class TestStatus:
         monkeypatch.chdir(tmp_path)
 
         idx = _make_sample_index()
-        with patch("cuecard.indexer.load_index", return_value=idx):
+        with patch("cuecard.indexing.indexer.load_index", return_value=idx):
             result = runner.invoke(app, ["status"])
 
         assert result.exit_code == 0
@@ -351,7 +351,7 @@ class TestStatus:
         _setup_home(tmp_path)
         monkeypatch.chdir(tmp_path)
 
-        with patch("cuecard.indexer.load_index", return_value=None):
+        with patch("cuecard.indexing.indexer.load_index", return_value=None):
             result = runner.invoke(app, ["status"])
 
         assert result.exit_code == 0
@@ -366,7 +366,7 @@ class TestStatus:
         log_path = tmp_path / ".cuecard" / "log.jsonl"
         log_path.write_text('{"event":"test"}\n')
 
-        with patch("cuecard.indexer.load_index", return_value=None):
+        with patch("cuecard.indexing.indexer.load_index", return_value=None):
             result = runner.invoke(app, ["status"])
 
         assert result.exit_code == 0
@@ -380,7 +380,7 @@ class TestStatus:
         monkeypatch.chdir(tmp_path)
 
         idx = _make_sample_index()
-        with patch("cuecard.indexer.load_index", return_value=idx):
+        with patch("cuecard.indexing.indexer.load_index", return_value=idx):
             result = runner.invoke(app, ["status"])
 
         assert result.exit_code == 0
@@ -408,7 +408,7 @@ class TestStatus:
                 return idx
             return None
 
-        with patch("cuecard.indexer.load_index", side_effect=_load_by_path):
+        with patch("cuecard.indexing.indexer.load_index", side_effect=_load_by_path):
             result = runner.invoke(app, ["status"])
 
         assert result.exit_code == 0
@@ -431,7 +431,7 @@ class TestStatus:
         (project_dir / "rules.txt").write_text("Project rule\n")
 
         idx = _make_sample_index()
-        with patch("cuecard.indexer.load_index", return_value=idx):
+        with patch("cuecard.indexing.indexer.load_index", return_value=idx):
             result = runner.invoke(app, ["status"])
 
         assert result.exit_code == 0
@@ -600,7 +600,7 @@ class TestStatusDetailed:
         # Create index
         idx = _make_sample_index()
         with patch(
-            "cuecard.indexer.load_index", return_value=idx,
+            "cuecard.indexing.indexer.load_index", return_value=idx,
         ):
             result = runner.invoke(app, ["status"])
         assert result.exit_code == 0
@@ -743,18 +743,18 @@ class TestLogCmdDetailed:
 
 class TestClaudeSettingsHelpers:
     def test_load_missing(self, tmp_path: Path) -> None:
-        from cuecard.cli import _load_claude_settings
+        from cuecard.cli.hooks import _load_claude_settings
 
         path = tmp_path / "nonexistent.json"
         assert _load_claude_settings(path) == {}
 
     def test_has_hook_bad_hooks_type(self) -> None:
-        from cuecard.cli import _has_cuecard_hook
+        from cuecard.cli.hooks import _has_cuecard_hook
 
         assert _has_cuecard_hook({"hooks": "not_a_dict"}) is False
 
     def test_has_hook_bad_pretool_type(self) -> None:
-        from cuecard.cli import _has_cuecard_hook
+        from cuecard.cli.hooks import _has_cuecard_hook
 
         settings: dict[str, object] = {
             "hooks": {"PreToolUse": "not_a_list"},
@@ -763,7 +763,7 @@ class TestClaudeSettingsHelpers:
 
     def test_has_hook_nested_hooks_format(self) -> None:
         """Settings.json uses nested {matcher, hooks: [...]} format."""
-        from cuecard.cli import _has_cuecard_hook
+        from cuecard.cli.hooks import _has_cuecard_hook
 
         settings: dict[str, object] = {
             "hooks": {
@@ -780,12 +780,12 @@ class TestClaudeSettingsHelpers:
         assert _has_cuecard_hook(settings) is True
 
     def test_entry_has_cuecard_non_dict(self) -> None:
-        from cuecard.cli_hooks import _entry_has_cuecard
+        from cuecard.cli.hooks import _entry_has_cuecard
 
         assert _entry_has_cuecard("not a dict") is False
 
     def test_entry_has_cuecard_hooks_not_list(self) -> None:
-        from cuecard.cli_hooks import _entry_has_cuecard
+        from cuecard.cli.hooks import _entry_has_cuecard
 
         assert _entry_has_cuecard({"hooks": "not_a_list"}) is False
 
@@ -794,7 +794,7 @@ class TestClaudeSettingsHelpers:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        from cuecard.cli import _claude_settings_path
+        from cuecard.cli.hooks import _claude_settings_path
 
         _patch_home(monkeypatch, tmp_path)
         p = _claude_settings_path()

@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from fastembed import TextEmbedding
 
     from cuecard.models import AffinityIndex, Index, RankedResult, ResolvedConfig
-    from cuecard.retrievers import ScoredCandidate
+    from cuecard.retrieval.fusion import ScoredCandidate
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ def run_pipeline(
     event_mask_applied = False
     rules_masked = 0
     if affinity is not None and event:
-        from cuecard.affinity import build_event_mask
+        from cuecard.retrieval.affinity import build_event_mask
 
         event_mask = build_event_mask(
             index, affinity, event,
@@ -146,7 +146,7 @@ def _run_sparse(
     mask: npt.NDArray[np.bool_] | None,
 ) -> tuple[list[ScoredCandidate], float]:
     """Run sparse retrieval, returning results and latency in ms."""
-    from cuecard.retrievers.sparse import SparseRetriever
+    from cuecard.retrieval.sparse import SparseRetriever
 
     try:
         sparse = SparseRetriever()
@@ -203,8 +203,8 @@ def _run_retrieval_stage(
 ) -> tuple[list[RankedResult], StageTrace]:
     """Stage 1: multi-retriever + RRF fusion (always runs)."""
     from cuecard.models import RankedResult
-    from cuecard.retrievers import fuse
-    from cuecard.retrievers.dense import DenseRetriever
+    from cuecard.retrieval.dense import DenseRetriever
+    from cuecard.retrieval.fusion import fuse
 
     top_k, threshold = _retrieval_params(effective_mode, config)
     input_count = index.size
@@ -270,7 +270,7 @@ def _run_rerank_stage(
     t0 = time.monotonic()
 
     try:
-        from cuecard import reranker
+        from cuecard.retrieval import reranker
 
         results = reranker.rerank(candidates, query, config=config)
         latency_ms = (time.monotonic() - t0) * 1000.0
@@ -313,7 +313,7 @@ def _run_llm_stage(
     t0 = time.monotonic()
 
     try:
-        from cuecard import llm_reranker
+        from cuecard.retrieval import llm_reranker
 
         results = llm_reranker.rerank_llm(
             candidates,

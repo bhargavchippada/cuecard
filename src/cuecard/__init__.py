@@ -1,7 +1,6 @@
 """cuecard — The right rule, at the right moment."""
 
 from cuecard.config import load_config
-from cuecard.formatter import format_rules
 from cuecard.models import (
     ExpandProgress,
     Index,
@@ -13,7 +12,8 @@ from cuecard.models import (
     Rule,
     StageTrace,
 )
-from cuecard.retriever import retrieve
+from cuecard.retrieval.formatter import format_rules
+from cuecard.retrieval.retriever import retrieve
 
 __all__ = [
     "ExpandProgress",

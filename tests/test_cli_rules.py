@@ -9,7 +9,7 @@ import pytest
 from typer.testing import CliRunner
 
 import cuecard.security as security_module
-from cuecard.cli import app
+from cuecard.cli.main import app
 from cuecard.models import Provenance, Rule
 
 runner = CliRunner()
@@ -62,7 +62,7 @@ def _setup_home(tmp_path: Path) -> Path:
 
 
 def _patch_home(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setattr("cuecard.cli._home_dir", lambda: tmp_path)
+    monkeypatch.setattr("cuecard.cli.main._home_dir", lambda: tmp_path)
 
 
 @pytest.fixture(autouse=True)
@@ -263,7 +263,7 @@ class TestRulesRemove:
             text="MD rule",
             provenance=Provenance(file="/some/file.md", line_start=1, line_end=1),
         )
-        with patch("cuecard.parser.parse_rules", return_value=[md_rule]):
+        with patch("cuecard.indexing.parser.parse_rules", return_value=[md_rule]):
             result = runner.invoke(app, ["rules", "remove", "1"])
 
         assert result.exit_code == 1
@@ -285,7 +285,7 @@ class TestRulesRemove:
                 line_end=1,
             ),
         )
-        with patch("cuecard.parser.parse_rules", return_value=[outside_rule]):
+        with patch("cuecard.indexing.parser.parse_rules", return_value=[outside_rule]):
             result = runner.invoke(app, ["rules", "remove", "1"])
 
         assert result.exit_code == 1
@@ -307,7 +307,7 @@ class TestRulesRemove:
                 line_end=999,
             ),
         )
-        with patch("cuecard.parser.parse_rules", return_value=[bad_rule]):
+        with patch("cuecard.indexing.parser.parse_rules", return_value=[bad_rule]):
             result = runner.invoke(app, ["rules", "remove", "1"])
 
         assert result.exit_code == 1
@@ -444,7 +444,7 @@ class TestRulesExpand:
         monkeypatch.chdir(tmp_path)
 
         with patch(
-            "cuecard.expander.call_local",
+            "cuecard.indexing.expander.call_local",
             return_value='{"expansions": ["expansion A"]}',
         ):
             result = runner.invoke(
@@ -463,7 +463,7 @@ class TestRulesExpand:
         monkeypatch.chdir(tmp_path)
 
         with patch(
-            "cuecard.expander.call_local",
+            "cuecard.indexing.expander.call_local",
             side_effect=ValueError("bad backend"),
         ):
             result = runner.invoke(
@@ -482,7 +482,7 @@ class TestRulesExpand:
         monkeypatch.chdir(tmp_path)
 
         with patch(
-            "cuecard.parser.parse_rules", return_value=[],
+            "cuecard.indexing.parser.parse_rules", return_value=[],
         ):
             result = runner.invoke(
                 app,
@@ -499,7 +499,7 @@ class TestRulesExpand:
         monkeypatch.chdir(tmp_path)
 
         with patch(
-            "cuecard.expander.call_local",
+            "cuecard.indexing.expander.call_local",
             return_value='{"expansions": ["new exp"]}',
         ):
             result = runner.invoke(
@@ -516,7 +516,7 @@ class TestRulesExpand:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """_expand_with_progress shows skipped count for --missing-only."""
-        from cuecard.cli_rules import _expand_with_progress
+        from cuecard.cli.rules import _expand_with_progress
         from cuecard.models import Provenance, Rule
 
         rules = [
@@ -528,7 +528,7 @@ class TestRulesExpand:
         ]
 
         with patch(
-            "cuecard.expander.call_local",
+            "cuecard.indexing.expander.call_local",
             return_value='{"expansions": ["new"]}',
         ):
             result = _expand_with_progress(
@@ -543,23 +543,23 @@ class TestRulesExpand:
 
 class TestTruncateRule:
     def test_short_text_unchanged(self) -> None:
-        from cuecard.cli_rules import _truncate_rule
+        from cuecard.cli.rules import _truncate_rule
         assert _truncate_rule("short text") == "short text"
 
     def test_exact_length_unchanged(self) -> None:
-        from cuecard.cli_rules import _truncate_rule
+        from cuecard.cli.rules import _truncate_rule
         text = "a" * 60
         assert _truncate_rule(text) == text
 
     def test_long_text_truncated(self) -> None:
-        from cuecard.cli_rules import _truncate_rule
+        from cuecard.cli.rules import _truncate_rule
         text = "a" * 80
         result = _truncate_rule(text)
         assert len(result) == 60
         assert result.endswith("...")
 
     def test_custom_max_len(self) -> None:
-        from cuecard.cli_rules import _truncate_rule
+        from cuecard.cli.rules import _truncate_rule
         result = _truncate_rule("a" * 20, max_len=10)
         assert len(result) == 10
         assert result.endswith("...")

@@ -7,7 +7,6 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 
-from cuecard.affinity import build_event_mask, build_strict_affinity
 from cuecard.models import (
     AffinityIndex,
     Index,
@@ -19,9 +18,10 @@ from cuecard.models import (
     StageTrace,
     _hash_rule_text,
 )
-from cuecard.retrievers import ScoredCandidate
-from cuecard.retrievers.dense import DenseRetriever
-from cuecard.retrievers.sparse import SparseRetriever
+from cuecard.retrieval.affinity import build_event_mask, build_strict_affinity
+from cuecard.retrieval.dense import DenseRetriever
+from cuecard.retrieval.fusion import ScoredCandidate
+from cuecard.retrieval.sparse import SparseRetriever
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -465,10 +465,10 @@ class TestPipelineEventMask:
             ScoredCandidate(rule=rules[0], score=0.9, retriever="dense"),
         ]
 
-        from cuecard.pipeline import run_pipeline
+        from cuecard.retrieval.pipeline import run_pipeline
 
         with patch(
-            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            "cuecard.retrieval.dense.DenseRetriever.retrieve",
             return_value=candidates,
         ):
             result = run_pipeline(
@@ -493,10 +493,10 @@ class TestPipelineEventMask:
             ScoredCandidate(rule=rules[0], score=0.9, retriever="dense"),
         ]
 
-        from cuecard.pipeline import run_pipeline
+        from cuecard.retrieval.pipeline import run_pipeline
 
         with patch(
-            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            "cuecard.retrieval.dense.DenseRetriever.retrieve",
             return_value=candidates,
         ):
             result = run_pipeline(
@@ -520,10 +520,10 @@ class TestPipelineEventMask:
             ScoredCandidate(rule=rules[0], score=0.9, retriever="dense"),
         ]
 
-        from cuecard.pipeline import run_pipeline
+        from cuecard.retrieval.pipeline import run_pipeline
 
         with patch(
-            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            "cuecard.retrieval.dense.DenseRetriever.retrieve",
             return_value=candidates,
         ):
             result = run_pipeline(
@@ -542,10 +542,10 @@ class TestPipelineEventMask:
         index = _make_index(tuple(rules))
         config = self._make_config()
 
-        from cuecard.pipeline import run_pipeline
+        from cuecard.retrieval.pipeline import run_pipeline
 
         with patch(
-            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            "cuecard.retrieval.dense.DenseRetriever.retrieve",
             return_value=[],
         ) as mock_dense:
             run_pipeline(
@@ -576,10 +576,10 @@ class TestPipelineEventMask:
         index = _make_index(tuple(rules))
         config = self._make_config()
 
-        from cuecard.pipeline import run_pipeline
+        from cuecard.retrieval.pipeline import run_pipeline
 
         with patch(
-            "cuecard.retrievers.dense.DenseRetriever.retrieve",
+            "cuecard.retrieval.dense.DenseRetriever.retrieve",
             return_value=[],
         ) as mock_dense:
             result = run_pipeline(
@@ -606,7 +606,7 @@ class TestLoaderAffinityMerge:
     """Tests for _load_and_merge_affinity in loader.py."""
 
     def test_no_affinity_returns_none(self, tmp_path: Path) -> None:
-        from cuecard.loader import _load_and_merge_affinity
+        from cuecard.indexing.loader import _load_and_merge_affinity
 
         result = _load_and_merge_affinity(
             str(tmp_path / "global"), None,
@@ -614,28 +614,28 @@ class TestLoaderAffinityMerge:
         assert result is None
 
     def test_global_only(self, tmp_path: Path) -> None:
-        from cuecard.affinity import save_affinity
+        from cuecard.retrieval.affinity import save_affinity
 
         rule = _make_rule("test rule")
         aff = build_strict_affinity([rule])
         global_dir = str(tmp_path / "global")
         save_affinity(aff, global_dir)
 
-        from cuecard.loader import _load_and_merge_affinity
+        from cuecard.indexing.loader import _load_and_merge_affinity
 
         result = _load_and_merge_affinity(global_dir, None)
         assert result is not None
         assert result.get(rule) is not None
 
     def test_project_only(self, tmp_path: Path) -> None:
-        from cuecard.affinity import save_affinity
+        from cuecard.retrieval.affinity import save_affinity
 
         rule = _make_rule("project rule")
         aff = build_strict_affinity([rule])
         proj_dir = str(tmp_path / "project")
         save_affinity(aff, proj_dir)
 
-        from cuecard.loader import _load_and_merge_affinity
+        from cuecard.indexing.loader import _load_and_merge_affinity
 
         result = _load_and_merge_affinity(
             str(tmp_path / "nonexistent"), proj_dir,
@@ -644,7 +644,7 @@ class TestLoaderAffinityMerge:
         assert result.get(rule) is not None
 
     def test_project_wins_on_duplicate(self, tmp_path: Path) -> None:
-        from cuecard.affinity import save_affinity
+        from cuecard.retrieval.affinity import save_affinity
 
         rule = _make_rule("shared rule")
         text_hash = _hash_rule_text(rule.text)
@@ -675,7 +675,7 @@ class TestLoaderAffinityMerge:
         save_affinity(global_aff, global_dir)
         save_affinity(project_aff, proj_dir)
 
-        from cuecard.loader import _load_and_merge_affinity
+        from cuecard.indexing.loader import _load_and_merge_affinity
 
         result = _load_and_merge_affinity(global_dir, proj_dir)
         assert result is not None
@@ -711,10 +711,10 @@ class TestLoaderAffinityMerge:
             pipeline=PipelineConfig(),
         )
 
-        from cuecard.loader import load_or_build
+        from cuecard.indexing.loader import load_or_build
 
         with patch(
-            "cuecard.loader._load_or_rebuild_scope",
+            "cuecard.indexing.loader._load_or_rebuild_scope",
             return_value=index,
         ):
             result = load_or_build(cfg)

@@ -373,7 +373,7 @@ def load_config(
     )
 
     # Build PipelineConfig (project wins, then global, then default)
-    from cuecard.pipeline import VALID_MODES
+    from cuecard.retrieval.pipeline import VALID_MODES
 
     pipeline_mode = project_flat.get(
         "pipeline_mode",
@@ -398,12 +398,12 @@ def load_config(
 
     # Validate endpoint at config load time (H1 fix)
     if pipeline_mode in ("rerank-llm-local", "llm-local"):
-        from cuecard.llm_utils import validate_endpoint
+        from cuecard.retrieval.llm_utils import validate_endpoint
         validate_endpoint(pipeline_local_endpoint)
 
     # Validate haiku model at config load time (M2 fix)
     if pipeline_mode in ("rerank-llm-haiku", "llm-haiku"):
-        from cuecard.llm_utils import _ALLOWED_HAIKU_MODELS
+        from cuecard.retrieval.llm_utils import _ALLOWED_HAIKU_MODELS
         if pipeline_haiku_model not in _ALLOWED_HAIKU_MODELS:
             msg = (
                 f"Haiku model {pipeline_haiku_model!r} not in allowlist. "

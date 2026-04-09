@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from cuecard.formatter import format_rules, format_rules_verbose
 from cuecard.models import Provenance, RankedResult, Rule
+from cuecard.retrieval.formatter import format_rules, format_rules_verbose
 
 _BOUNDARY_LABEL = (
     "[cuecard \u2014 RULES you must follow for this action"

@@ -9,8 +9,8 @@ if TYPE_CHECKING:
 
 import typer
 
-import cuecard.cli as _cli
-from cuecard.cli import app, console, err_console
+import cuecard.cli.main as _cli
+from cuecard.cli.main import app, console, err_console
 
 # --- setup ---
 
@@ -117,9 +117,9 @@ def setup(
         home_dir=home, allow_custom_model=allow_custom_model,
     )
 
-    from cuecard.freshness import check_freshness
-    from cuecard.indexer import build_index, save_index
-    from cuecard.parser import parse_rules
+    from cuecard.indexing.freshness import check_freshness
+    from cuecard.indexing.indexer import build_index, save_index
+    from cuecard.indexing.parser import parse_rules
 
     total_rules = 0
     for _label, cache_dir, source_paths in _cli._iter_scoped_sources(config):

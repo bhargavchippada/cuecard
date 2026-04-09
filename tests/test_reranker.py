@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from cuecard.models import Provenance, RankedResult, Rule
-from cuecard.reranker import (
+from cuecard.retrieval.reranker import (
     ALLOWED_RERANKER_MODELS,
     DEFAULT_RERANKER_MODEL,
     _load_model,
@@ -189,7 +189,7 @@ class TestRerankModelLoading:
         candidates = _make_candidates(2)
         mock_model = _make_mock_model([0.5, 0.3])
 
-        with patch("cuecard.reranker._load_model") as load_mock:
+        with patch("cuecard.retrieval.reranker._load_model") as load_mock:
             rerank(candidates, "test query", model=mock_model)
             load_mock.assert_not_called()
 
@@ -199,7 +199,7 @@ class TestRerankModelLoading:
         mock_model = _make_mock_model([0.5, 0.3])
 
         with patch(
-            "cuecard.reranker._load_model", return_value=mock_model,
+            "cuecard.retrieval.reranker._load_model", return_value=mock_model,
         ) as load_mock:
             result = rerank(candidates, "test query")
             load_mock.assert_called_once_with(DEFAULT_RERANKER_MODEL)
@@ -228,7 +228,7 @@ class TestLoadModel:
         """_load_model imports and instantiates TextCrossEncoder."""
         mock_cls = MagicMock()
         with patch(
-            "cuecard.reranker.TextCrossEncoder", mock_cls, create=True,
+            "cuecard.retrieval.reranker.TextCrossEncoder", mock_cls, create=True,
         ):
             # Patch the import inside _load_model
             import types as _types

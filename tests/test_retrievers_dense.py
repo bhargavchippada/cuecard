@@ -8,8 +8,8 @@ import numpy as np
 import pytest
 
 from cuecard.models import Index, Provenance, Rule, SourceMeta
-from cuecard.retrievers import ScoredCandidate
-from cuecard.retrievers.dense import DenseRetriever
+from cuecard.retrieval.dense import DenseRetriever
+from cuecard.retrieval.fusion import ScoredCandidate
 
 
 def _make_rules(count: int) -> tuple[Rule, ...]:
