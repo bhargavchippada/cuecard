@@ -22,39 +22,44 @@ cuecard/
 │   └── session-25-progress.md         # Current session state
 ├── src/cuecard/            # Core library (agent-agnostic)
 │   ├── __init__.py         # Public API: load_config, retrieve, format_rules
-│   ├── loader.py           # Unified index loading with freshness + scope composition
 │   ├── models.py           # Frozen dataclasses, safety caps, ResolvedConfig (single source of truth)
 │   ├── config.py           # Load/merge/validate cuecard.toml configs
 │   ├── security.py         # Path validation, secrets scrubbing, permissions
-│   ├── affinity.py         # Event/tool affinity inference, storage, event mask
-│   ├── parser.py           # Parse rule files → list[Rule] (dispatch by .txt/.json/.toml)
-│   ├── indexer.py          # Embed rules via fastembed, build index, rules.json I/O
-│   ├── freshness.py        # mtime + hash checking, full rebuild on change
-│   ├── retriever.py        # query_embed → parent collapse → top-k → dedup
-│   ├── formatter.py        # Format results for injection
-│   ├── pipeline.py         # Multi-stage pipeline orchestrator (dense + sparse + LLM)
-│   ├── reranker.py         # Cross-encoder re-ranking (Stage 2, opt-in)
-│   ├── llm_reranker.py     # LLM re-ranking (Stage 3, opt-in)
-│   ├── llm_utils.py        # Shared LLM helpers (validate_endpoint, call_local/haiku)
-│   ├── expander.py         # LLM-based rule expansion generation
-│   ├── eval.py             # Evaluation harness (load fixtures, run_eval, dataclasses)
-│   ├── eval_metrics.py     # IR metrics (precision, recall, MRR, nDCG, noise, quality)
-│   ├── eval_report.py      # Tier summaries, per-event metrics, report formatting
 │   ├── logger.py           # Structured JSONL logging with secrets scrubbing
-│   ├── cli.py              # Typer CLI (config, retrieve, index, serve, migrate, etc.)
-│   ├── cli_setup.py        # Interactive setup + configure commands
-│   ├── cli_rules.py        # Rules subcommands (add, remove, search, expand)
-│   ├── cli_hooks.py        # Install/uninstall/status/log commands
-│   ├── cli_eval.py         # Eval command
 │   ├── serve.py            # Persistent daemon server (HTTP, PID management)
+│   ├── _entry.py           # Fast CLI entry point (hook fast-path, then Typer)
+│   ├── _math.py            # L2 normalization helper
 │   ├── py.typed            # PEP 561 marker
-│   ├── retrievers/         # Pluggable retriever adapters
-│   │   ├── __init__.py     # Retriever protocol, ScoredCandidate, fuse()
+│   ├── indexing/           # Parsing, embedding, expansion, freshness, loading
+│   │   ├── parser.py       # Parse rule files → list[Rule] (.txt/.json/.toml)
+│   │   ├── indexer.py      # Embed rules via fastembed, build index, rules.json I/O
+│   │   ├── freshness.py    # mtime + hash checking, full rebuild on change
+│   │   ├── loader.py       # Unified index loading with freshness + scope composition
+│   │   └── expander.py     # LLM-based rule expansion generation
+│   ├── retrieval/          # Pipeline, retrievers, rerankers, affinity, formatting
+│   │   ├── pipeline.py     # Multi-stage pipeline orchestrator (dense + sparse + LLM)
+│   │   ├── retriever.py    # query_embed → parent collapse → top-k → dedup
 │   │   ├── dense.py        # DenseRetriever (cosine + parent collapse)
-│   │   └── sparse.py       # SparseRetriever (BM25Okapi + parent collapse)
+│   │   ├── sparse.py       # SparseRetriever (BM25Okapi + parent collapse)
+│   │   ├── fusion.py       # Retriever protocol, ScoredCandidate, RRF fuse()
+│   │   ├── reranker.py     # Cross-encoder re-ranking (Stage 2, opt-in)
+│   │   ├── llm_reranker.py # LLM re-ranking (Stage 3, opt-in)
+│   │   ├── llm_utils.py    # Shared LLM helpers (validate_endpoint, call_local/haiku)
+│   │   ├── affinity.py     # Event/tool affinity inference, storage, event mask
+│   │   └── formatter.py    # Format results for injection
+│   ├── eval/               # Evaluation harness, metrics, reporting
+│   │   ├── harness.py      # load_fixtures, run_eval, dataclasses
+│   │   ├── metrics.py      # IR metrics (precision, recall, MRR, nDCG, noise, quality)
+│   │   └── report.py       # Tier summaries, per-event metrics, report formatting
+│   ├── cli/                # Typer CLI commands
+│   │   ├── main.py         # Core commands (config, retrieve, index, serve, migrate)
+│   │   ├── setup.py        # Interactive setup + configure commands
+│   │   ├── rules.py        # Rules subcommands (add, remove, search, expand)
+│   │   ├── hooks.py        # Install/uninstall/status/log commands
+│   │   └── eval_cmd.py     # Eval command
 │   └── adapters/           # Agent-specific wrappers
 │       ├── __init__.py
-│       └── claude_code.py  # Claude Code PreToolUse hook
+│       └── claude_code.py  # Claude Code hook adapter (all 5 events)
 ├── tools/
 │   ├── bench_e2e.py        # E2E benchmark (default — model generates own expansions + reranks)
 │   └── notebook.ipynb      # 35-cell debugging tool (per-stage viz, loss analysis, prompts, batch eval)
@@ -65,26 +70,16 @@ cuecard/
 ├── examples/
 │   ├── cuecard.toml        # Example config
 │   └── rules.txt           # Example rules
-├── tests/
-│   ├── conftest.py
-│   ├── test_models.py
-│   ├── test_config.py
-│   ├── test_security.py
-│   ├── test_parser.py
-│   ├── test_indexer.py
-│   ├── test_freshness.py
-│   ├── test_retriever.py
-│   ├── test_formatter.py
-│   ├── test_pipeline.py
-│   ├── test_reranker.py
-│   ├── test_llm_reranker.py
-│   ├── test_llm_utils.py
-│   ├── test_expander.py
-│   ├── test_fusion.py
-│   ├── test_retrievers_dense.py
-│   ├── test_retrievers_sparse.py
-│   ├── test_eval.py
-│   └── test_cli.py
+├── tests/                  # Mirrors src/ structure
+│   ├── conftest.py         # Shared fixtures + network guard + 1s timeout
+│   ├── test_models.py, test_config.py, test_security.py, test_logger.py, test_math.py, test_e2e.py
+│   ├── indexing/           # 9 files: parser, indexer (3), freshness, loader, expander (3)
+│   ├── retrieval/          # 15 files: pipeline (2), retriever, dense, sparse, fusion,
+│   │                       #   reranker, llm_reranker (4), llm_utils, affinity, event_mask, formatter
+│   ├── eval/               # 3 files: metrics, per_event, pipeline
+│   ├── cli/                # 8 files: config, eval, hooks, index, migrate, retrieve, rules, setup
+│   ├── adapters/           # 1 file: adapter
+│   └── serve/              # 6 files: cli, client, handler, http, lifecycle, pid
 ├── pyproject.toml
 └── LICENSE
 ```
@@ -105,9 +100,9 @@ cuecard/
 
 ```bash
 uv sync                                        # Install dependencies
-uv run pytest                                  # Run tests (fast, mocked)
-uv run pytest --cov=cuecard --cov-fail-under=100  # With 100% coverage
+uv run pytest                                  # Run tests (fast, ~4.3s, no real endpoints)
 uv run pytest -m slow                          # Run integration tests (real model)
+uv run pytest -m '' --cov=cuecard --cov-fail-under=100  # Coverage (all tests incl. slow)
 uv run ruff check src/ tests/                  # Lint
 uv run mypy src/                               # Type check
 
@@ -129,7 +124,7 @@ mutmut verifies that tests actually detect code changes (mutations). 100% line c
 - The `results` command only shows surviving mutants (killed ones are omitted)
 - Use `mutmut show <name>` to see what mutation survived and decide if a test is needed
 - Config is in `[tool.mutmut]` in `pyproject.toml`
-- Note: `tests/test_cli.py::TestAdapterMainGuard::test_main_guard` is deselected from mutmut runs due to subprocess JSON parsing flakiness under fork
+- Note: `tests/cli/test_cli_hooks.py::TestAdapterMainGuard::test_main_guard` is deselected from mutmut runs due to subprocess JSON parsing flakiness under fork
 
 ## Conventions
 
@@ -140,17 +135,21 @@ mutmut verifies that tests actually detect code changes (mutations). 100% line c
 - All configurable values in `ResolvedConfig` (models.py) — single source of truth for defaults + validation metadata. `config.py` derives validators and defaults from field metadata. Adding a new config field: add to ResolvedConfig with default + metadata, add TOML key extraction in `_extract_flat()`
 
 ### Testing
-- 100% coverage required
+- 100% coverage required (run with `-m ''` to include slow tests)
 - Unit tests: mock fastembed (return deterministic vectors)
-- Integration tests: `@pytest.mark.slow`, use real BGE-small model
+- Integration tests: `@pytest.mark.slow`, use real BGE-small model, excluded by default via `addopts`
 - `tmp_path` for all file system tests — never touch real `~/.cuecard/`
+- **Network guard**: autouse conftest fixture blocks `socket.create_connection` and `socket.getaddrinfo` for non-localhost hosts — tests that need external DNS must mock at `cuecard.*.socket.getaddrinfo`
+- **1s timeout**: pytest-timeout enforces 1s per test (thread method). Slow tests are exempt via marker exclusion
+- Tests mirror src/ structure: `tests/indexing/`, `tests/retrieval/`, `tests/eval/`, `tests/cli/`, `tests/adapters/`, `tests/serve/`
+- **Monkeypatch rule**: always patch the *defining* module, not re-exports (e.g., `cuecard.cli.main._home_dir`, not `cuecard.cli._home_dir`)
 
 ### Architecture
 - Core library is agent-agnostic — no Claude Code imports in core modules
 - Adapters are thin wrappers in `src/cuecard/adapters/`
 - Multi-stage pipeline: multi-retriever (dense + sparse) → cross-encoder (opt-in) → LLM (opt-in)
 - pipeline.py orchestrates all stages; ALL retrieval paths (CLI, adapter, eval) route through `run_pipeline()` — even `embedding` mode uses the full dense+sparse+RRF stage
-- Retriever adapter pattern: `Retriever` protocol in `retrievers/__init__.py`, pluggable dense/sparse/future
+- Retriever adapter pattern: `Retriever` protocol in `retrieval/fusion.py`, pluggable dense/sparse/future
 - RRF (Reciprocal Rank Fusion) merges results from multiple retrievers
 - Parent-child collapse: rules have expansions (paraphrases), each embedded separately, max-score collapse via `rule_map`
 - JSON intermediate: `rules.json` is the canonical format. Parser→JSON→Indexer. Expansions survive rebuilds via merge. Both `cuecard index` and `load_or_build()` use the same merge lifecycle.
