@@ -550,6 +550,44 @@ LLM-generated expansions (v2 prompt): 8/12 threshold crossings, avg delta +0.276
 
 **Fixture realism (session 25):** 831→984 fixtures. Stop fixtures use realistic `"Stop: end_turn"`. PostToolUse: 3 compliance-as-violation fixes. SubagentStart: trimmed over-specification. All events rebalanced to 46-53% positive. +41 mined Stop fixtures in Phase 6 format.
 
+## Benchmarking Guidelines
+
+**CRITICAL: Follow these rules for correct, comparable benchmarks.**
+
+### Running E2E Benchmarks
+```bash
+# Standard benchmark (20% sample, reuses cached expansions)
+uv run python tools/bench_e2e.py \
+  --model-path ~/models/gemma-4-E4B-it-Q8_0.gguf \
+  --label gemma-e4b --no-server --sample-ratio 0.20 --seed 42
+
+# Fresh benchmark (regenerates expansions — slow, ~15 min)
+uv run python tools/bench_e2e.py \
+  --model-path ~/models/gemma-4-E4B-it-Q8_0.gguf \
+  --label gemma-e4b-fresh --no-server --force-expand --sample-ratio 0.20 --seed 42
+```
+
+### Rules for Valid Benchmarks
+1. **Each model generates its own expansions.** Never share corpora between models — shared-corpus comparisons unfairly bias toward the expansion-generator. Use `--force-expand` with a unique `--label` per model.
+2. **Always use inferred affinity, never ground truth.** The benchmark infers affinity via LLM at runtime. Ground truth labels (`rules_global_tagged.json`) are for accuracy measurement only — using them for event masking is data leakage.
+3. **Use `--no-server` with an existing llama-server.** The benchmark doesn't start/stop servers. Start `llama-server` manually first (see LLM Reranker Setup above).
+4. **Same seed for comparison.** Always `--seed 42` when comparing models/configs. Different seeds produce different fixture samples.
+5. **`--sample-ratio 0.20` for iteration, `1.0` for final numbers.** 20% is fast (~3 min) but n=87 for PreToolUse. Full dataset for publication-grade numbers.
+6. **Pipeline stages run in order:** embedding (dense+sparse+RRF) → LLM reranker → affinity mask. To isolate stages, run with `mode="embedding"` (stage 1 only) vs `mode="llm-local"` (all stages).
+7. **Results saved to** `eval/results/{label}-e2e-seed{seed}.json`
+
+### Latest Baseline (session 29, Gemma E4B, inferred affinity, 20% sample, seed=42)
+
+| Event | F2 | PosRecall | Noise | NegSil |
+|-------|------|-----------|-------|--------|
+| PreToolUse | 0.547 | 0.624 | 0.492 | 0.523 |
+| UserPromptSubmit | 0.616 | 0.616 | 0.396 | 0.652 |
+| PostToolUse | 0.577 | 0.808 | 0.532 | 0.462 |
+| Stop | 0.425 | 0.333 | 0.619 | 0.571 |
+| SubagentStart | 0.362 | 0.643 | 0.727 | 0.263 |
+
+Affinity accuracy: 90.7% (97/107 vs ground truth)
+
 ## When in Doubt
 
 1. Read the PRD — `artifacts/prd-v1.md` is the source of truth
