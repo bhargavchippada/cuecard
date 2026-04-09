@@ -70,10 +70,26 @@
 - `eval/fixtures/subagent_start.json` — 170 fixtures, trimmed to 1 rule/pos
 - `eval/results/gemma-e4b-e2e-seed42.json` — benchmark results
 
+### 8. Reranker Prompt Rewrite + top_k Tuning
+- Diagnosed reranker drops: 6/30 correct rules dropped from candidates
+- Root cause: hardcoded "exclude process rules for tool calls" + top_k=5 crowding
+- Rewrote prompt: 6 reasoning principles, "When in doubt include", 11 examples (was 16)
+- Changed top_k default from 5 → 7
+- Recall diagnostic confirmed: embedding quality is bottleneck, not reranker (top_k=30 only +0.8%)
+- But reranker WAS also dropping 26% of correct candidates — now fixed
+
+### 9. Final Benchmark (new prompt + top_k=7 + Phase 6 Stop + all fixes)
+
+| Event | S24 F2 | Final F2 | Δ | PosRecall | NegSil |
+|-------|--------|----------|---|-----------|--------|
+| PreToolUse | 0.566 | 0.570 | +0.4 | 0.570 | 0.614 |
+| UserPromptSubmit | 0.618 | 0.677 | +5.9 | 0.745 | 0.696 |
+| PostToolUse | 0.528 | 0.623 | +9.5 | 0.885 | 0.462 |
+| Stop | 0.426 | 0.486 | +6.0 | 0.542 | 0.500 |
+| SubagentStart | 0.248 | 0.432 | +18.4 | 0.786 | 0.316 |
+
 ## Remaining Work
-1. **Stop Phase 6 fixtures** — agent is rewriting all 135 to rich query format (in progress)
-2. **Re-benchmark after stop fixture rewrite** — should show Stop improvement
-3. **Affinity in rules.json** — architectural refactor (sidecar → inline), noted but not started
-4. **Expansion quality improvement** — recall diagnostic shows embedding is bottleneck
-5. **Phase 6 implementation** — completion gate Stop hook (PRD converged)
-6. **Commit** — all changes uncommitted
+1. **Affinity in rules.json** — architectural refactor (sidecar → inline), noted but not started
+2. **Expansion quality improvement** — recall diagnostic shows embedding quality is the remaining bottleneck
+3. **Phase 6 implementation** — completion gate Stop hook (PRD converged)
+4. **LLM affinity prompt** — 93.5% accuracy but could be used in production instead of ground truth
