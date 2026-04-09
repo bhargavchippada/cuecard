@@ -216,6 +216,7 @@ class TestRerankConfig:
         candidates = _make_candidates(2)
         mock_model = _make_mock_model([0.5, 0.3])
         mock_config = MagicMock()
+        mock_config.reranker_model = "Xenova/ms-marco-MiniLM-L-6-v2"
 
         result = rerank(
             candidates, "test query", model=mock_model, config=mock_config,

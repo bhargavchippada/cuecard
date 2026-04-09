@@ -302,11 +302,19 @@ fusion_k = 10              # RRF parameter (was 60, full-sample sweep → 10)
 sparse_enabled = true       # Enable BM25 retriever
 llm_candidates = 12         # Rules sent to LLM reranker
 llm_recall_threshold = 0.25 # Embedding threshold for LLM modes (wider recall)
+reranker_model = "Xenova/ms-marco-MiniLM-L-6-v2"  # Cross-encoder model
+
+[serve]
+port = 8452                 # Daemon port
 
 [expansion]
 max_per_rule = 5            # Max expansions per rule (default 5, cap 10)
 max_length = 500            # Max chars per expansion (= MAX_RULE_LENGTH)
 dedup_threshold = 0.80      # Cosine similarity for semantic dedup
+
+[pipeline.llm]
+max_tokens = 1024           # Max tokens for LLM response
+timeout = 60.0              # HTTP timeout for LLM calls (seconds)
 ```
 
 ## Implementation Status

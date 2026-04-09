@@ -10,7 +10,15 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from cuecard.models import KNOWN_HOOK_EVENTS, PipelineConfig, ResolvedConfig
+from cuecard.models import (
+    DEFAULT_HAIKU_MODEL,
+    DEFAULT_LLM_ENDPOINT,
+    KNOWN_HOOK_EVENTS,
+    LLM_MAX_TOKENS,
+    LLM_TIMEOUT,
+    PipelineConfig,
+    ResolvedConfig,
+)
 from cuecard.security import ConfigError, validate_source_path
 
 logger = logging.getLogger(__name__)
@@ -135,6 +143,7 @@ def _extract_flat(raw: dict[str, Any]) -> dict[str, Any]:
         "top_k", "threshold", "dedup_threshold",
         "fusion_k", "llm_candidates", "sparse_enabled",
         "affinity_mode", "llm_recall_threshold",
+        "reranker_model",
     ):
         if key in retrieval:
             flat[key] = retrieval[key]
@@ -160,6 +169,10 @@ def _extract_flat(raw: dict[str, Any]) -> dict[str, Any]:
     if "allowed_dirs" in sources:
         flat["allowed_dirs"] = sources["allowed_dirs"]
 
+    serve = raw.get("serve", {})
+    if "port" in serve:
+        flat["serve_port"] = serve["port"]
+
     expansion = raw.get("expansion", {})
     for key in ("max_per_rule", "max_length", "dedup_threshold"):
         if key in expansion:
@@ -177,6 +190,10 @@ def _extract_flat(raw: dict[str, Any]) -> dict[str, Any]:
                 flat["pipeline_haiku_model"] = llm_section["haiku_model"]
             if "thinking" in llm_section:
                 flat["pipeline_thinking"] = llm_section["thinking"]
+            if "max_tokens" in llm_section:
+                flat["pipeline_llm_max_tokens"] = llm_section["max_tokens"]
+            if "timeout" in llm_section:
+                flat["pipeline_llm_timeout"] = llm_section["timeout"]
 
     return flat
 
@@ -385,15 +402,23 @@ def load_config(
 
     pipeline_local_endpoint = project_flat.get(
         "pipeline_local_endpoint",
-        global_flat.get("pipeline_local_endpoint", "http://localhost:8081/v1"),
+        global_flat.get("pipeline_local_endpoint", DEFAULT_LLM_ENDPOINT),
     )
     pipeline_haiku_model = project_flat.get(
         "pipeline_haiku_model",
-        global_flat.get("pipeline_haiku_model", "claude-haiku-4-5"),
+        global_flat.get("pipeline_haiku_model", DEFAULT_HAIKU_MODEL),
     )
     pipeline_thinking = project_flat.get(
         "pipeline_thinking",
         global_flat.get("pipeline_thinking", False),
+    )
+    pipeline_llm_max_tokens = project_flat.get(
+        "pipeline_llm_max_tokens",
+        global_flat.get("pipeline_llm_max_tokens", LLM_MAX_TOKENS),
+    )
+    pipeline_llm_timeout = project_flat.get(
+        "pipeline_llm_timeout",
+        global_flat.get("pipeline_llm_timeout", LLM_TIMEOUT),
     )
 
     # Validate endpoint at config load time (H1 fix)
@@ -422,6 +447,8 @@ def load_config(
         local_endpoint=pipeline_local_endpoint,
         haiku_model=pipeline_haiku_model,
         thinking=pipeline_thinking,
+        llm_max_tokens=pipeline_llm_max_tokens,
+        llm_timeout=pipeline_llm_timeout,
     )
 
     return ResolvedConfig(

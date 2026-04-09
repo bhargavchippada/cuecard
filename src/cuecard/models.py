@@ -167,9 +167,11 @@ class PipelineConfig:
     """Pipeline mode and LLM settings."""
 
     mode: str = "embedding"
-    local_endpoint: str = "http://localhost:8081/v1"
-    haiku_model: str = "claude-haiku-4-5"
+    local_endpoint: str = DEFAULT_LLM_ENDPOINT
+    haiku_model: str = DEFAULT_HAIKU_MODEL
     thinking: bool = False
+    llm_max_tokens: int = LLM_MAX_TOKENS
+    llm_timeout: float = LLM_TIMEOUT
 
 
 @dataclass(frozen=True)
@@ -207,6 +209,10 @@ class ResolvedConfig:
     fusion_k: int = field(default=10, metadata={"min": 1, "max": 1000})
     llm_candidates: int = field(default=12, metadata={"min": 1, "max": 100})
     sparse_enabled: bool = True
+    reranker_model: str = DEFAULT_RERANKER_MODEL
+    serve_port: int = field(
+        default=DEFAULT_SERVE_PORT, metadata={"min": 1, "max": 65535},
+    )
     expansion_max_per_rule: int = field(
         default=5, metadata={"min": 1, "max": 100},
     )

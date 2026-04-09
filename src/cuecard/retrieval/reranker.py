@@ -51,6 +51,9 @@ def rerank(
     if not candidates:
         return []
 
+    if config is not None:
+        model_name = config.reranker_model
+
     if model_name not in ALLOWED_RERANKER_MODELS:
         msg = (
             f"Model {model_name!r} not in allowlist. "

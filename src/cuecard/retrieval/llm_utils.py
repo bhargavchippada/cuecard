@@ -63,6 +63,7 @@ def call_local(
     thinking: bool,
     *,
     max_tokens: int = LLM_MAX_TOKENS,
+    timeout: float = _TIMEOUT,
     temperature: float = 0.0,
     stop: tuple[str, ...] | None = ("\n\n",),
 ) -> str:
@@ -84,7 +85,7 @@ def call_local(
     response = httpx.post(
         f"{endpoint.rstrip('/')}/chat/completions",
         json=body,
-        timeout=_TIMEOUT,
+        timeout=timeout,
     )
     response.raise_for_status()
     data: dict[str, object] = response.json()
