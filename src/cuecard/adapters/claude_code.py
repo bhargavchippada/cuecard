@@ -27,11 +27,8 @@ from cuecard.config import load_config
 from cuecard.formatter import format_rules
 from cuecard.loader import load_or_build
 from cuecard.logger import log_retrieval
-from cuecard.models import KNOWN_HOOK_EVENTS
+from cuecard.models import KNOWN_HOOK_EVENTS, MAX_REQUEST_BYTES, MAX_TOOL_NAME_LENGTH
 from cuecard.security import scrub_secrets
-
-_MAX_STDIN = 1_000_000  # 1 MB guard
-_MAX_TOOL_NAME = 200
 
 _AGENT_TYPE_RE = re.compile(r"[^a-zA-Z0-9_-]")
 
@@ -83,7 +80,7 @@ def _format_tool_input(tool_input: object) -> str:
 def _handle_pre_tool_use(data: dict[str, object]) -> tuple[str, str, str]:
     """Extract query for PreToolUse events."""
     tool_name = _sanitize_field(
-        str(data.get("tool_name", "")), _MAX_TOOL_NAME,
+        str(data.get("tool_name", "")), MAX_TOOL_NAME_LENGTH,
     )
     tool_input = _format_tool_input(data.get("tool_input", ""))
     query = f"{tool_name}: {tool_input}"
@@ -97,7 +94,7 @@ def _handle_post_tool_use(data: dict[str, object]) -> tuple[str, str, str]:
     then scrub_secrets() on full string BEFORE truncation to 500.
     """
     tool_name = _sanitize_field(
-        str(data.get("tool_name", "")), _MAX_TOOL_NAME,
+        str(data.get("tool_name", "")), MAX_TOOL_NAME_LENGTH,
     )
     tool_input = _format_tool_input(data.get("tool_input", ""))[:200]
     raw_output = data.get("tool_output", "")
@@ -248,7 +245,7 @@ def main() -> None:
     output: dict[str, object] = {}
 
     try:
-        raw = sys.stdin.read(_MAX_STDIN)
+        raw = sys.stdin.read(MAX_REQUEST_BYTES)
         output = json.loads(raw)
 
         # Fast path: try daemon first

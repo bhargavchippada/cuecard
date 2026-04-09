@@ -17,6 +17,8 @@ MAX_RULE_LENGTH = 500
 MAX_EXPANSION_LENGTH = MAX_RULE_LENGTH
 MAX_EXPANSIONS_PER_RULE = 10
 MAX_RULES_PER_FILE = 500
+MAX_REQUEST_BYTES = 1_000_000
+MAX_TOOL_NAME_LENGTH = 200
 
 KNOWN_HOOK_EVENTS: frozenset[str] = frozenset({
     "PreToolUse", "PostToolUse", "UserPromptSubmit", "SubagentStart", "Stop",

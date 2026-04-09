@@ -20,13 +20,14 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from cuecard.models import MAX_REQUEST_BYTES
+
 if TYPE_CHECKING:
     from cuecard.models import AffinityIndex, Index, ResolvedConfig
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_PORT = 8452
-_MAX_REQUEST_BYTES = 1_000_000  # 1 MB guard
 _PID_FILE = "serve.pid"
 _LOG_FILE = "serve.log"
 
@@ -142,7 +143,7 @@ class _Handler(BaseHTTPRequestHandler):
             self._send_error(400, "Invalid Content-Length")
             return
 
-        if content_length > _MAX_REQUEST_BYTES:
+        if content_length > MAX_REQUEST_BYTES:
             self._send_error(413, "Request too large")
             return
 
