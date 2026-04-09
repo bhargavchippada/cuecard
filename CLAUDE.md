@@ -23,7 +23,7 @@ cuecard/
 ├── src/cuecard/            # Core library (agent-agnostic)
 │   ├── __init__.py         # Public API: load_config, retrieve, format_rules
 │   ├── loader.py           # Unified index loading with freshness + scope composition
-│   ├── models.py           # Frozen dataclasses (Rule, Provenance, Index, etc.)
+│   ├── models.py           # Frozen dataclasses, safety caps, ResolvedConfig (single source of truth)
 │   ├── config.py           # Load/merge/validate cuecard.toml configs
 │   ├── security.py         # Path validation, secrets scrubbing, permissions
 │   ├── affinity.py         # Event/tool affinity inference, storage, event mask
@@ -37,9 +37,12 @@ cuecard/
 │   ├── llm_reranker.py     # LLM re-ranking (Stage 3, opt-in)
 │   ├── llm_utils.py        # Shared LLM helpers (validate_endpoint, call_local/haiku)
 │   ├── expander.py         # LLM-based rule expansion generation
-│   ├── eval.py             # Evaluation framework (precision, recall, MRR, nDCG)
+│   ├── eval.py             # Evaluation harness (load fixtures, run_eval, dataclasses)
+│   ├── eval_metrics.py     # IR metrics (precision, recall, MRR, nDCG, noise, quality)
+│   ├── eval_report.py      # Tier summaries, per-event metrics, report formatting
 │   ├── logger.py           # Structured JSONL logging with secrets scrubbing
-│   ├── cli.py              # Typer CLI (setup, config, configure, retrieve, rules, eval, serve, etc.)
+│   ├── cli.py              # Typer CLI (config, retrieve, index, serve, migrate, etc.)
+│   ├── cli_setup.py        # Interactive setup + configure commands
 │   ├── cli_rules.py        # Rules subcommands (add, remove, search, expand)
 │   ├── cli_hooks.py        # Install/uninstall/status/log commands
 │   ├── cli_eval.py         # Eval command
@@ -54,7 +57,7 @@ cuecard/
 │       └── claude_code.py  # Claude Code PreToolUse hook
 ├── tools/
 │   ├── bench_e2e.py        # E2E benchmark (default — model generates own expansions + reranks)
-│   └── notebook.ipynb      # Step-by-step visualization (Phase 3)
+│   └── notebook.ipynb      # 35-cell debugging tool (per-stage viz, loss analysis, prompts, batch eval)
 ├── eval/                   # Evaluation framework (Phase 3)
 │   ├── corpora/
 │   ├── fixtures/
@@ -134,7 +137,7 @@ mutmut verifies that tests actually detect code changes (mutations). 100% line c
 - Immutable data — frozen dataclasses everywhere, never mutate
 - Small files (<400 lines), small functions (<50 lines)
 - Type hints everywhere, no `Any` types
-- All configurable values in `config.py` with validation
+- All configurable values in `ResolvedConfig` (models.py) — single source of truth for defaults + validation metadata. `config.py` derives validators and defaults from field metadata. Adding a new config field: add to ResolvedConfig with default + metadata, add TOML key extraction in `_extract_flat()`
 
 ### Testing
 - 100% coverage required
@@ -194,11 +197,12 @@ mutmut verifies that tests actually detect code changes (mutations). 100% line c
 - `run_eval()` accepts optional `affinity` parameter and passes `event` + `affinity` to `run_pipeline()`
 
 ### Expansion Design
-- Rules can have 0-10 expansions (paraphrases, trigger phrases, code patterns)
+- Rules can have 0-5 expansions by default (paraphrases, trigger phrases, code patterns)
 - Generated via `cuecard rules expand` using local LLM or Haiku
 - Stored in `rules.json` intermediate format, preserved across index rebuilds
 - Each expansion is embedded separately; max-score collapse selects the best match
-- Constants: `MAX_EXPANSION_LENGTH=200`, `MAX_EXPANSIONS_PER_RULE=10` (in models.py)
+- Safety caps in models.py: `MAX_EXPANSION_LENGTH=MAX_RULE_LENGTH` (500), `MAX_EXPANSIONS_PER_RULE=10`, `MAX_RULES_PER_FILE=500`, `MAX_REQUEST_BYTES=1M`, `MAX_TOOL_NAME_LENGTH=200`
+- Operational defaults in ResolvedConfig: `expansion_max_per_rule=5`, `expansion_max_length=500`, `expansion_dedup_threshold=0.80`
 - BM25 sparse retrieval uses expansion texts for keyword matching
 
 ## Key Design Decisions
@@ -292,15 +296,18 @@ Two locations, layered:
 
 Merge: scalars = project wins, sources = union, model = project wins (must match dim).
 
-New config fields (with defaults):
+Config fields (all defaults from ResolvedConfig):
 ```toml
 [retrieval]
-fusion_k = 60              # RRF parameter
+fusion_k = 10              # RRF parameter (was 60, full-sample sweep → 10)
 sparse_enabled = true       # Enable BM25 retriever
+llm_candidates = 12         # Rules sent to LLM reranker
+llm_recall_threshold = 0.25 # Embedding threshold for LLM modes (wider recall)
 
 [expansion]
-max_per_rule = 10           # Max expansions per rule
-max_expansion_length = 200  # Max chars per expansion
+max_per_rule = 5            # Max expansions per rule (default 5, cap 10)
+max_length = 500            # Max chars per expansion (= MAX_RULE_LENGTH)
+dedup_threshold = 0.80      # Cosine similarity for semantic dedup
 ```
 
 ## Implementation Status
