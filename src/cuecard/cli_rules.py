@@ -318,8 +318,12 @@ def expand(
             console.print(f"[yellow]{label}: no rules found.[/yellow]")
             continue
         # Merge with cached rules.json to preserve existing expansions
-        cached = load_rules_json(cache_dir)
-        rules = merge_rules_json(parsed, cached) if cached is not None else parsed
+        cached_result = load_rules_json(cache_dir)
+        if cached_result is not None:
+            cached, _cached_aff = cached_result
+            rules = merge_rules_json(parsed, cached)
+        else:
+            rules = parsed
         save_rules_json(rules, cache_dir)
 
         if dry_run:

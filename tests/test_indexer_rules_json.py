@@ -38,9 +38,10 @@ class TestSaveRulesJson:
         ]
 
         save_rules_json(rules, str(tmp_path))
-        loaded = load_rules_json(str(tmp_path))
+        result = load_rules_json(str(tmp_path))
 
-        assert loaded is not None
+        assert result is not None
+        loaded, _aff = result
         assert len(loaded) == 2
         assert loaded[0].text == "Never commit secrets"
         assert loaded[0].expansions == ("hardcoded API key", "AKIA in source")
@@ -111,8 +112,9 @@ class TestLoadRulesJson:
         }
         (tmp_path / "rules.json").write_text(json.dumps(data))
 
-        rules = load_rules_json(str(tmp_path))
-        assert rules is not None
+        result = load_rules_json(str(tmp_path))
+        assert result is not None
+        rules, _aff = result
         assert len(rules[0].expansions[0]) == 200
 
     def test_expansion_count_capped(self, tmp_path: Path) -> None:
@@ -128,8 +130,9 @@ class TestLoadRulesJson:
         }
         (tmp_path / "rules.json").write_text(json.dumps(data))
 
-        rules = load_rules_json(str(tmp_path))
-        assert rules is not None
+        result = load_rules_json(str(tmp_path))
+        assert result is not None
+        rules, _aff = result
         assert len(rules[0].expansions) == 10
 
     def test_empty_text_skipped(self, tmp_path: Path) -> None:
@@ -142,8 +145,9 @@ class TestLoadRulesJson:
         }
         (tmp_path / "rules.json").write_text(json.dumps(data))
 
-        rules = load_rules_json(str(tmp_path))
-        assert rules is not None
+        result = load_rules_json(str(tmp_path))
+        assert result is not None
+        rules, _aff = result
         assert len(rules) == 1
         assert rules[0].text == "Real rule"
 
@@ -160,8 +164,9 @@ class TestLoadRulesJson:
         }
         (tmp_path / "rules.json").write_text(json.dumps(data))
 
-        rules = load_rules_json(str(tmp_path))
-        assert rules is not None
+        result = load_rules_json(str(tmp_path))
+        assert result is not None
+        rules, _aff = result
         assert rules[0].expansions == ("valid",)
 
     def test_empty_expansion_strings_skipped(self, tmp_path: Path) -> None:
@@ -177,8 +182,9 @@ class TestLoadRulesJson:
         }
         (tmp_path / "rules.json").write_text(json.dumps(data))
 
-        rules = load_rules_json(str(tmp_path))
-        assert rules is not None
+        result = load_rules_json(str(tmp_path))
+        assert result is not None
+        rules, _aff = result
         assert rules[0].expansions == ("valid",)
 
 
@@ -270,9 +276,10 @@ class TestRulesJsonV2:
         ]
 
         save_rules_json(rules, str(tmp_path))
-        loaded = load_rules_json(str(tmp_path))
+        result = load_rules_json(str(tmp_path))
 
-        assert loaded is not None
+        assert result is not None
+        loaded, _aff = result
         assert len(loaded) == 2
         assert loaded[0].events == frozenset({"PreToolUse", "PostToolUse"})
         assert loaded[0].tools == frozenset({"Bash"})
@@ -299,6 +306,69 @@ class TestRulesJsonV2:
         assert raw["rules"][0]["events"] == ["Stop"]
         assert sorted(raw["rules"][0]["tools"]) == ["Edit", "Write"]
 
+    def test_inline_affinity_roundtrip(self, tmp_path: Path) -> None:
+        """Affinity saved inline in rules.json is loaded back correctly."""
+        from cuecard.models import AffinityIndex, RuleAffinity
+
+        rules = [
+            Rule(
+                text="Use uv not pip",
+                provenance=Provenance(file="/tmp/r.txt", line_start=1, line_end=1),
+            ),
+            Rule(
+                text="Classify tasks",
+                provenance=Provenance(file="/tmp/r.txt", line_start=2, line_end=2),
+            ),
+        ]
+        import hashlib
+
+        h0 = hashlib.sha256(rules[0].text.encode()).hexdigest()
+        h1 = hashlib.sha256(rules[1].text.encode()).hexdigest()
+        affinity = AffinityIndex(
+            version=1, mode="strict", model="test",
+            affinities=(
+                (h0, RuleAffinity(
+                    events=frozenset({"PreToolUse", "PostToolUse"}),
+                    tools=frozenset(), source="explicit", reasoning="tool rule",
+                )),
+                (h1, RuleAffinity(
+                    events=frozenset({"UserPromptSubmit", "Stop"}),
+                    tools=frozenset(), source="inferred", reasoning="workflow",
+                )),
+            ),
+        )
+
+        save_rules_json(rules, str(tmp_path), affinity=affinity)
+
+        result = load_rules_json(str(tmp_path))
+        assert result is not None
+        loaded_rules, loaded_aff = result
+        assert len(loaded_rules) == 2
+        assert loaded_aff is not None
+        assert len(loaded_aff.items) == 2
+        assert loaded_aff.mode == "strict"
+
+        # Verify affinity content
+        aff_lookup = dict(loaded_aff.items)
+        assert aff_lookup[h0].events == frozenset({"PreToolUse", "PostToolUse"})
+        assert aff_lookup[h0].source == "explicit"
+        assert aff_lookup[h1].events == frozenset({"UserPromptSubmit", "Stop"})
+
+    def test_load_without_inline_affinity_returns_none(self, tmp_path: Path) -> None:
+        """rules.json without affinity dicts returns None for affinity."""
+        rules = [
+            Rule(
+                text="A rule",
+                provenance=Provenance(file="/tmp/r.txt", line_start=1, line_end=1),
+            ),
+        ]
+        save_rules_json(rules, str(tmp_path))
+
+        result = load_rules_json(str(tmp_path))
+        assert result is not None
+        _rules, aff = result
+        assert aff is None
+
     def test_load_v1_gets_empty_events_tools(self, tmp_path: Path) -> None:
         """V1 rules.json without events/tools defaults to empty."""
         import json
@@ -318,9 +388,10 @@ class TestRulesJsonV2:
         }
         (tmp_path / "rules.json").write_text(json.dumps(data))
 
-        loaded = load_rules_json(str(tmp_path))
+        result = load_rules_json(str(tmp_path))
 
-        assert loaded is not None
+        assert result is not None
+        loaded, _aff = result
         assert loaded[0].events == frozenset()
         assert loaded[0].tools == frozenset()
 

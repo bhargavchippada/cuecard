@@ -20,9 +20,11 @@ from cuecard._math import l2_normalize
 from cuecard.models import (
     MAX_EXPANSION_LENGTH,
     MAX_EXPANSIONS_PER_RULE,
+    AffinityIndex,
     Index,
     Provenance,
     Rule,
+    RuleAffinity,
     SourceMeta,
 )
 from cuecard.security import scrub_secrets
@@ -63,17 +65,26 @@ _RULES_JSON_VERSION = 2
 def save_rules_json(
     rules: list[Rule],
     cache_dir: str,
+    affinity: AffinityIndex | None = None,
 ) -> None:
     """Persist rules to a canonical JSON intermediate format.
 
     Writes ``rules.json`` with atomic write + 0o600 permissions.
+    If ``affinity`` is provided, each rule entry includes an inline
+    ``affinity`` dict — no separate sidecar file needed.
     """
     dir_path = Path(cache_dir)
     dir_path.mkdir(parents=True, exist_ok=True)
     os.chmod(dir_path, _DIR_PERMS)
 
-    rules_list = [
-        {
+    # Build affinity lookup if provided
+    aff_lookup: dict[str, RuleAffinity] = {}
+    if affinity is not None:
+        aff_lookup = dict(affinity.items)
+
+    rules_list: list[dict[str, object]] = []
+    for r in rules:
+        entry: dict[str, object] = {
             "text": r.text,
             "expansions": list(r.expansions),
             "events": sorted(r.events),
@@ -85,10 +96,22 @@ def save_rules_json(
                 "chunk_type": r.provenance.chunk_type,
             },
         }
-        for r in rules
-    ]
+        # Inline affinity if available for this rule
+        text_hash = hashlib.sha256(r.text.encode()).hexdigest()
+        ra = aff_lookup.get(text_hash)
+        if ra is not None:
+            entry["affinity"] = {
+                "events": sorted(ra.events),
+                "tools": sorted(ra.tools),
+                "source": ra.source,
+                "reasoning": ra.reasoning,
+            }
+        rules_list.append(entry)
 
-    data = {"version": _RULES_JSON_VERSION, "rules": rules_list}
+    data: dict[str, object] = {"version": _RULES_JSON_VERSION, "rules": rules_list}
+    if affinity is not None:
+        data["affinity_mode"] = affinity.mode
+        data["affinity_model"] = affinity.model
     json_path = dir_path / "rules.json"
 
     with tempfile.NamedTemporaryFile(
@@ -101,9 +124,13 @@ def save_rules_json(
     os.replace(tmp_path, json_path)
 
 
-def load_rules_json(cache_dir: str) -> list[Rule] | None:
+def load_rules_json(
+    cache_dir: str,
+) -> tuple[list[Rule], AffinityIndex | None] | None:
     """Load rules from the canonical JSON intermediate format.
 
+    Returns ``(rules, affinity)`` where affinity is extracted from
+    inline ``affinity`` dicts if present, or None if absent.
     Returns None if rules.json does not exist or is corrupt.
     """
     json_path = Path(cache_dir) / "rules.json"
@@ -124,6 +151,9 @@ def load_rules_json(cache_dir: str) -> list[Rule] | None:
         return None
 
     rules: list[Rule] = []
+    affinities: list[tuple[str, RuleAffinity]] = []
+    has_affinity = False
+
     for entry in data.get("rules", []):
         text = entry.get("text", "").strip()
         if not text:
@@ -163,7 +193,34 @@ def load_rules_json(cache_dir: str) -> list[Rule] | None:
             tools=tools,
         ))
 
-    return rules
+        # Extract inline affinity if present
+        raw_aff = entry.get("affinity")
+        if isinstance(raw_aff, dict):
+            has_affinity = True
+            text_hash = hashlib.sha256(text.encode()).hexdigest()
+            aff_events = frozenset(
+                e for e in raw_aff.get("events", []) if isinstance(e, str)
+            )
+            aff_tools = frozenset(
+                t for t in raw_aff.get("tools", []) if isinstance(t, str)
+            )
+            affinities.append((text_hash, RuleAffinity(
+                events=aff_events,
+                tools=aff_tools,
+                source=raw_aff.get("source", "inferred"),
+                reasoning=raw_aff.get("reasoning", ""),
+            )))
+
+    affinity_index: AffinityIndex | None = None
+    if has_affinity and affinities:
+        affinity_index = AffinityIndex(
+            version=1,
+            mode=data.get("affinity_mode", "inferred"),
+            model=data.get("affinity_model", ""),
+            affinities=tuple(affinities),
+        )
+
+    return rules, affinity_index
 
 
 def merge_rules_json(

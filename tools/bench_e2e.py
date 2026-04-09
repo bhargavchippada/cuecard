@@ -147,14 +147,21 @@ def generate_expansions_for_label(label: str, *, force: bool = False) -> None:
     """Generate expansions using the currently running model.
 
     Creates eval/corpora/enriched_{tier}_{label}/rules.json for each tier.
+    Includes inline affinity from eval/corpora/affinity.json if available.
     Skips generation if corpus already exists and --force is not set.
     """
+    from cuecard.affinity import load_affinity
+
+    # Load affinity once to embed inline in each rules.json
+    affinity = load_affinity(str(CORPORA_DIR))
+
     for tier, cfg in SOURCE_FILES.items():
         out_dir = CORPORA_DIR / f"enriched_{tier}_{label}"
         rules_json = out_dir / "rules.json"
 
         if rules_json.exists() and not force:
-            n_rules = len(json.loads(rules_json.read_text()))
+            data = json.loads(rules_json.read_text())
+            n_rules = len(data.get("rules", []))
             print(f"  {tier}: reusing existing corpus at {out_dir} ({n_rules} rules)")
             continue
 
@@ -177,7 +184,7 @@ def generate_expansions_for_label(label: str, *, force: bool = False) -> None:
         )
 
         out_dir.mkdir(parents=True, exist_ok=True)
-        save_rules_json(expanded, str(out_dir))
+        save_rules_json(expanded, str(out_dir), affinity=affinity)
 
 
 def summary_to_dict(summary: EvalSummary) -> dict:
@@ -199,12 +206,20 @@ def run_benchmark(label: str, *, sample_ratio: float = 0.2, seed: int = 42) -> d
     from fastembed import TextEmbedding
 
     from cuecard.affinity import load_affinity
+    from cuecard.indexer import load_rules_json
 
     print(f"\nLoading embedding model: {EMBEDDING_MODEL}")
     embedding_model = TextEmbedding(model_name=EMBEDDING_MODEL)
 
-    # Load affinity index for event mask filtering (if available)
-    affinity = load_affinity(str(CORPORA_DIR))
+    # Load affinity: prefer inline from rules.json, fall back to sidecar
+    affinity = None
+    first_corpus = CORPORA_DIR / f"enriched_basic_{label}" / "rules.json"
+    if first_corpus.exists():
+        result = load_rules_json(str(first_corpus.parent))
+        if result is not None:
+            _rules, affinity = result
+    if affinity is None:
+        affinity = load_affinity(str(CORPORA_DIR))
     if affinity:
         print(f"Loaded affinity index: {affinity.mode}, {len(affinity.items)} entries")
     else:

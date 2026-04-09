@@ -358,8 +358,9 @@ def index(
             continue
 
         # Merge with cached rules.json to preserve expansions
-        cached_rules = load_rules_json(cache_dir)
-        if cached_rules is not None:
+        cached_result = load_rules_json(cache_dir)
+        if cached_result is not None:
+            cached_rules, _cached_aff = cached_result
             rules = merge_rules_json(rules, cached_rules)
         save_rules_json(rules, cache_dir)
 

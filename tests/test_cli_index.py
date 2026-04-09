@@ -240,8 +240,9 @@ class TestIndex:
         # Verify rules.json was saved with merged content
         from cuecard.indexer import load_rules_json
 
-        merged = load_rules_json(cache_dir)
-        assert merged is not None
+        result = load_rules_json(cache_dir)
+        assert result is not None
+        merged, _aff = result
         # Both source rules should be present
         texts = [r.text for r in merged]
         assert "Never commit secrets to git" in texts

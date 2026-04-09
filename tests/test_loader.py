@@ -599,6 +599,7 @@ class TestRulesJsonIntegration:
         # Verify the rules.json was updated with preserved expansions
         from cuecard.indexer import load_rules_json
 
-        loaded = load_rules_json(cache_dir)
-        assert loaded is not None
-        assert loaded[0].expansions == ("hardcoded API key", "AKIA in source")
+        loaded_result = load_rules_json(cache_dir)
+        assert loaded_result is not None
+        loaded_rules, _aff = loaded_result
+        assert loaded_rules[0].expansions == ("hardcoded API key", "AKIA in source")

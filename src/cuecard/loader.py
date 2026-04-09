@@ -73,8 +73,9 @@ def _load_or_rebuild_scope(
         return None
 
     # Merge with cached rules.json to preserve expansions
-    cached_rules = load_rules_json(cache_dir)
-    if cached_rules is not None:
+    cached_result = load_rules_json(cache_dir)
+    if cached_result is not None:
+        cached_rules, _cached_affinity = cached_result
         rules = merge_rules_json(rules, cached_rules)
 
     # Save the canonical JSON intermediate
@@ -96,15 +97,32 @@ def _load_or_rebuild_scope(
     return new_index
 
 
+def _load_affinity_for_scope(cache_dir: str) -> AffinityIndex | None:
+    """Load affinity for a scope: prefer inline (rules.json), fall back to sidecar."""
+    # Try inline from rules.json first
+    result = load_rules_json(cache_dir)
+    if result is not None:
+        _rules, inline_aff = result
+        if inline_aff is not None:
+            logger.debug("Loaded inline affinity from rules.json in %s", cache_dir)
+            return inline_aff
+
+    # Fall back to sidecar affinity.json
+    sidecar_aff = load_affinity(cache_dir)
+    if sidecar_aff is not None:
+        logger.debug("Loaded sidecar affinity.json from %s", cache_dir)
+    return sidecar_aff
+
+
 def _load_and_merge_affinity(
     global_cache_dir: str,
     project_cache_dir: str | None,
 ) -> AffinityIndex | None:
     """Load and merge affinity from both scopes. Project wins on duplicates."""
-    global_aff = load_affinity(global_cache_dir)
+    global_aff = _load_affinity_for_scope(global_cache_dir)
     project_aff: AffinityIndex | None = None
     if project_cache_dir:
-        project_aff = load_affinity(project_cache_dir)
+        project_aff = _load_affinity_for_scope(project_cache_dir)
 
     if global_aff is None and project_aff is None:
         return None
