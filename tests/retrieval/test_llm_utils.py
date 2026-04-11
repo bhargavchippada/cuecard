@@ -464,3 +464,24 @@ class TestConstants:
 
     def test_allowed_haiku_models(self) -> None:
         assert "claude-haiku-4-5" in _ALLOWED_HAIKU_MODELS
+
+
+
+class TestIsLoopback:
+    def test_dns_failure_returns_false(self) -> None:
+        from cuecard.retrieval.llm_utils import _is_loopback
+
+        with patch(
+            "cuecard.retrieval.llm_utils.socket.getaddrinfo",
+            side_effect=socket.gaierror,
+        ):
+            assert _is_loopback("missing.example") is False
+
+    def test_empty_resolution_returns_false(self) -> None:
+        from cuecard.retrieval.llm_utils import _is_loopback
+
+        with patch(
+            "cuecard.retrieval.llm_utils.socket.getaddrinfo",
+            return_value=[],
+        ):
+            assert _is_loopback("localhost") is False

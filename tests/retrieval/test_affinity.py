@@ -156,20 +156,20 @@ class TestBuildAffinityPrompt:
 class TestParseAffinityResponse:
     def test_valid_json(self) -> None:
         response = json.dumps({
-            "events": ["PreToolUse", "PostToolUse"],
+            "events": ["PreToolUse", "Stop"],
             "tools": ["Bash"],
             "reasoning": "Git commit is a Bash operation",
         })
         events, tools, reasoning = _parse_affinity_response(
             response, frozenset(), frozenset(),
         )
-        assert events == frozenset({"PreToolUse", "PostToolUse"})
+        assert events == frozenset({"PreToolUse", "Stop"})
         assert tools == frozenset({"Bash"})
         assert "Git commit" in reasoning
 
     def test_extends_explicit_annotations(self) -> None:
         response = json.dumps({
-            "events": ["PostToolUse"],
+            "events": ["Stop"],
             "tools": ["Edit"],
             "reasoning": "",
         })
@@ -179,7 +179,7 @@ class TestParseAffinityResponse:
             frozenset({"Bash"}),
         )
         assert "PreToolUse" in events
-        assert "PostToolUse" in events
+        assert "Stop" in events
         assert "Bash" in tools
         assert "Edit" in tools
 
@@ -326,7 +326,7 @@ class TestParseAffinityResponse:
         events, _, reasoning = _parse_affinity_response(
             response, frozenset(), frozenset(),
         )
-        assert events == frozenset({"PreToolUse", "PostToolUse"})
+        assert events == frozenset({"PreToolUse"})
         assert "Constrains" in reasoning
 
     def test_singular_category_workflow(self) -> None:
@@ -348,7 +348,7 @@ class TestParseAffinityResponse:
             response, frozenset(), frozenset(),
         )
         assert events == frozenset({
-            "PreToolUse", "PostToolUse",
+            "PreToolUse",
             "UserPromptSubmit", "SubagentStart", "Stop",
         })
 
@@ -362,7 +362,7 @@ class TestParseAffinityResponse:
         events, _, _ = _parse_affinity_response(
             response, frozenset(), frozenset(),
         )
-        assert events == frozenset({"PreToolUse", "PostToolUse"})
+        assert events == frozenset({"PreToolUse"})
 
     def test_invalid_explicit_event_dropped(self) -> None:
         """Typo'd explicit event is stripped before merge."""
@@ -394,10 +394,10 @@ class TestStrictAffinity:
     def test_explicit_events_preserved(self) -> None:
         rule = _make_rule(
             "Has events",
-            events=frozenset({"PreToolUse", "PostToolUse"}),
+            events=frozenset({"PreToolUse", "Stop"}),
         )
         aff = _strict_affinity(rule)
-        assert aff.events == frozenset({"PreToolUse", "PostToolUse"})
+        assert aff.events == frozenset({"PreToolUse", "Stop"})
         assert aff.source == "explicit"
 
     def test_empty_tools_means_all(self) -> None:
@@ -748,7 +748,7 @@ class TestInferAffinities:
         )
         config = _make_config()
         llm_response = json.dumps({
-            "events": ["PostToolUse"],
+            "events": ["Stop"],
             "tools": ["Edit"],
             "reasoning": "",
         })
@@ -761,7 +761,7 @@ class TestInferAffinities:
         aff = idx.get(rule)
         assert aff is not None
         assert "PreToolUse" in aff.events
-        assert "PostToolUse" in aff.events
+        assert "Stop" in aff.events
         assert "Bash" in aff.tools
         assert "Edit" in aff.tools
         assert aff.source == "explicit+inferred"
@@ -903,3 +903,25 @@ class TestInferAffinities:
             pytest.raises(ValueError, match="bad"),
         ):
             infer_affinities(rules, config)
+
+    def test_parallel_produces_correct_ordered_results(self) -> None:
+        """max_workers > 1 uses ThreadPoolExecutor and preserves order."""
+        rules = [_make_rule(f"rule {i}") for i in range(4)]
+        config = _make_config()
+
+        llm_response = '{"reasoning": "test", "category": "tool_use"}'
+
+        with patch(
+            "cuecard.retrieval.affinity.call_local",
+            return_value=llm_response,
+        ) as mock_call:
+            idx = infer_affinities(rules, config, max_workers=3)
+
+        assert mock_call.call_count == 4
+        assert idx.mode == "infer"
+        assert len(idx.items) == 4
+        # Verify each rule is in the index with correct events
+        for rule in rules:
+            aff = idx.get(rule)
+            assert aff is not None
+            assert "PreToolUse" in aff.events

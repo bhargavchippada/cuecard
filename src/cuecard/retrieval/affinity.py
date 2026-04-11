@@ -226,7 +226,6 @@ def _parse_affinity_response(
     for cat in cats:
         if cat == "tool_use":
             inferred_events.add("PreToolUse")
-            inferred_events.add("PostToolUse")
         elif cat == "workflow":
             inferred_events.add("UserPromptSubmit")
             inferred_events.add("SubagentStart")
@@ -349,8 +348,16 @@ def _infer_single_rule(
 def infer_affinities(
     rules: list[Rule],
     config: ResolvedConfig,
+    *,
+    max_workers: int = 1,
 ) -> AffinityIndex:
     """Infer event/tool affinities via LLM for each rule.
+
+    Args:
+        rules: Rules to classify.
+        config: Resolved configuration.
+        max_workers: Max parallel LLM calls (default 1 = sequential).
+            Set to match llama-server -np slots for parallel inference.
 
     Falls back to strict mode if the LLM endpoint is unreachable.
     """
@@ -370,11 +377,10 @@ def infer_affinities(
             return _fallback_strict(rules)
 
     affinities: list[tuple[str, RuleAffinity]] = []
-    for rule in rules:
+
+    def _infer_or_fallback(rule: Rule) -> tuple[str, RuleAffinity]:
         try:
-            affinities.append(
-                _infer_single_rule(rule, backend, endpoint, haiku_model),
-            )
+            return _infer_single_rule(rule, backend, endpoint, haiku_model)
         except (ConfigError, ValueError):
             raise
         except Exception as exc:
@@ -385,7 +391,24 @@ def infer_affinities(
                 type(exc).__name__,
             )
             text_hash = _hash_rule_text(rule.text)
-            affinities.append((text_hash, _strict_affinity(rule)))
+            return text_hash, _strict_affinity(rule)
+
+    if max_workers > 1 and len(rules) > 1:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            futures = {
+                pool.submit(_infer_or_fallback, r): i
+                for i, r in enumerate(rules)
+            }
+            indexed: list[tuple[int, tuple[str, RuleAffinity]]] = []
+            for future in as_completed(futures):
+                indexed.append((futures[future], future.result()))
+            indexed.sort(key=lambda x: x[0])
+            affinities = [item for _, item in indexed]
+    else:
+        for rule in rules:
+            affinities.append(_infer_or_fallback(rule))
 
     return AffinityIndex(
         version=_AFFINITY_VERSION,

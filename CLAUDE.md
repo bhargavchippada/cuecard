@@ -2,7 +2,7 @@
 
 > The right rule, at the right moment.
 
-Contextual rule enforcement for AI coding agents. Retrieves relevant user-defined rules via semantic similarity and injects them at every stage — before actions (PreToolUse), after actions (PostToolUse), on user messages (UserPromptSubmit), when spawning subagents (SubagentStart), and at turn end (Stop).
+Contextual rule enforcement for AI coding agents. Retrieves relevant user-defined rules via semantic similarity and injects them at the stages that matter — before actions (PreToolUse), on user messages (UserPromptSubmit), when spawning subagents (SubagentStart), and at turn end (Stop). PostToolUse was removed to avoid over-triggering; it may return later with tighter post-action matching.
 
 ## Project Structure
 
@@ -12,14 +12,11 @@ cuecard/
 ├── README.md               # Public-facing readme
 ├── .gitignore
 ├── artifacts/              # Design docs & session state
-│   ├── prd-v1.md           # PRD v1.2 — core pipeline (converged)
-│   ├── enriched-retrieval-prd.md     # Enriched retrieval design
-│   ├── multi-stage-retrieval-prd.md  # Multi-stage PRD v1.1 (converged)
-│   ├── phase4-closed-loop-hooks-prd.md # Closed-loop hooks PRD v1.2 (converged)
-│   ├── paper-design-rule-rationale.md # Compliance paper design
-│   ├── phase6-completion-gate-prd.md  # Completion gate Stop hook PRD v1.2 (converged)
-│   ├── phase7-rule-quality-prd.md     # Trigger-aware rule rewriting PRD v1.0
-│   └── session-25-progress.md         # Current session state
+│   ├── README.md                     # Index of consolidated history docs
+│   ├── project-history.md            # Phase timeline, decisions, status
+│   ├── design-history.md             # PRD evolution, architecture choices
+│   ├── evaluation-history.md         # Benchmark history, baselines, deltas
+│   └── research-notes.md             # Rule-rewrite research, prompt iterations
 ├── src/cuecard/            # Core library (agent-agnostic)
 │   ├── __init__.py         # Public API: load_config, retrieve, format_rules
 │   ├── models.py           # Frozen dataclasses, safety caps, ResolvedConfig (single source of truth)
@@ -59,7 +56,7 @@ cuecard/
 │   │   └── eval_cmd.py     # Eval command
 │   └── adapters/           # Agent-specific wrappers
 │       ├── __init__.py
-│       └── claude_code.py  # Claude Code hook adapter (all 5 events)
+│       └── claude_code.py  # Claude Code hook adapter (4 active events)
 ├── tools/
 │   ├── bench_e2e.py        # E2E benchmark (default — model generates own expansions + reranks)
 │   └── notebook.ipynb      # 35-cell debugging tool (per-stage viz, loss analysis, prompts, batch eval)
@@ -158,6 +155,120 @@ mutmut verifies that tests actually detect code changes (mutations). 100% line c
 - Provenance on every data object — trace back to source file + line
 - Per-retriever observability: `RetrieverTrace` tracks candidate count, latency, unique rules per retriever
 
+### Pipeline Diagram (llm-local mode — current production default)
+
+```
+                         ┌─────────────────────────────┐
+                         │   Claude Code hook event    │
+                         │ (PreToolUse│UserPromptSubmit│
+                         │   SubagentStart│Stop)       │
+                         └──────────────┬──────────────┘
+                                        │ stdin JSON
+                                        ▼
+                         ┌─────────────────────────────┐
+                         │  adapter/claude_code.py     │
+                         │  • detect event             │
+                         │  • dispatch to handler      │
+                         │  • scrub_secrets()          │
+                         │  • build query string       │
+                         └──────────────┬──────────────┘
+                                        │ (query, event, tool_name)
+                                        ▼
+                         ┌─────────────────────────────┐
+                         │  daemon fast-path (:8452)   │──── hit ────┐
+                         │  else cold-load model       │             │
+                         └──────────────┬──────────────┘             │
+                                        │ miss                       │
+                                        ▼                            │
+                         ┌─────────────────────────────┐             │
+                         │  load_or_build(Index)       │             │
+                         │  + AffinityIndex            │             │
+                         │  rules_global.txt  (107)    │             │
+                         └──────────────┬──────────────┘             │
+                                        ▼                            │
+          ┌───────────────────────── run_pipeline ────────────────┐  │
+          │                                                       │  │
+          │ ╔═════════════════════════════════════════════════╗   │  │
+          │ ║ Stage 0  Event mask (affinity)                  ║   │  │
+          │ ║   filter rules to this event's affinity         ║   │  │
+          │ ║   (PreToolUse → tool_use + both)                ║   │  │
+          │ ║   (workflow events → workflow + both)           ║   │  │
+          │ ║   Optional: query expansion (OFF by default)    ║   │  │
+          │ ╚═════════════════════════════════════════════════╝   │  │
+          │                        │                              │  │
+          │                        ▼                              │  │
+          │ ╔═════════════════════════════════════════════════╗   │  │
+          │ ║ Stage 1  Retrieval  (always runs)               ║   │  │
+          │ ║                                                 ║   │  │
+          │ ║   ┌──────────────┐      ┌──────────────┐        ║   │  │
+          │ ║   │ Dense        │      │ Sparse BM25  │        ║   │  │
+          │ ║   │ jina-code-v2 │      │ (opt-in;     │        ║   │  │
+          │ ║   │ 768d cosine  │      │  OFF default)│        ║   │  │
+          │ ║   │ parent-max   │      │ parent-max   │        ║   │  │
+          │ ║   └──────┬───────┘      └──────┬───────┘        ║   │  │
+          │ ║          │                     │                ║   │  │
+          │ ║          └──────── RRF ────────┘                ║   │  │
+          │ ║                fusion_k=10                      ║   │  │
+          │ ║        top_k=12 (llm_candidates)                ║   │  │
+          │ ║        threshold=0.25 (llm_recall_threshold)    ║   │  │
+          │ ╚══════════════════════╤══════════════════════════╝   │  │
+          │                        │                              │  │
+          │                        ▼                              │  │
+          │ ╔═════════════════════════════════════════════════╗   │  │
+          │ ║ Stage 2  Cross-encoder rerank  (SKIPPED in      ║   │  │
+          │ ║   llm-local mode — regresses on code)           ║   │  │
+          │ ╚═════════════════════════════════════════════════╝   │  │
+          │                        │                              │  │
+          │                        ▼                              │  │
+          │ ╔═════════════════════════════════════════════════╗   │  │
+          │ ║ Stage 3  LLM reranker                           ║   │  │
+          │ ║   Gemma-4-E4B via llama-server :8081            ║   │  │
+          │ ║   system prompt: 13 few-shot examples,          ║   │  │
+          │ ║     strict trigger semantics,                   ║   │  │
+          │ ║     "when in doubt, exclude"                    ║   │  │
+          │ ║   input:  ≤12 numbered candidate rules          ║   │  │
+          │ ║   output: JSON {reasoning, rules: [ids...]}     ║   │  │
+          │ ║   capped at top_k=7 final                       ║   │  │
+          │ ╚══════════════════════╤══════════════════════════╝   │  │
+          └────────────────────────┼──────────────────────────────┘  │
+                                   │ RankedResult[]                  │
+                                   ▼                                 ▼
+                         ┌─────────────────────────────┐  ◄──── join ┘
+                         │  formatter.format_rules()   │
+                         │  + per-event label          │
+                         │    (PREVENT/PROPAGATE/AUDIT)│
+                         └──────────────┬──────────────┘
+                                        ▼
+                         ┌─────────────────────────────┐
+                         │  hookSpecificOutput JSON    │
+                         │  {additionalContext: ...,   │
+                         │   permissionDecision: allow}│ (PreToolUse only)
+                         └──────────────┬──────────────┘
+                                        │ stdout
+                                        ▼
+                                 Claude Code
+                             (rules injected into
+                                agent context)
+```
+
+Key knobs (defaults from `ResolvedConfig`):
+
+| Knob | Default | Notes |
+|---|---|---|
+| Index size | 107 rules | `rules_global.txt` |
+| Embedding model | jina-code-v2 (768d) | `config.model_name` |
+| Event mask | ON | always when affinity present |
+| BM25 sparse | **OFF** | session 31 — no net benefit with code-specific dense |
+| Query expansion | **OFF** | session 31 — net F2 regression |
+| Stage-1 `top_k` | 12 (`llm_candidates`) | candidates fed to LLM |
+| Stage-1 `threshold` | 0.25 (`llm_recall_threshold`) | wider recall for LLM |
+| RRF `fusion_k` | 10 | |
+| Final `top_k` | 7 | after LLM |
+| LLM reranker | Gemma-4-E4B (local) | llama-server :8081 |
+| Daemon | localhost:8452 | fast-path, 500ms timeout |
+
+Graceful degradation: every stage catches its own exceptions and falls back to the previous stage's results, logging the error in `StageTrace.error`. The pipeline never hard-fails — worst case, you get dense-only results.
+
 ### Security
 - Path validation: canonicalize via `Path.resolve()`, enforce allowed dirs
 - Secrets scrubbing: regex-based redaction before logging
@@ -183,7 +294,7 @@ mutmut verifies that tests actually detect code changes (mutations). 100% line c
 ### Affinity Design
 - Rules have event/tool affinity — which hook events and tools they apply to
 - Two modes: `infer` (LLM classifies at index time, default) and `strict` (explicit annotations only)
-- **Minimum retrieval scope**: LLM classifies rules as `tool_use` (→ PreToolUse+PostToolUse), `workflow` (→ UserPromptSubmit+SubagentStart+Stop), or `both` (→ all 5 events). Prompt asks "when would the agent misbehave without this rule?" — tool_use if at tool time, workflow if at planning time, both only if agent can plan AROUND the tool event entirely. 93.5% accuracy. Ground truth: 60 tool_use, 44 workflow, 3 both.
+- **Minimum retrieval scope**: LLM classifies rules as `tool_use` (→ PreToolUse), `workflow` (→ UserPromptSubmit+SubagentStart+Stop), or `both` (→ all 4 events). Prompt asks "when would the agent misbehave without this rule?" — tool_use if at tool time, workflow if at planning time, both only if agent can plan AROUND the tool event entirely. PostToolUse was removed from the active event set to avoid over-triggering.
 - `AffinityIndex` uses O(1) dict lookup (not frozen dataclass — follows `Index` pattern)
 - `LoadedIndex` composite return type wraps `(Index, AffinityIndex | None)`
 - `load_or_build()` returns `LoadedIndex | None` — all call sites destructure
@@ -221,42 +332,18 @@ Critical ones:
 - D17: Merge preserves expansions for unchanged rules
 - S1: Path validation with allowlist (prevents traversal)
 
-## Model Recommendations (updated session 20)
+## Model Recommendations
 
 | Stage | Model | Why |
 |-------|-------|-----|
-| Embedding | jina-embeddings-v2-base-code | Best PreToolUse hard recall (60%), code-specific, 22ms |
-| Embedding (workflow alt) | snowflake-arctic-embed-m | Best UserPromptSubmit hard recall (73.3%), 14ms |
-| Cross-encoder (opt-in) | Xenova/ms-marco-MiniLM-L-6-v2 | 13ms, but regressions on code — skip |
-| **LLM (GPU, default)** | **Gemma-4-E4B via llama-server** | **Best PosRecall (+39% vs 9B), best workflow F2=0.820, perfect workflow NegSil, 1204ms (8.2GB Q8_0)** |
-| LLM (GPU, best basic F2) | Qwen3.5-9B via llama-server | Best basic F2=0.797, best basic NegSil=0.962, but lower PosRecall (5.3GB) |
-| LLM (GPU, low noise) | Qwen3.5-35B-A3B via llama-server | Lowest noise (0.217), highest basic NegSil (0.926), MoE (21GB) |
-| LLM (CPU/laptop) | Qwen3.5-4B via llama-server | 2.6GB, 917ms p50, F2=0.736, viable for laptop |
+| Embedding | jina-embeddings-v2-base-code | Best PreToolUse hard recall, code-specific, 22ms |
+| Cross-encoder (opt-in) | Xenova/ms-marco-MiniLM-L-6-v2 | 13ms, but regresses on code — skip |
+| **LLM (GPU, default)** | **Gemma-4-E4B via llama-server** | Best PosRecall, best workflow metrics, ~1200ms p50 (8.2GB Q8_0) |
+| LLM (GPU, alt) | Qwen3.5-9B / Qwen3.5-35B-A3B | Historical comparisons kept in `artifacts/evaluation-history.md` |
+| LLM (CPU/laptop) | Qwen3.5-4B via llama-server | 2.6GB, ~900ms p50, viable for laptop |
 | LLM (API) | Haiku via claude-agent-sdk | Fast, Max subscription |
 
-### E2E Model Comparison (each model generates own expansions + reranks, 20% sample, seed=42)
-
-**IMPORTANT**: Always use `tools/bench_e2e.py` for model comparison. Each model must
-generate its own expansions — shared-corpus benchmarks unfairly bias toward the
-expansion-generator model. `bench_models.py` is deprecated.
-
-| Model | Basic F2 | Basic PosRecall | Basic Noise | Basic NegSil | Workflow F2 | Workflow NegSil | p50ms | GGUF |
-|-------|---------|----------------|-------------|--------------|------------|-----------------|-------|------|
-| **Gemma-4-E4B** | 0.774 | **0.778** | 0.266 | 0.852 | **0.820** | **1.000** | **1204ms** | 8.2GB |
-| Qwen3.5-9B | **0.797** | 0.560 | 0.259 | **0.962** | 0.725 | 0.750 | 1259ms | 5.3GB |
-| Qwen3.5-35B | 0.785 | — | **0.217** | 0.926 | 0.680 | 0.750 | 1294ms | 21GB |
-| Qwen3.5-4B | 0.736 | — | 0.243 | 0.852 | 0.577 | 0.750 | 917ms | 2.6GB |
-
-**Key insights**:
-- **Gemma E4B wins on recall and workflow.** 39% more relevant rules found (PosRecall 0.778
-  vs 0.560), workflow F2 +9.5 pts, perfect workflow silence. Best all-rounder for production.
-- **Qwen 9B wins basic F2 and NegSil.** Best for use cases where false positives are expensive.
-- **E2E methodology matters.** Shared-corpus benchmarks showed Qwen 35B winning. E2E (each
-  model generates own expansions) flips rankings — Gemma and 9B both beat 35B.
-
-**Prompt tuning on both models (5 variants total) was reverted** — every variant overcorrected.
-Gemma is hypersensitive to negative few-shot examples (even one crashes PosRecall by 30+ pts).
-The prompt is at a local optimum for both models.
+Historical multi-model comparisons (sessions 19–29) are captured in `artifacts/evaluation-history.md` and are no longer maintained here — Gemma-4-E4B is the current production default.
 
 ### Gemma 4 E4B Setup
 
@@ -276,7 +363,7 @@ Requires llama.cpp build ≥8672 (gemma4 architecture support added after b8235)
 
 The same model must handle both expansion generation and reranking — rules out cross-encoder-only models.
 
-### Embedding Model Comparison (enriched, embedding mode, 354 basic fixtures)
+### Embedding Model Comparison (archived — embedding mode, 354 PreToolUse fixtures)
 
 | Model | Dim | Easy | Medium | Hard | Recall | Noise | p50ms |
 |-------|-----|------|--------|------|--------|-------|-------|
@@ -285,7 +372,7 @@ The same model must handle both expansion generation and reranking — rules out
 | snowflake-arctic-m | 768 | 94.2% | 73.7% | 57.5% | 47.5% | 83.7% | 14ms |
 | bge-small (default) | 384 | 94.2% | 74.1% | 51.1% | 46.8% | 84.0% | 4ms |
 
-Key insight: model choice gives ~4% recall spread. The LLM reranker gives ~70% improvement on noise/silence. Embedding mode alone cannot achieve negative silence >0% (except jina-v3 at 6%, but 457ms).
+Key insight: model choice gives ~4% recall spread. The LLM reranker gives ~70% improvement on noise/silence. jina-code-v2 is the current embedding default.
 
 ## Config
 
@@ -298,11 +385,11 @@ Merge: scalars = project wins, sources = union, model = project wins (must match
 Config fields (all defaults from ResolvedConfig):
 ```toml
 [retrieval]
-fusion_k = 10              # RRF parameter (was 60, full-sample sweep → 10)
-sparse_enabled = true       # Enable BM25 retriever
+fusion_k = 10               # RRF parameter (full-sample sweep → 10)
+sparse_enabled = true       # BM25 retriever — ON in ResolvedConfig; eval harness defaults to False (session 31: no net benefit with code-specific dense)
 llm_candidates = 12         # Rules sent to LLM reranker
 llm_recall_threshold = 0.25 # Embedding threshold for LLM modes (wider recall)
-reranker_model = "Xenova/ms-marco-MiniLM-L-6-v2"  # Cross-encoder model
+reranker_model = "Xenova/ms-marco-MiniLM-L-6-v2"  # Cross-encoder model (opt-in only)
 
 [serve]
 port = 8452                 # Daemon port
@@ -319,56 +406,40 @@ timeout = 60.0              # HTTP timeout for LLM calls (seconds)
 
 ## Implementation Status
 
-- **Phase 1:** Core pipeline — COMPLETE
-- **Phase 2:** Adapter + logging — COMPLETE
-- **Phase 3:** Eval framework + notebook — COMPLETE
-- **Multi-stage:** Pipeline + reranker + LLM reranker — COMPLETE
-- **Eval metrics:** noise ratio, context waste, per-tier breakdown, negative silence, quality (F2), positive recall — COMPLETE
-- **Quality iteration:** 354 PreToolUse + 84 UserPromptSubmit fixtures — COMPLETE
-- **Unified events:** UserPromptSubmit support, reasoning-in-response prompt — COMPLETE
-- **Enriched retrieval:** JSON intermediate, expansion-aware indexing, parent collapse, BM25+RRF, expansion CLI — COMPLETE (826 tests, 100% coverage)
-- **Benchmarking:** 6 embedding models, raw vs enriched vs LLM, v1 vs v3 expansion prompts — COMPLETE
-- **Small model investigation:** Qwen3-0.6B not viable; Qwen3.5-4B/9B benchmarked — COMPLETE
-- **LLM robustness:** Configurable stop sequences, JSON extraction, retry on parse failure — COMPLETE
-- **Prompt engineering:** 16 few-shot examples (13 original + 3 category-aware negatives), category-aware guidance, principle-based guidelines — COMPLETE
-- **Model benchmarking:** Qwen3.5-9B/4B/2B vs 35B on v3 corpora with sampling — COMPLETE
-- **Eval infrastructure:** tqdm progress, stratified sampling, bench_models.py script — COMPLETE
-- **E2E benchmarking:** `tools/bench_e2e.py` — each model generates its own expansions AND reranks. Default mode going forward. `bench_models.py` deprecated (shared-corpus comparisons are unfair). Corpora cached at `eval/corpora/enriched_{tier}_{label}/` per model.
-- **Expansion prompt v5:** Reasoning-field prompt for expansions (structured CoT before generating) — COMPLETE
-- **Eval corpus:** 109 rules in `eval/corpora/rules_global.txt` (unified global + basic + workflow). All fixture files reference `rules_global.txt`.
-- **Eval dataset:** 1096+ fixtures across 5 event types (441 PreToolUse, 219 UserPromptSubmit, 131 PostToolUse, 135 Stop, 170 SubagentStart). All events balanced 44-49% positive. Cross-event consistency enforced (tool_use rules only in PreToolUse/PostToolUse fixtures). 5 verification rounds converged. +41 mined Stop fixtures in Phase 6 format (`eval/fixtures/stop_mined.json`).
-- **Tagged corpus:** `eval/corpora/rules_global_tagged.json` — each rule tagged as tool_use/workflow/both. Ground truth uses minimum-retrieval-scope principle (session 26): 60 tool_use, 44 workflow, 3 both. Affinity prompt accuracy: 93.5%.
-- **Fixture realism (session 25):** Stop fixtures use realistic `"Stop: end_turn"` queries. PostToolUse: 3 compliance-as-violation errors fixed, 5 output format fixes. SubagentStart: trimmed 2.6→1.5 rules/pos. All events rebalanced to 46-53% positive.
-- **Phase 6 Completion Gate:** PRD converged (v1.2, 3 review rounds). Stop hook reads `last_assistant_message` + `transcript_path`, always blocks up to `max_stop_blocks` (Option A), shared `execute_stop_gate()` function. Pending implementation.
-- **Phase 7 Rule Quality:** PRD written. Rewrite all 109 rules with trigger conditions ("When X: do Y — because Z"). 63/109 rewritten (PreToolUse subset). Remaining 46 workflow rules in progress.
-- **CLI UX:** `cuecard configure` interactive setup, `cuecard serve` daemon, expand progress bar — COMPLETE
-- **Hook format:** Correct `hookEventName` + `permissionDecision` for PreToolUse, `hook_event_name` input field detection — COMPLETE
-- **Global install:** `uv tool install` support, `cuecard hook` CLI entry point — COMPLETE
-- **Live validation:** Verified agent compliance in real Claude Code sessions — COMPLETE
-- **Closed-loop hooks (Phase 4):** TOML rule format, event/tool affinity inference, event mask retrieval, 5 hook adapters (PreToolUse/PostToolUse/UserPromptSubmit/SubagentStart/Stop), per-event eval metrics — COMPLETE (1148 tests, 100% coverage)
-  - Phase 1: TOML parser + Rule.events/tools + migrate CLI + KNOWN_HOOK_EVENTS
-  - Phase 2: Affinity inference + storage (AffinityIndex O(1) lookup, LLM fallback to strict)
-  - Phase 3: Event mask in retrieval + LoadedIndex return type + numpy advanced indexing
-  - Phase 4a: Multi-event adapter with scrub_secrets on PostToolUse/SubagentStart/Stop
-  - Phase 4b: Hook registration for all 5 events
-  - Phase 5: Eval corpus migration + new fixtures (PostToolUse/Stop/SubagentStart)
-  - Phase 6: Benchmark with Gemma — pending
-- **Publish:** pending
-- **Multi-source parsing (markdown, YAML, CLAUDE.md):** DRAFT PRD (`artifacts/phase5-multi-source-prd-draft.md`)
+**Complete:**
+- Core pipeline (dense + sparse + RRF + LLM reranker, graceful degradation, per-stage traces)
+- Adapter + JSONL logging with secrets scrubbing
+- Eval framework: F2 / PosRecall / Noise / NegSil + per-event breakdown, stratified sampling, tqdm progress
+- Enriched retrieval: JSON intermediate, expansion-aware indexing, parent-max collapse, expansion CLI
+- Closed-loop hooks: TOML rule format, event/tool affinity inference, event mask retrieval, 4 hook adapters (PreToolUse, UserPromptSubmit, SubagentStart, Stop), per-event eval metrics
+- E2E benchmarking (`tools/bench_e2e.py`) — each model generates its own affinities + expansions + reranks. Corpora cached at `eval/corpora/enriched_{label}/`.
+- Expansion prompt v5: reasoning-field prompt for expansions (structured CoT before generating)
+- Prompt engineering: few-shot examples with strict trigger semantics, "when in doubt, exclude"
+- Eval corpus: 107 rules in `eval/corpora/rules_global.txt`, one fixture file per event (`pre_tool_use.json`, `workflow.json`, `stop.json`, `subagent_start.json`)
+- Tagged corpus: `eval/corpora/rules_global_tagged.json` — 60 tool_use, 44 workflow, 3 both (ground truth for affinity accuracy measurement)
+- CLI UX: `cuecard configure`, `cuecard serve` daemon, expand progress bar
+- Hook format: correct `hookEventName` + `permissionDecision`, `hook_event_name` input field detection
+- Global install (`uv tool install`) + `cuecard hook` CLI entry point
+- Live validation in real Claude Code sessions
+- **Session 31 cleanup:** PostToolUse removed from active events (over-triggers; PreToolUse already covers prevention); basic.json → pre_tool_use.json; stop_mined.json merged into stop.json; one file per event
+
+**Pending / In flight:**
+- Phase 6 Completion Gate: PRD converged (v1.2). Stop hook reads `last_assistant_message` + `transcript_path`, always blocks up to `max_stop_blocks`. Implementation pending.
+- Phase 7 Rule Quality: trigger-aware rule rewriting ("When X: do Y — because Z"). 63/107 done (PreToolUse subset), 44 workflow rules remaining.
+- Publish to PyPI
+- Multi-source parsing (markdown, YAML, CLAUDE.md): DRAFT PRD (`artifacts/phase5-multi-source-prd-draft.md`)
 
 ## Event Types
 
-cuecard supports five Claude Code hook events (closed-loop enforcement):
+cuecard supports four Claude Code hook events (closed-loop enforcement). PostToolUse was intentionally removed — it over-triggered with the current retrieval pipeline, and PreToolUse already covers the prevention use case. It may return later with tighter post-action matching.
 
 - **PreToolUse**: Before each tool call. PREVENT — inject action constraints.
-- **PostToolUse**: After each tool call. VERIFY — check compliance against output.
 - **UserPromptSubmit**: When user sends a message. GUIDE — process/methodology rules.
 - **SubagentStart**: When a subagent spawns. PROPAGATE — rules for delegated work.
 - **Stop**: When a turn ends. AUDIT — verify rules were followed.
 
 All event types use the same pipeline. The adapter dispatches to per-event handlers that construct queries:
 - PreToolUse: `"{tool_name}: {tool_input[:500]}"`
-- PostToolUse: `"PostToolUse:{tool_name}: {tool_input[:200]} → {scrub_secrets(tool_output[:500])}"`
 - UserPromptSubmit: `"UserPromptSubmit: {prompt[:500]}"`
 - SubagentStart: `"SubagentStart:{agent_type}: {prompt[:500]}"`
 - Stop (current): `"Stop: {stop_reason[:500]}"` (fallback: "turn completed") — minimal context
@@ -381,7 +452,7 @@ All event types use the same pipeline. The adapter dispatches to per-event handl
 - `session_id` — session identifier
 - Stop output uses flat `{"decision": "block", "reason": "..."}` NOT `hookSpecificOutput` wrapper
 
-PostToolUse, SubagentStart, and Stop all apply `scrub_secrets()` before query construction.
+SubagentStart and Stop both apply `scrub_secrets()` before query construction.
 
 ### Hook Output Format (CRITICAL)
 
@@ -407,40 +478,37 @@ Claude Code hooks require specific JSON output formats per event type:
 
 ## LLM Reranker Setup
 
-For llm-local mode (best quality):
+Default: Gemma-4-E4B — see **Gemma 4 E4B Setup** above for the canonical launch command.
+
+Alternative models (historical — keep for reference, not benchmarked in session 31+):
 ```bash
-# Recommended: Qwen3.5-9B (matches 35B on basic, 4x smaller)
-llama-server -m ~/models/Qwen3.5-9B-Q4_K_M.gguf \
-  --port 8081 -ngl 99 -c 16384 --jinja
+# Qwen3.5-9B — lower PosRecall than Gemma, similar F2
+llama-server -m ~/models/Qwen3.5-9B-Q4_K_M.gguf --port 8081 -ngl 99 -c 16384 --jinja
 
-# Alternative: Qwen3.5-35B-A3B (best workflow recall, needs 32GB GPU)
-llama-server -m ~/models/Qwen3.5-35B-A3B-Q4_K_M.gguf \
-  --port 8081 -ngl 99 -c 16384 --jinja
-
-# CPU/laptop: Qwen3.5-4B (2.6GB, 856ms p50)
-llama-server -m ~/models/Qwen3.5-4B-Q4_K_M.gguf \
-  --port 8081 -ngl 0 -c 16384 --jinja
+# Qwen3.5-4B — CPU/laptop viable, 2.6GB
+llama-server -m ~/models/Qwen3.5-4B-Q4_K_M.gguf --port 8081 -ngl 0 -c 16384 --jinja
 ```
 
-Key requirements:
+Key requirements (apply to all models):
 - `--jinja` flag — required for Gemma's chat template
 - `--reasoning off` — disables thinking server-side, eliminates `chat_template_kwargs` overhead
 - `-np 5` — 5 parallel slots (19660 tokens/slot with `-c 98304`)
 - `-c 98304` — total context (~20GB VRAM with model)
-- `_MAX_TOKENS=1024` — reasoning-in-response needs room for 3-5 sentence analysis
+- `LLM_MAX_TOKENS=1024` — reasoning-in-response needs room for 3-5 sentence analysis
 - Reasoning captured in `LLMParseResult.reasoning` for debugging
 - Reranker passes `stop=None` to `call_local()` — no stop sequence for JSON responses
 - Expander keeps default `stop=("\n\n",)` to prevent repetition degeneration
 
-### Prompt Engineering
-- System prompt has 13 few-shot examples (7 original + 6 from loss analysis)
-- Guidelines use reasoning principles ("does this change code/state?") not hardcoded command lists
-- "When in doubt, include" — false negatives worse than false positives
-- Loss analysis: `artifacts/llm-reranker-loss-analysis-2026-04-02.md`
+### Prompt Engineering (session 31)
+- System prompt has 13 few-shot examples with strict trigger semantics
+- Principles (in order): what-could-go-wrong → think-one-step-ahead → read-only-needs-no-rules → match-actions-not-keywords → inspect-code-content → **don't-fire-rules-already-followed** → **trigger-conditions-are-strict** → **when-in-doubt-exclude**
+- "When in doubt, exclude" replaced the older "when in doubt, include" (session 31) — precision over recall for the tool-use pipeline
+- Rules are preventive, not congratulatory (e.g. `uv run mypy` does NOT fire the "run mypy before commit" rule)
+- Trigger verbs are matched strictly: "When running git commit" does NOT fire on `git rebase`, `git diff`, `git merge`, `git tag`
 
-### Expansion Prompt
+### Expansion Prompt (v5 + v4 format)
 - Reasoning-field prompt: model reasons about vocabulary gap before generating expansions
-- Variable 3-10 expansions based on rule complexity
+- v4 format: balanced abstract concept tags + specific tool-name examples (`ceil(max/2)` abstract + `floor(max/2)` specific)
 - Cross-domain boundary enforcement (PreToolUse vs UserPromptSubmit)
 - Semantic dedup (cosine > 0.85) removes near-duplicate expansions
 
@@ -466,89 +534,59 @@ Note: `mean_recall` still includes negatives as 0.0 for backwards compatibility.
 
 ## Quality Benchmarks
 
-### With v5 Expansions (reasoning-field prompt, 20% sample, seed=42, jina-code + LLM, 2026-04-04)
+### Current Baseline (session 33 — Gemma-4-E4B, all 4 tiers traced, 20% sample, seed=42)
 
-| Model | Basic F2 | Basic PosRecall | Basic Noise | Basic NegSil | p50ms | p95ms |
-|-------|---------|-----------------|-------------|--------------|-------|-------|
-| **35B** | **0.808** | 0.808 | **0.205** | **0.889** | 1274ms | **1718ms** |
-| 9B | 0.762 | **0.832** | 0.316 | 0.815 | 1350ms | 3440ms |
+**Corpus:** `eval/corpora/rules_global.txt` (107 rules) · **Cache:** `enriched_gemma-e4b-s32/`
+**Pipeline:** dense (jina-code-v2) → event mask → LLM reranker (Gemma-4-E4B, 13 few-shot, "when in doubt, exclude")
 
-| Model | Workflow F2 | Workflow PosRecall | Workflow Noise | Workflow NegSil |
-|-------|-------------|-------------------|----------------|-----------------|
-| **35B** | **0.632** | **0.621** | **0.406** | 0.750 |
-| 9B | 0.604 | 0.576 | 0.439 | 0.750 |
+| Tier | N | F2 | PosRecall | Noise | NegSil | p50ms |
+|------|--:|----:|---------:|------:|-------:|------:|
+| **pre_tool_use** (PreToolUse) | 87 | **0.662** | 0.764 | 0.391 | 0.634 | 3025 |
+| **workflow** (UserPromptSubmit) | 41 | **0.689** | 0.449 | 0.317 | 0.913 | 2756 |
+| **stop** (Stop) | 33 | **0.556** | 0.474 | 0.460 | 0.714 | 2833 |
+| **subagent_start** (SubagentStart) | 33 | **0.398** | 0.857 | 0.704 | 0.211 | 2892 |
 
-**Per-tier basic (seed=42):**
-| Tier | 9B F2 | 35B F2 | Gap |
-|------|------:|-------:|----:|
-| Easy | 0.880 | 0.888 | tie |
-| Medium | 0.707 | **0.817** | 35B +11 |
-| Hard | **0.581** | 0.438 | **9B +14** |
-| Negative | 0.815 | **0.889** | 35B +7 |
+**Event mask (rules visible after inferred affinity):**
+- PreToolUse: 64/107 (43 masked)
+- UserPromptSubmit, Stop, SubagentStart: 45/107 each (62 masked) — binary affinity lumps all three workflow events together, so they see an identical rule set.
 
-**Key findings (apples-to-apples, same corpus + seed)**:
-- Real gap is ~5 pts F2 on basic, ~3 pts on workflow — much smaller than older cached numbers suggested
-- **The gap is noise, not recall.** 9B actually beats 35B on PosRecall; 35B wins via discrimination
-- **9B wins hard-tier (+14 pts)**, 35B wins medium-tier (+11 pts). 35B is conservative; that helps medium, hurts hard
-- 9B p95 latency is 2x worse (tail risk). 35B more predictable
+**Stage latency (median):** retrieval ~40ms · LLM reranker ~2800ms. LLM dominates end-to-end.
 
-Cross-encoder (MiniLM) is a regression on code — skip it. Use llm-local or llm-haiku.
+**Known gaps (from traces at `eval/results/gemma-e4b-s32-traced-seed42/`):**
+- SubagentStart is the worst tier — Noise 0.704, NegSil 0.211. Planner/architect/tdd-guide rules fire on every subagent, including pure-observation ones.
+- Stop has embedding recall failures — rules phrased imperatively don't retrieve on past-tense queries (`stop-sensitive-file-created` missed rotate-secrets rule at stage 1).
+- Reranker drops correct rules it saw in stage 1 (`mined-git-add-commit-no-verify` dropped 2 of 4 matches) — "when in doubt, exclude" slightly over-tuned for multi-rule scenarios.
+- Rule-keyword drift on test runners: `vitest`, `jest`, `npx jest --coverage` all trigger the pytest-specific "5s suite" rule.
 
-**Historical (stale — different corpus, pre-v5 expansions)**: 35B basic 0.750, 9B basic 0.682, etc. See session 19 notes.
+### Traced Benchmark Artifacts
 
-### Expansion Validation (hand-crafted, 8 hard fixtures)
+`tools/bench_e2e.py` produces a full debug bundle per run at `eval/results/{label}-traced-seed{seed}/`:
 
-| Metric | Raw | With Expansions | Delta |
-|--------|-----|-----------------|-------|
-| Avg cosine similarity | 0.187 | 0.558 | +0.371 |
-| Threshold crossings (N→Y) | — | 10/12 pairs | — |
+- `report.md` — metrics tables, stage latencies, top FNs/FPs/noisy TPs with stage-1 candidates and LLM reasoning
+- `summary.json` — machine metrics per tier
+- `config.json` — run config (label, seed, corpus path, endpoint)
+- `traces/{tier}/{fixture_id}.json` — per-fixture: pipeline stages, event mask stats (`embeddings_masked` vs rule-level `rules_masked`), stage-1 candidates with scores, LLM prompt + raw response + reasoning + selected indices, final metrics, classification (`tp_exact`/`tp_noisy`/`partial`/`fn`/`fp`/`tn`)
+- `llm_calls.jsonl` — flat per-call log of every LLM interaction
 
-LLM-generated expansions (v2 prompt): 8/12 threshold crossings, avg delta +0.276.
+Every run is reproducibly debuggable without re-invoking the LLM. Tracing is achieved by monkey-patching `llm_reranker.rerank_llm` with thread-local fixture-ID correlation — core pipeline/harness code is untouched.
 
-### With 109-Rule Corpus (session 24, 40% sample, seed=42, Gemma E4B, jina-code + LLM + event mask)
+### Archived Benchmarks
 
-**Corpus:** `eval/corpora/rules_global.txt` (109 rules — global + basic + workflow unified)
-**Fixtures:** 831 total (486 pos, 345 neg), verified in 4 rounds
-**Pipeline:** dense + sparse + RRF (top_k=12, threshold=0.25) → LLM reranker (16 examples, category-aware) → event mask (binary affinity)
+Older multi-model and per-session benchmark tables are preserved in `artifacts/evaluation-history.md` and `artifacts/project-history.md`. They compared Qwen 4B/9B/35B and earlier prompt iterations and are NOT directly comparable to the current baseline.
 
-| Event | F2 | PosRecall | Noise | NegSil | p50ms |
-|-------|------|-----------|-------|--------|-------|
-| PreToolUse | 0.566 | 0.319 | 0.408 | 0.523 | 1415 |
-| UserPromptSubmit | 0.618 | 0.444 | 0.384 | 0.833 | 1402 |
-| PostToolUse | 0.528 | 0.415 | 0.493 | 0.316 | 1472 |
-| Stop | 0.426 | 0.414 | 0.595 | 0.100 | 1457 |
-| SubagentStart | 0.248 | 0.296 | 0.814 | 0.000 | 1522 |
+### Quality Gap Analysis (still valid, sessions 25–31)
 
-**Key findings (109 rules vs 32 rules):**
-- 3.4x corpus expansion caused ~30% F2 drop — expected, more rules = harder discrimination
-- Event mask helps PreToolUse +3% F2 and PostToolUse +3% F2 (noise reduction)
-- Prompt tuning (category awareness, 3 new negative examples) recovered +5-8% on PreToolUse/Workflow
-- Compliance-as-violation was the #1 fixture error — 25 false positives removed in R3
-- Binary affinity classification (tool_use/workflow with golden examples) >> 5-event classification
+**Affinity is not the bottleneck.** Inferred affinity matches ground truth at ~90% accuracy; the remaining mismatches are genuinely borderline. Affinity mask gives PreToolUse ~28% rule reduction (tool_use + both).
 
-**Reranker prompt changes (session 24):**
-- Replaced "when in doubt, include" with category-aware guidance (concrete=include, process=exclude on tool events)
-- Added 3 negative examples: process-rules-excluded-from-pytest, LLM-rules-excluded-from-edit, high-candidate-discrimination-on-git-diff
-- Added RULE CATEGORIES section mapping rule types to event types
-- Reduced LLM candidate input from top_k=20/threshold=0.20 to top_k=12/threshold=0.25
+**The bottleneck is embedding/expansion quality.** Session 26 `top_k=30` diagnostic showed only +0.8% recall improvement over `top_k=5` — correct rules simply never reach the reranker because they aren't in the embedding neighborhood of the query.
 
-### Quality Gap Analysis (session 25)
+**Root cause: rule text is the only retrieval signal.** Rules that describe WHAT but not WHEN match every topically-similar query. "Run convergence reviews" matches everything about reviews/quality. "After completing an implementation phase: run convergence reviews" matches specifically. This drives Phase 7 (trigger-aware rule rewriting).
 
-**Affinity accuracy:** 86.2% (after ground truth correction — 20 rules re-tagged workflow→both). Remaining 15 mismatches are genuinely borderline. Affinity is NOT the bottleneck.
-
-**Affinity mask impact:** Applied post-scoring (`scores[~mask] = -inf`) in both dense and sparse retrievers. PreToolUse gets 78/109 rules (28% reduction). Workflow events get ALL 109 rules (no reduction). The binary classification helps PreToolUse but doesn't help workflow events.
-
-**Pipeline bottleneck (verified — session 26 top_k=30 diagnostic):**
-- top_k=5 vs top_k=30: only +0.8% recall improvement
-- **Bottleneck is embedding/expansion quality, NOT the LLM reranker**
-- Correct rules never reach the reranker — they're not in the embedding neighborhood
-- Path forward: better expansions, richer queries (Phase 6), or better embedding model
-
-**Root cause: rule text is the only retrieval signal.** Rules that describe WHAT but not WHEN match every topically-similar query. "Run convergence reviews" matches everything about reviews/quality. "After completing an implementation phase: run convergence reviews" matches specifically.
-
-**Planned fix (Phase 7):** Rewrite all 109 rules with trigger conditions ("When X: do Y — because Z"). Adds tool names and action context as vocabulary for embeddings. Target: PreToolUse F2 ≥0.666 (+10 pts). 63/109 rules rewritten (PreToolUse subset), remaining 46 in progress.
-
-**Fixture realism (session 25):** 831→984 fixtures. Stop fixtures use realistic `"Stop: end_turn"`. PostToolUse: 3 compliance-as-violation fixes. SubagentStart: trimmed over-specification. All events rebalanced to 46-53% positive. +41 mined Stop fixtures in Phase 6 format.
+**Session 31 discoveries:**
+- Baseline F2 can be inflated by *coordinated wrongness* (fixtures + LLM wrong in the same direction). Strict trigger-condition audits revealed true F2.
+- Few-shot examples override principles — principles said "strict" but examples showed loose matching → LLM followed examples. Tune both.
+- BM25 sparse adds almost nothing when dense is code-specific (jina-code-v2) — disabled in eval by default.
+- Query expansion (tag-to-tag matching) works in isolation (+0.019 F2) but loses net by displacing specific tool-shaped expansions — disabled by default.
 
 ## Benchmarking Guidelines
 
@@ -556,37 +594,36 @@ LLM-generated expansions (v2 prompt): 8/12 threshold crossings, avg delta +0.276
 
 ### Running E2E Benchmarks
 ```bash
-# Standard benchmark (20% sample, reuses cached expansions)
+# Standard benchmark (20% sample, reuses cached expansions if present)
 uv run python tools/bench_e2e.py \
   --model-path ~/models/gemma-4-E4B-it-Q8_0.gguf \
   --label gemma-e4b --no-server --sample-ratio 0.20 --seed 42
 
-# Fresh benchmark (regenerates expansions — slow, ~15 min)
+# Single tier only (faster iteration)
+uv run python tools/bench_e2e.py \
+  --model-path ~/models/gemma-4-E4B-it-Q8_0.gguf \
+  --label gemma-e4b --no-server --sample-ratio 0.20 --seed 42 \
+  --tiers pre_tool_use
+
+# Fresh benchmark (regenerates affinity + expansions — slow, ~2 min for 107 rules)
 uv run python tools/bench_e2e.py \
   --model-path ~/models/gemma-4-E4B-it-Q8_0.gguf \
   --label gemma-e4b-fresh --no-server --force-expand --sample-ratio 0.20 --seed 42
 ```
 
+Tiers: `pre_tool_use`, `workflow`, `stop`, `subagent_start`
+
 ### Rules for Valid Benchmarks
-1. **Each model generates its own expansions.** Never share corpora between models — shared-corpus comparisons unfairly bias toward the expansion-generator. Use `--force-expand` with a unique `--label` per model.
+1. **Each model generates its own expansions + affinity.** Never share corpora between models — shared-corpus comparisons unfairly bias toward the expansion-generator. Use `--force-expand` with a unique `--label` per model.
 2. **Always use inferred affinity, never ground truth.** The benchmark infers affinity via LLM at runtime. Ground truth labels (`rules_global_tagged.json`) are for accuracy measurement only — using them for event masking is data leakage.
-3. **Use `--no-server` with an existing llama-server.** The benchmark doesn't start/stop servers. Start `llama-server` manually first (see LLM Reranker Setup above).
+3. **Use `--no-server` with an existing llama-server.** The benchmark doesn't start/stop servers. Start `llama-server` manually first (see Gemma 4 E4B Setup above).
 4. **Same seed for comparison.** Always `--seed 42` when comparing models/configs. Different seeds produce different fixture samples.
-5. **`--sample-ratio 0.20` for iteration, `1.0` for final numbers.** 20% is fast (~3 min) but n=87 for PreToolUse. Full dataset for publication-grade numbers.
-6. **Pipeline stages run in order:** embedding (dense+sparse+RRF) → LLM reranker → affinity mask. To isolate stages, run with `mode="embedding"` (stage 1 only) vs `mode="llm-local"` (all stages).
+5. **`--sample-ratio 0.20` for iteration, `1.0` for final numbers.** 20% gives n=87 for PreToolUse (~50s per tier). Full dataset for publication-grade numbers.
+6. **Pipeline stages run in order:** dense retrieval (+optional sparse) → RRF fusion → event mask → LLM reranker. To isolate stages, run with `mode="embedding"` (stage 1 only) vs `mode="llm-local"` (all stages).
 7. **Results saved to** `eval/results/{label}-e2e-seed{seed}.json`
+8. **Phase 0/1 regenerate on every run.** Affinity inference always runs fresh. Expansions are cached at `eval/corpora/enriched_{label}/rules.json` — reused unless `--force-expand`.
 
-### Latest Baseline (session 29, Gemma E4B, inferred affinity, 20% sample, seed=42)
-
-| Event | F2 | PosRecall | Noise | NegSil |
-|-------|------|-----------|-------|--------|
-| PreToolUse | 0.547 | 0.624 | 0.492 | 0.523 |
-| UserPromptSubmit | 0.616 | 0.616 | 0.396 | 0.652 |
-| PostToolUse | 0.577 | 0.808 | 0.532 | 0.462 |
-| Stop | 0.425 | 0.333 | 0.619 | 0.571 |
-| SubagentStart | 0.362 | 0.643 | 0.727 | 0.263 |
-
-Affinity accuracy: 90.7% (97/107 vs ground truth)
+The single authoritative Latest Baseline lives in the **Quality Benchmarks → Current Baseline** section above.
 
 ## When in Doubt
 

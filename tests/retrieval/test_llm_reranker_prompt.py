@@ -42,8 +42,10 @@ class TestBuildPrompt:
         candidates = _make_candidates(1)
         system, _ = _build_prompt(candidates, "test", "nonce1")
         assert "HOW TO DECIDE:" in system
-        assert "When in doubt, include" in system
+        assert "When in doubt, exclude" in system
         assert "Think one step ahead" in system
+        assert "Don't fire rules the agent is already following" in system
+        assert "Trigger conditions are strict" in system
 
     def test_system_prompt_has_empty_rules_example(self) -> None:
         """Prompt shows the model how to return empty rules array."""

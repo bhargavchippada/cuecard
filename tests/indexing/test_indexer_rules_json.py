@@ -263,7 +263,7 @@ class TestRulesJsonV2:
                     file="/tmp/rules.toml", line_start=1, line_end=1,
                     chunk_type="toml_rule",
                 ),
-                events=frozenset({"PreToolUse", "PostToolUse"}),
+                events=frozenset({"PreToolUse", "Stop"}),
                 tools=frozenset({"Bash"}),
             ),
             Rule(
@@ -281,7 +281,7 @@ class TestRulesJsonV2:
         assert result is not None
         loaded, _aff = result
         assert len(loaded) == 2
-        assert loaded[0].events == frozenset({"PreToolUse", "PostToolUse"})
+        assert loaded[0].events == frozenset({"PreToolUse", "Stop"})
         assert loaded[0].tools == frozenset({"Bash"})
         assert loaded[1].events == frozenset()
         assert loaded[1].tools == frozenset()
@@ -328,7 +328,7 @@ class TestRulesJsonV2:
             version=1, mode="strict", model="test",
             affinities=(
                 (h0, RuleAffinity(
-                    events=frozenset({"PreToolUse", "PostToolUse"}),
+                    events=frozenset({"PreToolUse", "Stop"}),
                     tools=frozenset(), source="explicit", reasoning="tool rule",
                 )),
                 (h1, RuleAffinity(
@@ -350,7 +350,7 @@ class TestRulesJsonV2:
 
         # Verify affinity content
         aff_lookup = dict(loaded_aff.items)
-        assert aff_lookup[h0].events == frozenset({"PreToolUse", "PostToolUse"})
+        assert aff_lookup[h0].events == frozenset({"PreToolUse", "Stop"})
         assert aff_lookup[h0].source == "explicit"
         assert aff_lookup[h1].events == frozenset({"UserPromptSubmit", "Stop"})
 

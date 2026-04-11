@@ -93,7 +93,7 @@ def _make_tier_summary(
 # ---------------------------------------------------------------------------
 
 _EVENT_ORDER = (
-    "PreToolUse", "PostToolUse", "UserPromptSubmit",
+    "PreToolUse", "UserPromptSubmit",
     "SubagentStart", "Stop",
 )
 

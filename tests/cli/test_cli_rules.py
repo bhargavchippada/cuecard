@@ -565,3 +565,62 @@ class TestTruncateRule:
         result = _truncate_rule("a" * 20, max_len=10)
         assert len(result) == 10
         assert result.endswith("...")
+
+
+
+class TestExpandCachedRulesJson:
+    def test_expand_preserves_cached_expansions_from_rules_json(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        import cuecard.cli.rules as rules_cli
+        from cuecard.models import PipelineConfig, ResolvedConfig
+
+        rules_path = tmp_path / "rules.txt"
+        rules_path.write_text("Rule A\n")
+
+        cfg = ResolvedConfig(
+            source_paths=(str(rules_path),),
+            global_source_paths=(str(rules_path),),
+            project_source_paths=(),
+            global_cache_dir=str(tmp_path / "cache"),
+            pipeline=PipelineConfig(),
+        )
+
+        parsed = [
+            Rule(
+                text="Rule A",
+                provenance=Provenance(file=str(rules_path), line_start=1, line_end=1),
+            ),
+        ]
+        cached = [
+            Rule(
+                text="Rule A",
+                provenance=Provenance(file=str(rules_path), line_start=1, line_end=1),
+                expansions=("cached",),
+            ),
+        ]
+
+        monkeypatch.setattr("cuecard.cli.main._load_config_or_exit", lambda **_: cfg)
+        monkeypatch.setattr(
+            rules_cli._cli,
+            "_iter_scoped_sources",
+            lambda _cfg: [("global", str(tmp_path / "cache"), (str(rules_path),))],
+        )
+
+        with (
+            patch("cuecard.indexing.parser.parse_rules", return_value=parsed),
+            patch(
+                "cuecard.indexing.indexer.load_rules_json",
+                return_value=(cached, None),
+            ),
+            patch("cuecard.indexing.indexer.save_rules_json") as mock_save,
+            patch(
+                "cuecard.cli.rules._expand_with_progress",
+                side_effect=lambda rules, **k: rules,
+            ),
+        ):
+            result = runner.invoke(app, ["rules", "expand", "--dry-run"])
+
+        assert result.exit_code == 0
+        saved_rules = mock_save.call_args.args[0]
+        assert saved_rules[0].expansions == ("cached",)

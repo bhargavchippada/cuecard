@@ -748,6 +748,15 @@ class TestClaudeSettingsHelpers:
         path = tmp_path / "nonexistent.json"
         assert _load_claude_settings(path) == {}
 
+    def test_load_malformed_raises_exit(self, tmp_path: Path) -> None:
+        from cuecard.cli.hooks import _load_claude_settings
+
+        path = tmp_path / "settings.json"
+        path.write_text("{bad json")
+        with pytest.raises(Exception) as exc_info:
+            _load_claude_settings(path)
+        assert exc_info.type.__name__ == "Exit"
+
     def test_has_hook_bad_hooks_type(self) -> None:
         from cuecard.cli.hooks import _has_cuecard_hook
 

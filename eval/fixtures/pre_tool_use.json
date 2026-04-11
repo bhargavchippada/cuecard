@@ -4,8 +4,11 @@
     "query": "Bash: git commit -m 'fix auth bug'",
     "corpus": "rules_global.txt",
     "should_match": [
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
       "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
-      "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
+      "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless",
+      "When finishing an implementation phase or milestone (Bash: git commit): commit after each phase \u2014 atomic tested commits prevent compound debt, enable bisection for regressions, and give reviewers digestible chunks instead of monolithic diffs"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -18,9 +21,10 @@
     "query": "Bash: git commit -m 'add feature'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
+      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless",
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [
       "When writing concurrent I/O code with threads (Edit, Write): use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
@@ -73,11 +77,13 @@
     "id": "edit-python-file",
     "query": "Edit: {\"file_path\": \"src/auth.py\", \"old_string\": \"def login\", \"new_string\": \"def login_user\"}",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
+    ],
     "should_not_match": [
       "Never force-push to main or master branch \u2014 force-push overwrites other developers' commits with no recovery path"
     ],
-    "difficulty": "negative",
+    "difficulty": "easy",
     "event": "PreToolUse"
   },
   {
@@ -123,7 +129,9 @@
     "id": "run-tests",
     "query": "Bash: uv run pytest --cov=myapp",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests"
+    ],
     "should_not_match": [
       "Never force-push to main or master branch \u2014 force-push overwrites other developers' commits with no recovery path"
     ],
@@ -174,11 +182,13 @@
     "id": "new-branch",
     "query": "Bash: git checkout -b feature/add-login",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When starting feature work (Bash: git checkout, git branch): always create a new branch \u2014 working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation"
+    ],
     "should_not_match": [
       "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables"
     ],
-    "difficulty": "negative",
+    "difficulty": "easy",
     "event": "PreToolUse"
   },
   {
@@ -196,11 +206,13 @@
     "id": "npm-audit",
     "query": "Bash: npm audit",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When adding new dependencies: review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
+    ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -234,6 +246,7 @@
     "query": "Edit: {\"file_path\": \"src/config.py\", \"new_string\": \"timeout = 30\"}",
     "corpus": "rules_global.txt",
     "should_match": [
+      "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
       "When writing code with literal numbers: extract magic numbers into named constants \u2014 unnamed numbers scattered through code are impossible to find, update consistently, or understand"
     ],
     "should_not_match": [
@@ -247,7 +260,8 @@
     "query": "Edit: {\"file_path\": \"src/processor.py\", \"new_string\": \"def process_all_data(data, config, options, flags, params):\"}",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When a function exceeds 50 lines (Edit, Write): split it \u2014 large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes. Keep files under 800 lines (400 preferred)"
+      "When a function exceeds 50 lines (Edit, Write): split it \u2014 large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes. Keep files under 800 lines (400 preferred)",
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
     "should_not_match": [
       "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
@@ -310,7 +324,8 @@
     "query": "Edit: {\"file_path\": \".env.example\", \"old_string\": \"DB_URL=\", \"new_string\": \"DB_URL=postgres://localhost:5432/mydb\"}",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
+      "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
+      "When creating or writing sensitive files (keys, configs, tokens, .env, credentials) via Bash or Write: set file permissions to 0o600 \u2014 world-readable secrets are the most common cloud breach vector"
     ],
     "should_not_match": [
       "When writing concurrent I/O code with threads (Edit, Write): use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
@@ -413,11 +428,13 @@
     "id": "docker-build",
     "query": "Bash: docker build -t myapp:latest .",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When running build commands or adding generated output directories: add .gitignore entries for generated files and build artifacts \u2014 committed artifacts bloat the repo and cause merge conflicts on every build"
+    ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -447,7 +464,8 @@
     "query": "Bash: npm install express",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When adding new dependencies: review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
+      "When adding new dependencies: review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for",
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting \u2014 unvetted dependencies become permanent tech debt"
     ],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
@@ -460,7 +478,8 @@
     "query": "Bash: cargo add serde --features derive",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When adding new dependencies: review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
+      "When adding new dependencies: review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for",
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting \u2014 unvetted dependencies become permanent tech debt"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -473,7 +492,8 @@
     "query": "Bash: go get github.com/gin-gonic/gin",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When adding new dependencies: review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
+      "When adding new dependencies: review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for",
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting \u2014 unvetted dependencies become permanent tech debt"
     ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
@@ -485,39 +505,33 @@
     "id": "jest-test",
     "query": "Bash: npx jest --coverage",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
-    ],
+    "should_match": [],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
     "id": "vitest-run",
     "query": "Bash: npx vitest run --reporter=verbose",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
     "id": "cargo-test",
     "query": "Bash: cargo test -- --nocapture",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
-    ],
+    "should_match": [],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
@@ -638,11 +652,13 @@
     "id": "chown-system-file",
     "query": "Bash: chown root:root /etc/nginx/nginx.conf",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When creating or writing sensitive files (keys, configs, tokens, .env, credentials) via Bash or Write: set file permissions to 0o600 \u2014 world-readable secrets are the most common cloud breach vector"
+    ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -650,7 +666,7 @@
     "query": "Bash: curl -H 'Authorization: Bearer sk-live-abc123' https://api.example.com/data",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
+      "When calling external APIs: log every call with latency, status code, and response size \u2014 without observability, production debugging becomes guesswork and intermittent failures go undetected"
     ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
@@ -673,11 +689,13 @@
     "id": "write-to-etc",
     "query": "Write: {\"file_path\": \"/etc/cron.d/backup\", \"content\": \"0 * * * * root /opt/backup.sh\"}",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When creating or writing sensitive files (keys, configs, tokens, .env, credentials) via Bash or Write: set file permissions to 0o600 \u2014 world-readable secrets are the most common cloud breach vector"
+    ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -721,11 +739,13 @@
     "id": "async-code",
     "query": "Edit: {\"file_path\": \"src/client.py\", \"new_string\": \"async def fetch_data(url: str) -> dict:\\n    async with aiohttp.ClientSession() as session:\"}",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When writing code that opens files, database connections, or HTTP sessions (Edit, Write): always close them after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
+    ],
     "should_not_match": [
       "Never force-push to main or master branch \u2014 force-push overwrites other developers' commits with no recovery path"
     ],
-    "difficulty": "negative",
+    "difficulty": "easy",
     "event": "PreToolUse"
   },
   {
@@ -759,7 +779,9 @@
     "id": "gitignore-update",
     "query": "Edit: {\"file_path\": \".gitignore\", \"old_string\": \"node_modules/\", \"new_string\": \"node_modules/\\ndist/\\n.env\"}",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When running build commands or adding generated output directories: add .gitignore entries for generated files and build artifacts \u2014 committed artifacts bloat the repo and cause merge conflicts on every build"
+    ],
     "should_not_match": [
       "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables"
     ],
@@ -798,6 +820,7 @@
     "query": "Edit: {\"file_path\": \"src/state.py\", \"new_string\": \"state['items'].append(new_item)\\nstate['count'] += 1\"}",
     "corpus": "rules_global.txt",
     "should_match": [
+      "When writing functions that receive mutable arguments (Edit, Write): never mutate function arguments or shared state \u2014 mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere",
       "When writing data structures or containers (Edit, Write): prefer immutable data structures over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency"
     ],
     "should_not_match": [
@@ -810,11 +833,13 @@
     "id": "secret-rotation",
     "query": "Bash: grep -r 'AKIA' . --include='*.py'",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When discovering exposed credentials in code, logs, or git history (Bash: git log, git diff, Read): rotate any secrets that may have been exposed \u2014 exposed credentials remain valid until rotated, giving attackers a persistent access window"
+    ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -860,35 +885,35 @@
     "id": "proper-except-handling",
     "query": "Edit: {\"file_path\": \"src/service.py\", \"new_string\": \"try:\\n    result = api_call()\\nexcept Exception as e:\\n    logger.error('API failed: %s', e)\\n    raise\"}",
     "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [
+    "should_match": [
       "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
     ],
-    "difficulty": "negative",
+    "should_not_match": [],
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
     "id": "env-var-read",
     "query": "Edit: {\"file_path\": \"src/config.py\", \"new_string\": \"db_url = os.getenv('DB_URL', 'sqlite:///default.db')\"}",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
+    ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
     "id": "git-merge-feature",
     "query": "Bash: git merge feature/payments --no-ff",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
-    ],
+    "should_match": [],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "hard",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
@@ -897,7 +922,8 @@
     "corpus": "rules_global.txt",
     "should_match": [
       "When adding new dependencies: review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for",
-      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
+      "When running build commands or adding generated output directories: add .gitignore entries for generated files and build artifacts \u2014 committed artifacts bloat the repo and cause merge conflicts on every build"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -950,8 +976,8 @@
     "query": "Edit: {\"file_path\": \"src/auth.py\", \"new_string\": \"password = \\\"admin123\\\"\\ndb_pass = \\\"supersecret\\\"\"}",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
-      "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
+      "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
+      "When creating or writing sensitive files (keys, configs, tokens, .env, credentials) via Bash or Write: set file permissions to 0o600 \u2014 world-readable secrets are the most common cloud breach vector"
     ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
@@ -975,8 +1001,8 @@
     "query": "Write: {\"file_path\": \"tests/test_auth.py\", \"content\": \"import pytest\\nfrom myapp.auth import login\\n\\ndef test_login_success():\\n    assert login('user', 'pass')\"}",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
-      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests"
     ],
     "should_not_match": [
       "Never force-push to main or master branch \u2014 force-push overwrites other developers' commits with no recovery path"
@@ -1000,8 +1026,10 @@
     "query": "Edit: {\"file_path\": \"src/config.py\", \"new_string\": \"class Config:\\n    items = []\\n    settings = {}\\n    def add(self, item):\\n        self.items.append(item)\"}",
     "corpus": "rules_global.txt",
     "should_match": [
+      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
+      "When writing functions that receive mutable arguments (Edit, Write): never mutate function arguments or shared state \u2014 mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere",
       "When writing data structures or containers (Edit, Write): prefer immutable data structures over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency",
-      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -1095,8 +1123,9 @@
     "corpus": "rules_global.txt",
     "should_match": [
       "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
-      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
-      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless",
+      "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
@@ -1110,8 +1139,8 @@
     "query": "Bash: pip install flask && python -m pytest",
     "corpus": "rules_global.txt",
     "should_match": [
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests",
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
       "When adding new dependencies: review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
     ],
     "should_not_match": [
@@ -1141,15 +1170,13 @@
     "query": "Bash: ruff check src/ && mypy src/ && git commit -m 'refactor: clean up types'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
-      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
-      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
       "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
-    "difficulty": "easy",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -1187,7 +1214,6 @@
     "query": "Bash: cat .env | grep API_KEY && sed -i 's/API_KEY=.*/API_KEY=new_value/' .env",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
       "When creating or writing sensitive files (keys, configs, tokens, .env, credentials) via Bash or Write: set file permissions to 0o600 \u2014 world-readable secrets are the most common cloud breach vector"
     ],
@@ -1203,8 +1229,7 @@
     "query": "Bash: git rebase -i HEAD~3 && git push --force origin main",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Never force-push to main or master branch \u2014 force-push overwrites other developers' commits with no recovery path",
-      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "Never force-push to main or master branch \u2014 force-push overwrites other developers' commits with no recovery path"
     ],
     "should_not_match": [
       "When starting feature work (Bash: git checkout, git branch): always create a new branch \u2014 working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation",
@@ -1218,11 +1243,7 @@
     "query": "Bash: pip install -r requirements.txt && pytest --cov=src && ruff check . && git commit -am 'fix: resolve test failures'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
-      "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
-      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
-      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -1250,7 +1271,9 @@
     "query": "Edit: old_string='@app.route(\"/users\", methods=[\"GET\"])\ndef get_users():\n    return jsonify(users)' new_string='@app.route(\"/users\", methods=[\"GET\"])\ndef get_users():\n    try:\n        page = request.args.get(\"page\", 1, type=int)\n        per_page = request.args.get(\"per_page\", 20, type=int)\n        query = db.session.query(User).filter(User.active == True)\n        results = query.paginate(page=page, per_page=per_page)\n        return jsonify({\"users\": [u.to_dict() for u in results.items], \"total\": results.total, \"page\": page})\n    except Exception as e:\n        logger.error(f\"Failed to fetch users: {e}\")\n        return jsonify({\"error\": \"Internal server error\"}), 500'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+      "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse",
+      "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
@@ -1263,12 +1286,15 @@
     "id": "long-edit-async-db-handler",
     "query": "Edit: old_string='def process_batch(items):\n    for item in items:\n        db.execute(f\"INSERT INTO results VALUES ({item.id}, {item.value})\")\n    db.commit()' new_string='async def process_batch(items: list[Item]) -> BatchResult:\n    async with db.acquire() as conn:\n        async with conn.transaction():\n            for item in items:\n                await conn.execute(\"INSERT INTO results VALUES ($1, $2)\", item.id, item.value)\n    return BatchResult(processed=len(items))'",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables",
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
+    ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -1276,7 +1302,6 @@
     "query": "Write: file_path='/app/src/config.py' content='import os\n\nDATABASE_URL = \"postgresql://admin:supersecret123@db.internal:5432/prod\"\nREDIS_URL = \"redis://localhost:6379/0\"\nSECRET_KEY = \"my-secret-key-do-not-share\"\nDEBUG = True\nALLOWED_HOSTS = [\"*\"]\nMAX_RETRIES = 3\nTIMEOUT = 30\nAPI_VERSION = \"v2\"\nLOG_LEVEL = os.getenv(\"LOG_LEVEL\", \"INFO\")\n'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
       "When writing code with literal numbers: extract magic numbers into named constants \u2014 unnamed numbers scattered through code are impossible to find, update consistently, or understand",
       "When creating or writing sensitive files (keys, configs, tokens, .env, credentials) via Bash or Write: set file permissions to 0o600 \u2014 world-readable secrets are the most common cloud breach vector"
@@ -1293,7 +1318,7 @@
     "query": "Bash: uv run python -m pytest tests/ -v --cov=src --cov-report=term-missing --cov-fail-under=100 -x --timeout=60 --log-level=DEBUG -k 'not integration and not slow' --tb=short --strict-markers -W error::DeprecationWarning",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests"
     ],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
@@ -1307,9 +1332,10 @@
     "query": "Edit: old_string='class UserService:\n    pass' new_string='class UserService:\n    def __init__(self, db_pool, cache, logger):\n        self.db = db_pool\n        self.cache = cache\n        self.logger = logger\n        self._connection = None\n\n    def get_user(self, user_id):\n        cached = self.cache.get(f\"user:{user_id}\")\n        if cached:\n            return cached\n        row = self.db.execute(f\"SELECT * FROM users WHERE id = {user_id}\")\n        user = User(**row)\n        self.cache.set(f\"user:{user_id}\", user, ttl=300)\n        return user\n\n    def create_user(self, name, email, password):\n        hashed = hashlib.md5(password.encode()).hexdigest()\n        self.db.execute(f\"INSERT INTO users (name, email, password) VALUES (\\''{name}\\'', \\''{email}\\'', \\''{hashed}\\'')\") \n        print(f\"Created user {name}\")\n        return True'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables",
       "Before committing code: remove console.log, print(), and debug statements \u2014 debug output clutters logs, leaks internal state, and makes real errors harder to find in production monitoring",
       "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime",
+      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables",
       "When writing code that opens files, database connections, or HTTP sessions (Edit, Write): always close them after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
     ],
     "should_not_match": [
@@ -1323,12 +1349,14 @@
     "id": "long-write-django-settings",
     "query": "Write: file_path='/app/settings/production.py' content='DATABASES = {\"default\": {\"ENGINE\": \"django.db.backends.postgresql\", \"HOST\": os.getenv(\"DB_HOST\"), \"NAME\": os.getenv(\"DB_NAME\"), \"USER\": os.getenv(\"DB_USER\"), \"PASSWORD\": os.getenv(\"DB_PASS\")}}\nSECRET_KEY = os.getenv(\"DJANGO_SECRET_KEY\")\nCSRF_COOKIE_SECURE = True\nSESSION_COOKIE_SECURE = True\nALLOWED_HOSTS = os.getenv(\"ALLOWED_HOSTS\", \"\").split(\",\")\nSTATIC_ROOT = \"/var/www/static\"\nMEDIA_ROOT = \"/var/www/media\"\nLOGGING = {\"version\": 1, \"handlers\": {\"console\": {\"class\": \"logging.StreamHandler\"}}, \"root\": {\"handlers\": [\"console\"], \"level\": \"WARNING\"}}'",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When creating or writing sensitive files (keys, configs, tokens, .env, credentials) via Bash or Write: set file permissions to 0o600 \u2014 world-readable secrets are the most common cloud breach vector"
+    ],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
-    "difficulty": "negative",
+    "difficulty": "easy",
     "event": "PreToolUse"
   },
   {
@@ -1336,9 +1364,9 @@
     "query": "Bash: curl -s https://api.github.com/repos/org/repo/releases/latest | jq -r '.assets[] | select(.name | endswith(\".tar.gz\")) | .browser_download_url' | xargs wget -q && tar xzf *.tar.gz && cd release-* && pip install -e '.[dev]' && python -m pytest --cov",
     "corpus": "rules_global.txt",
     "should_match": [
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests",
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
-      "When adding new dependencies: review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for",
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When adding new dependencies: review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message",
@@ -1352,8 +1380,9 @@
     "query": "Edit: old_string='try:\n    result = api.call(endpoint, data)\nexcept:\n    pass' new_string='try:\n    result = await api.call(endpoint, validated_data)\nexcept ConnectionError as e:\n    logger.error(\"API connection failed\", extra={\"endpoint\": endpoint, \"error\": str(e)})\n    raise ServiceUnavailableError(f\"Cannot reach {endpoint}\") from e\nexcept ValidationError as e:\n    logger.warning(\"Invalid API response\", extra={\"endpoint\": endpoint, \"error\": str(e)})\n    raise BadGatewayError(\"Upstream returned invalid data\") from e\nexcept Exception as e:\n    logger.exception(\"Unexpected API error\", extra={\"endpoint\": endpoint})\n    raise'",
     "corpus": "rules_global.txt",
     "should_match": [
+      "When writing API endpoints, form handlers, or CLI parsers: validate all user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source",
       "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
-      "When writing API endpoints, form handlers, or CLI parsers: validate all user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
+      "When writing error handling, try/except, or fallback logic (Edit, Write): never use silent fallbacks \u2014 if a pipeline stage falls back to an alternative, log it loudly and surface it in the output so the user knows the result is degraded, not just different"
     ],
     "should_not_match": [
       "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables",
@@ -1367,7 +1396,8 @@
     "query": "Write: file_path='/app/src/models/user.py' content='from dataclasses import dataclass, field\nfrom typing import Optional\nfrom datetime import datetime\n\n@dataclass(frozen=True)\nclass User:\n    id: int\n    name: str\n    email: str\n    created_at: datetime = field(default_factory=datetime.utcnow)\n    role: str = \"user\"\n    api_key: Optional[str] = None\n\n    def is_admin(self) -> bool:\n        return self.role == \"admin\"\n\n    def mask_email(self) -> str:\n        local, domain = self.email.split(\"@\")\n        return f\"{local[:2]}***@{domain}\"\n'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+      "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse",
+      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
     "should_not_match": [
       "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables",
@@ -1413,7 +1443,6 @@
     "query": "Write: file_path='/app/tests/test_auth.py' content='import pytest\nfrom unittest.mock import AsyncMock, patch\nfrom src.auth import authenticate, hash_password, verify_token\n\nclass TestAuthenticate:\n    async def test_valid_credentials(self):\n        user = await authenticate(\"admin\", \"password123\")\n        assert user.name == \"admin\"\n\n    async def test_invalid_password(self):\n        with pytest.raises(AuthError):\n            await authenticate(\"admin\", \"wrong\")\n\n    async def test_missing_user(self):\n        result = await authenticate(\"nonexistent\", \"pass\")\n        assert result is None\n\ndef test_hash_password():\n    h1 = hash_password(\"secret\")\n    h2 = hash_password(\"secret\")\n    assert h1 == h2\n'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
       "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [
@@ -1428,7 +1457,6 @@
     "query": "Bash: cat <<'EOF' > /app/src/init_db.py\nimport sqlite3\n\ndef init():\n    conn = sqlite3.connect('app.db')\n    conn.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT, password TEXT)')\n    conn.execute(\"INSERT INTO users VALUES (1, 'admin', 'admin123')\")\n    conn.commit()\n    conn.close()\n\nif __name__ == '__main__':\n    init()\nEOF",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "When writing code that opens files, database connections, or HTTP sessions (Edit, Write): always close them after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service",
       "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
     ],
@@ -1443,12 +1471,14 @@
     "id": "embedded-code-decorator-pattern",
     "query": "Edit: old_string='def handler(request):' new_string='@require_auth\n@validate_input(schema=UserUpdateSchema)\n@rate_limit(max_calls=100, period=60)\nasync def handler(request: Request) -> Response:\n    \"\"\"Handle user update requests.\"\"\"\n    user_id = request.path_params[\"user_id\"]\n    data = await request.json()\n    sanitized = bleach.clean(data.get(\"bio\", \"\"))\n    result = await db.execute(\n        \"UPDATE users SET bio = $1 WHERE id = $2\",\n        sanitized, user_id\n    )\n    return Response(status=200, body={\"updated\": True})'",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When writing API endpoints, form handlers, or CLI parsers: validate all user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
+    ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -1456,7 +1486,6 @@
     "query": "Write: file_path='/app/tasks/email.py' content='from celery import shared_task\nimport smtplib\n\nSMTP_PASS = \"smtp_password_12345\"\n\n@shared_task(bind=True, max_retries=3)\ndef send_email(self, to, subject, body):\n    try:\n        server = smtplib.SMTP(\"smtp.gmail.com\", 587)\n        server.login(\"noreply@app.com\", SMTP_PASS)\n        server.sendmail(\"noreply@app.com\", to, f\"Subject: {subject}\\n\\n{body}\")\n    except Exception:\n        pass\n'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
       "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
       "When writing code that opens files, database connections, or HTTP sessions (Edit, Write): always close them after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
@@ -1474,8 +1503,9 @@
     "corpus": "rules_global.txt",
     "should_match": [
       "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables",
+      "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
       "When writing API endpoints, form handlers, or CLI parsers: validate all user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source",
-      "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
@@ -1533,26 +1563,26 @@
     "id": "special-chars-dotenv-path",
     "query": "Read: file_path='/app/.env.production'",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
-    ],
+    "should_match": [],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
       "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
     "id": "special-chars-unicode-comment",
     "query": "Edit: old_string='# TODO: fix later' new_string='# \u2705 Fixed: validate input before processing\ndef process(data: dict) -> dict:\n    if not isinstance(data, dict):\n        raise ValueError(\"Expected dict\")\n    return {k: sanitize(v) for k, v in data.items()}'",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
+    ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message",
       "When writing concurrent I/O code with threads (Edit, Write): use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
     ],
-    "difficulty": "negative",
+    "difficulty": "easy",
     "event": "PreToolUse"
   },
   {
@@ -1561,7 +1591,8 @@
     "corpus": "rules_global.txt",
     "should_match": [
       "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
-      "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
+      "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
+      "When creating or writing sensitive files (keys, configs, tokens, .env, credentials) via Bash or Write: set file permissions to 0o600 \u2014 world-readable secrets are the most common cloud breach vector"
     ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
@@ -1605,8 +1636,7 @@
     "query": "Write: file_path='/app/tests/test_payment.py' content='import pytest\nfrom src.payment import process_payment\n\ndef test_successful_payment():\n    result = process_payment(amount=100, currency=\"USD\")\n    assert result.status == \"success\"\n\ndef test_invalid_amount():\n    with pytest.raises(ValueError):\n        process_payment(amount=-1, currency=\"USD\")\n'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [
       "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables",
@@ -1635,12 +1665,15 @@
     "id": "ambiguous-async-db-connections",
     "query": "Edit: old_string='import threading' new_string='import asyncio\nimport asyncpg\n\nasync def fetch_all_users():\n    pool = await asyncpg.create_pool(dsn=DATABASE_URL)\n    async with pool.acquire() as conn:\n        rows = await conn.fetch(\"SELECT * FROM users WHERE active = $1\", True)\n    return [dict(r) for r in rows]'",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When writing concurrent I/O code with threads (Edit, Write): use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread",
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
+    ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -1648,10 +1681,10 @@
     "query": "Write: file_path='/app/src/middleware/auth.py' content='from functools import wraps\nfrom flask import request, abort\nimport jwt\n\nSECRET = \"jwt-signing-key-2024\"\n\ndef require_auth(f):\n    @wraps(f)\n    def decorated(*args, **kwargs):\n        token = request.headers.get(\"Authorization\", \"\").replace(\"Bearer \", \"\")\n        try:\n            payload = jwt.decode(token, SECRET, algorithms=[\"HS256\"])\n            request.user = payload\n        except:\n            abort(401)\n        return f(*args, **kwargs)\n    return decorated\n'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
+      "When writing API endpoints, form handlers, or CLI parsers: validate all user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source",
       "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
-      "When writing API endpoints, form handlers, or CLI parsers: validate all user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
+      "When creating or writing sensitive files (keys, configs, tokens, .env, credentials) via Bash or Write: set file permissions to 0o600 \u2014 world-readable secrets are the most common cloud breach vector"
     ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
@@ -1683,7 +1716,8 @@
     "corpus": "rules_global.txt",
     "should_match": [
       "When writing API endpoints, form handlers, or CLI parsers: validate all user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source",
-      "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
+      "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
@@ -1698,8 +1732,9 @@
     "corpus": "rules_global.txt",
     "should_match": [
       "When writing code with literal numbers: extract magic numbers into named constants \u2014 unnamed numbers scattered through code are impossible to find, update consistently, or understand",
+      "When writing functions that receive mutable arguments (Edit, Write): never mutate function arguments or shared state \u2014 mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere",
       "When writing data structures or containers (Edit, Write): prefer immutable data structures over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency",
-      "When writing functions that receive mutable arguments (Edit, Write): never mutate function arguments or shared state \u2014 mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere"
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
     "should_not_match": [
       "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables",
@@ -1714,8 +1749,10 @@
     "corpus": "rules_global.txt",
     "should_match": [
       "When writing API endpoints, form handlers, or CLI parsers: validate all user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source",
+      "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime",
       "When creating or writing sensitive files (keys, configs, tokens, .env, credentials) via Bash or Write: set file permissions to 0o600 \u2014 world-readable secrets are the most common cloud breach vector",
-      "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
+      "When writing code that opens files, database connections, or HTTP sessions (Edit, Write): always close them after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service"
     ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
@@ -1729,7 +1766,6 @@
     "query": "Bash: curl -X POST https://api.stripe.com/v1/charges -u sk_live_abc123: -d amount=2000 -d currency=usd -d source=tok_visa",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
     ],
     "should_not_match": [
@@ -1745,7 +1781,8 @@
     "corpus": "rules_global.txt",
     "should_match": [
       "When writing code that opens files, database connections, or HTTP sessions (Edit, Write): always close them after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service",
-      "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
+      "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message",
@@ -1759,10 +1796,7 @@
     "query": "Write: file_path='/app/Makefile' content='.PHONY: test lint build deploy\n\ntest:\n\tpip install -r requirements.txt\n\tpython -m pytest tests/ --cov=src\n\nlint:\n\truff check src/\n\tmypy src/\n\nbuild:\n\tdocker build -t myapp .\n\ndeploy:\n\tdocker push registry.example.com/myapp:latest\n\tgit tag v$(VERSION)\n\tgit push origin v$(VERSION)\n'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
-      "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
-      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
@@ -1788,7 +1822,6 @@
     "query": "Bash: ssh-keygen -t ed25519 -C 'deploy@app.com' -f /app/deploy_key -N '' && cat /app/deploy_key",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "When creating or writing sensitive files (keys, configs, tokens, .env, credentials) via Bash or Write: set file permissions to 0o600 \u2014 world-readable secrets are the most common cloud breach vector"
     ],
     "should_not_match": [
@@ -1818,12 +1851,8 @@
     "query": "Write: file_path='/app/.github/workflows/ci.yml' content='name: CI\non: [push, pull_request]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    env:\n      DATABASE_URL: ${{ secrets.DATABASE_URL }}\n      API_KEY: sk_test_hardcoded_key_123\n    steps:\n      - uses: actions/checkout@v4\n      - run: pip install -r requirements.txt\n      - run: python -m pytest\n      - run: git push --force origin main\n'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
-      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
       "Never force-push to main or master branch \u2014 force-push overwrites other developers' commits with no recovery path",
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
-      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
-      "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts",
@@ -1837,7 +1866,6 @@
     "query": "Write: file_path=\"/app/src/logging_config.py\" content=\"import logging\nimport logging.handlers\nimport os\n\nSENTRY_DSN = \"https://abc123@sentry.io/456\"\nSLACK_WEBHOOK = \"https://hooks.slack.com/services/T00/B00/xxxx\"\n\ndef setup_logging():\n    handler = logging.handlers.RotatingFileHandler(\"/var/log/app.log\", maxBytes=10*1024*1024, backupCount=5)\n    handler.setLevel(logging.WARNING)\n    formatter = logging.Formatter(\"%(asctime)s %(levelname)s %(message)s\")\n    handler.setFormatter(formatter)\n    logging.root.addHandler(handler)\n    logging.root.setLevel(logging.DEBUG)\n\"",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
     ],
     "should_not_match": [
@@ -2159,7 +2187,9 @@
     "id": "mined-git-checkout-new-branch",
     "query": "Bash: git checkout -b modernize/v0.4.0",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When starting feature work (Bash: git checkout, git branch): always create a new branch \u2014 working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation"
+    ],
     "should_not_match": [
       "Never force-push to main or master branch \u2014 force-push overwrites other developers' commits with no recovery path"
     ],
@@ -2195,6 +2225,8 @@
     "corpus": "rules_global.txt",
     "should_match": [
       "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless",
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
       "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [
@@ -2211,7 +2243,7 @@
     "should_not_match": [
       "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "PreToolUse",
     "tier": "easy"
   },
@@ -2219,13 +2251,11 @@
     "id": "mined-node-bcrypt-compare",
     "query": "Bash: node -e \"const bcrypt = require('bcryptjs'); bcrypt.compare('admin', '$2b$10$...).then(r => console.log('admin:', r))\"",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
-    ],
+    "should_match": [],
     "should_not_match": [
       "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables"
     ],
-    "difficulty": "hard",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
@@ -2255,7 +2285,7 @@
     "query": "Bash: cd /home/user/antigravity/projects/web-scrapers && poetry run pytest --tb=short -q 2>&1 | tail -20",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests"
     ],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
@@ -2268,12 +2298,12 @@
     "query": "Bash: git add src/__tests__/*.test.ts src/__tests__/*.test.tsx && git commit --no-verify -m 'test(agents): ...'",
     "corpus": "rules_global.txt",
     "should_match": [
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless",
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
       "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
-      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
-    ],
-    "should_not_match": [
       "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
     ],
+    "should_not_match": [],
     "difficulty": "medium",
     "event": "PreToolUse"
   },
@@ -2292,13 +2322,11 @@
     "id": "mined-npx-vitest-run",
     "query": "Bash: npx vitest run tests/health/server-capabilities.test.ts 2>&1 | tail -15",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
-    ],
+    "should_match": [],
     "should_not_match": [
       "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
@@ -2388,7 +2416,7 @@
     "should_not_match": [
       "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -2442,11 +2470,10 @@
     "query": "Edit: mcp-nexus-rag/http_server.py \u2014 changing timeout constant from 90 to 120",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When writing code with literal numbers: extract magic numbers into named constants \u2014 unnamed numbers scattered through code are impossible to find, update consistently, or understand"
-    ],
-    "should_not_match": [
+      "When writing code with literal numbers: extract magic numbers into named constants \u2014 unnamed numbers scattered through code are impossible to find, update consistently, or understand",
       "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
     ],
+    "should_not_match": [],
     "difficulty": "medium",
     "event": "PreToolUse"
   },
@@ -2458,7 +2485,7 @@
     "should_not_match": [
       "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -2487,11 +2514,13 @@
     "id": "mined-edit-claude-md-db-config",
     "query": "Edit: antigravity/CLAUDE.md \u2014 updating database connection info (Neo4j to Memgraph)",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "After changing project structure, architecture, or conventions: update CLAUDE.md \u2014 without this, the next session starts with stale context and makes wrong assumptions"
+    ],
     "should_not_match": [
       "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -2524,7 +2553,7 @@
     "should_not_match": [
       "When writing code with literal numbers: extract magic numbers into named constants \u2014 unnamed numbers scattered through code are impossible to find, update consistently, or understand"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -2542,11 +2571,13 @@
     "id": "mined-write-forceatlas2-claude-md",
     "query": "Write: /home/user/projects/forceatlas2/CLAUDE.md \u2014 creating project documentation",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "After changing project structure, architecture, or conventions: update CLAUDE.md \u2014 without this, the next session starts with stale context and makes wrong assumptions"
+    ],
     "should_not_match": [
       "When a function exceeds 50 lines (Edit, Write): split it \u2014 large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes. Keep files under 800 lines (400 preferred)"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -2601,7 +2632,6 @@
     "query": "Write: agentic-trader/tests/test_signal_engine_models.py \u2014 tests for Pydantic models",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
       "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [
@@ -2615,7 +2645,6 @@
     "query": "Write: canopy-ai/tests/test_embeddings.py \u2014 guard check unit tests",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
       "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [
@@ -2643,11 +2672,14 @@
     "id": "mined-write-cuecard-prd",
     "query": "Write: cuecard/artifacts/prd-v1.md \u2014 creating product requirements doc",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
+      "After revising a PRD or design document: run convergence reviews \u2014 design gaps that survive review become implementation bugs that survive testing"
+    ],
     "should_not_match": [
       "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -2764,11 +2796,13 @@
     "id": "mined-edit-benchmark-prd-resolved",
     "query": "Edit: canopy-ai/artifacts/benchmark-prd.md \u2014 changing open questions to resolved",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "After revising a PRD or design document: run convergence reviews \u2014 design gaps that survive review become implementation bugs that survive testing"
+    ],
     "should_not_match": [
       "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -2808,26 +2842,26 @@
     "id": "rust-cargo-build",
     "query": "Bash: cargo build --release",
     "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [
-      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
-      "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
-    ],
-    "difficulty": "negative",
-    "event": "PreToolUse"
-  },
-  {
-    "id": "rust-cargo-test-nocapture",
-    "query": "Bash: cargo test -- --nocapture 2>&1 | head -50",
-    "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running build commands or adding generated output directories: add .gitignore entries for generated files and build artifacts \u2014 committed artifacts bloat the repo and cause merge conflicts on every build"
     ],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
       "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
     ],
     "difficulty": "medium",
+    "event": "PreToolUse"
+  },
+  {
+    "id": "rust-cargo-test-nocapture",
+    "query": "Bash: cargo test -- --nocapture 2>&1 | head -50",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
+      "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
+    ],
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
@@ -2852,7 +2886,7 @@
       "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
       "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
-    "difficulty": "hard",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
@@ -2907,7 +2941,7 @@
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
       "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
-    "difficulty": "hard",
+    "difficulty": "negative",
     "event": "PreToolUse",
     "tier": "easy"
   },
@@ -2916,7 +2950,6 @@
     "query": "Write: tests/integration_test.rs -- content='#[cfg(test)] mod tests { #[test] fn test_parse_config() { let cfg = Config::from_env(); assert!(cfg.port > 0); } }'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
       "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [
@@ -2943,14 +2976,12 @@
     "id": "go-run-tests",
     "query": "Bash: go test ./... -v -count=1",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
-    ],
+    "should_match": [],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
       "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
@@ -3050,7 +3081,6 @@
     "query": "Bash: go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
       "When running build commands or adding generated output directories: add .gitignore entries for generated files and build artifacts \u2014 committed artifacts bloat the repo and cause merge conflicts on every build"
     ],
     "should_not_match": [
@@ -3156,14 +3186,12 @@
     "id": "ts-jest-coverage",
     "query": "Bash: npx jest --coverage --coverageThreshold='{\"global\":{\"branches\":80}}'",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
-    ],
+    "should_match": [],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
       "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
@@ -3196,14 +3224,12 @@
     "id": "ts-vitest-run-verbose",
     "query": "Bash: npx vitest run --reporter=verbose 2>&1",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
-    ],
+    "should_match": [],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
       "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
@@ -3275,13 +3301,11 @@
     "id": "read-env-production",
     "query": "Read: .env.production",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
-    ],
+    "should_match": [],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
@@ -3346,13 +3370,11 @@
     "id": "glob-env-files",
     "query": "Glob: **/.env*",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
-    ],
+    "should_match": [],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
@@ -3384,7 +3406,6 @@
     "query": "Grep: API_KEY|SECRET_KEY|PASSWORD in src/",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
     ],
     "should_not_match": [
@@ -3463,7 +3484,6 @@
     "query": "Bash: mysqldump -u root -p'MySecretPass123' mydb > backup.sql",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "When creating or writing sensitive files (keys, configs, tokens, .env, credentials) via Bash or Write: set file permissions to 0o600 \u2014 world-readable secrets are the most common cloud breach vector"
     ],
     "should_not_match": [
@@ -3476,25 +3496,25 @@
     "id": "bash-redis-cli",
     "query": "Bash: redis-cli SET session:abc123 '{\"user\":\"admin\",\"token\":\"sk-live-xyz\"}'",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
-    ],
+    "should_match": [],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
     "id": "bash-mongo-shell",
     "query": "Bash: mongo --eval 'db.users.find({role: \"admin\"})'",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When writing code that executes strings as commands: never use eval(), exec(), or shell=True \u2014 these execute arbitrary input as code, enabling remote code execution attacks"
+    ],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
       "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -3552,13 +3572,11 @@
     "id": "docker-build-with-env",
     "query": "Bash: docker build --build-arg API_KEY=sk-live-abc123 -t myapp .",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
-    ],
+    "should_match": [],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
@@ -3566,7 +3584,6 @@
     "query": "Bash: docker run --env-file .env -p 8080:80 myapp:latest",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
     ],
     "should_not_match": [
@@ -3592,8 +3609,8 @@
     "query": "Write: docker-compose.yml -- content='version: \"3.8\"\nservices:\n  app:\n    environment:\n      DB_PASSWORD: SuperSecret123\n      API_KEY: sk-live-abc'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
-      "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
+      "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
+      "When creating or writing sensitive files (keys, configs, tokens, .env, credentials) via Bash or Write: set file permissions to 0o600 \u2014 world-readable secrets are the most common cloud breach vector"
     ],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
@@ -3606,8 +3623,7 @@
     "query": "Write: .github/workflows/ci.yml -- content='name: CI\non: push\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: pip install -r requirements.txt\n      - run: pytest --cov=src'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -3620,9 +3636,7 @@
     "query": "Edit: .github/workflows/ci.yml -- old_string='- run: pytest' new_string='- run: pytest --cov=src\n      - run: pip-audit\n      - uses: trufflesecurity/trufflehog@main'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
-      "When adding new dependencies: review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for",
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
+      "When adding new dependencies: review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -3635,7 +3649,6 @@
     "query": "Bash: gh pr create --title 'feat: add user auth' --body 'Adds JWT authentication' --base main",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless",
       "When starting feature work (Bash: git checkout, git branch): always create a new branch \u2014 working directly on main risks breaking the shared branch and makes it impossible to review changes in isolation"
     ],
     "should_not_match": [
@@ -3673,13 +3686,11 @@
     "id": "bash-curl-with-token-inline",
     "query": "Bash: curl -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.test' https://api.example.com/data",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
-    ],
+    "should_match": [],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
@@ -3687,7 +3698,6 @@
     "query": "Edit: src/config.py -- old_string='DATABASE_URL = \"postgresql://admin:s3cret@db.prod.internal:5432/myapp\"' new_string='DATABASE_URL = os.environ[\"DATABASE_URL\"]'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
     ],
     "should_not_match": [
@@ -3729,7 +3739,6 @@
     "query": "Edit: src/auth.py -- old_string='if password == stored_password:' new_string='if bcrypt.checkpw(password.encode(), stored_hash):'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "When writing API endpoints, form handlers, or CLI parsers: validate all user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
     ],
     "should_not_match": [
@@ -3744,8 +3753,7 @@
     "corpus": "rules_global.txt",
     "should_match": [
       "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
-      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
-      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
@@ -3759,10 +3767,7 @@
     "query": "Bash: npm audit fix && npm test && git add package.json package-lock.json && git commit -m 'fix: resolve security vulnerabilities'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When adding new dependencies: review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for",
-      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
-      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless",
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
+      "When adding new dependencies: review all dependencies for known vulnerabilities first \u2014 a vulnerable dependency in your supply chain is an open door that attackers actively scan for"
     ],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
@@ -3775,7 +3780,8 @@
     "query": "Bash: cargo test && cargo clippy && git push origin feature/new-parser",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
@@ -3789,7 +3795,6 @@
     "query": "Edit: src/handlers/payment.py -- old_string='def charge(amount, card_token): stripe.api_key = \"sk_live_abc123\"' new_string='def charge(amount: int, card_token: str) -> stripe.Charge: return stripe.Charge.create(amount=amount, source=card_token, api_key=os.environ[\"STRIPE_KEY\"])'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
       "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime",
       "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
@@ -3804,7 +3809,9 @@
     "id": "multi-tool-uv-ruff-mypy-pytest",
     "query": "Bash: uv run ruff check src/ --fix && uv run mypy src/ --strict && uv run pytest --cov=src --cov-fail-under=100",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests"
+    ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
@@ -3817,12 +3824,13 @@
     "query": "Edit: src/services/user_service.py -- old_string='class UserService:\n    def __init__(self):\n        self.db = sqlite3.connect(\"users.db\")\n        self.cache = {}\n    def get_user(self, user_id):\n        cursor = self.db.cursor()\n        cursor.execute(f\"SELECT * FROM users WHERE id = {user_id}\")' new_string='@dataclass(frozen=True)\nclass User:\n    id: int; name: str; email: str\nclass UserService:\n    async def get_user(self, user_id: int) -> User | None:\n        async with aiosqlite.connect(self._db_url) as db:\n            cursor = await db.execute(\"SELECT * FROM users WHERE id = ?\", (user_id,))'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables",
-      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime",
-      "When writing code that opens files, database connections, or HTTP sessions (Edit, Write): always close them after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service",
+      "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control",
       "When writing data structures or containers (Edit, Write): prefer immutable data structures over mutable ones \u2014 immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency",
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime",
+      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead \u2014 string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables",
       "When writing concurrent I/O code with threads (Edit, Write): use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread",
-      "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead \u2014 hardcoded config prevents deployment to different environments and leaks secrets into source control"
+      "When writing code that opens files, database connections, or HTTP sessions (Edit, Write): always close them after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service",
+      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -3835,8 +3843,9 @@
     "query": "Edit: src/api/client.py -- old_string='def fetch_data(url):\n    try:\n        response = requests.get(url)\n        return response.json()\n    except:\n        pass' new_string='async def fetch_data(url: str) -> dict[str, Any]:\n    try:\n        async with aiohttp.ClientSession() as session:\n            async with session.get(url) as response:\n                response.raise_for_status()\n                return await response.json()\n    except aiohttp.ClientError as e:\n        logger.error(\"Failed: %s\", e)\n        raise'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
       "When writing concurrent I/O code with threads (Edit, Write): use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread",
+      "When writing code that opens files, database connections, or HTTP sessions (Edit, Write): always close them after use \u2014 unclosed resources leak memory and exhaust connection pools, eventually crashing the service",
+      "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace",
       "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
     "should_not_match": [
@@ -4063,11 +4072,12 @@
     "query": "Bash: git add src/new_feature.py && git commit -m 'add user profile endpoint'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
-      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless",
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
       "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
-      "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
+      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
+      "When running git commit or git add on Python files: run ruff check and mypy first \u2014 type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -4111,7 +4121,6 @@
     "query": "Edit: src/auth.py -- old_string='logger.info(f\"User {username} logged in with token {token}\")' new_string='logger.info(\"User %s authenticated successfully\", username)'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "Before committing code: remove console.log, print(), and debug statements \u2014 debug output clutters logs, leaks internal state, and makes real errors harder to find in production monitoring"
     ],
     "should_not_match": [
@@ -4151,8 +4160,7 @@
     "query": "Write: .github/workflows/ci.yml -- content='name: CI\non: push\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: pip install -e .[dev]\n      - run: pytest tests/ -v'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -4180,7 +4188,7 @@
     "corpus": "rules_global.txt",
     "should_match": [
       "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
     "should_not_match": [
       "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
@@ -4208,7 +4216,6 @@
     "query": "Edit: tests/health/web-chat-command-logging.test.ts -- old_string='const mockChatLogEntries: Array<Record<string, unknown>> = [];' new_string='const { mockChatLog, mockChatLogEntries } = vi.hoisted(() => {'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
       "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
     "should_not_match": [
@@ -4245,11 +4252,13 @@
     "id": "mined-gravity-edit-readme",
     "query": "Edit: mission-control/README.md -- old_string='| **Tiles** | Static JSON | /api/tiles' new_string='| **Tiles** | Static JSON (server-side) | loadTiles() in page.tsx'",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When editing code that changes CLI commands, API endpoints, setup steps, or adding new dependencies (Edit, Write): update README to match \u2014 outdated README causes every new contributor to fail on setup"
+    ],
     "should_not_match": [
       "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -4282,7 +4291,7 @@
     "query": "Bash: uv run pytest --cov=delulu --cov-report=term-missing --cov-fail-under=100 -q 2>&1 | tail -30",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -4311,7 +4320,7 @@
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "PreToolUse",
     "tier": "easy"
   },
@@ -4332,9 +4341,10 @@
     "query": "Bash: git add -A && git commit -m 'feat: add arXiv MCP to README' && git push",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
+      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless",
-      "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -4386,8 +4396,8 @@
     "query": "Bash: pip install -e '.[dev]' && pytest",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests",
+      "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -4479,11 +4489,14 @@
     "id": "edge-git-force-push-feature",
     "query": "Bash: git push --force origin feature/my-branch",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+    ],
     "should_not_match": [
       "Never force-push to main or master branch \u2014 force-push overwrites other developers' commits with no recovery path"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -4517,7 +4530,8 @@
     "query": "Edit: src/monolith.py (490 lines) -- old_string='# end of file' new_string='def new_handler():\n    pass\n# end of file'",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When a function exceeds 50 lines (Edit, Write): split it \u2014 large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes. Keep files under 800 lines (400 preferred)"
+      "When a function exceeds 50 lines (Edit, Write): split it \u2014 large functions hide bugs in nested logic, and large files make it impossible to understand scope of changes. Keep files under 800 lines (400 preferred)",
+      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
     "should_not_match": [
       "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments"
@@ -4540,11 +4554,13 @@
     "id": "pre-mutate-neg-new-copy",
     "query": "Edit: {\"file_path\": \"src/config.py\", \"old_string\": \"return config\", \"new_string\": \"return dataclasses.replace(config, timeout=30)\"}",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
+    ],
     "should_not_match": [
       "When writing functions that receive mutable arguments (Edit, Write): never mutate function arguments or shared state \u2014 mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere"
     ],
-    "difficulty": "negative",
+    "difficulty": "easy",
     "event": "PreToolUse"
   },
   {
@@ -4608,11 +4624,13 @@
     "id": "pre-silent-fallback-neg-logged",
     "query": "Edit: {\"file_path\": \"src/fetcher.py\", \"old_string\": \"return primary_result\", \"new_string\": \"try:\\n    return primary_result\\nexcept TimeoutError:\\n    logger.warning('Primary API timeout, using cache')\\n    return cached_result\"}",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When writing try/except or catch blocks (Edit, Write): always handle errors explicitly \u2014 empty catch blocks hide bugs that surface later as mysterious failures with no stack trace"
+    ],
     "should_not_match": [
       "When writing error handling, try/except, or fallback logic (Edit, Write): never use silent fallbacks \u2014 if a pipeline stage falls back to an alternative, log it loudly and surface it in the output so the user knows the result is degraded, not just different"
     ],
-    "difficulty": "negative",
+    "difficulty": "easy",
     "event": "PreToolUse"
   },
   {
@@ -4630,11 +4648,11 @@
     "id": "pre-api-logging-neg-has-logging",
     "query": "Edit: {\"file_path\": \"src/api.py\", \"old_string\": \"logger.info('Calling API')\", \"new_string\": \"start = time.monotonic()\\nresponse = httpx.get(url)\\nlatency = time.monotonic() - start\\nlogger.info('API call', latency_ms=latency*1000, status=response.status_code, size=len(response.content))\"}",
     "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [
+    "should_match": [
       "When calling external APIs: log every call with latency, status code, and response size \u2014 without observability, production debugging becomes guesswork and intermittent failures go undetected"
     ],
-    "difficulty": "negative",
+    "should_not_match": [],
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -4675,9 +4693,7 @@
     "query": "Edit: {\"file_path\": \"src/storage/postgres.py\", \"old_string\": \"class PostgresStore\", \"new_string\": \"class PostgresStore(StorageProtocol)\"}",
     "corpus": "rules_global.txt",
     "should_match": [],
-    "should_not_match": [
-      "When writing new classes or module interfaces (Edit, Write): design interfaces as Protocols \u2014 concrete implementations can be swapped without refactoring callers, enabling testing with fakes and future provider changes without cascading code changes"
-    ],
+    "should_not_match": [],
     "difficulty": "negative",
     "event": "PreToolUse"
   },
@@ -4709,7 +4725,7 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "PreToolUse",
     "tier": "easy"
   },
@@ -4728,11 +4744,13 @@
     "id": "pre-test-real-data-neg-running-live",
     "query": "Bash: uv run pytest -m slow tests/test_openbb_integration.py -v",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests"
+    ],
     "should_not_match": [
       "After mocked tests pass: test with real external data \u2014 NaN values, missing columns, and API format differences only surface with live data"
     ],
-    "difficulty": "negative",
+    "difficulty": "easy",
     "event": "PreToolUse"
   },
   {
@@ -4762,7 +4780,8 @@
     "query": "Write: {\"file_path\": \"src/models/company.py\", \"content\": \"@dataclass\\nclass Company:\\n    ticker: str\\n    revenue: float\\n    net_income: float\\n    eps: float\\n    dividend_yield: float\\n    market_cap: float\"}",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When writing data models, schemas, or dataclasses (Edit, Write): make them accept defaults for optional data sources \u2014 crypto has no income statements, new companies have no history \u2014 hardcoded required fields silently exclude valid use cases"
+      "When writing data models, schemas, or dataclasses (Edit, Write): make them accept defaults for optional data sources \u2014 crypto has no income statements, new companies have no history \u2014 hardcoded required fields silently exclude valid use cases",
+      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
     "should_not_match": [],
     "difficulty": "medium",
@@ -4772,11 +4791,13 @@
     "id": "pre-data-model-neg-has-defaults",
     "query": "Write: {\"file_path\": \"src/models/ticker.py\", \"content\": \"@dataclass\\nclass TickerData:\\n    symbol: str\\n    price: float\\n    eps: float | None = None\\n    dividend_yield: float | None = None\\n    market_cap: float | None = None\"}",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
+    ],
     "should_not_match": [
       "When writing data models, schemas, or dataclasses (Edit, Write): make them accept defaults for optional data sources \u2014 crypto has no income statements, new companies have no history \u2014 hardcoded required fields silently exclude valid use cases"
     ],
-    "difficulty": "negative",
+    "difficulty": "easy",
     "event": "PreToolUse"
   },
   {
@@ -4785,7 +4806,7 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [],
-    "difficulty": "hard",
+    "difficulty": "negative",
     "event": "PreToolUse",
     "tier": "easy"
   },
@@ -4826,11 +4847,13 @@
     "id": "no-real-background-neg-integration-test",
     "query": "Bash: uv run pytest -m slow tests/test_integration.py",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests"
+    ],
     "should_not_match": [
       "When writing test functions that call code with background tasks or HTTP clients (Edit, Write test files): never let a test trigger a real background task or HTTP request \u2014 mock at the boundary so the test exercises YOUR code, not the external service"
     ],
-    "difficulty": "negative",
+    "difficulty": "easy",
     "event": "PreToolUse"
   },
   {
@@ -4848,11 +4871,13 @@
     "id": "mark-slow-neg-already-marked",
     "query": "Edit: tests/test_indexer.py adding @pytest.mark.slow decorator to test_real_model_embedding",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests"
+    ],
     "should_not_match": [
       "Mark tests that require real services with @pytest.mark.slow or @pytest.mark.e2e and exclude them from the default test run \u2014 the default `pytest` invocation must always be fast, deterministic, and offline"
     ],
-    "difficulty": "negative",
+    "difficulty": "easy",
     "event": "PreToolUse"
   },
   {
@@ -4870,11 +4895,13 @@
     "id": "no-sleep-neg-production-code",
     "query": "Edit: src/cuecard/serve.py adding time.sleep(0.1) for retry backoff in server health polling",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When writing or modifying daemon/server code that provides a fast path (Edit, Write serve.py, daemon code): verify the fast path exercises the same code paths as the inline path \u2014 daemon shortcuts silently bypass features that work in direct mode, making core features inoperative in production"
+    ],
     "should_not_match": [
       "When writing test code with async operations or waits (Edit, Write test files): never use time.sleep() \u2014 use mock clocks, manual event triggers, or synchronous test helpers instead, because sleep-based tests are both slow and flaky"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -4892,11 +4919,11 @@
     "id": "llama-server-np-neg-no-slots",
     "query": "Bash: llama-server -m ~/models/gemma-4-E4B-it-Q8_0.gguf --port 8081 -ngl 99 -c 98304 --jinja",
     "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [
+    "should_match": [
       "When using llama-server with -np N parallel slots, total context is divided by N \u2014 ensure every prompt fits within (total_ctx / np) tokens per slot, because exceeding it returns a cryptic 400 error with no useful diagnostic"
     ],
-    "difficulty": "negative",
+    "should_not_match": [],
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -4950,7 +4977,7 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "PreToolUse",
     "tier": "easy"
   },
@@ -5013,11 +5040,13 @@
     "id": "test-plan-neg-running-existing-tests",
     "query": "Bash: uv run pytest --cov=cuecard --cov-fail-under=100",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests"
+    ],
     "should_not_match": [
       "Before testing a completed milestone: create a comprehensive test plan reviewed by subagents \u2014 an incomplete test plan produces false confidence"
     ],
-    "difficulty": "negative",
+    "difficulty": "easy",
     "event": "PreToolUse"
   },
   {
@@ -5115,12 +5144,14 @@
     "id": "v3-bash-curl-localhost-runs",
     "query": "Bash: curl -s -H \"Authorization: Bearer BCZZOq7DQuODfc6pjv_i1vC1LYlcEZzh93uvglj1b44uK173KFt1w9GciJPzu_VV\" http://localhost:8453/runs 2>&1",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When discovering exposed credentials in code, logs, or git history (Bash: git log, git diff, Read): rotate any secrets that may have been exposed \u2014 exposed credentials remain valid until rotated, giving attackers a persistent access window"
+    ],
     "should_not_match": [
       "When running git add or git commit, or writing config/.env files: never include secrets \u2014 once pushed, secrets are in the history forever and require rotation across all environments",
       "When writing API endpoints, form handlers, or CLI parsers: validate all user input at system boundaries \u2014 unvalidated input propagates corrupted data through the entire system, causing failures far from the source"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -5138,23 +5169,27 @@
     "id": "v3-bash-uv-run-pytest-specific-tests",
     "query": "Bash: uv run pytest tests/test_models.py tests/test_config.py tests/test_cli.py tests/test_orchestrator.py -q -x 2>&1",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests"
+    ],
     "should_not_match": [
       "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production",
       "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
-    "difficulty": "negative",
+    "difficulty": "easy",
     "event": "PreToolUse"
   },
   {
     "id": "v3-bash-uv-run-pytest-cov-100",
     "query": "Bash: uv run pytest --cov=cuecard --cov-fail-under=100 -q 2>&1 | tail -15",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds \u2014 if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests"
+    ],
     "should_not_match": [
       "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
     ],
-    "difficulty": "negative",
+    "difficulty": "easy",
     "event": "PreToolUse"
   },
   {
@@ -5376,7 +5411,8 @@
     "query": "Edit: /home/turiya/projects/cuecard/src/cuecard/models.py old: @dataclass(frozen=True)\nclass Rule:\n    \"\"\"A single rule with its source provenance new: @dataclass(frozen=True)\nclass Rule:\n    \"\"\"A single rule with source provenance and event affinity",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
+      "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings \u2014 undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse",
+      "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
     "should_not_match": [],
     "difficulty": "medium",
@@ -5476,12 +5512,12 @@
     "query": "Write: /home/turiya/projects/cuecard/tests/test_serve.py content: \"\"\"Tests for cuecard.serve.\"\"\"\nfrom __future__ import annotations\nimport json\nfrom unittest.mock import patch, MagicMock\nimport pytest",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "easy",
+    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {

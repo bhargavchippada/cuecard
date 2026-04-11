@@ -498,7 +498,7 @@ class TestParseJsonV2:
                 {
                     "text": "Never commit secrets",
                     "expansions": [],
-                    "events": ["PreToolUse", "PostToolUse"],
+                    "events": ["PreToolUse", "Stop"],
                     "tools": ["Bash"],
                     "source": {},
                 },
@@ -509,7 +509,7 @@ class TestParseJsonV2:
         rules = parse_rules((str(f),))
 
         assert len(rules) == 1
-        assert rules[0].events == frozenset({"PreToolUse", "PostToolUse"})
+        assert rules[0].events == frozenset({"PreToolUse", "Stop"})
         assert rules[0].tools == frozenset({"Bash"})
 
     def test_v2_empty_events_tools(self, tmp_path: Path) -> None:

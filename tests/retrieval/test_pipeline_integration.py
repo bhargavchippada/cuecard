@@ -573,3 +573,63 @@ class TestSparseRetrieverIntegration:
         assert result.results
         trace = result.stages[0]
         assert isinstance(trace, RetrievalStageTrace)
+
+
+class TestQueryExpansionIntegration:
+    """Query expansion behavior in the retrieval stage."""
+
+    def test_query_expansion_adds_retrieval_queries(
+        self,
+        sample_index: Index,
+        config: ResolvedConfig,
+        fake_candidates: list[ScoredCandidate],
+    ) -> None:
+        with (
+            patch(
+                "cuecard.retrieval.query_expander.expand_query",
+                return_value=("tag one", "tag two"),
+            ),
+            patch(
+                "cuecard.retrieval.dense.DenseRetriever.retrieve",
+                return_value=fake_candidates,
+            ) as mock_dense,
+        ):
+            result = run_pipeline(
+                "test query",
+                sample_index,
+                config,
+                mode="embedding",
+                query_expansion_enabled=True,
+            )
+
+        assert len(result.results) == len(fake_candidates)
+        assert mock_dense.call_count == 3
+        seen_queries = [call.args[0] for call in mock_dense.call_args_list]
+        assert seen_queries == ["test query", "tag one", "tag two"]
+
+    def test_query_expansion_failure_falls_back_to_raw_query(
+        self,
+        sample_index: Index,
+        config: ResolvedConfig,
+        fake_candidates: list[ScoredCandidate],
+    ) -> None:
+        with (
+            patch(
+                "cuecard.retrieval.query_expander.expand_query",
+                side_effect=RuntimeError("boom"),
+            ),
+            patch(
+                "cuecard.retrieval.dense.DenseRetriever.retrieve",
+                return_value=fake_candidates,
+            ) as mock_dense,
+        ):
+            result = run_pipeline(
+                "test query",
+                sample_index,
+                config,
+                mode="embedding",
+                query_expansion_enabled=True,
+            )
+
+        assert len(result.results) == len(fake_candidates)
+        mock_dense.assert_called_once()

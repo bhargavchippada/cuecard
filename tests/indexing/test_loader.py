@@ -603,3 +603,34 @@ class TestRulesJsonIntegration:
         assert loaded_result is not None
         loaded_rules, _aff = loaded_result
         assert loaded_rules[0].expansions == ("hardcoded API key", "AKIA in source")
+
+
+
+class TestAffinityLoading:
+    def test_load_affinity_for_scope_prefers_inline_rules_json(
+        self, tmp_path: Path,
+    ) -> None:
+        from cuecard.indexing.loader import _load_affinity_for_scope
+        from cuecard.models import AffinityIndex, RuleAffinity
+
+        inline_aff = AffinityIndex(
+            version=1,
+            mode="strict",
+            model="",
+            affinities=((
+                "hash",
+                RuleAffinity(
+                    events=frozenset({"PreToolUse"}),
+                    tools=frozenset(),
+                    source="explicit",
+                ),
+            ),),
+        )
+
+        with patch(
+            "cuecard.indexing.loader.load_rules_json",
+            return_value=([], inline_aff),
+        ):
+            result = _load_affinity_for_scope(str(tmp_path))
+
+        assert result is inline_aff

@@ -98,7 +98,7 @@ class TestBuildEventMask:
                 source="explicit",
             ),
             RuleAffinity(
-                events=frozenset({"PostToolUse"}),
+                events=frozenset({"Stop"}),
                 tools=frozenset(),
                 source="explicit",
             ),
@@ -145,7 +145,7 @@ class TestBuildEventMask:
                 source="explicit",
             ),
             RuleAffinity(
-                events=frozenset({"PreToolUse", "PostToolUse"}),
+                events=frozenset({"PreToolUse", "Stop"}),
                 tools=frozenset(),
                 source="explicit",
             ),
@@ -482,6 +482,7 @@ class TestPipelineEventMask:
         assert result.event == "PreToolUse"
         assert result.event_mask_applied is True
         assert result.rules_masked >= 0
+        assert result.embeddings_masked >= 0
 
     def test_pipeline_without_affinity_backwards_compat(self) -> None:
         """Pipeline works without affinity (backwards compat)."""
@@ -508,6 +509,7 @@ class TestPipelineEventMask:
         assert result.event == ""
         assert result.event_mask_applied is False
         assert result.rules_masked == 0
+        assert result.embeddings_masked == 0
 
     def test_pipeline_affinity_without_event_no_mask(self) -> None:
         """Affinity provided but empty event -> no mask applied."""
@@ -597,6 +599,45 @@ class TestPipelineEventMask:
         # The single rule should be masked (Edit != Bash)
         assert not mask[0]
         assert result.rules_masked == 1
+        assert result.embeddings_masked == 1
+
+    def test_pipeline_counts_masked_rules_not_embeddings(self) -> None:
+        """rules_masked stays rule-level even when one rule has many embeddings."""
+        rules = [
+            _make_rule("Rule A"),
+            _make_rule("Rule B"),
+        ]
+        affinities = [
+            RuleAffinity(
+                events=frozenset({"PreToolUse"}),
+                tools=frozenset(),
+                source="explicit",
+            ),
+            RuleAffinity(
+                events=frozenset({"Stop"}),
+                tools=frozenset(),
+                source="explicit",
+            ),
+        ]
+        aff_idx = _make_affinity(rules, affinities)
+        index = _make_index(tuple(rules), rule_map=(0, 0, 1))
+        config = self._make_config()
+
+        from cuecard.retrieval.pipeline import run_pipeline
+
+        with patch(
+            "cuecard.retrieval.dense.DenseRetriever.retrieve",
+            return_value=[],
+        ):
+            result = run_pipeline(
+                "test", index, config,  # type: ignore[arg-type]
+                mode="embedding",
+                event="PreToolUse",
+                affinity=aff_idx,
+            )
+
+        assert result.rules_masked == 1
+        assert result.embeddings_masked == 1
 
 
 # --- Loader affinity composition ---
@@ -738,6 +779,7 @@ class TestPipelineResultFields:
         assert result.event == ""
         assert result.event_mask_applied is False
         assert result.rules_masked == 0
+        assert result.embeddings_masked == 0
 
     def test_custom_values(self) -> None:
         result = PipelineResult(
@@ -754,7 +796,9 @@ class TestPipelineResultFields:
             event="PreToolUse",
             event_mask_applied=True,
             rules_masked=3,
+            embeddings_masked=4,
         )
         assert result.event == "PreToolUse"
         assert result.event_mask_applied is True
         assert result.rules_masked == 3
+        assert result.embeddings_masked == 4

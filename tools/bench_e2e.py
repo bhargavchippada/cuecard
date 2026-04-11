@@ -1,30 +1,48 @@
 #!/usr/bin/env python3
-"""End-to-end benchmark: each model generates its own expansions AND reranks.
+"""End-to-end benchmark with full per-stage tracing.
 
-This is the DEFAULT benchmarking mode to avoid unfair comparisons where
-one model's expansions are used to evaluate another model's reranker.
+Each model generates its own expansions AND reranks. The traced eval loop
+captures every fixture's pipeline stages, LLM prompts, raw responses,
+reasoning, and selected rules, writing them to disk so a run can be
+debugged without re-invoking the LLM.
 
 Usage:
     uv run python tools/bench_e2e.py \\
-        --model-path ~/models/Qwen3.5-9B-Q4_K_M.gguf --label qwen35-9b
-    uv run python tools/bench_e2e.py \\
-        --model-path ~/models/gemma-4-E4B-it-Q8_0.gguf --label gemma-e4b
+        --model-path ~/models/gemma-4-E4B-it-Q8_0.gguf --label gemma-e4b-s32 \\
+        --no-server --sample-ratio 0.20 --seed 42
 
-Per-model corpora are cached at eval/corpora/enriched_{basic,workflow}_{label}/
-so repeated benchmarks reuse expansions without regeneration.
+Per-model corpora are cached at eval/corpora/enriched_{label}/ so repeat
+runs reuse expansions without regeneration. Each rule's expansion style
+is chosen by its affinity (tool_use → tool-style, workflow → workflow-style,
+both → both styles merged). One unified corpus is shared across all tiers,
+matching production behaviour.
+
+Artifacts (written to eval/results/{label}-traced-seed{seed}/ by default):
+    report.md                   Human-readable summary with gap analysis
+    summary.json                Machine-readable metrics per tier
+    config.json                 Run configuration (label, seed, ratio, tiers)
+    traces/{tier}/{id}.json     Full per-fixture trace
+    llm_calls.jsonl             Flat log of every LLM interaction
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
+import random
+import re
+import secrets
 import signal
 import subprocess
 import sys
+import threading
 import time
 from dataclasses import asdict
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import requests
 
@@ -33,34 +51,49 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from cuecard.eval.harness import (
     EvalSummary,
+    Fixture,
+    FixtureResult,
+    _build_summary,  # noqa: PLC2701
     evaluate_per_event,
     format_per_event_report,
     load_fixtures,
-    run_eval,
+)
+from cuecard.eval.metrics import (
+    anti_precision,
+    context_waste_ratio,
+    mrr,
+    ndcg_at_k,
+    noise_ratio,
+    precision_at_k,
+    quality_score,
+    recall_at_k,
 )
 from cuecard.indexing.expander import expand_rules
-from cuecard.indexing.indexer import save_rules_json
+from cuecard.indexing.indexer import build_index, save_rules_json
 from cuecard.indexing.parser import parse_rules
+from cuecard.models import PipelineConfig, ResolvedConfig
+from cuecard.retrieval import llm_reranker as _llm_rr
+from cuecard.retrieval.pipeline import run_pipeline
+
+if TYPE_CHECKING:
+    from cuecard.models import PipelineResult, RankedResult
+
+logger = logging.getLogger(__name__)
 
 EVAL_DIR = Path(__file__).resolve().parent.parent / "eval"
 CORPORA_DIR = EVAL_DIR / "corpora"
 RESULTS_DIR = EVAL_DIR / "results"
 
-SOURCE_FILES = {
-    "basic": {
+SOURCE_FILES: dict[str, dict[str, Any]] = {
+    "pre_tool_use": {
         "rules_txt": CORPORA_DIR / "rules_global.txt",
         "event_type": "PreToolUse",
-        "fixtures": EVAL_DIR / "fixtures" / "basic.json",
+        "fixtures": EVAL_DIR / "fixtures" / "pre_tool_use.json",
     },
     "workflow": {
         "rules_txt": CORPORA_DIR / "rules_global.txt",
         "event_type": "UserPromptSubmit",
         "fixtures": EVAL_DIR / "fixtures" / "workflow.json",
-    },
-    "post_tool_use": {
-        "rules_txt": CORPORA_DIR / "rules_global.txt",
-        "event_type": "PostToolUse",
-        "fixtures": EVAL_DIR / "fixtures" / "post_tool_use.json",
     },
     "stop": {
         "rules_txt": CORPORA_DIR / "rules_global.txt",
@@ -77,6 +110,22 @@ SOURCE_FILES = {
 EMBEDDING_MODEL = "jinaai/jina-embeddings-v2-base-code"
 PORT = 8081
 ENDPOINT = f"http://localhost:{PORT}/v1"
+
+MAX_WORKERS = 5  # match llama-server -np 5
+
+# Filename sanitizer for fixture IDs
+_UNSAFE_FILENAME_CHARS = re.compile(r"[^a-zA-Z0-9._-]+")
+
+
+def _safe_filename(text: str, max_len: int = 80) -> str:
+    """Sanitize arbitrary text for use as a filename."""
+    cleaned = _UNSAFE_FILENAME_CHARS.sub("_", text).strip("_")
+    return cleaned[:max_len] or "fixture"
+
+
+# ---------------------------------------------------------------------------
+# Server management
+# ---------------------------------------------------------------------------
 
 
 def start_server(model_path: str, *, ngl: int = 99) -> subprocess.Popen[bytes]:
@@ -143,64 +192,422 @@ def ping_server() -> float:
     return elapsed
 
 
-def generate_expansions_for_label(label: str, *, force: bool = False) -> None:
-    """Generate expansions using the currently running model.
+# ---------------------------------------------------------------------------
+# Affinity + expansion generation (unchanged)
+# ---------------------------------------------------------------------------
 
-    Creates eval/corpora/enriched_{tier}_{label}/rules.json for each tier.
-    Infers affinity via LLM and embeds inline in each rules.json.
-    Skips generation if corpus already exists and --force is not set.
-    """
-    from cuecard.models import PipelineConfig, ResolvedConfig
+
+def _infer_affinity_once() -> tuple[list[Any], object]:
+    """Infer affinity once for all tiers. Returns (rules, AffinityIndex)."""
     from cuecard.retrieval.affinity import infer_affinities
 
-    # Always infer affinity — strict mode doesn't apply event masks
-    print("  Inferring affinity from rules via LLM...")
-    first_rules_txt = list(SOURCE_FILES.values())[0]["rules_txt"]
-    rules_for_aff = parse_rules((str(first_rules_txt),))
+    print("  Inferring affinity from rules via LLM (parallel)...")
+    first_rules_txt = next(iter(SOURCE_FILES.values()))["rules_txt"]
+    rules = parse_rules((str(first_rules_txt),))
     aff_config = ResolvedConfig(
         source_paths=(), global_source_paths=(),
         project_source_paths=(), global_cache_dir="",
         pipeline=PipelineConfig(mode="llm-local"),
     )
-    affinity = infer_affinities(rules_for_aff, aff_config)
-    print(f"  Inferred affinity: {affinity.mode}, {len(affinity.items)} entries")
+    t0 = time.monotonic()
+    affinity = infer_affinities(rules, aff_config, max_workers=MAX_WORKERS)
+    elapsed = time.monotonic() - t0
+    n = len(affinity.items)
+    print(f"  Inferred affinity: {affinity.mode}, {n} entries in {elapsed:.1f}s")
+    return rules, affinity
 
-    for tier, cfg in SOURCE_FILES.items():
-        out_dir = CORPORA_DIR / f"enriched_{tier}_{label}"
-        rules_json = out_dir / "rules.json"
 
-        if rules_json.exists() and not force:
-            data = json.loads(rules_json.read_text())
-            n_rules = len(data.get("rules", []))
-            print(f"  {tier}: reusing existing corpus at {out_dir} ({n_rules} rules)")
+def generate_expansions_for_label(
+    label: str, affinity: object, *, force: bool = False,
+) -> None:
+    """Generate (or reuse) per-model corpus with affinity-aware expansions."""
+    out_dir = CORPORA_DIR / f"enriched_{label}"
+    rules_json = out_dir / "rules.json"
+
+    if rules_json.exists() and not force:
+        data = json.loads(rules_json.read_text())
+        n_rules = len(data.get("rules", []))
+        print(f"  Reusing existing corpus at {out_dir} ({n_rules} rules)")
+        return
+
+    print("  Generating affinity-aware expansions (parallel)...")
+    t0 = time.monotonic()
+    first_rules_txt = next(iter(SOURCE_FILES.values()))["rules_txt"]
+    rules = parse_rules((str(first_rules_txt),))
+    expanded = expand_rules(
+        rules,
+        backend="local",
+        endpoint=ENDPOINT,
+        haiku_model="claude-haiku-4-5",
+        event_type="PreToolUse",
+        dedup_threshold=0.80,
+        affinity=affinity,
+        max_workers=MAX_WORKERS,
+        max_per_rule=8,
+    )
+    elapsed = time.monotonic() - t0
+    total = sum(len(r.expansions) for r in expanded)
+    avg = total / len(expanded) if expanded else 0
+    print(
+        f"  {len(expanded)} rules, {total} expansions "
+        f"(avg {avg:.1f}) in {elapsed:.1f}s",
+    )
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    save_rules_json(expanded, str(out_dir), affinity=affinity)
+
+
+# ---------------------------------------------------------------------------
+# Tracing infrastructure
+# ---------------------------------------------------------------------------
+
+
+class TraceCapture:
+    """Per-fixture LLM-call trace, correlated via thread-local storage.
+
+    The monkey-patched ``rerank_llm`` records the raw prompts/response/
+    reasoning under the ``fixture_id`` stamped by the calling thread before
+    ``run_pipeline``. Safe for parallel eval workers.
+    """
+
+    def __init__(self) -> None:
+        self._local = threading.local()
+        self._lock = threading.Lock()
+        self._traces: dict[str, dict[str, Any]] = {}
+
+    def set_fixture(self, fixture_id: str) -> None:
+        self._local.fixture_id = fixture_id
+
+    def clear_fixture(self) -> None:
+        self._local.fixture_id = None
+
+    def current(self) -> str | None:
+        return getattr(self._local, "fixture_id", None)
+
+    def record(self, **data: Any) -> None:
+        fid = self.current()
+        if fid is None:
+            return
+        with self._lock:
+            self._traces[fid] = data
+
+    def pop(self, fixture_id: str) -> dict[str, Any] | None:
+        with self._lock:
+            return self._traces.pop(fixture_id, None)
+
+
+_TRACE = TraceCapture()
+
+
+def _traced_rerank_llm(
+    candidates: list[RankedResult],
+    query: str,
+    *,
+    backend: str,
+    endpoint: str,
+    haiku_model: str,
+    thinking: bool = False,
+    top_k: int,
+) -> list[RankedResult]:
+    """Instrumented replacement for ``llm_reranker.rerank_llm``.
+
+    Behaviourally identical to the original (same fallback semantics, same
+    single retry) but records stage-1 candidates, user prompt, raw response,
+    parsed reasoning and selected indices on every call.
+    """
+    from cuecard.retrieval.llm_utils import (
+        call_haiku,
+        call_local,
+        validate_endpoint,
+    )
+    from cuecard.security import ConfigError
+
+    if not candidates:
+        _TRACE.record(
+            stage1_candidates=[],
+            raw_response=None,
+            reasoning=None,
+            selected_indices=None,
+            prompt_user=None,
+            attempts=0,
+            error="no_candidates",
+        )
+        return []
+
+    if backend not in ("local", "haiku"):
+        msg = f"Invalid backend: {backend!r}, expected 'local' or 'haiku'"
+        raise ValueError(msg)
+
+    stage1_dump = [
+        {
+            "idx": i + 1,
+            "text": c.rule.text,
+            "stage1_score": round(float(c.score), 6),
+        }
+        for i, c in enumerate(candidates)
+    ]
+    fallback = candidates[:top_k]
+
+    try:
+        if backend == "local":
+            validate_endpoint(endpoint)
+
+        nonce = secrets.token_hex(6)
+        system_prompt, user_prompt = _llm_rr._build_prompt(
+            candidates, query, nonce,
+        )
+
+        raw: str | None = None
+        parsed = None
+        for attempt in range(2):
+            if backend == "local":
+                raw = call_local(
+                    system_prompt, user_prompt, endpoint, thinking,
+                    stop=None,
+                )
+            else:
+                raw = call_haiku(system_prompt, user_prompt, haiku_model)
+            parsed = _llm_rr._parse_llm_response(raw, len(candidates))
+            if parsed.indices is not None:
+                break
+            if attempt == 0:
+                logger.info("LLM response unparseable, retrying once")
+
+        if parsed is None or parsed.indices is None:
+            _TRACE.record(
+                stage1_candidates=stage1_dump,
+                raw_response=raw,
+                reasoning=parsed.reasoning if parsed else None,
+                selected_indices=None,
+                prompt_user=user_prompt,
+                attempts=2,
+                error="unparseable_after_retry",
+            )
+            return fallback
+
+        _TRACE.record(
+            stage1_candidates=stage1_dump,
+            raw_response=raw,
+            reasoning=parsed.reasoning,
+            selected_indices=list(parsed.indices),
+            prompt_user=user_prompt,
+            attempts=1 if parsed.indices is not None else 2,
+            error=None,
+        )
+        return _llm_rr._compute_ordinal_scores(
+            parsed.indices, candidates,
+        )[:top_k]
+
+    except (ConfigError, ValueError):
+        raise
+    except Exception as exc:  # noqa: BLE001
+        _TRACE.record(
+            stage1_candidates=stage1_dump,
+            raw_response=None,
+            reasoning=None,
+            selected_indices=None,
+            prompt_user=None,
+            attempts=0,
+            error=f"{type(exc).__name__}: {exc}",
+        )
+        logger.warning("Traced LLM re-rank failed; returning fallback")
+        return fallback
+
+
+def _install_tracing() -> Any:
+    """Monkey-patch llm_reranker.rerank_llm; return the original."""
+    orig = _llm_rr.rerank_llm
+    _llm_rr.rerank_llm = _traced_rerank_llm
+    return orig
+
+
+def _uninstall_tracing(orig: Any) -> None:
+    _llm_rr.rerank_llm = orig
+
+
+# ---------------------------------------------------------------------------
+# Fixture-level trace helpers
+# ---------------------------------------------------------------------------
+
+
+def _stage_trace_to_dict(stage: Any) -> dict[str, Any]:
+    """Serialize a StageTrace or RetrievalStageTrace to JSON-safe dict."""
+    base = {
+        "stage": stage.stage,
+        "input_count": stage.input_count,
+        "output_count": stage.output_count,
+        "latency_ms": round(float(stage.latency_ms), 3),
+        "error": stage.error,
+    }
+    retrievers = getattr(stage, "retrievers", None)
+    if retrievers is not None:
+        base["retrievers"] = [
+            {
+                "name": r.name,
+                "candidate_count": r.candidate_count,
+                "latency_ms": round(float(r.latency_ms), 3),
+                "unique_rules": r.unique_rules,
+            }
+            for r in retrievers
+        ]
+        base["fusion_latency_ms"] = round(
+            float(getattr(stage, "fusion_latency_ms", 0.0)), 3,
+        )
+    return base
+
+
+def _count_rules_masked(
+    index: Any, affinity: Any, event: str,
+) -> tuple[int, int, int]:
+    """Count rules (not embedding rows) excluded by the event mask.
+
+    Returns (total_rules, rules_included, rules_masked). The pipeline's
+    own ``rules_masked`` field counts masked embedding rows, which
+    over-reports after expansion fan-out (code-review finding #3 —
+    2026-04-10). This helper uses the parent-rule list for a correct
+    rule-level count.
+    """
+    if affinity is None or not event:
+        total = len(index.rules)
+        return total, total, 0
+
+    total = 0
+    included = 0
+    for rule in index.rules:
+        total += 1
+        aff = affinity.get(rule) if hasattr(affinity, "get") else None
+        if aff is None:
+            included += 1  # default: show rule when no affinity known
             continue
-
-        event_type = cfg["event_type"]
-        print(f"  {tier}: generating expansions ({event_type})...")
-        t0 = time.monotonic()
-        rules = parse_rules((str(cfg["rules_txt"]),))
-        expanded = expand_rules(
-            rules,
-            backend="local",
-            endpoint=ENDPOINT,
-            haiku_model="claude-haiku-4-5",
-            event_type=cfg["event_type"],
-            dedup_threshold=0.80,
-        )
-        elapsed = time.monotonic() - t0
-        total = sum(len(r.expansions) for r in expanded)
-        avg = total / len(expanded) if expanded else 0
-        print(
-            f"  {tier}: {len(expanded)} rules, {total} expansions "
-            f"(avg {avg:.1f}) in {elapsed:.1f}s"
-        )
-
-        out_dir.mkdir(parents=True, exist_ok=True)
-        save_rules_json(expanded, str(out_dir), affinity=affinity)
+        if event in aff.events:
+            included += 1
+    return total, included, total - included
 
 
-def summary_to_dict(summary: EvalSummary) -> dict:
-    """Convert EvalSummary to serializable dict (drop per_fixture for brevity)."""
+def _build_fixture_trace(
+    fx: Fixture,
+    pr: PipelineResult,
+    fr: FixtureResult,
+    llm_capture: dict[str, Any] | None,
+    *,
+    mask_stats: tuple[int, int, int] | None = None,
+) -> dict[str, Any]:
+    """Assemble the per-fixture trace record."""
+    relevant = set(fx.should_match)
+    retrieved_texts = list(fr.retrieved)
+    retrieved_set = set(retrieved_texts)
+
+    hits = sorted(relevant & retrieved_set)
+    misses = sorted(relevant - retrieved_set)
+    extras = [r for r in retrieved_texts if r not in relevant]
+
+    classification: str
+    if fx.difficulty == "negative":
+        classification = "tn" if not retrieved_texts else "fp"
+    elif not relevant:
+        classification = "unknown"
+    elif not misses and not extras:
+        classification = "tp_exact"
+    elif not misses:
+        classification = "tp_noisy"
+    elif hits:
+        classification = "partial"
+    else:
+        classification = "fn"
+
+    llm_block: dict[str, Any] | None = None
+    if llm_capture is not None:
+        llm_block = {
+            "stage1_candidates": llm_capture.get("stage1_candidates"),
+            "prompt_user": llm_capture.get("prompt_user"),
+            "raw_response": llm_capture.get("raw_response"),
+            "reasoning": llm_capture.get("reasoning"),
+            "selected_indices": llm_capture.get("selected_indices"),
+            "attempts": llm_capture.get("attempts"),
+            "error": llm_capture.get("error"),
+        }
+
+    return {
+        "fixture_id": fx.id,
+        "event": fx.event,
+        "difficulty": fx.difficulty,
+        "query": fx.query,
+        "should_match": list(fx.should_match),
+        "should_not_match": list(fx.should_not_match),
+        "classification": classification,
+        "pipeline": {
+            "mode": pr.mode,
+            "event": pr.event,
+            "event_mask_applied": pr.event_mask_applied,
+            # NOTE: PipelineResult.rules_masked counts MASKED EMBEDDING ROWS,
+            # not masked rules (see code-review-2026-04-10.md finding #3).
+            # Kept under its original name for back-compat; real rule counts
+            # exposed below.
+            "embeddings_masked": pr.rules_masked,
+            "total_rules": mask_stats[0] if mask_stats else None,
+            "rules_included": mask_stats[1] if mask_stats else None,
+            "rules_masked": mask_stats[2] if mask_stats else None,
+            "stages": [_stage_trace_to_dict(s) for s in pr.stages],
+        },
+        "llm": llm_block,
+        "final_retrieved": retrieved_texts,
+        "hits": hits,
+        "misses": misses,
+        "extras": extras,
+        "metrics": {
+            "precision_at_k": round(fr.precision_at_k, 4),
+            "recall_at_k": round(fr.recall_at_k, 4),
+            "mrr": round(fr.mrr, 4),
+            "ndcg_at_k": round(fr.ndcg_at_k, 4),
+            "noise_ratio": round(fr.noise_ratio, 4),
+            "anti_precision": round(fr.anti_precision, 4),
+            "quality_score_f2": round(fr.quality_score, 4),
+            "latency_ms": round(fr.latency_ms, 2),
+        },
+    }
+
+
+# ---------------------------------------------------------------------------
+# Sampling + eval loop
+# ---------------------------------------------------------------------------
+
+
+def _stratified_sample(
+    fixtures: list[Fixture], sample_ratio: float, seed: int,
+) -> list[Fixture]:
+    """Stratified sampling preserving tier distribution."""
+    rng = random.Random(seed)
+    by_tier: dict[str, list[Fixture]] = {}
+    for fx in fixtures:
+        by_tier.setdefault(fx.difficulty, []).append(fx)
+    sampled: list[Fixture] = []
+    for tier_fixtures in by_tier.values():
+        n = max(1, int(len(tier_fixtures) * sample_ratio))
+        sampled.extend(rng.sample(tier_fixtures, min(n, len(tier_fixtures))))
+    rng.shuffle(sampled)
+    return sampled
+
+
+def _make_eval_config(llm_candidates: int | None) -> ResolvedConfig:
+    """ResolvedConfig tailored for benchmark eval."""
+    kwargs: dict[str, Any] = {
+        "source_paths": (),
+        "global_source_paths": (),
+        "project_source_paths": (),
+        "global_cache_dir": "",
+        "top_k": 7,
+        "threshold": 0.30,
+        "dedup_threshold": 0.95,
+        "query_max_length": 500,
+        "sparse_enabled": False,
+    }
+    if llm_candidates is not None:
+        kwargs["llm_candidates"] = llm_candidates
+    return ResolvedConfig(**kwargs)
+
+
+def _summary_to_dict(summary: EvalSummary) -> dict[str, Any]:
+    """Convert EvalSummary to serialisable dict (omit per_fixture for brevity)."""
     d = asdict(summary)
     del d["per_fixture"]
     for k, v in d.items():
@@ -213,83 +620,538 @@ def summary_to_dict(summary: EvalSummary) -> dict:
     return d
 
 
-def run_benchmark(label: str, *, sample_ratio: float = 0.2, seed: int = 42) -> dict:
-    """Run basic + workflow eval against model-specific corpora."""
+# ---------------------------------------------------------------------------
+# Traced benchmark
+# ---------------------------------------------------------------------------
+
+
+def run_benchmark_traced(
+    label: str,
+    affinity: object,
+    *,
+    sample_ratio: float,
+    seed: int,
+    tiers: tuple[str, ...] | None,
+    llm_candidates: int | None,
+    query_expansion_enabled: bool,
+    artifacts_dir: Path,
+) -> dict[str, Any]:
+    """Run traced benchmark: replaces legacy run_benchmark.
+
+    Writes per-fixture traces, llm_calls.jsonl, summary.json, config.json,
+    and report.md into artifacts_dir. Returns the per-tier results dict.
+    """
     from fastembed import TextEmbedding
 
-    from cuecard.retrieval.affinity import infer_affinities
-
+    n_affinity = len(affinity.items)  # type: ignore[attr-defined]
     print(f"\nLoading embedding model: {EMBEDDING_MODEL}")
+    print(
+        f"Using pre-inferred affinity: "
+        f"{affinity.mode}, {n_affinity} entries",  # type: ignore[attr-defined]
+    )
     embedding_model = TextEmbedding(model_name=EMBEDDING_MODEL)
 
-    # Always infer affinity via LLM — never use ground truth labels
-    # (ground truth is for accuracy comparison only, not for event masking)
-    from cuecard.models import PipelineConfig, ResolvedConfig
+    corpus_path = str(CORPORA_DIR / f"enriched_{label}" / "rules.json")
+    if not Path(corpus_path).exists():
+        msg = f"Corpus not found: {corpus_path}"
+        raise FileNotFoundError(msg)
 
-    print("Inferring affinity via LLM...")
-    first_rules_txt = list(SOURCE_FILES.values())[0]["rules_txt"]
-    aff_rules = parse_rules((str(first_rules_txt),))
-    aff_config = ResolvedConfig(
-        source_paths=(), global_source_paths=(),
-        project_source_paths=(), global_cache_dir="",
-        pipeline=PipelineConfig(mode="llm-local"),
+    eval_config = _make_eval_config(llm_candidates)
+
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    traces_root = artifacts_dir / "traces"
+    traces_root.mkdir(exist_ok=True)
+    llm_log_path = artifacts_dir / "llm_calls.jsonl"
+    llm_log_path.unlink(missing_ok=True)
+
+    # Shared corpus: build index once
+    rules = tuple(parse_rules((corpus_path,)))
+    index = build_index(rules, {}, EMBEDDING_MODEL, model=embedding_model)
+    print(
+        f"  Built shared index: {len(rules)} rules, "
+        f"{index.embeddings.shape[0]} embeddings "
+        f"(rules + expansions)",
     )
-    affinity = infer_affinities(aff_rules, aff_config)
-    print(f"Inferred affinity: {affinity.mode}, {len(affinity.items)} entries")
 
-    results = {}
-    for tier, cfg in SOURCE_FILES.items():
-        fixture_path = cfg["fixtures"]
-        if not fixture_path.exists():
-            print(f"  Skipping {tier}: fixture file not found")
-            continue
+    orig_rerank = _install_tracing()
+    results_by_tier: dict[str, Any] = {}
+    all_fixture_traces: list[dict[str, Any]] = []
 
-        corpus_path = str(
-            CORPORA_DIR / f"enriched_{tier}_{label}" / "rules.json"
+    try:
+        for tier, cfg in SOURCE_FILES.items():
+            if tiers is not None and tier not in tiers:
+                continue
+            fixture_path = cfg["fixtures"]
+            if not fixture_path.exists():
+                print(f"  Skipping {tier}: fixture file not found")
+                continue
+
+            print(f"\n--- {tier} ---")
+            fixtures = load_fixtures(str(fixture_path))
+            if sample_ratio < 1.0:
+                fixtures = _stratified_sample(fixtures, sample_ratio, seed)
+            print(f"  Evaluating {len(fixtures)} fixtures")
+
+            tier_trace_dir = traces_root / tier
+            tier_trace_dir.mkdir(exist_ok=True)
+
+            tier_event = cfg["event_type"]
+            mask_stats = _count_rules_masked(index, affinity, tier_event)
+            print(
+                f"  Event mask: {mask_stats[1]}/{mask_stats[0]} rules "
+                f"visible for {tier_event} "
+                f"({mask_stats[2]} masked)",
+            )
+
+            tier_results, tier_traces, tier_llm_log = _eval_tier(
+                fixtures=fixtures,
+                index=index,
+                embedding_model=embedding_model,
+                eval_config=eval_config,
+                affinity=affinity,
+                query_expansion_enabled=query_expansion_enabled,
+                tier=tier,
+                tier_trace_dir=tier_trace_dir,
+                mask_stats=mask_stats,
+            )
+
+            all_fixture_traces.extend(tier_traces)
+
+            summary = _build_summary(tier_results)
+            per_event = evaluate_per_event(
+                list(summary.per_fixture), fixtures,
+            )
+            print(
+                f"  F2={summary.mean_quality:.3f}  "
+                f"PosRecall={summary.positive_recall:.3f}  "
+                f"Noise={summary.mean_noise_ratio:.3f}  "
+                f"NegSil={summary.negative_silence_rate:.3f}  "
+                f"p50={summary.latency_p50_ms:.0f}ms",
+            )
+            if per_event:
+                print(format_per_event_report(per_event))
+
+            results_by_tier[tier] = {
+                "summary": _summary_to_dict(summary),
+                "per_event": [asdict(em) for em in per_event],
+                "n_fixtures_sampled": len(fixtures),
+            }
+
+            # Append tier LLM calls to flat log
+            with open(llm_log_path, "a") as fp:
+                for entry in tier_llm_log:
+                    fp.write(json.dumps(entry, default=str) + "\n")
+
+    finally:
+        _uninstall_tracing(orig_rerank)
+
+    # Write top-level artifacts
+    config_payload = {
+        "label": label,
+        "seed": seed,
+        "sample_ratio": sample_ratio,
+        "tiers": list(results_by_tier.keys()),
+        "llm_candidates": llm_candidates,
+        "query_expansion_enabled": query_expansion_enabled,
+        "corpus_path": corpus_path,
+        "embedding_model": EMBEDDING_MODEL,
+        "llm_endpoint": ENDPOINT,
+        "generated_at": datetime.now(UTC).isoformat(),
+    }
+    (artifacts_dir / "config.json").write_text(
+        json.dumps(config_payload, indent=2),
+    )
+
+    summary_payload = {
+        "label": label,
+        "seed": seed,
+        "sample_ratio": sample_ratio,
+        "results": results_by_tier,
+    }
+    (artifacts_dir / "summary.json").write_text(
+        json.dumps(summary_payload, indent=2),
+    )
+
+    report_md = _build_report_md(
+        label=label,
+        config=config_payload,
+        results_by_tier=results_by_tier,
+        all_fixture_traces=all_fixture_traces,
+    )
+    (artifacts_dir / "report.md").write_text(report_md)
+
+    print(f"\nArtifacts written to {artifacts_dir}")
+    print("  report.md       — human summary")
+    print("  summary.json    — machine metrics")
+    print("  config.json     — run config")
+    print("  traces/         — per-fixture JSON (all tiers)")
+    print("  llm_calls.jsonl — flat LLM interaction log")
+
+    return results_by_tier
+
+
+def _eval_tier(
+    *,
+    fixtures: list[Fixture],
+    index: Any,
+    embedding_model: Any,
+    eval_config: ResolvedConfig,
+    affinity: object,
+    query_expansion_enabled: bool,
+    tier: str,
+    tier_trace_dir: Path,
+    mask_stats: tuple[int, int, int],
+) -> tuple[
+    list[FixtureResult],
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+]:
+    """Evaluate one tier with full tracing. Returns (results, traces, llm_log)."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    try:
+        from tqdm import tqdm
+        pbar: Any = tqdm(total=len(fixtures), desc=tier, unit="fix")
+    except ImportError:
+        pbar = None
+
+    results: list[FixtureResult] = []
+    traces: list[dict[str, Any]] = []
+    llm_log: list[dict[str, Any]] = []
+
+    def _eval_one(fx: Fixture) -> tuple[
+        FixtureResult, dict[str, Any], dict[str, Any] | None,
+    ]:
+        _TRACE.set_fixture(fx.id)
+        try:
+            start = time.perf_counter()
+            pr = run_pipeline(
+                fx.query,
+                index,
+                eval_config,
+                embedding_model=embedding_model,
+                mode="llm-local",
+                event=fx.event or "",
+                affinity=affinity,  # type: ignore[arg-type]
+                query_expansion_enabled=query_expansion_enabled,
+                query_expansion_endpoint=ENDPOINT,
+            )
+            elapsed_ms = (time.perf_counter() - start) * 1000.0
+
+            retrieved_texts = [r.rule.text for r in pr.results]
+            relevant = set(fx.should_match)
+            anti_rel = set(fx.should_not_match)
+            is_negative = fx.difficulty == "negative"
+
+            fr = FixtureResult(
+                fixture_id=fx.id,
+                query=fx.query,
+                difficulty=fx.difficulty,
+                retrieved=tuple(retrieved_texts),
+                precision_at_k=precision_at_k(retrieved_texts, relevant),
+                recall_at_k=recall_at_k(retrieved_texts, relevant),
+                mrr=mrr(retrieved_texts, relevant),
+                ndcg_at_k=ndcg_at_k(retrieved_texts, relevant),
+                anti_precision=anti_precision(retrieved_texts, anti_rel),
+                noise_ratio=noise_ratio(retrieved_texts, relevant),
+                context_waste_ratio=context_waste_ratio(
+                    retrieved_texts, relevant,
+                ),
+                retrieved_count=len(retrieved_texts),
+                latency_ms=elapsed_ms,
+                quality_score=quality_score(
+                    retrieved_texts, relevant, is_negative,
+                ),
+            )
+
+            llm_capture = _TRACE.pop(fx.id)
+            trace_obj = _build_fixture_trace(
+                fx, pr, fr, llm_capture, mask_stats=mask_stats,
+            )
+
+            out_file = tier_trace_dir / f"{_safe_filename(fx.id)}.json"
+            out_file.write_text(json.dumps(trace_obj, indent=2, default=str))
+
+            return fr, trace_obj, llm_capture
+        finally:
+            _TRACE.clear_fixture()
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+        futures = {pool.submit(_eval_one, fx): fx for fx in fixtures}
+        for fut in as_completed(futures):
+            fr, trace_obj, llm_capture = fut.result()
+            results.append(fr)
+            traces.append(trace_obj)
+            if llm_capture is not None:
+                llm_log.append({
+                    "tier": tier,
+                    "fixture_id": fr.fixture_id,
+                    "event": trace_obj["event"],
+                    "difficulty": trace_obj["difficulty"],
+                    "query": fr.query,
+                    "n_candidates": len(
+                        llm_capture.get("stage1_candidates") or [],
+                    ),
+                    "selected_indices": llm_capture.get("selected_indices"),
+                    "reasoning": llm_capture.get("reasoning"),
+                    "raw_response": llm_capture.get("raw_response"),
+                    "error": llm_capture.get("error"),
+                })
+            if pbar is not None:
+                pbar.update(1)
+
+    if pbar is not None:
+        pbar.close()
+
+    return results, traces, llm_log
+
+
+# ---------------------------------------------------------------------------
+# Markdown report
+# ---------------------------------------------------------------------------
+
+
+def _truncate(text: str, n: int = 140) -> str:
+    text = text.replace("\n", " ").strip()
+    return text if len(text) <= n else text[: n - 1] + "…"
+
+
+def _build_report_md(
+    *,
+    label: str,
+    config: dict[str, Any],
+    results_by_tier: dict[str, Any],
+    all_fixture_traces: list[dict[str, Any]],
+) -> str:
+    """Build a human-readable markdown report with metrics + gap analysis."""
+    lines: list[str] = []
+    lines.append(f"# Benchmark Report — {label}")
+    lines.append("")
+    lines.append(f"- **Generated:** {config['generated_at']}")
+    lines.append(f"- **Seed:** {config['seed']}")
+    lines.append(f"- **Sample ratio:** {config['sample_ratio']}")
+    lines.append(f"- **Corpus:** `{config['corpus_path']}`")
+    lines.append(f"- **Embedding model:** `{config['embedding_model']}`")
+    lines.append(f"- **LLM endpoint:** `{config['llm_endpoint']}`")
+    lines.append(f"- **llm_candidates override:** {config['llm_candidates']}")
+    lines.append(
+        f"- **Query expansion:** {config['query_expansion_enabled']}",
+    )
+    lines.append("")
+
+    # Top-level metrics per tier
+    lines.append("## Per-Tier Summary")
+    lines.append("")
+    lines.append(
+        "| Tier | N | F2 | PosRecall | Noise | NegSil | p50ms | p95ms |",
+    )
+    lines.append(
+        "|------|--:|---:|----------:|------:|-------:|------:|------:|",
+    )
+    for tier, tdata in results_by_tier.items():
+        s = tdata["summary"]
+        lines.append(
+            f"| {tier} | {tdata['n_fixtures_sampled']} | "
+            f"{s['mean_quality']:.3f} | "
+            f"{s['positive_recall']:.3f} | "
+            f"{s['mean_noise_ratio']:.3f} | "
+            f"{s['negative_silence_rate']:.3f} | "
+            f"{s['latency_p50_ms']:.0f} | "
+            f"{s['latency_p95_ms']:.0f} |",
         )
-        print(f"\n--- {tier} (corpus: enriched_{tier}_{label}) ---")
-        fixtures = load_fixtures(str(fixture_path))
-        print(f"  Loaded {len(fixtures)} fixtures")
+    lines.append("")
 
-        summary = run_eval(
-            fixtures,
-            str(fixture_path.parent),
-            EMBEDDING_MODEL,
-            model=embedding_model,
-            mode="llm-local",
-            corpus_override=(corpus_path,),
-            sample_ratio=sample_ratio,
-            seed=seed,
-            affinity=affinity,
+    # Per-event breakdown
+    lines.append("## Per-Event Breakdown")
+    lines.append("")
+    lines.append("| Tier | Event | N | F2 | PosRecall | Noise | NegSil |")
+    lines.append("|------|-------|--:|---:|----------:|------:|-------:|")
+    for tier, tdata in results_by_tier.items():
+        for em in tdata.get("per_event", []):
+            lines.append(
+                f"| {tier} | {em['event']} | {em['fixture_count']} | "
+                f"{em['quality']:.3f} | "
+                f"{em['positive_recall']:.3f} | "
+                f"{em['noise_ratio']:.3f} | "
+                f"{em['negative_silence']:.3f} |",
+            )
+    lines.append("")
+
+    # Per-tier stage latency breakdown (from traces)
+    lines.append("## Stage Latency (median per fixture)")
+    lines.append("")
+    lines.append("| Tier | Stage | median ms |")
+    lines.append("|------|-------|----------:|")
+    by_tier_traces: dict[str, list[dict[str, Any]]] = {}
+    for t in all_fixture_traces:
+        # trace has no explicit "tier" key; re-derive via event heuristic
+        tier_guess = _infer_tier(t["event"])
+        by_tier_traces.setdefault(tier_guess, []).append(t)
+
+    for tier, tlist in by_tier_traces.items():
+        stage_ms: dict[str, list[float]] = {}
+        for t in tlist:
+            for s in t["pipeline"]["stages"]:
+                stage_ms.setdefault(s["stage"], []).append(s["latency_ms"])
+        for stage, vals in stage_ms.items():
+            vals_sorted = sorted(vals)
+            median = vals_sorted[len(vals_sorted) // 2]
+            lines.append(f"| {tier} | {stage} | {median:.0f} |")
+    lines.append("")
+
+    # Gap analysis: FN (positive fixtures with missed rules)
+    lines.append("## Gap Analysis")
+    lines.append("")
+
+    fn_cases = [
+        t for t in all_fixture_traces
+        if t["classification"] in {"fn", "partial"}
+           and t["difficulty"] != "negative"
+    ]
+    fn_cases.sort(key=lambda t: (
+        -len(t["misses"]),  # most misses first
+        len(t["extras"]),
+    ))
+
+    lines.append(f"### False Negatives / Partial Hits ({len(fn_cases)})")
+    lines.append("")
+    lines.append(
+        "Positive fixtures where one or more expected rules were NOT in "
+        "the final retrieved set. Shows what the LLM saw and why it "
+        "excluded the missed rules.",
+    )
+    lines.append("")
+    for t in fn_cases[:15]:
+        lines.append(f"#### `{t['fixture_id']}` — {t['difficulty']}")
+        lines.append(f"- **Event:** {t['event']}")
+        lines.append(f"- **Query:** `{_truncate(t['query'])}`")
+        lines.append(
+            f"- **Missed ({len(t['misses'])}):**",
         )
-
-        results[tier] = summary_to_dict(summary)
-        print(
-            f"  F2={summary.mean_quality:.3f}  "
-            f"recall={summary.mean_recall:.3f}  "
-            f"noise={summary.mean_noise_ratio:.3f}  "
-            f"neg_sil={summary.negative_silence_rate:.3f}  "
-            f"p50={summary.latency_p50_ms:.0f}ms"
+        for m in t["misses"][:4]:
+            lines.append(f"  - `{_truncate(m)}`")
+        lines.append(
+            f"- **Retrieved ({len(t['final_retrieved'])}):**",
         )
+        for r in t["final_retrieved"][:4]:
+            lines.append(f"  - `{_truncate(r)}`")
 
-        # Per-event breakdown
-        per_event = evaluate_per_event(summary.per_fixture, fixtures)
-        if per_event:
-            print(format_per_event_report(per_event))
+        llm = t.get("llm") or {}
+        if llm.get("reasoning"):
+            lines.append(
+                f"- **LLM reasoning:** {_truncate(llm['reasoning'], 260)}",
+            )
+        stage1 = llm.get("stage1_candidates") or []
+        expected_set = set(t["should_match"])
+        missed_in_stage1 = [
+            c for c in stage1 if c["text"] in expected_set
+        ]
+        if missed_in_stage1:
+            lines.append(
+                "- **Missed rules WERE in stage 1 "
+                f"({len(missed_in_stage1)}):** LLM reranker dropped them",
+            )
+            for c in missed_in_stage1[:3]:
+                lines.append(
+                    f"  - idx={c['idx']} score={c['stage1_score']:.3f} "
+                    f"`{_truncate(c['text'])}`",
+                )
+        elif stage1:
+            lines.append(
+                "- **Missed rules NOT in stage 1:** embedding recall "
+                "failure (the LLM never saw them)",
+            )
+        lines.append("")
 
-    return results
+    # Gap analysis: FP (negative fixtures where rules fired)
+    fp_cases = [
+        t for t in all_fixture_traces
+        if t["classification"] == "fp"
+    ]
+    fp_cases.sort(key=lambda t: -len(t["final_retrieved"]))
+
+    lines.append(f"### False Positives on Negatives ({len(fp_cases)})")
+    lines.append("")
+    lines.append(
+        "Negative fixtures (expected to be silent) where the pipeline "
+        "fired rules anyway.",
+    )
+    lines.append("")
+    for t in fp_cases[:15]:
+        lines.append(f"#### `{t['fixture_id']}` — negative")
+        lines.append(f"- **Event:** {t['event']}")
+        lines.append(f"- **Query:** `{_truncate(t['query'])}`")
+        lines.append(
+            f"- **Fired ({len(t['final_retrieved'])}):**",
+        )
+        for r in t["final_retrieved"][:4]:
+            lines.append(f"  - `{_truncate(r)}`")
+        llm = t.get("llm") or {}
+        if llm.get("reasoning"):
+            lines.append(
+                f"- **LLM reasoning:** {_truncate(llm['reasoning'], 260)}",
+            )
+        lines.append("")
+
+    # Noisiest TP cases
+    noisy_tp = [
+        t for t in all_fixture_traces
+        if t["classification"] == "tp_noisy"
+    ]
+    noisy_tp.sort(key=lambda t: -len(t["extras"]))
+    lines.append(f"### Noisy True Positives ({len(noisy_tp)})")
+    lines.append("")
+    lines.append(
+        "Positive fixtures where all expected rules were retrieved, "
+        "but with extra rules on top (precision cost).",
+    )
+    lines.append("")
+    for t in noisy_tp[:10]:
+        lines.append(f"- `{t['fixture_id']}` — "
+                     f"{len(t['extras'])} extras over "
+                     f"{len(t['should_match'])} expected "
+                     f"(`{_truncate(t['query'], 80)}`)")
+    lines.append("")
+
+    lines.append("## Artifacts")
+    lines.append("")
+    lines.append("- `traces/{tier}/{fixture_id}.json` — full per-fixture trace")
+    lines.append("- `llm_calls.jsonl` — flat LLM interaction log")
+    lines.append("- `summary.json` — machine-readable metrics")
+    lines.append("- `config.json` — run configuration")
+    lines.append("")
+
+    return "\n".join(lines)
+
+
+def _infer_tier(event: str) -> str:
+    """Map event name back to tier key for grouping in the report."""
+    return {
+        "PreToolUse": "pre_tool_use",
+        "UserPromptSubmit": "workflow",
+        "Stop": "stop",
+        "SubagentStart": "subagent_start",
+    }.get(event, event or "unknown")
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="E2E benchmark: model generates its own expansions AND reranks",
+        description=(
+            "E2E benchmark with full per-stage tracing: model generates "
+            "its own expansions AND reranks."
+        ),
     )
     parser.add_argument(
         "--model-path", required=True, help="Path to GGUF model file",
     )
     parser.add_argument(
         "--label", required=True,
-        help="Label for corpus+results (e.g. qwen35-9b)",
+        help="Label for corpus+results (e.g. gemma-e4b-s32)",
     )
     parser.add_argument(
         "--ngl", type=int, default=99, help="GPU layers (0 for CPU-only)",
@@ -300,7 +1162,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--sample-ratio", type=float, default=0.2,
-        help="Fraction of fixtures",
+        help="Fraction of fixtures to evaluate",
     )
     parser.add_argument(
         "--seed", type=int, default=42,
@@ -311,8 +1173,26 @@ def main() -> None:
         help="Regenerate expansions even if cached",
     )
     parser.add_argument(
-        "--out", type=str, default=None,
-        help="Output path for results JSON",
+        "--artifacts-dir", type=str, default=None,
+        help=(
+            "Directory for traces, report, summary. "
+            "Default: eval/results/{label}-traced-seed{seed}/"
+        ),
+    )
+    parser.add_argument(
+        "--tiers", type=str, default=None,
+        help=(
+            "Comma-separated tiers to benchmark "
+            f"(available: {','.join(SOURCE_FILES)}). Default: all."
+        ),
+    )
+    parser.add_argument(
+        "--llm-candidates", type=int, default=None,
+        help="Override llm_candidates (rules sent to LLM reranker).",
+    )
+    parser.add_argument(
+        "--query-expansion", action="store_true",
+        help="Enable query-side expansion (experimental).",
     )
     args = parser.parse_args()
 
@@ -320,50 +1200,64 @@ def main() -> None:
         print(f"Model not found: {args.model_path}")
         sys.exit(1)
 
-    import re
     if not re.match(r"^[a-zA-Z0-9_\-]+$", args.label):
-        print(f"Invalid label: {args.label!r} — only alphanumeric, dash, underscore")
+        print(
+            f"Invalid label: {args.label!r} — only alphanumeric, "
+            "dash, underscore",
+        )
         sys.exit(1)
 
+    tiers: tuple[str, ...] | None = None
+    if args.tiers:
+        tiers = tuple(t.strip() for t in args.tiers.split(","))
+        invalid = [t for t in tiers if t not in SOURCE_FILES]
+        if invalid:
+            print(
+                f"Unknown tiers: {invalid}. "
+                f"Available: {list(SOURCE_FILES)}",
+            )
+            sys.exit(1)
+        print(f"Benchmarking tiers: {', '.join(tiers)}")
+
     os.environ.setdefault("CUECARD_LLM_ENDPOINT", ENDPOINT)
+
+    if args.artifacts_dir:
+        artifacts_dir = Path(args.artifacts_dir)
+    else:
+        RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+        artifacts_dir = RESULTS_DIR / f"{args.label}-traced-seed{args.seed}"
 
     proc = None
     if not args.no_server:
         proc = start_server(args.model_path, ngl=args.ngl)
 
     try:
-        # PING test first — rule: benchmark single call before pipeline
         ping_seconds = ping_server()
         if ping_seconds > 10:
             print(
-                f"WARNING: PING took {ping_seconds:.1f}s — endpoint may be slow. "
-                "Proceeding anyway.",
+                f"WARNING: PING took {ping_seconds:.1f}s — endpoint may "
+                "be slow. Proceeding anyway.",
             )
 
-        print(f"\n=== Phase 1: Generate expansions for {args.label} ===")
-        generate_expansions_for_label(args.label, force=args.force_expand)
+        print("\n=== Phase 0: Infer affinity (once for all events) ===")
+        _rules, affinity = _infer_affinity_once()
 
-        print(f"\n=== Phase 2: Benchmark {args.label} ===")
-        results = run_benchmark(
-            args.label,
-            sample_ratio=args.sample_ratio,
-            seed=args.seed,
+        print(f"\n=== Phase 1: Generate expansions for {args.label} ===")
+        generate_expansions_for_label(
+            args.label, affinity, force=args.force_expand,
         )
 
-        if args.out:
-            out_path = Path(args.out)
-        else:
-            RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-            out_path = RESULTS_DIR / f"{args.label}-e2e-seed{args.seed}.json"
-        payload = {
-            "label": args.label,
-            "seed": args.seed,
-            "sample_ratio": args.sample_ratio,
-            "results": results,
-        }
-        with open(out_path, "w") as f:
-            json.dump(payload, f, indent=2)
-        print(f"\nResults saved to {out_path}")
+        print(f"\n=== Phase 2: Traced benchmark {args.label} ===")
+        run_benchmark_traced(
+            args.label,
+            affinity,
+            sample_ratio=args.sample_ratio,
+            seed=args.seed,
+            tiers=tiers,
+            llm_candidates=args.llm_candidates,
+            query_expansion_enabled=args.query_expansion,
+            artifacts_dir=artifacts_dir,
+        )
 
     finally:
         if proc is not None:

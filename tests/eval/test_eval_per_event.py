@@ -76,7 +76,7 @@ class TestPerEventMetrics:
             noise_ratio=0.2, negative_silence=1.0,
         )
         with pytest.raises(AttributeError):
-            m.event = "PostToolUse"  # type: ignore[misc]
+            m.event = "Stop"  # type: ignore[misc]
 
     def test_fields(self) -> None:
         m = PerEventMetrics(
@@ -118,7 +118,7 @@ class TestEvaluatePerEvent:
     def test_multiple_events(self) -> None:
         fixtures = [
             _make_fixture("f1", "easy", "PreToolUse"),
-            _make_fixture("f2", "easy", "PostToolUse"),
+            _make_fixture("f2", "easy", "UserPromptSubmit"),
             _make_fixture("f3", "easy", "Stop"),
         ]
         results = [
@@ -130,13 +130,13 @@ class TestEvaluatePerEvent:
         assert len(per_event) == 3
         # Verify canonical order
         assert per_event[0].event == "PreToolUse"
-        assert per_event[1].event == "PostToolUse"
+        assert per_event[1].event == "UserPromptSubmit"
         assert per_event[2].event == "Stop"
 
     def test_negative_fixtures_silence(self) -> None:
         fixtures = [
-            _make_fixture("f1", "negative", "PostToolUse"),
-            _make_fixture("f2", "negative", "PostToolUse"),
+            _make_fixture("f1", "negative", "Stop"),
+            _make_fixture("f2", "negative", "Stop"),
         ]
         results = [
             _make_result("f1", "negative", retrieved=(), quality=1.0),
@@ -200,13 +200,13 @@ class TestLoadFixturesEvent:
             "should_match": ["rule"],
             "should_not_match": [],
             "difficulty": "easy",
-            "event": "PostToolUse",
+            "event": "Stop",
         }]
         p = str(tmp_path / "fx.json")  # type: ignore[operator]
         with open(p, "w") as f:
             json.dump(data, f)
         result = load_fixtures(p)
-        assert result[0].event == "PostToolUse"
+        assert result[0].event == "Stop"
 
     def test_event_defaults_to_pretooluse(self, tmp_path: object) -> None:
         data = [{
@@ -254,7 +254,7 @@ class TestFormatPerEventReport:
                 noise_ratio=0.25, negative_silence=0.85,
             ),
             PerEventMetrics(
-                event="PostToolUse", fixture_count=30,
+                event="Stop", fixture_count=30,
                 quality=0.65, positive_recall=0.60,
                 noise_ratio=0.30, negative_silence=0.90,
             ),
@@ -262,7 +262,7 @@ class TestFormatPerEventReport:
         report = format_per_event_report(metrics)
         assert "Per-Event Breakdown" in report
         assert "PreToolUse" in report
-        assert "PostToolUse" in report
+        assert "Stop" in report
         assert "0.780" in report
         assert "0.650" in report
 

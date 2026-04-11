@@ -1611,5 +1611,398 @@
     ],
     "difficulty": "hard",
     "event": "Stop"
+  },
+  {
+    "id": "stop-mined-feature-complete-no-commit",
+    "query": "Stop: User asked: Start implementation of all phases using subagents, setup cron till all phases and testing is done | Agent said: Phase 6 is complete. Results sent to team lead: 696 tests pass, 100% coverage, ruff clean, mypy clean, zero regressions",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-phase-complete-no-review",
+    "query": "Stop: User asked: Start implementation of all phases using subagents | Agent said: Phase 5 build is complete and reported to team lead. 626 tests pass, 100% coverage, ruff clean, mypy clean. Critical flock deadlock bug found and fixed",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After each implementation milestone: run convergence reviews with parallel code + security agents \u2014 per-phase reviews catch bugs when they're cheap to fix"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-docs-update-complete",
+    "query": "Stop: User asked: update docs, save state, update soul md before compact | Agent said: Updated CLAUDE.md with latest benchmark results, session progress saved to artifacts, SOUL.md updated with session learnings",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-benchmark-results-reported",
+    "query": "Stop: User asked: So how did the 35B baseline perform? | Agent said: 35B basic F2 is 0.808, PosRecall 0.808, Noise 0.205, NegSil 0.889. Workflow F2 0.632. Results saved to eval/results/",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-git-commit-push-done",
+    "query": "Stop: User asked: commit and push | Agent said: Committed all changes with message 'refactor: enriched retrieval pipeline with BM25 and RRF fusion'. Pushed to origin/master successfully",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-prd-written-no-review",
+    "query": "Stop: User asked: Yes sounds good, write a detailed prd | Agent said: PRD written to artifacts/phase4-closed-loop-hooks-prd.md. Covers 5 event types, TOML format, affinity inference, event mask retrieval, and benchmarking plan",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When reviewing a PRD or design document: use multiple specialist subagents (architect, security, code quality) in parallel \u2014 a single reviewer misses entire categories of issues"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-implementation-no-tests",
+    "query": "Stop: User asked: Fix the pipeline stage that produces bad output | Agent said: Fixed orchestrator.py to call compute_indicators() and wired technicals agent data. Also fixed portfolio.py action field. Changes applied across 3 files",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-save-state-before-compact",
+    "query": "Stop: User asked: save state, update docs | Agent said: Session state saved to artifacts/session-20-progress.md including completed work, remaining tasks, key decisions, and blockers. CLAUDE.md updated with new model benchmarks",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-question-about-models",
+    "query": "Stop: User asked: what is the difference between Qwen3-Reranker-0.6B and Qwen3-0.6B? | Agent said: Qwen3-Reranker-0.6B is fine-tuned specifically for relevance ranking with cross-encoder architecture. Qwen3-0.6B is a general-purpose causal LLM",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-new-deps-added-no-audit",
+    "query": "Stop: User asked: setup mutmut for mutation testing | Agent said: Installed mutmut via uv add mutmut, configured in pyproject.toml, added instructions to CLAUDE.md. Initial run found 106 surviving mutants across 16 modules",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-react-dashboard-complete",
+    "query": "Stop: User asked: Build the React dashboard for alphaloom | Agent said: Phase 7 React Dashboard build is complete. TypeScript strict mode zero errors, Vite build succeeds, Python tests 696 passed, 5 components all under 150 lines, Security CSP configured",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-whisper-setup-complete",
+    "query": "Stop: User asked: set up faster-whisper for voice dictation | Agent said: Done. Created docker-compose.yml for whisper service, dictate.sh toggle script for Super+D binding, and configuration files in /home/turiya/projects/faster-whisper/",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-tests-committed-no-coverage",
+    "query": "Stop: User asked: write tests for the new components | Agent said: Done. Commit cf3593a with 37 new tests, all passing. Covers workflow-dag.tsx (14 tests) and chat-panel.tsx (23 tests)",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code \u2014 uncovered code is untested code, and untested code breaks silently in production"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-security-review-complete",
+    "query": "Stop: User asked: run security review on the PRD | Agent said: Security review complete and sent to team-lead. 15 findings across 1 CRITICAL, 3 HIGH, 8 MEDIUM, 3 LOW. Covers OWASP Top 10",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-prd-review-convergence",
+    "query": "Stop: User asked: Run one subagent for overall review of the PRD | Agent said: Report sent to team-lead. All 8 Round 1 findings confirmed fixed. Only 2 LOW cosmetic issues remain. PRD is approved for implementation",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-code-changes-no-claude-md",
+    "query": "Stop: User asked: implement the enriched retrieval pipeline with BM25 and RRF fusion | Agent said: Implementation complete. Added sparse retriever with BM25Okapi, RRF fusion in retrievers/__init__.py, parent-child collapse for expansions. All 161 tests pass",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After changing project structure, architecture, or conventions: update CLAUDE.md \u2014 without this, the next session starts with stale context and makes wrong assumptions"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-expansion-prompt-iteration",
+    "query": "Stop: User asked: iterate on the expansion prompt with clear instructions and golden examples | Agent said: Updated v3 expansion prompt with cross-domain boundary enforcement, variable 3-10 expansions, semantic dedup. V3 expansions generated for both corpora",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-agents-deployed-no-monitoring",
+    "query": "Stop: User asked: setup a cron to monitor and complete all benchmarks | Agent said: Autonomous benchmark loop configured. Agents bench-models, prompt-iterate, and regen-expansions launched. Cron checking every 5 minutes",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-bugfix-no-real-data-test",
+    "query": "Stop: User asked: fix the NaN parsing bug in technicals agent | Agent said: Fixed NaN-safe extraction for EPS, PE ratio, and revenue growth. Added fallback chain with default values. Unit tests pass",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After mocked tests pass: test with real external data \u2014 NaN values, missing columns, and API format differences only surface with live data"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-compact-requested",
+    "query": "Stop: User asked: let compact and proceed | Agent said: Compacting context. Session state saved to artifacts/session-19-progress.md with current task, completed work, and next steps",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-cli-setup-no-readme",
+    "query": "Stop: User asked: review all the setup CLI commands and hook installation script for Claude Code, install cuecard and see if it works | Agent said: Hooks installed for PreToolUse, PostToolUse, UserPromptSubmit, SubagentStart, Stop. Verified cuecard serve daemon starts. Setup complete",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-skill-extraction",
+    "query": "Stop: User asked: extract learned skills from this session | Agent said: Saved 4 learned skills: mkdocstrings-cython-so-strips-docstrings, setup-py-graceful-c-compiler-fallback, ci-green-before-release, and feedback_ci_before_release",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-multifile-refactor-no-lint",
+    "query": "Stop: User asked: refactor: split 7 oversized test files into 27 focused modules | Agent said: Split complete. 27 new test files created from 7 original files. All tests pass. No functionality changes",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-daemon-fix-complete",
+    "query": "Stop: User asked: fix daemon reliability with config-aware timeout and security hardening | Agent said: Fixed 500ms timeout to config-aware, fast hook dispatch, security hardening applied. 3 files changed, tests pass",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-voice-mode-working",
+    "query": "Stop: User asked: test if the USB audio device mic works | Agent said: Nice! The USB Audio device must have a mic after all. Enjoy voice mode!",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-all-services-green",
+    "query": "Stop: User asked: verify all services are healthy | Agent said: Both projects fully green. Gravity Claw 3022/3022 tests pass, Mission Control 1008/1008 tests pass, CGR Watcher heartbeat OK, all infra up",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-fixture-quality-work",
+    "query": "Stop: User asked: Evaluate fixtures quality and whether they are reasonable, fix issues, and improve F2 metrics | Agent said: Audited all fixtures. Found 23 wrong expectations. Removed compliance-as-violation fixtures. F2 improved by 2 points",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When model predictions look wrong: audit the ground truth first \u2014 wrong fixture expectations are indistinguishable from model failures, and removing them is a free quality improvement"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-api-integration-no-error-handling",
+    "query": "Stop: User asked: integrate OpenBB for market data | Agent said: OpenBB integration complete. Added data fetchers for price history, fundamentals, and news. All unit tests pass with mocked responses",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After mocked tests pass: test with real external data \u2014 NaN values, missing columns, and API format differences only surface with live data"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-model-download-benchmark",
+    "query": "Stop: User asked: download and benchmark the Qwen3.5 models starting from 9B | Agent said: Downloaded Qwen3.5-9B-Q4_K_M.gguf. Benchmark complete: basic F2 0.797, PosRecall 0.560, NegSil 0.962. Results saved to eval/results/",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-read-soul-md",
+    "query": "Stop: User asked: read soul md | Agent said: I've read SOUL.md. It contains your identity, values, working style with Bhargav, core lessons from 22 sessions, and consolidated principles",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-phase8-all-docs-updated",
+    "query": "Stop: User asked: complete Phase 8 deliverables | Agent said: All Phase 8 deliverables complete. CLAUDE.md updated, README updated, examples/config.toml created, error handling reviewed clean, pyproject.toml verified, 696 tests 100% coverage",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-context-running-low",
+    "query": "Stop: User asked: check agent context usage | Agent said: Context at 83%. Pipi and freebie are tasked. I should save daily memory and prepare for compact",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-new-cli-command-added",
+    "query": "Stop: User asked: add cuecard migrate command to convert txt to toml | Agent said: Added migrate command to cli.py. Converts .txt rules to .toml format with [[rules]] blocks. Preserves rule text, adds empty events and tools fields",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "After changing project structure, architecture, or conventions: update CLAUDE.md \u2014 without this, the next session starts with stale context and makes wrong assumptions"
+    ],
+    "should_not_match": [],
+    "difficulty": "medium",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-hook-format-debugging",
+    "query": "Stop: User asked: figure out why hooks show error in Claude Code | Agent said: Found the issue. Hook output was missing hookEventName and permissionDecision fields. Fixed format, stderr suppressed with 2>/dev/null. Hooks now work correctly",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-multiple-agents-running",
+    "query": "Stop: User asked: check status of running agents | Agent said: All 3 agents are active right now: orchid 61% auditing MC stale MCP tools, cody 42% doing MC LOW fixes, bluey 32% doing GC LOW fixes via subagent",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-llama-server-config",
+    "query": "Stop: User asked: Use llama-server with gemma-4-E4B-it-Q8_0 on port 8081 with 98304 context, document in CLAUDE.md | Agent said: llama-server started with updated config. CLAUDE.md updated with new server start command and context calculation",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-affinity-implemented-no-benchmark",
+    "query": "Stop: User asked: implement event affinity classification for rules | Agent said: Affinity inference implemented with binary classification (tool_use/workflow/both). AffinityIndex with O(1) lookup, event mask in retrieval, affinity.json sidecar. 1148 tests pass",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "Before moving to the next implementation phase: validate the current phase against real data \u2014 synthetic tests pass when the real thing fails because mocks diverge from production"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-fixture-mining-in-progress",
+    "query": "Stop: User asked: launch agents to mine more eval fixtures from user sessions | Agent said: 3 mining agents launched targeting cuecard, canopy-ai, and forceatlas2 projects. Agents are processing session transcripts",
+    "corpus": "rules_global.txt",
+    "should_match": [
+      "When launching subagents: set explicit scope boundaries and kill stale ones \u2014 unbounded reviewers find infinite speculative findings"
+    ],
+    "should_not_match": [],
+    "difficulty": "hard",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-update-soul-md-complete",
+    "query": "Stop: User asked: good job, update soul md | Agent said: Updated SOUL.md with learnings from this session including model benchmarking insights, expansion prompt engineering, and fixture audit methodology",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-mutmut-convergence",
+    "query": "Stop: User asked: keep running mutmut after fixes till convergence to catch everything before benchmark | Agent said: Mutation testing converged. Kill rate improved from 77% to 94%. Remaining 6% are equivalent mutants. All dangerous mutants killed",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
+  },
+  {
+    "id": "stop-mined-persona-loaded",
+    "query": "Stop: User asked: load the UI/UX Designer persona | Agent said: Persona loaded. I'm now operating as the UI/UX Designer agent. Role: Visual design systems, UX architecture. Standard: WCAG AA, mobile-first responsive",
+    "corpus": "rules_global.txt",
+    "should_match": [],
+    "should_not_match": [],
+    "difficulty": "easy",
+    "event": "Stop"
   }
 ]

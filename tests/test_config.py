@@ -114,23 +114,32 @@ class TestExtractFlat:
     def test_full_config(self) -> None:
         raw = {
             "retrieval": {"top_k": 10, "threshold": 0.5, "dedup_threshold": 0.9},
-            "hooks": {"query_max_length": 300, "events": ["PreToolUse", "PostToolUse"]},
+            "hooks": {"query_max_length": 300, "events": ["PreToolUse", "Stop"]},
             "logging": {"max_log_size_mb": 50, "verbose": True, "redact": False},
             "embedding": {"model": "custom/model"},
             "sources": {"rules": ["a.txt"], "allowed_dirs": ["/ext"]},
+            "serve": {"port": 9000},
+            "pipeline": {
+                "mode": "llm-local",
+                "llm": {"max_tokens": 256, "timeout": 12.5},
+            },
         }
         flat = _extract_flat(raw)
         assert flat["top_k"] == 10
         assert flat["threshold"] == 0.5
         assert flat["dedup_threshold"] == 0.9
         assert flat["query_max_length"] == 300
-        assert flat["hook_events"] == ["PreToolUse", "PostToolUse"]
+        assert flat["hook_events"] == ["PreToolUse", "Stop"]
         assert flat["max_log_size_mb"] == 50
         assert flat["verbose"] is True
         assert flat["redact"] is False
         assert flat["model"] == "custom/model"
         assert flat["source_rules"] == ["a.txt"]
         assert flat["allowed_dirs"] == ["/ext"]
+        assert flat["serve_port"] == 9000
+        assert flat["pipeline_mode"] == "llm-local"
+        assert flat["pipeline_llm_max_tokens"] == 256
+        assert flat["pipeline_llm_timeout"] == 12.5
 
     def test_empty(self) -> None:
         assert _extract_flat({}) == {}
@@ -341,10 +350,10 @@ class TestLoadConfig:
         project = tmp_path / "project"
         project.mkdir()
         (project / "cuecard.toml").write_text(
-            '[hooks]\nevents = ["PreToolUse", "PostToolUse"]\n'
+            '[hooks]\nevents = ["PreToolUse", "Stop"]\n'
         )
         config = load_config(project_dir=project, home_dir=home)
-        assert config.hook_events == ("PreToolUse", "PostToolUse")
+        assert config.hook_events == ("PreToolUse", "Stop")
 
     def test_model_override(self, tmp_path: Path) -> None:
         home = tmp_path / "home"

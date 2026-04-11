@@ -32,9 +32,9 @@ class TestBuildExpansionPrompt:
 
     def test_contains_golden_examples_pretooluse(self) -> None:
         system, _ = _build_expansion_prompt("test rule", "nonce1")
+        assert "When adding new dependencies" in system
         assert "Always close file handles" in system
         assert "Run quality checks before every commit" in system
-        assert "Always handle errors explicitly" in system
 
     def test_contains_golden_examples_workflow(self) -> None:
         system, _ = _build_expansion_prompt(
@@ -55,12 +55,13 @@ class TestBuildExpansionPrompt:
         system, _ = _build_expansion_prompt(
             "test rule", "nonce1", event_type="PreToolUse",
         )
-        assert "tool calls and code actions" in system
+        assert "TOOL CALLS" in system
+        assert "Use tool prefixes (Bash:, Edit:, Write:)" in system
 
     def test_anti_template_instruction(self) -> None:
         system, _ = _build_expansion_prompt("test rule", "nonce1")
-        assert "Vary the form" in system
-        assert "template repetition" in system
+        assert "Use CONSISTENT vocabulary" in system
+        assert "same concept should always produce" in system
 
     def test_trigger_direction_instruction(self) -> None:
         system, _ = _build_expansion_prompt("test rule", "nonce1")
@@ -72,9 +73,9 @@ class TestBuildExpansionPrompt:
         assert "indirect triggers" in system.lower()
 
     def test_variable_count_instruction(self) -> None:
-        _, user = _build_expansion_prompt("test rule", "nonce1")
-        assert "3-10" in user
-        assert "Stop when additional expansions would just be rephrasing" in user
+        system, _ = _build_expansion_prompt("test rule", "nonce1")
+        assert "ABSTRACT (3-8)" in system
+        assert "SPECIFIC (3-8)" in system
 
     def test_workflow_cross_domain_dont(self) -> None:
         system, _ = _build_expansion_prompt(
@@ -94,8 +95,8 @@ class TestBuildExpansionPrompt:
         system, _ = _build_expansion_prompt(
             "test rule", "nonce1", event_type="UserPromptSubmit",
         )
-        assert "would false-match" in system or "would fire on every" in system
-        assert "would match unrelated" in system or "would fire on every" in system
+        assert "Bad abstract tags" in system
+        assert "too broad" in system or "paraphrase" in system
 
     def test_scrubs_secrets_from_rule(self) -> None:
         system, user = _build_expansion_prompt(
@@ -117,9 +118,10 @@ class TestBuildExpansionPrompt:
 
     def test_user_prompt_has_json_format(self) -> None:
         _, user = _build_expansion_prompt("test", "nonce1")
-        assert '"expansions"' in user
+        assert '"abstract"' in user
+        assert '"specific"' in user
         assert '"reasoning"' in user
-        assert "3-10 retrieval expansion" in user
+        assert "Return JSON" in user
 
     def test_reasoning_instruction_in_system(self) -> None:
         system, _ = _build_expansion_prompt("test", "nonce1")
@@ -137,6 +139,14 @@ class TestBuildExpansionPrompt:
 
 
 class TestParseExpansionResponse:
+    def test_abstract_specific_format_balances_results(self) -> None:
+        response = json.dumps({
+            "abstract": ["abs 1", "abs 2", "abs 3"],
+            "specific": ["spec 1", "spec 2", "spec 3"],
+        })
+        result = _parse_expansion_response(response, max_per_rule=5)
+        assert result == ["abs 1", "abs 2", "abs 3", "spec 1", "spec 2"]
+
     def test_valid_json(self) -> None:
         response = '{"expansions": ["phrase 1", "phrase 2"]}'
         result = _parse_expansion_response(response)

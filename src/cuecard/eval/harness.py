@@ -240,18 +240,24 @@ def _make_eval_config(
     threshold: float = 0.30,
     dedup_threshold: float = 0.95,
     query_max_length: int = 500,
+    llm_candidates: int | None = None,
+    sparse_enabled: bool = False,
 ) -> ResolvedConfig:
     """Build a ResolvedConfig for eval with dummy computed fields."""
-    return ResolvedConfig(
-        source_paths=(),
-        global_source_paths=(),
-        project_source_paths=(),
-        global_cache_dir="",
-        top_k=top_k,
-        threshold=threshold,
-        dedup_threshold=dedup_threshold,
-        query_max_length=query_max_length,
-    )
+    kwargs: dict[str, object] = {
+        "source_paths": (),
+        "global_source_paths": (),
+        "project_source_paths": (),
+        "global_cache_dir": "",
+        "top_k": top_k,
+        "threshold": threshold,
+        "dedup_threshold": dedup_threshold,
+        "query_max_length": query_max_length,
+        "sparse_enabled": sparse_enabled,
+    }
+    if llm_candidates is not None:
+        kwargs["llm_candidates"] = llm_candidates
+    return ResolvedConfig(**kwargs)  # type: ignore[arg-type]
 
 
 def run_eval(
@@ -269,6 +275,9 @@ def run_eval(
     sample_ratio: float = 1.0,
     seed: int = 42,
     affinity: AffinityIndex | None = None,
+    llm_candidates: int | None = None,
+    query_expansion_enabled: bool = False,
+    query_expansion_endpoint: str = "http://localhost:8081/v1",
 ) -> EvalSummary:
     """Run evaluation across all fixtures and aggregate metrics.
 
@@ -318,6 +327,7 @@ def run_eval(
         threshold=threshold,
         dedup_threshold=dedup_threshold,
         query_max_length=query_max_length,
+        llm_candidates=llm_candidates,
     )
 
     # Pre-build all indexes (not parallelizable — depends on corpus_key)
@@ -352,11 +362,13 @@ def run_eval(
         pipeline_result = run_pipeline(
             fixture.query,
             index,
-            eval_config,  # type: ignore[arg-type]
+            eval_config,
             embedding_model=model,  # type: ignore[arg-type]
             mode=effective_mode,
             event=event,
             affinity=affinity,
+            query_expansion_enabled=query_expansion_enabled,
+            query_expansion_endpoint=query_expansion_endpoint,
         )
         ranked: Sequence[RankedResult] = pipeline_result.results
         elapsed_ms = (time.perf_counter() - start) * 1000.0

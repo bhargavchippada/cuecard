@@ -306,3 +306,30 @@ class TestRunServer:
         # shutdown should only be called once by the handler
         # (serve_forever already returned, so handler sets flag)
         mock_server.shutdown.assert_called_once()
+
+
+
+class TestStopServerForceKill:
+    def test_stop_force_kills_stuck_daemon(self, tmp_path: Path) -> None:
+        write_pid(os.getpid(), tmp_path)
+        calls: list[int] = []
+
+        def _kill_side_effect(pid: int, sig: int) -> None:
+            calls.append(sig)
+            if sig == signal.SIGTERM:
+                return
+            if sig == 0:
+                return
+            if sig == signal.SIGKILL:
+                raise ProcessLookupError
+
+        with (
+            patch("os.kill", side_effect=_kill_side_effect),
+            patch("time.sleep"),
+        ):
+            result = stop_server(tmp_path)
+
+        assert result is True
+        assert signal.SIGTERM in calls
+        assert signal.SIGKILL in calls
+        assert read_pid(tmp_path) is None

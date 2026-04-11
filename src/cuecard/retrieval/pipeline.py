@@ -45,6 +45,8 @@ def run_pipeline(
     event: str = "",
     tool_name: str = "",
     affinity: AffinityIndex | None = None,
+    query_expansion_enabled: bool = False,
+    query_expansion_endpoint: str = "http://localhost:8081/v1",
 ) -> PipelineResult:
     """Execute the multi-stage retrieval pipeline.
 
@@ -77,6 +79,7 @@ def run_pipeline(
     event_mask: npt.NDArray[np.bool_] | None = None
     event_mask_applied = False
     rules_masked = 0
+    embeddings_masked = 0
     if affinity is not None and event:
         from cuecard.retrieval.affinity import build_event_mask
 
@@ -85,14 +88,37 @@ def run_pipeline(
             tool_name=tool_name if tool_name else None,
         )
         event_mask_applied = True
-        rules_masked = int((~event_mask).sum())
+        embeddings_masked = int((~event_mask).sum())
+        allowed_rules = {
+            index.rule_map[i]
+            for i, allowed in enumerate(event_mask)
+            if bool(allowed)
+        }
+        rules_masked = len(index.rules) - len(allowed_rules)
 
     stages: list[StageTrace] = []
+
+    # Stage 0: query expansion (optional)
+    query_expansions: tuple[str, ...] = ()
+    if query_expansion_enabled:
+        from cuecard.retrieval.query_expander import expand_query
+        try:
+            query_expansions = expand_query(
+                query,
+                endpoint=query_expansion_endpoint,
+                event=event or "PreToolUse",
+            )
+        except Exception as exc:
+            logger.warning(
+                "Query expansion failed (%s), falling back to raw query",
+                exc,
+            )
 
     # Stage 1: always (multi-retriever + fusion)
     results, trace = _run_retrieval_stage(
         query, index, config, effective_mode, embedding_model,
         mask=event_mask,
+        query_expansions=query_expansions,
     )
     stages.append(trace)
 
@@ -114,6 +140,7 @@ def run_pipeline(
         event=event,
         event_mask_applied=event_mask_applied,
         rules_masked=rules_masked,
+        embeddings_masked=embeddings_masked,
     )
 
 
@@ -200,8 +227,15 @@ def _run_retrieval_stage(
     embedding_model: TextEmbedding | None,
     *,
     mask: npt.NDArray[np.bool_] | None = None,
+    query_expansions: tuple[str, ...] = (),
 ) -> tuple[list[RankedResult], StageTrace]:
-    """Stage 1: multi-retriever + RRF fusion (always runs)."""
+    """Stage 1: multi-retriever + RRF fusion (always runs).
+
+    When query_expansions is non-empty, runs dense+sparse retrieval for the
+    raw query AND each expansion, then fuses all candidate sets via RRF.
+    This enables tag-to-tag matching when the rule-side expansions contain
+    matching abstract tags.
+    """
     from cuecard.models import RankedResult
     from cuecard.retrieval.dense import DenseRetriever
     from cuecard.retrieval.fusion import fuse
@@ -210,6 +244,9 @@ def _run_retrieval_stage(
     input_count = index.size
     t0 = time.monotonic()
 
+    # Build query list: raw + expansions
+    queries = (query, *query_expansions)
+
     # Dense (always)
     dense = DenseRetriever(
         model=embedding_model,
@@ -217,25 +254,36 @@ def _run_retrieval_stage(
         max_query_length=config.query_max_length,
     )
     t_dense_start = time.monotonic()
-    dense_results = dense.retrieve(
-        query, index, top_k=top_k, threshold=threshold, mask=mask,
-    )
+    dense_sets: list[list[ScoredCandidate]] = []
+    for q in queries:
+        dense_sets.append(
+            dense.retrieve(
+                q, index, top_k=top_k, threshold=threshold, mask=mask,
+            ),
+        )
+    dense_results = dense_sets[0]  # raw-query set for trace
     t_dense_ms = (time.monotonic() - t_dense_start) * 1000.0
 
-    # Sparse (when available and enabled)
-    all_results: list[list[ScoredCandidate]] = [dense_results]
+    # Sparse (when available and enabled) — for each query
     sparse_ran = config.sparse_enabled and index.bm25_corpus is not None
+    sparse_sets: list[list[ScoredCandidate]] = []
     sparse_results: list[ScoredCandidate] = []
     t_sparse_ms = 0.0
 
     if sparse_ran:
-        sparse_results, t_sparse_ms = _run_sparse(
-            query, index, top_k, mask,
-        )
-        if sparse_results:
-            all_results.append(sparse_results)
+        t_sparse_start = time.monotonic()
+        for q in queries:
+            s, _ = _run_sparse(q, index, top_k, mask)
+            if s:
+                sparse_sets.append(s)
+        t_sparse_ms = (time.monotonic() - t_sparse_start) * 1000.0
+        if sparse_sets:
+            sparse_results = sparse_sets[0]  # raw-query set for trace
 
-    # Fusion
+    # Fusion: all dense sets + all sparse sets
+    all_results: list[list[ScoredCandidate]] = [
+        s for s in dense_sets if s
+    ] + sparse_sets
     t_fusion_start = time.monotonic()
     fused = (
         fuse(all_results, k=config.fusion_k, top_k=top_k)

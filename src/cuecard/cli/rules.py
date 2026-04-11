@@ -20,7 +20,7 @@ import cuecard.cli.main as _cli
 from cuecard.cli.main import console, err_console, rules_app
 
 if TYPE_CHECKING:
-    from cuecard.models import ExpandProgress, Rule
+    from cuecard.models import AffinityIndex, ExpandProgress, Rule
 
 
 @rules_app.callback(invoke_without_command=True)
@@ -242,6 +242,7 @@ def _expand_with_progress(
     haiku_model: str,
     missing_only: bool = False,
     dedup_threshold: float,
+    affinity: AffinityIndex | None = None,
 ) -> list[Rule]:
     """Run expand_rules with a Rich progress display on stderr."""
     from cuecard.indexing.expander import expand_rules
@@ -280,6 +281,7 @@ def _expand_with_progress(
             haiku_model=haiku_model,
             missing_only=missing_only,
             dedup_threshold=dedup_threshold,
+            affinity=affinity,
             on_progress=_on_progress,
         )
 
@@ -343,6 +345,16 @@ def expand(
             )
             continue
 
+        # Infer affinity so each rule gets the right expansion style
+        # (tool_use → tool-style, workflow → workflow-style, both → both)
+        from cuecard.retrieval.affinity import infer_affinities
+
+        console.print(
+            f"[bold]{label}:[/bold] inferring affinity for "
+            f"{len(rules)} rules...",
+        )
+        aff = infer_affinities(rules, cfg)
+
         console.print(
             f"[bold]{label}:[/bold] expanding {len(rules)} rules "
             f"via {backend}...",
@@ -356,6 +368,7 @@ def expand(
                 haiku_model=cfg.pipeline.haiku_model,
                 missing_only=missing_only,
                 dedup_threshold=cfg.expansion_dedup_threshold,
+                affinity=aff,
             )
         except Exception as exc:
             err_console.print(f"[red]Expansion failed: {exc}[/red]")

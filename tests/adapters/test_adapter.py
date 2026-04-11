@@ -14,10 +14,8 @@ from cuecard.adapters.claude_code import (
     _LABEL_AUDIT,
     _LABEL_PREVENT,
     _LABEL_PROPAGATE,
-    _LABEL_VERIFY,
     _detect_event,
     _format_tool_input,
-    _handle_post_tool_use,
     _handle_pre_tool_use,
     _handle_stop,
     _handle_subagent_start,
@@ -455,84 +453,6 @@ class TestHandlePreToolUse:
         assert event == "PreToolUse"
 
 
-class TestHandlePostToolUse:
-    def test_basic_query(self) -> None:
-        data: dict[str, object] = {
-            "tool_name": "Bash",
-            "tool_input": "git status",
-            "tool_output": "On branch master\nnothing to commit",
-        }
-        query, tool_name, event = _handle_post_tool_use(data)
-        assert query.startswith("PostToolUse:Bash:")
-        assert "git status" in query
-        assert "\u2192" in query
-        assert "On branch master" in query
-        assert tool_name == "Bash"
-        assert event == "PostToolUse"
-
-    def test_scrubs_secrets_in_output(self) -> None:
-        data: dict[str, object] = {
-            "tool_name": "Bash",
-            "tool_input": "cat .env",
-            "tool_output": "API_KEY=sk-ant-abcdefghijklmnopqrstuvwxyz",
-        }
-        query, _, _ = _handle_post_tool_use(data)
-        assert "sk-ant-" not in query
-        assert "[REDACTED]" in query
-
-    def test_large_output_truncated_at_2000_then_500(self) -> None:
-        big_output = "x" * 5000
-        data: dict[str, object] = {
-            "tool_name": "Bash",
-            "tool_input": "cat big.log",
-            "tool_output": big_output,
-        }
-        query, _, _ = _handle_post_tool_use(data)
-        # The output portion should be at most 500 chars
-        # Total query has prefix + tool_input + arrow + output
-        arrow_idx = query.index("\u2192")
-        output_part = query[arrow_idx + 2:]  # skip "→ "
-        assert len(output_part) <= 500
-
-    def test_non_string_output(self) -> None:
-        data: dict[str, object] = {
-            "tool_name": "Read",
-            "tool_input": "/tmp/f.txt",
-            "tool_output": 12345,
-        }
-        query, _, _ = _handle_post_tool_use(data)
-        assert "12345" in query
-
-    def test_tool_input_truncated_at_200(self) -> None:
-        long_input = "a" * 400
-        data: dict[str, object] = {
-            "tool_name": "Bash",
-            "tool_input": long_input,
-            "tool_output": "ok",
-        }
-        query, _, _ = _handle_post_tool_use(data)
-        # tool_input should be truncated to 200
-        prefix = "PostToolUse:Bash: "
-        arrow_idx = query.index(" \u2192 ")
-        input_part = query[len(prefix):arrow_idx]
-        assert len(input_part) <= 200
-
-    def test_missing_output(self) -> None:
-        data: dict[str, object] = {"tool_name": "Bash", "tool_input": "ls"}
-        query, _, _ = _handle_post_tool_use(data)
-        assert "PostToolUse:Bash:" in query
-
-    def test_newlines_stripped_from_output(self) -> None:
-        data: dict[str, object] = {
-            "tool_name": "Bash",
-            "tool_input": "ls",
-            "tool_output": "line1\nline2\rline3",
-        }
-        query, _, _ = _handle_post_tool_use(data)
-        assert "\n" not in query
-        assert "\r" not in query
-
-
 class TestHandleUserPromptSubmit:
     def test_basic_query(self) -> None:
         data: dict[str, object] = {
@@ -659,7 +579,7 @@ class TestHandleStop:
 class TestDetectEvent:
     def test_known_events(self) -> None:
         for event_name in (
-            "PreToolUse", "PostToolUse", "UserPromptSubmit",
+            "PreToolUse", "UserPromptSubmit",
             "SubagentStart", "Stop",
         ):
             data: dict[str, object] = {"hook_event_name": event_name}
@@ -669,21 +589,25 @@ class TestDetectEvent:
         assert _detect_event({"hook_event_name": "Unknown"}) == "PreToolUse"
         assert _detect_event({}) == "PreToolUse"
 
+    def test_post_tool_use_falls_back_to_pre_tool_use(self) -> None:
+        """PostToolUse is no longer supported — detect fallback."""
+        assert _detect_event({"hook_event_name": "PostToolUse"}) == "PreToolUse"
+
     def test_legacy_event_field(self) -> None:
         data: dict[str, object] = {"event": "UserPromptSubmit"}
         assert _detect_event(data) == "UserPromptSubmit"
 
     def test_hook_event_name_takes_priority(self) -> None:
         data: dict[str, object] = {
-            "hook_event_name": "PostToolUse",
+            "hook_event_name": "Stop",
             "event": "PreToolUse",
         }
-        assert _detect_event(data) == "PostToolUse"
+        assert _detect_event(data) == "Stop"
 
 
 class TestEventHandlersDict:
-    def test_all_five_events_registered(self) -> None:
-        expected = {"PreToolUse", "PostToolUse", "UserPromptSubmit",
+    def test_all_events_registered(self) -> None:
+        expected = {"PreToolUse", "UserPromptSubmit",
                     "SubagentStart", "Stop"}
         assert set(_EVENT_HANDLERS.keys()) == expected
 
@@ -696,9 +620,6 @@ class TestEventLabels:
     def test_pre_tool_use_label(self) -> None:
         assert _EVENT_LABELS["PreToolUse"] == _LABEL_PREVENT
 
-    def test_post_tool_use_label(self) -> None:
-        assert _EVENT_LABELS["PostToolUse"] == _LABEL_VERIFY
-
     def test_user_prompt_submit_label(self) -> None:
         assert _EVENT_LABELS["UserPromptSubmit"] == _LABEL_PREVENT
 
@@ -709,7 +630,6 @@ class TestEventLabels:
         assert _EVENT_LABELS["Stop"] == _LABEL_AUDIT
 
     def test_label_contents(self) -> None:
-        assert "VERIFY compliance" in _LABEL_VERIFY
         assert "RULES this agent" in _LABEL_PROPAGATE
         assert "AUDIT" in _LABEL_AUDIT
         assert "RULES you must follow" in _LABEL_PREVENT
@@ -752,21 +672,6 @@ class TestInjectionLabelInOutput:
         )
         ctx = output["hookSpecificOutput"]["additionalContext"]
         assert ctx.startswith(_LABEL_PREVENT)
-
-    def test_post_tool_use_label(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
-    ) -> None:
-        output = self._run_main_with_event(
-            {
-                "hook_event_name": "PostToolUse",
-                "tool_name": "Bash",
-                "tool_input": "ls",
-                "tool_output": "file.txt",
-            },
-            tmp_path, capsys,
-        )
-        ctx = output["hookSpecificOutput"]["additionalContext"]
-        assert ctx.startswith(_LABEL_VERIFY)
 
     def test_user_prompt_submit_label(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
@@ -843,22 +748,6 @@ class TestHookOutputFormat:
         hook_out = output["hookSpecificOutput"]
         assert hook_out["hookEventName"] == "PreToolUse"
         assert hook_out["permissionDecision"] == "allow"
-
-    def test_post_tool_use_no_permission_decision(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
-    ) -> None:
-        output = self._run_event(
-            {
-                "hook_event_name": "PostToolUse",
-                "tool_name": "Bash",
-                "tool_input": "ls",
-                "tool_output": "ok",
-            },
-            tmp_path, capsys,
-        )
-        hook_out = output["hookSpecificOutput"]
-        assert hook_out["hookEventName"] == "PostToolUse"
-        assert "permissionDecision" not in hook_out
 
     def test_user_prompt_submit_no_permission_decision(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str],

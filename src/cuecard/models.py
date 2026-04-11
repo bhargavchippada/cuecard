@@ -32,7 +32,7 @@ LLM_TIMEOUT = 60.0
 DEFAULT_HOOK_EVENT = "PreToolUse"
 
 KNOWN_HOOK_EVENTS: frozenset[str] = frozenset({
-    "PreToolUse", "PostToolUse", "UserPromptSubmit", "SubagentStart", "Stop",
+    "PreToolUse", "UserPromptSubmit", "SubagentStart", "Stop",
 })
 
 AffinitySource = Literal["explicit", "inferred", "explicit+inferred", "default"]
@@ -267,6 +267,7 @@ class PipelineResult:
     event: str = ""
     event_mask_applied: bool = False
     rules_masked: int = 0
+    embeddings_masked: int = 0
 
 
 class Index:

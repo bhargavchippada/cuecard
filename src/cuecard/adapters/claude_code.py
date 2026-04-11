@@ -5,8 +5,8 @@ Reads hook JSON from stdin, retrieves relevant rules,
 injects them into hookSpecificOutput.additionalContext,
 and writes the result to stdout.
 
-Supports all 5 Claude Code hook events:
-PreToolUse, PostToolUse, UserPromptSubmit, SubagentStart, Stop.
+Supports 4 Claude Code hook events:
+PreToolUse, UserPromptSubmit, SubagentStart, Stop.
 """
 
 from __future__ import annotations
@@ -38,9 +38,6 @@ _LABEL_PREVENT = (
     "[cuecard \u2014 RULES you must follow for this action"
     " to avoid failures]"
 )
-_LABEL_VERIFY = (
-    "[cuecard \u2014 VERIFY compliance for this completed action]"
-)
 _LABEL_PROPAGATE = (
     "[cuecard \u2014 RULES this agent must follow]"
 )
@@ -50,7 +47,6 @@ _LABEL_AUDIT = (
 
 _EVENT_LABELS: dict[str, str] = {
     "PreToolUse": _LABEL_PREVENT,
-    "PostToolUse": _LABEL_VERIFY,
     "UserPromptSubmit": _LABEL_PREVENT,
     "SubagentStart": _LABEL_PROPAGATE,
     "Stop": _LABEL_AUDIT,
@@ -85,26 +81,6 @@ def _handle_pre_tool_use(data: dict[str, object]) -> tuple[str, str, str]:
     tool_input = _format_tool_input(data.get("tool_input", ""))
     query = f"{tool_name}: {tool_input}"
     return query, tool_name, "PreToolUse"
-
-
-def _handle_post_tool_use(data: dict[str, object]) -> tuple[str, str, str]:
-    """Extract query for PostToolUse events.
-
-    Security: raw output capped at 2000 chars BEFORE str(),
-    then scrub_secrets() on full string BEFORE truncation to 500.
-    """
-    tool_name = _sanitize_field(
-        str(data.get("tool_name", "")), MAX_TOOL_NAME_LENGTH,
-    )
-    tool_input = _format_tool_input(data.get("tool_input", ""))[:200]
-    raw_output = data.get("tool_output", "")
-    if isinstance(raw_output, str):
-        raw_output = raw_output[:2000]
-    else:
-        raw_output = str(raw_output)[:2000]
-    tool_output = _sanitize_field(scrub_secrets(raw_output), 500)
-    query = f"PostToolUse:{tool_name}: {tool_input} \u2192 {tool_output}"
-    return query, tool_name, "PostToolUse"
 
 
 def _handle_user_prompt_submit(
@@ -148,7 +124,6 @@ def _handle_stop(data: dict[str, object]) -> tuple[str, str, str]:
 
 _EVENT_HANDLERS: dict[str, Callable[[dict[str, object]], tuple[str, str, str]]] = {
     "PreToolUse": _handle_pre_tool_use,
-    "PostToolUse": _handle_post_tool_use,
     "UserPromptSubmit": _handle_user_prompt_submit,
     "SubagentStart": _handle_subagent_start,
     "Stop": _handle_stop,

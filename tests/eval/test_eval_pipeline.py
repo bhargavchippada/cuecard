@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from typing import TYPE_CHECKING
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -478,6 +478,67 @@ class TestRunEvalWithMode:
         assert summary.per_fixture[0].retrieved == ("Rule A",)
 
 
+    def test_query_expansion_flag_threads_to_pipeline(self, tmp_path: object) -> None:
+        corpus_dir = str(tmp_path)  # type: ignore[arg-type]
+        corpus_file = str(tmp_path / "rules.txt")  # type: ignore[operator]
+        with open(corpus_file, "w") as f:
+            f.write("Rule A\n")
+
+        fixtures = [
+            Fixture(
+                id="mode-test",
+                query="test",
+                corpus="rules.txt",
+                should_match=("Rule A",),
+                should_not_match=(),
+                difficulty="easy",
+            ),
+        ]
+        model = MockModel()
+
+        from cuecard.models import (
+            PipelineResult,
+            Provenance,
+            RankedResult,
+            Rule,
+            StageTrace,
+        )
+
+        fake_pipeline = PipelineResult(
+            results=(
+                RankedResult(
+                    rule=Rule(
+                        text="Rule A",
+                        provenance=Provenance(
+                            file=corpus_file, line_start=1, line_end=1,
+                        ),
+                    ),
+                    score=0.9,
+                ),
+            ),
+            stages=(StageTrace(
+                stage="embedding", input_count=1,
+                output_count=1, latency_ms=0.5,
+            ),),
+            mode="llm-local",
+        )
+
+        with patch(
+            "cuecard.retrieval.pipeline.run_pipeline",
+            return_value=fake_pipeline,
+        ) as mock_pipe:
+            run_eval(
+                fixtures,
+                corpus_dir,
+                "test-model",
+                model=model,
+                mode="llm-local",
+                query_expansion_enabled=True,
+            )
+
+        assert mock_pipe.call_args.kwargs["query_expansion_enabled"] is True
+
+
 class TestCorpusOverride:
     def test_corpus_override_builds_unified_index(
         self, tmp_path: Path,
@@ -633,3 +694,110 @@ class TestFormatEvalReport:
             "Per-Tier Breakdown",
         ]:
             assert label in report, f"Missing label: {label}"
+
+
+
+class TestEvalInternals:
+    def test_make_eval_config_overrides_llm_candidates(self) -> None:
+        from cuecard.eval.harness import _make_eval_config
+
+        config = _make_eval_config(llm_candidates=21)
+        assert config.llm_candidates == 21
+
+    def test_llm_mode_uses_parallel_path(self, tmp_path: Path) -> None:
+        corpus_dir = str(tmp_path)
+        corpus_file = tmp_path / "rules.txt"
+        corpus_file.write_text("Rule A\n")
+
+        fixtures = [
+            Fixture(
+                id=f"fx-{i}",
+                query=f"query {i}",
+                corpus="rules.txt",
+                should_match=("Rule A",),
+                should_not_match=(),
+                difficulty="easy",
+            )
+            for i in range(2)
+        ]
+        model = MockModel()
+
+        with (
+            patch("cuecard.eval.harness._run_parallel") as mock_parallel,
+            patch("cuecard.eval.harness._build_summary", return_value=EvalSummary(
+                fixture_count=0,
+                mean_precision=0.0, mean_recall=0.0, mean_mrr=0.0, mean_ndcg=0.0,
+                mean_anti_precision=0.0, mean_noise_ratio=0.0,
+                mean_context_waste_ratio=0.0, negative_silence_rate=0.0,
+                mean_retrieved_count=0.0, mean_quality=0.0, positive_recall=0.0,
+                positive_quality=0.0, latency_p50_ms=0.0, latency_p95_ms=0.0,
+                latency_p99_ms=0.0, per_fixture=(), per_tier=(),
+            )),
+        ):
+            run_eval(fixtures, corpus_dir, "test-model", model=model, mode="llm-local")
+
+        mock_parallel.assert_called_once()
+
+    def test_run_parallel_updates_and_closes_progress_bar(self) -> None:
+        from cuecard.eval.harness import _run_parallel
+
+        results: list[FixtureResult] = []
+        fixtures = [
+            Fixture(
+                id=f"fx-{i}", query="q", corpus="rules.txt",
+                should_match=(), should_not_match=(), difficulty="easy",
+            )
+            for i in range(2)
+        ]
+        pbar = MagicMock()
+
+        def eval_one(fx: Fixture) -> FixtureResult:
+            return FixtureResult(
+                fixture_id=fx.id, query=fx.query, difficulty=fx.difficulty,
+                retrieved=(), precision_at_k=0.0, recall_at_k=0.0, mrr=0.0,
+                ndcg_at_k=0.0, anti_precision=0.0, noise_ratio=0.0,
+                context_waste_ratio=0.0, retrieved_count=0, latency_ms=0.0,
+                quality_score=0.0,
+            )
+
+        with patch("tqdm.tqdm", return_value=pbar):
+            _run_parallel(fixtures, eval_one, results, "llm-local")
+
+        assert len(results) == 2
+        assert pbar.update.call_count == 2
+        pbar.close.assert_called_once()
+
+
+    def test_run_parallel_without_tqdm(self) -> None:
+        import builtins
+
+        from cuecard.eval.harness import _run_parallel
+
+        real_import = builtins.__import__
+        results: list[FixtureResult] = []
+        fixtures = [
+            Fixture(
+                id=f"fx-{i}", query="q", corpus="rules.txt",
+                should_match=(), should_not_match=(), difficulty="easy",
+            )
+            for i in range(2)
+        ]
+
+        def eval_one(fx: Fixture) -> FixtureResult:
+            return FixtureResult(
+                fixture_id=fx.id, query=fx.query, difficulty=fx.difficulty,
+                retrieved=(), precision_at_k=0.0, recall_at_k=0.0, mrr=0.0,
+                ndcg_at_k=0.0, anti_precision=0.0, noise_ratio=0.0,
+                context_waste_ratio=0.0, retrieved_count=0, latency_ms=0.0,
+                quality_score=0.0,
+            )
+
+        def mock_import(name: str, *args: object, **kwargs: object) -> object:
+            if name == "tqdm":
+                raise ImportError("no tqdm")
+            return real_import(name, *args, **kwargs)
+
+        with patch.object(builtins, "__import__", side_effect=mock_import):
+            _run_parallel(fixtures, eval_one, results, "llm-local")
+
+        assert len(results) == 2

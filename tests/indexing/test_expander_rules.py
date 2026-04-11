@@ -9,11 +9,20 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from cuecard.indexing.expander import (
+    _TOOL_STYLE,
     _VALID_EVENT_TYPES,
+    _WORKFLOW_STYLE,
     _build_expansion_prompt,
+    _expansion_styles_for_rule,
     expand_rules,
 )
-from cuecard.models import Provenance, Rule
+from cuecard.models import (
+    AffinityIndex,
+    Provenance,
+    Rule,
+    RuleAffinity,
+    _hash_rule_text,
+)
 from cuecard.security import ConfigError
 
 
@@ -355,3 +364,370 @@ class TestExpandRules:
                 "claude-haiku-4-5", dedup_threshold=0.80,
             )
         assert len(result) == 1
+
+    def test_affinity_tool_use_gets_tool_style(self) -> None:
+        """Rules with tool_use affinity get PreToolUse expansion style."""
+        rule = _make_rule()
+
+        with (
+            patch(
+                "cuecard.indexing.expander._build_expansion_prompt",
+                wraps=_build_expansion_prompt,
+            ) as mock_prompt,
+            patch(
+                "cuecard.indexing.expander.call_local",
+                return_value='{"expansions": ["x"]}',
+            ),
+            patch(
+                "cuecard.indexing.expander._semantic_dedup",
+                side_effect=lambda x, **kw: x,
+            ),
+        ):
+            aff = _make_affinity(rule, events=frozenset({"PreToolUse"}))
+            expand_rules(
+                [rule], "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
+                affinity=aff,
+            )
+            _, kwargs = mock_prompt.call_args
+            assert kwargs["event_type"] == "PreToolUse"
+
+    def test_affinity_workflow_gets_workflow_style(self) -> None:
+        """Rules with workflow affinity get UserPromptSubmit expansion style."""
+        rule = _make_rule()
+
+        with (
+            patch(
+                "cuecard.indexing.expander._build_expansion_prompt",
+                wraps=_build_expansion_prompt,
+            ) as mock_prompt,
+            patch(
+                "cuecard.indexing.expander.call_local",
+                return_value='{"expansions": ["x"]}',
+            ),
+            patch(
+                "cuecard.indexing.expander._semantic_dedup",
+                side_effect=lambda x, **kw: x,
+            ),
+        ):
+            aff = _make_affinity(
+                rule, events=frozenset({"UserPromptSubmit", "Stop"}),
+            )
+            expand_rules(
+                [rule], "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
+                affinity=aff,
+            )
+            _, kwargs = mock_prompt.call_args
+            assert kwargs["event_type"] == "UserPromptSubmit"
+
+    def test_affinity_both_gets_two_calls(self) -> None:
+        """Rules with both tool+workflow affinity expand twice."""
+        rule = _make_rule()
+        call_count = 0
+
+        def _fake_call(*args: object, **kwargs: object) -> str:
+            nonlocal call_count
+            call_count += 1
+            return '{"expansions": ["exp' + str(call_count) + '"]}'
+
+        with (
+            patch("cuecard.indexing.expander.call_local", side_effect=_fake_call),
+            patch(
+                "cuecard.indexing.expander._semantic_dedup",
+                side_effect=lambda x, **kw: x,
+            ),
+        ):
+            aff = _make_affinity(
+                rule,
+                events=frozenset({"PreToolUse", "UserPromptSubmit"}),
+            )
+            result = expand_rules(
+                [rule], "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
+                affinity=aff,
+            )
+        assert call_count == 2
+        assert len(result[0].expansions) == 2
+
+    def test_affinity_none_uses_fallback(self) -> None:
+        """When affinity is None, falls back to event_type."""
+        rule = _make_rule()
+
+        with (
+            patch(
+                "cuecard.indexing.expander._build_expansion_prompt",
+                wraps=_build_expansion_prompt,
+            ) as mock_prompt,
+            patch(
+                "cuecard.indexing.expander.call_local",
+                return_value='{"expansions": ["x"]}',
+            ),
+            patch(
+                "cuecard.indexing.expander._semantic_dedup",
+                side_effect=lambda x, **kw: x,
+            ),
+        ):
+            expand_rules(
+                [rule], "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
+                event_type="UserPromptSubmit",
+                affinity=None,
+            )
+            _, kwargs = mock_prompt.call_args
+            assert kwargs["event_type"] == "UserPromptSubmit"
+
+    def test_affinity_rule_not_found_uses_fallback(self) -> None:
+        """When rule not in affinity index, falls back to event_type."""
+        rule = _make_rule()
+        # Empty affinity — rule won't be found
+        aff = AffinityIndex(version=1, mode="infer", model="test", affinities=())
+
+        with (
+            patch(
+                "cuecard.indexing.expander._build_expansion_prompt",
+                wraps=_build_expansion_prompt,
+            ) as mock_prompt,
+            patch(
+                "cuecard.indexing.expander.call_local",
+                return_value='{"expansions": ["x"]}',
+            ),
+            patch(
+                "cuecard.indexing.expander._semantic_dedup",
+                side_effect=lambda x, **kw: x,
+            ),
+        ):
+            expand_rules(
+                [rule], "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
+                event_type="UserPromptSubmit",
+                affinity=aff,
+            )
+            _, kwargs = mock_prompt.call_args
+            assert kwargs["event_type"] == "UserPromptSubmit"
+
+    def test_parallel_produces_same_results(self) -> None:
+        """Parallel mode produces the same rules as sequential."""
+        rules = [
+            _make_rule(text="Rule A"),
+            _make_rule(text="Rule B"),
+            _make_rule(text="Rule C"),
+        ]
+
+        def _fake_call(*args: object, **kwargs: object) -> str:
+            return '{"expansions": ["expanded"]}'
+
+        with patch("cuecard.indexing.expander.call_local", side_effect=_fake_call):
+            sequential = expand_rules(
+                rules, "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
+                max_workers=1,
+            )
+
+        with patch("cuecard.indexing.expander.call_local", side_effect=_fake_call):
+            parallel = expand_rules(
+                rules, "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
+                max_workers=3,
+            )
+
+        assert len(sequential) == len(parallel)
+        for s, p in zip(sequential, parallel, strict=True):
+            assert s.text == p.text
+            assert s.expansions == p.expansions
+
+    def test_parallel_skips_missing_only(self) -> None:
+        """Parallel mode respects missing_only flag."""
+        rules = [
+            _make_rule(text="Has exp", expansions=("existing",)),
+            _make_rule(text="Needs exp"),
+        ]
+
+        with patch(
+            "cuecard.indexing.expander.call_local",
+            return_value='{"expansions": ["new"]}',
+        ):
+            result = expand_rules(
+                rules, "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
+                missing_only=True, max_workers=2,
+            )
+
+        assert result[0].expansions == ("existing",)
+        assert result[1].expansions == ("new",)
+
+    def test_parallel_with_affinity(self) -> None:
+        """Parallel mode uses affinity for per-rule style selection."""
+        tool_rule = _make_rule(text="tool rule")
+        workflow_rule = _make_rule(text="workflow rule")
+        rules = [tool_rule, workflow_rule]
+
+        prompt_styles: list[str] = []
+        original_build = _build_expansion_prompt
+
+        def _capture_prompt(
+            text: str, nonce: str, event_type: str = "PreToolUse",
+        ) -> tuple:
+            prompt_styles.append(event_type)
+            return original_build(text, nonce, event_type=event_type)
+
+        aff = AffinityIndex(
+            version=1, mode="infer", model="test",
+            affinities=(
+                (_hash_rule_text("tool rule"), RuleAffinity(
+                    events=frozenset({"PreToolUse"}),
+                    tools=frozenset(), source="inferred",
+                )),
+                (_hash_rule_text("workflow rule"), RuleAffinity(
+                    events=frozenset({"UserPromptSubmit"}),
+                    tools=frozenset(), source="inferred",
+                )),
+            ),
+        )
+
+        with (
+            patch(
+                "cuecard.indexing.expander._build_expansion_prompt",
+                side_effect=_capture_prompt,
+            ),
+            patch(
+                "cuecard.indexing.expander.call_local",
+                return_value='{"expansions": ["x"]}',
+            ),
+            patch(
+                "cuecard.indexing.expander._semantic_dedup",
+                side_effect=lambda x, **kw: x,
+            ),
+        ):
+            expand_rules(
+                rules, "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
+                affinity=aff, max_workers=2,
+            )
+
+        assert "PreToolUse" in prompt_styles
+        assert "UserPromptSubmit" in prompt_styles
+
+    def test_on_progress_disables_parallel(self) -> None:
+        """on_progress forces sequential mode even with max_workers > 1."""
+        rules = [_make_rule(text="A"), _make_rule(text="B")]
+        updates: list[object] = []
+
+        with patch(
+            "cuecard.indexing.expander.call_local",
+            return_value='{"expansions": ["x"]}',
+        ):
+            expand_rules(
+                rules, "local", "http://localhost:8081/v1",
+                "claude-haiku-4-5", dedup_threshold=0.80,
+                max_workers=5, on_progress=updates.append,
+            )
+
+        # on_progress was called (sequential mode) — parallel would skip it
+        assert len(updates) == 2
+        assert updates[0].rule_index == 0  # type: ignore[union-attr]
+
+
+class TestExpansionStylesForRule:
+    """Tests for _expansion_styles_for_rule."""
+
+    def test_no_affinity_returns_fallback(self) -> None:
+        rule = _make_rule()
+        assert _expansion_styles_for_rule(rule, None, "PreToolUse") == ("PreToolUse",)
+
+    def test_rule_not_in_affinity_returns_fallback(self) -> None:
+        rule = _make_rule()
+        empty_aff = AffinityIndex(
+            version=1, mode="infer", model="test", affinities=(),
+        )
+        result = _expansion_styles_for_rule(rule, empty_aff, "PreToolUse")
+        assert result == ("PreToolUse",)
+
+    def test_tool_use_events_return_tool_style(self) -> None:
+        rule = _make_rule()
+        aff = _make_affinity(rule, events=frozenset({"PreToolUse"}))
+        result = _expansion_styles_for_rule(rule, aff, "PreToolUse")
+        assert result == (_TOOL_STYLE,)
+
+    def test_workflow_events_return_workflow_style(self) -> None:
+        rule = _make_rule()
+        aff = _make_affinity(rule, events=frozenset({"UserPromptSubmit", "Stop"}))
+        result = _expansion_styles_for_rule(rule, aff, "PreToolUse")
+        assert result == (_WORKFLOW_STYLE,)
+
+    def test_both_events_return_both_styles(self) -> None:
+        rule = _make_rule()
+        aff = _make_affinity(
+            rule,
+            events=frozenset({"PreToolUse", "UserPromptSubmit", "Stop"}),
+        )
+        result = _expansion_styles_for_rule(rule, aff, "PreToolUse")
+        assert result == (_TOOL_STYLE, _WORKFLOW_STYLE)
+
+    def test_empty_events_returns_fallback(self) -> None:
+        rule = _make_rule()
+        aff = _make_affinity(rule, events=frozenset())
+        result = _expansion_styles_for_rule(rule, aff, "UserPromptSubmit")
+        assert result == ("UserPromptSubmit",)
+
+    def test_subagent_start_is_workflow(self) -> None:
+        rule = _make_rule()
+        aff = _make_affinity(rule, events=frozenset({"SubagentStart"}))
+        result = _expansion_styles_for_rule(rule, aff, "PreToolUse")
+        assert result == (_WORKFLOW_STYLE,)
+
+
+def _make_affinity(
+    rule: Rule,
+    *,
+    events: frozenset[str] = frozenset(),
+) -> AffinityIndex:
+    """Create a minimal AffinityIndex with one rule."""
+    text_hash = _hash_rule_text(rule.text)
+    return AffinityIndex(
+        version=1, mode="infer", model="test",
+        affinities=(
+            (text_hash, RuleAffinity(
+                events=events, tools=frozenset(), source="inferred",
+            )),
+        ),
+    )
+
+
+
+class TestExpandRulesParallelCoverage:
+    def test_parallel_multistyle_uses_multi_style_helper(self) -> None:
+        rules = [_make_rule(text="Both rule")]
+        aff = AffinityIndex(
+            version=1,
+            mode="strict",
+            model="",
+            affinities=((
+                _hash_rule_text("Both rule"),
+                RuleAffinity(
+                    events=frozenset({"PreToolUse", "UserPromptSubmit"}),
+                    tools=frozenset(),
+                    source="explicit",
+                ),
+            ),),
+        )
+
+        with patch(
+            "cuecard.indexing.expander._expand_single_rule_multi_style",
+            return_value=(
+                _make_rule(text="Both rule", expansions=("x",)),
+                1,
+            ),
+        ) as mock_multi:
+            result = expand_rules(
+                rules,
+                "local",
+                "http://localhost:8081/v1",
+                "claude-haiku-4-5",
+                dedup_threshold=0.80,
+                affinity=aff,
+                max_workers=2,
+            )
+
+        assert result[0].expansions == ("x",)
+        mock_multi.assert_called_once()

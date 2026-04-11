@@ -206,7 +206,7 @@ def _parse_toml(path: str) -> list[Rule]:
 
         [[rules]]
         text = "Rule text"
-        events = ["PreToolUse", "PostToolUse"]
+        events = ["PreToolUse"]
         tools = ["Bash"]
 
     Uses ``chunk_type="toml_rule"`` — line_start is the rule ordinal

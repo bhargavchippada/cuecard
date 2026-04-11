@@ -94,10 +94,10 @@ class TestRule:
         r = Rule(
             text="Use uv",
             provenance=sample_provenance,
-            events=frozenset({"PreToolUse", "PostToolUse"}),
+            events=frozenset({"PreToolUse", "Stop"}),
             tools=frozenset({"Bash"}),
         )
-        assert r.events == frozenset({"PreToolUse", "PostToolUse"})
+        assert r.events == frozenset({"PreToolUse", "Stop"})
         assert r.tools == frozenset({"Bash"})
 
     def test_events_tools_frozen(
@@ -115,11 +115,11 @@ class TestRule:
 
 
 class TestKnownHookEvents:
-    def test_contains_all_five_events(self) -> None:
+    def test_contains_all_events(self) -> None:
         from cuecard.models import KNOWN_HOOK_EVENTS
 
         expected = {
-            "PreToolUse", "PostToolUse", "UserPromptSubmit",
+            "PreToolUse", "UserPromptSubmit",
             "SubagentStart", "Stop",
         }
         assert expected == KNOWN_HOOK_EVENTS
