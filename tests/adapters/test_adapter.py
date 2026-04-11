@@ -459,7 +459,7 @@ class TestHandleUserPromptSubmit:
             "prompt": "Add authentication to the API",
         }
         query, tool_name, event = _handle_user_prompt_submit(data)
-        assert query == "UserPromptSubmit: Add authentication to the API"
+        assert query.startswith("UserPromptSubmit: Add authentication to the API")
         assert tool_name == ""
         assert event == "UserPromptSubmit"
 
@@ -472,8 +472,14 @@ class TestHandleUserPromptSubmit:
         long_prompt = "z" * 1000
         data: dict[str, object] = {"prompt": long_prompt}
         query, _, _ = _handle_user_prompt_submit(data)
-        # "UserPromptSubmit: " + 500 chars max
-        assert len(query) <= len("UserPromptSubmit: ") + 500
+        assert query.startswith("UserPromptSubmit: ")
+        assert "z" * 500 in query
+
+    def test_compaction_prompt_adds_workflow_hints(self) -> None:
+        query, _, _ = _handle_user_prompt_submit({"prompt": "compact"})
+        assert query.startswith("UserPromptSubmit: compact")
+        assert "hints:" in query
+        assert "compaction" in query
 
 
 class TestHandleSubagentStart:
@@ -572,8 +578,7 @@ class TestHandleStop:
     def test_large_stop_reason_truncated(self) -> None:
         data: dict[str, object] = {"stop_reason": "r" * 5000}
         query, _, _ = _handle_stop(data)
-        # "Stop: " + max 500 chars
-        assert len(query) <= len("Stop: ") + 500
+        assert query == f"Stop: {'r' * 500}"
 
 
 class TestDetectEvent:

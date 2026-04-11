@@ -49,6 +49,8 @@ class TestBuildPrompt:
         assert "Use only direct evidence" in system
         assert "Already compliant actions need no reminder" in system
         assert "Return all clearly triggered rules" in system
+        assert "keep complementary safeguards together" in system
+        assert "trying to SKIP a safeguard" in system
 
     def test_system_prompt_has_empty_rules_example(self) -> None:
         """Prompt shows the model how to return empty rules array."""

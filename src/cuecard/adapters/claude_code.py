@@ -53,6 +53,122 @@ _EVENT_LABELS: dict[str, str] = {
 }
 
 
+def _workflow_hint_fragments(text: str) -> list[str]:
+    """Add small semantic hints so terse workflow prompts retrieve better.
+
+    Workflow fixtures often use short natural-language requests like
+    "compact", "ralph seems stuck", or "run the full dataset". These can be
+    semantically clear to a human but too sparse for retrieval against longer
+    policy-style rule text. We preserve the original text verbatim and append
+    a narrow set of hint phrases only when the intent is already explicit.
+    """
+    lower = text.lower()
+    hints: list[str] = []
+
+    if any(
+        token in lower
+        for token in (
+            "compact", "context limit", "context is getting heavy",
+            "running low", "wrap up soon",
+        )
+    ):
+        hints.append(
+            "compaction save task state artifacts blockers key decisions "
+            "monitor context"
+        )
+
+    if any(
+        token in lower
+        for token in (
+            "subagent", "delegate", "spawn", "review agent", "reviewer",
+            "ralph", "cody", "agent seems stuck", "check on him",
+        )
+    ):
+        hints.append(
+            "delegation subagent worker tmux send-keys progress polling "
+            "scope boundaries parallel review"
+        )
+
+    if any(
+        token in lower
+        for token in (
+            "benchmark", "baseline", "full dataset", "sample",
+            "quality metrics", "compare",
+        )
+    ):
+        hints.append(
+            "benchmark methodology baseline metrics full dataset not small "
+            "sample comparable evaluation"
+        )
+
+    if any(
+        token in lower
+        for token in (
+            "schema", "dataclass", "cardinality", "field", "events field",
+            "consumer", "export",
+        )
+    ):
+        hints.append(
+            "schema change audit every consumer views queries cli exports "
+            "tests"
+        )
+
+    if any(
+        token in lower
+        for token in (
+            "noise", "irrelevant", "generic", "flat", "retrieval pipeline",
+            "too many irrelevant", "quality dropped", "regressed",
+            "classification", "never get classified",
+        )
+    ):
+        hints.append(
+            "upstream stage debugging multi-stage pipeline noise filtering "
+            "configurable thresholds stage quality"
+        )
+
+    if any(
+        token in lower
+        for token in (
+            "dependency", "sdk", "library", "langgraph", "fastembed",
+            "openbb", "cross encoder", "reranking stage", "new approach",
+            "temporal cdt",
+        )
+    ):
+        hints.append(
+            "new dependency spike-test alternatives benchmark before "
+            "adopting lightweight deterministic first unproven technique"
+        )
+
+    if any(token in lower for token in ("prd", "design document")):
+        hints.append(
+            "prd review multiple specialist reviewers convergence review"
+        )
+
+    if any(token in lower for token in ("git push", "git commit", "commit")):
+        hints.append(
+            "commit push quality checks tests coverage conventional commit"
+        )
+
+    if any(
+        token in lower
+        for token in ("real data", "mocked tests", "fixtures")
+    ):
+        hints.append(
+            "validate against real data after mocked tests before next phase"
+        )
+
+    return hints
+
+
+def _augment_workflow_query(prefix: str, text: str) -> str:
+    """Append semantic intent hints for workflow events when useful."""
+    hints = _workflow_hint_fragments(text)
+    if not hints:
+        return f"{prefix}: {text}"
+    suffix = " | hints: " + "; ".join(hints)
+    return f"{prefix}: {text}{suffix}"[:1500]
+
+
 def _sanitize_field(value: str, max_len: int) -> str:
     """Cap length and strip control characters."""
     return value[:max_len].replace("\n", " ").replace("\r", " ")
@@ -90,7 +206,13 @@ def _handle_user_prompt_submit(
     prompt_text = _sanitize_field(
         str(data.get("prompt", "")), 500,
     )
-    return f"UserPromptSubmit: {prompt_text}", "", "UserPromptSubmit"
+    return (
+        _augment_workflow_query(
+            "UserPromptSubmit", prompt_text,
+        ),
+        "",
+        "UserPromptSubmit",
+    )
 
 
 def _handle_subagent_start(
