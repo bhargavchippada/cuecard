@@ -195,6 +195,8 @@ examples should cover multiple ecosystems.", \
 "Bash: cargo add serde --features derive", \
 "Bash: go get github.com/gin-gonic/gin", \
 "Edit: requirements.txt adding new package"]}}
+↑ Note: "adding dependency: pip, cargo, npm, go get" grounds the concept \
+in tool names. If a query is expanded with the same tag, cosine = 1.0.
 Bad abstract tags:
 - "dependency management" (no tool names, too abstract for jina-code-v2)
 - "security" (too broad, matches everything)
@@ -220,10 +222,7 @@ bridge version control concepts. Specific examples are CLI commands.", \
 "specific": [\
 "Bash: git commit -m 'fix: update logic'", \
 "Bash: git add -A && git commit", \
-"Bash: git push origin feature-branch"]}}
-
-↑ Note: "adding dependency: pip, cargo, npm, go get" grounds the concept \
-in tool names. If a query is expanded with the same tag, cosine = 1.0."""
+"Bash: git push origin feature-branch"]}}"""
 
     system = f"""You generate retrieval expansion phrases for coding rules.
 
@@ -303,6 +302,17 @@ def _parse_expansion_response(
     *,
     max_per_rule: int = 5,
 ) -> list[str]:
+    expansions, _ = _parse_expansion_response_with_status(
+        response, max_per_rule=max_per_rule,
+    )
+    return expansions
+
+
+def _parse_expansion_response_with_status(
+    response: str,
+    *,
+    max_per_rule: int = 5,
+) -> tuple[list[str], bool]:
     """Parse LLM response to extract expansion strings.
 
     Handles two formats:
@@ -311,7 +321,8 @@ def _parse_expansion_response(
     - Legacy (v3): {"reasoning": "...", "expansions": [...]}
       Takes up to max_per_rule from the flat list.
 
-    Returns a list of valid expansion strings (max MAX_EXPANSIONS_PER_RULE).
+    Returns (expansions, parse_failed).
+    parse_failed is True only when the response could not be parsed as JSON.
     """
     import math
 
@@ -332,11 +343,11 @@ def _parse_expansion_response(
         parsed = json.loads(cleaned)
     except (json.JSONDecodeError, ValueError):
         logger.warning("Failed to parse expansion response as JSON")
-        return []
+        return [], True
 
     if not isinstance(parsed, dict):
         logger.warning("Expansion response is not a JSON object")
-        return []
+        return [], False
 
     # Log reasoning if present (for debugging/quality inspection)
     reasoning = parsed.get("reasoning")
@@ -366,7 +377,7 @@ def _parse_expansion_response(
         raw_expansions = parsed.get("expansions", [])
         if not isinstance(raw_expansions, list):
             logger.warning("Expansion response has no valid expansion fields")
-            return []
+            return [], False
 
     result: list[str] = []
     seen: set[str] = set()
@@ -389,7 +400,7 @@ def _parse_expansion_response(
         if len(result) >= MAX_EXPANSIONS_PER_RULE:
             break
 
-    return result
+    return result, False
 
 
 def _semantic_dedup(
@@ -475,7 +486,24 @@ def _expand_single_rule(
         else:
             raw = call_haiku(system_prompt, user_prompt, haiku_model)
 
-        expansions = _parse_expansion_response(raw, max_per_rule=max_per_rule)
+        expansions, parse_failed = _parse_expansion_response_with_status(
+            raw, max_per_rule=max_per_rule,
+        )
+        if parse_failed:
+            logger.info(
+                "Expansion JSON parse failed for rule; retrying once: %s",
+                scrub_secrets(rule.text[:80]),
+            )
+            if backend == "local":
+                raw = call_local(
+                    system_prompt, user_prompt, endpoint, False,
+                    temperature=0.7,
+                )
+            else:
+                raw = call_haiku(system_prompt, user_prompt, haiku_model)
+            expansions, _ = _parse_expansion_response_with_status(
+                raw, max_per_rule=max_per_rule,
+            )
         expansions = _semantic_dedup(expansions, threshold=dedup_threshold)
         return replace(rule, expansions=tuple(expansions)), len(expansions)
 

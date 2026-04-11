@@ -71,8 +71,9 @@ from cuecard.eval.metrics import (
 from cuecard.indexing.expander import expand_rules
 from cuecard.indexing.indexer import build_index, save_rules_json
 from cuecard.indexing.parser import parse_rules
-from cuecard.models import PipelineConfig, ResolvedConfig
+from cuecard.models import MAX_TOOL_NAME_LENGTH, PipelineConfig, ResolvedConfig
 from cuecard.retrieval import llm_reranker as _llm_rr
+from cuecard.retrieval import pipeline as _pipeline_mod
 from cuecard.retrieval.pipeline import run_pipeline
 
 if TYPE_CHECKING:
@@ -121,6 +122,16 @@ def _safe_filename(text: str, max_len: int = 80) -> str:
     """Sanitize arbitrary text for use as a filename."""
     cleaned = _UNSAFE_FILENAME_CHARS.sub("_", text).strip("_")
     return cleaned[:max_len] or "fixture"
+
+
+def _extract_tool_name(event: str, query: str) -> str:
+    """Recover tool_name from benchmark fixtures for PreToolUse traces."""
+    if event != "PreToolUse":
+        return ""
+    prefix, sep, _rest = query.partition(":")
+    if not sep:
+        return ""
+    return prefix.strip()[:MAX_TOOL_NAME_LENGTH]
 
 
 # ---------------------------------------------------------------------------
@@ -257,6 +268,13 @@ def generate_expansions_for_label(
     save_rules_json(expanded, str(out_dir), affinity=affinity)
 
 
+def _apply_suffix(label: str, suffix: str | None) -> str:
+    """Append a validated suffix to a label for corpus/result names."""
+    if not suffix:
+        return label
+    return f"{label}-{suffix}"
+
+
 # ---------------------------------------------------------------------------
 # Tracing infrastructure
 # ---------------------------------------------------------------------------
@@ -289,7 +307,9 @@ class TraceCapture:
         if fid is None:
             return
         with self._lock:
-            self._traces[fid] = data
+            existing = self._traces.get(fid, {})
+            existing.update(data)
+            self._traces[fid] = existing
 
     def pop(self, fixture_id: str) -> dict[str, Any] | None:
         with self._lock:
@@ -414,15 +434,129 @@ def _traced_rerank_llm(
         return fallback
 
 
-def _install_tracing() -> Any:
-    """Monkey-patch llm_reranker.rerank_llm; return the original."""
-    orig = _llm_rr.rerank_llm
+def _traced_run_retrieval_stage(
+    query: str,
+    index: Any,
+    config: ResolvedConfig,
+    effective_mode: str,
+    embedding_model: Any,
+    *,
+    mask: Any = None,
+    query_expansions: tuple[str, ...] = (),
+) -> tuple[list[Any], Any]:
+    """Instrumented retrieval stage capturing dense/sparse/fused sets."""
+    from cuecard.models import RankedResult
+    from cuecard.retrieval.dense import DenseRetriever
+    from cuecard.retrieval.fusion import fuse
+
+    top_k, threshold = _pipeline_mod._retrieval_params(
+        effective_mode, config,
+    )
+    input_count = index.size
+    t0 = time.monotonic()
+
+    queries = (query, *query_expansions)
+
+    dense = DenseRetriever(
+        model=embedding_model,
+        dedup_threshold=config.dedup_threshold,
+        max_query_length=config.query_max_length,
+    )
+    t_dense_start = time.monotonic()
+    dense_sets: list[list[Any]] = []
+    for q in queries:
+        dense_sets.append(
+            dense.retrieve(
+                q, index, top_k=top_k, threshold=threshold, mask=mask,
+            ),
+        )
+    dense_results = dense_sets[0] if dense_sets else []
+    t_dense_ms = (time.monotonic() - t_dense_start) * 1000.0
+
+    sparse_ran = config.sparse_enabled and index.bm25_corpus is not None
+    sparse_sets: list[list[Any]] = []
+    sparse_results: list[Any] = []
+    t_sparse_ms = 0.0
+    if sparse_ran:
+        t_sparse_start = time.monotonic()
+        for q in queries:
+            s, _ = _pipeline_mod._run_sparse(q, index, top_k, mask)
+            if s:
+                sparse_sets.append(s)
+        t_sparse_ms = (time.monotonic() - t_sparse_start) * 1000.0
+        if sparse_sets:
+            sparse_results = sparse_sets[0]
+
+    raw_only_results: list[list[Any]] = []
+    if dense_results:
+        raw_only_results.append(dense_results)
+    if sparse_results:
+        raw_only_results.append(sparse_results)
+    fused_raw_query = (
+        fuse(raw_only_results, k=config.fusion_k, top_k=top_k)
+        if len(raw_only_results) > 1
+        else dense_results
+    )
+
+    all_results: list[list[Any]] = [s for s in dense_sets if s] + sparse_sets
+    t_fusion_start = time.monotonic()
+    fused = (
+        fuse(all_results, k=config.fusion_k, top_k=top_k)
+        if len(all_results) > 1
+        else (all_results[0] if all_results else [])
+    )
+    t_fusion_ms = (time.monotonic() - t_fusion_start) * 1000.0
+
+    results: list[RankedResult] = [
+        RankedResult(rule=sc.rule, score=sc.score) for sc in fused
+    ]
+
+    def _dump(candidates: list[Any]) -> list[dict[str, Any]]:
+        return [
+            {
+                "text": candidate.rule.text,
+                "score": round(float(candidate.score), 6),
+                "retriever": getattr(candidate, "retriever", ""),
+            }
+            for candidate in candidates
+        ]
+
+    _TRACE.record(
+        retrieval_sets={
+            "query_expansion_count": len(query_expansions),
+            "dense_raw": _dump(dense_results),
+            "sparse_raw": _dump(sparse_results),
+            "fused_raw_query": _dump(fused_raw_query),
+            "fused_raw": _dump(fused),
+        },
+    )
+
+    return results, _pipeline_mod.RetrievalStageTrace(
+        stage="retrieval",
+        input_count=input_count,
+        output_count=len(results),
+        latency_ms=(time.monotonic() - t0) * 1000.0,
+        retrievers=_pipeline_mod._build_retriever_traces(
+            dense_results, sparse_results,
+            t_dense_ms, t_sparse_ms, sparse_ran,
+        ),
+        fusion_latency_ms=t_fusion_ms,
+    )
+
+
+def _install_tracing() -> tuple[Any, Any]:
+    """Monkey-patch LLM and retrieval tracing hooks; return originals."""
+    orig_rerank = _llm_rr.rerank_llm
+    orig_retrieval = _pipeline_mod._run_retrieval_stage
     _llm_rr.rerank_llm = _traced_rerank_llm
-    return orig
+    _pipeline_mod._run_retrieval_stage = _traced_run_retrieval_stage
+    return orig_rerank, orig_retrieval
 
 
-def _uninstall_tracing(orig: Any) -> None:
-    _llm_rr.rerank_llm = orig
+def _uninstall_tracing(orig: tuple[Any, Any]) -> None:
+    orig_rerank, orig_retrieval = orig
+    _llm_rr.rerank_llm = orig_rerank
+    _pipeline_mod._run_retrieval_stage = orig_retrieval
 
 
 # ---------------------------------------------------------------------------
@@ -457,7 +591,10 @@ def _stage_trace_to_dict(stage: Any) -> dict[str, Any]:
 
 
 def _count_rules_masked(
-    index: Any, affinity: Any, event: str,
+    index: Any,
+    affinity: Any,
+    event: str,
+    tool_name: str | None = None,
 ) -> tuple[int, int, int]:
     """Count rules (not embedding rows) excluded by the event mask.
 
@@ -479,18 +616,522 @@ def _count_rules_masked(
         if aff is None:
             included += 1  # default: show rule when no affinity known
             continue
-        if event in aff.events:
+        if (
+            event in aff.events
+            and (
+                not tool_name
+                or not aff.tools
+                or tool_name in aff.tools
+            )
+        ):
             included += 1
     return total, included, total - included
 
 
+def _count_expected_rules_visible(
+    fx: Fixture,
+    index: Any,
+    affinity: Any,
+    event: str,
+    tool_name: str | None = None,
+) -> tuple[int, int]:
+    """Count expected rules that survive the event mask for a fixture."""
+    expected = set(fx.should_match)
+    if not expected:
+        return 0, 0
+
+    visible = 0
+    for rule in index.rules:
+        if rule.text not in expected:
+            continue
+        aff = affinity.get(rule) if hasattr(affinity, "get") else None
+        if aff is None or (
+            event in aff.events
+            and (
+                not tool_name
+                or not aff.tools
+                or tool_name in aff.tools
+            )
+        ):
+            visible += 1
+    return len(expected), visible
+
+
+def _compute_fixture_metrics(
+    retrieved_texts: list[str],
+    *,
+    relevant: set[str],
+    anti_relevant: set[str],
+    is_negative: bool,
+) -> dict[str, float]:
+    """Compute the benchmark metric bundle for one retrieved set."""
+    return {
+        "precision_at_k": precision_at_k(retrieved_texts, relevant),
+        "recall_at_k": recall_at_k(retrieved_texts, relevant),
+        "mrr": mrr(retrieved_texts, relevant),
+        "ndcg_at_k": ndcg_at_k(retrieved_texts, relevant),
+        "anti_precision": anti_precision(retrieved_texts, anti_relevant),
+        "noise_ratio": noise_ratio(retrieved_texts, relevant),
+        "context_waste_ratio": context_waste_ratio(retrieved_texts, relevant),
+        "quality_score_f2": quality_score(
+            retrieved_texts, relevant, is_negative,
+        ),
+    }
+
+
+def _round_metric_dict(data: dict[str, Any]) -> dict[str, Any]:
+    """Recursively round floats for JSON/report friendliness."""
+    rounded: dict[str, Any] = {}
+    for key, value in data.items():
+        if isinstance(value, float):
+            rounded[key] = round(value, 4)
+        elif isinstance(value, dict):
+            rounded[key] = _round_metric_dict(value)
+        else:
+            rounded[key] = value
+    return rounded
+
+
+def _build_stage_metrics(
+    traces: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    """Aggregate stage quality and transition diagnostics for one tier.
+
+    The benchmark already stores final metrics. This helper adds:
+    - Stage 0 mask coverage / recall ceiling
+    - Stage 1 retrieval quality from candidates shown to the LLM
+    - Stage 3 final quality from the reranked output
+    - Transition diagnostics that attribute failures between stages
+    """
+    n = len(traces)
+    if n == 0:
+        return {
+            "stage0_mask": {},
+            "stage1_dense": {},
+            "stage1_sparse": {},
+            "stage1_fused": {},
+            "stage1_retrieval": {},
+            "stage3_final": {},
+            "transitions": {},
+        }
+
+    total_rules = [
+        t["pipeline"]["total_rules"]
+        for t in traces
+        if t["pipeline"]["total_rules"] is not None
+    ]
+    rules_included = [
+        t["pipeline"]["rules_included"]
+        for t in traces
+        if t["pipeline"]["rules_included"] is not None
+    ]
+    rules_masked = [
+        t["pipeline"]["rules_masked"]
+        for t in traces
+        if t["pipeline"]["rules_masked"] is not None
+    ]
+
+    positives = [t for t in traces if t["difficulty"] != "negative"]
+    negatives = [t for t in traces if t["difficulty"] == "negative"]
+
+    stage1_dense_rows: list[FixtureResult] = []
+    stage1_sparse_rows: list[FixtureResult] = []
+    stage1_raw_query_rows: list[FixtureResult] = []
+    stage1_fused_rows: list[FixtureResult] = []
+    stage1_rows: list[FixtureResult] = []
+    stage3_rows: list[FixtureResult] = []
+
+    stage0_full = 0
+    stage0_partial = 0
+    stage0_zero = 0
+    stage0_expected_rules = 0
+    stage0_masked_expected_rules = 0
+
+    stage1_full_recall = 0
+    stage1_any_hit = 0
+    stage1_neg_silent = 0
+
+    llm_relevant_seen = 0
+    llm_relevant_kept = 0
+    llm_irrelevant_seen = 0
+    llm_irrelevant_pruned = 0
+    llm_empty_from_nonempty = 0
+    llm_fallback_errors = 0
+    sparse_ran_count = 0
+    query_expansion_fixture_count = 0
+    query_expansion_helped = 0
+    query_expansion_hurt = 0
+    query_expansion_net_new_hits = 0
+    query_expansion_net_new_noise = 0
+
+    for t in traces:
+        relevant = set(t["should_match"])
+        anti_relevant = set(t["should_not_match"])
+        final_retrieved = list(t["final_retrieved"])
+        retrieval = t.get("retrieval") or {}
+        llm = t.get("llm") or {}
+        dense_candidates = [
+            candidate["text"]
+            for candidate in (retrieval.get("dense_raw") or [])
+        ]
+        sparse_candidates = [
+            candidate["text"]
+            for candidate in (retrieval.get("sparse_raw") or [])
+        ]
+        fused_candidates = [
+            candidate["text"]
+            for candidate in (retrieval.get("fused_raw") or [])
+        ]
+        raw_query_candidates = [
+            candidate["text"]
+            for candidate in (retrieval.get("fused_raw_query") or [])
+        ]
+        stage1_candidates = [
+            candidate["text"]
+            for candidate in (llm.get("stage1_candidates") or [])
+        ]
+        is_negative = t["difficulty"] == "negative"
+        if llm.get("error") is not None:
+            llm_fallback_errors += 1
+        if any(
+            retr["name"] == "sparse"
+            for s in t["pipeline"]["stages"]
+            if s["stage"] == "retrieval"
+            for retr in s.get("retrievers", [])
+        ):
+            sparse_ran_count += 1
+        if retrieval.get("query_expansion_count", 0) > 0:
+            query_expansion_fixture_count += 1
+            raw_hits = len(set(raw_query_candidates) & relevant)
+            fused_hits = len(set(fused_candidates) & relevant)
+            raw_noise = sum(
+                1 for text in raw_query_candidates if text not in relevant
+            )
+            fused_noise = sum(
+                1 for text in fused_candidates if text not in relevant
+            )
+            if fused_hits > raw_hits:
+                query_expansion_helped += 1
+            elif fused_hits < raw_hits or (
+                fused_hits == raw_hits and fused_noise > raw_noise
+            ):
+                query_expansion_hurt += 1
+            query_expansion_net_new_hits += max(0, fused_hits - raw_hits)
+            query_expansion_net_new_noise += max(0, fused_noise - raw_noise)
+
+        stage1_dense_metric_values = _compute_fixture_metrics(
+            dense_candidates,
+            relevant=relevant,
+            anti_relevant=anti_relevant,
+            is_negative=is_negative,
+        )
+        stage1_sparse_metric_values = _compute_fixture_metrics(
+            sparse_candidates,
+            relevant=relevant,
+            anti_relevant=anti_relevant,
+            is_negative=is_negative,
+        )
+        stage1_fused_metric_values = _compute_fixture_metrics(
+            fused_candidates,
+            relevant=relevant,
+            anti_relevant=anti_relevant,
+            is_negative=is_negative,
+        )
+        stage1_raw_query_metric_values = _compute_fixture_metrics(
+            raw_query_candidates,
+            relevant=relevant,
+            anti_relevant=anti_relevant,
+            is_negative=is_negative,
+        )
+        stage1_metric_values = _compute_fixture_metrics(
+            stage1_candidates,
+            relevant=relevant,
+            anti_relevant=anti_relevant,
+            is_negative=is_negative,
+        )
+        stage3_metric_values = _compute_fixture_metrics(
+            final_retrieved,
+            relevant=relevant,
+            anti_relevant=anti_relevant,
+            is_negative=is_negative,
+        )
+
+        stage1_dense_rows.append(FixtureResult(
+            fixture_id=t["fixture_id"],
+            query=t["query"],
+            difficulty=t["difficulty"],
+            retrieved=tuple(dense_candidates),
+            precision_at_k=stage1_dense_metric_values["precision_at_k"],
+            recall_at_k=stage1_dense_metric_values["recall_at_k"],
+            mrr=stage1_dense_metric_values["mrr"],
+            ndcg_at_k=stage1_dense_metric_values["ndcg_at_k"],
+            anti_precision=stage1_dense_metric_values["anti_precision"],
+            noise_ratio=stage1_dense_metric_values["noise_ratio"],
+            context_waste_ratio=stage1_dense_metric_values["context_waste_ratio"],
+            retrieved_count=len(dense_candidates),
+            latency_ms=next(
+                (
+                    retr["latency_ms"]
+                    for s in t["pipeline"]["stages"]
+                    if s["stage"] == "retrieval"
+                    for retr in s.get("retrievers", [])
+                    if retr["name"] == "dense"
+                ),
+                0.0,
+            ),
+            quality_score=stage1_dense_metric_values["quality_score_f2"],
+        ))
+        stage1_sparse_rows.append(FixtureResult(
+            fixture_id=t["fixture_id"],
+            query=t["query"],
+            difficulty=t["difficulty"],
+            retrieved=tuple(sparse_candidates),
+            precision_at_k=stage1_sparse_metric_values["precision_at_k"],
+            recall_at_k=stage1_sparse_metric_values["recall_at_k"],
+            mrr=stage1_sparse_metric_values["mrr"],
+            ndcg_at_k=stage1_sparse_metric_values["ndcg_at_k"],
+            anti_precision=stage1_sparse_metric_values["anti_precision"],
+            noise_ratio=stage1_sparse_metric_values["noise_ratio"],
+            context_waste_ratio=stage1_sparse_metric_values["context_waste_ratio"],
+            retrieved_count=len(sparse_candidates),
+            latency_ms=next(
+                (
+                    retr["latency_ms"]
+                    for s in t["pipeline"]["stages"]
+                    if s["stage"] == "retrieval"
+                    for retr in s.get("retrievers", [])
+                    if retr["name"] == "sparse"
+                ),
+                0.0,
+            ),
+            quality_score=stage1_sparse_metric_values["quality_score_f2"],
+        ))
+        stage1_raw_query_rows.append(FixtureResult(
+            fixture_id=t["fixture_id"],
+            query=t["query"],
+            difficulty=t["difficulty"],
+            retrieved=tuple(raw_query_candidates),
+            precision_at_k=stage1_raw_query_metric_values["precision_at_k"],
+            recall_at_k=stage1_raw_query_metric_values["recall_at_k"],
+            mrr=stage1_raw_query_metric_values["mrr"],
+            ndcg_at_k=stage1_raw_query_metric_values["ndcg_at_k"],
+            anti_precision=stage1_raw_query_metric_values["anti_precision"],
+            noise_ratio=stage1_raw_query_metric_values["noise_ratio"],
+            context_waste_ratio=stage1_raw_query_metric_values["context_waste_ratio"],
+            retrieved_count=len(raw_query_candidates),
+            latency_ms=next(
+                (
+                    s["latency_ms"]
+                    for s in t["pipeline"]["stages"]
+                    if s["stage"] == "retrieval"
+                ),
+                0.0,
+            ),
+            quality_score=stage1_raw_query_metric_values["quality_score_f2"],
+        ))
+        stage1_fused_rows.append(FixtureResult(
+            fixture_id=t["fixture_id"],
+            query=t["query"],
+            difficulty=t["difficulty"],
+            retrieved=tuple(fused_candidates),
+            precision_at_k=stage1_fused_metric_values["precision_at_k"],
+            recall_at_k=stage1_fused_metric_values["recall_at_k"],
+            mrr=stage1_fused_metric_values["mrr"],
+            ndcg_at_k=stage1_fused_metric_values["ndcg_at_k"],
+            anti_precision=stage1_fused_metric_values["anti_precision"],
+            noise_ratio=stage1_fused_metric_values["noise_ratio"],
+            context_waste_ratio=stage1_fused_metric_values["context_waste_ratio"],
+            retrieved_count=len(fused_candidates),
+            latency_ms=next(
+                (
+                    s["latency_ms"]
+                    for s in t["pipeline"]["stages"]
+                    if s["stage"] == "retrieval"
+                ),
+                0.0,
+            ),
+            quality_score=stage1_fused_metric_values["quality_score_f2"],
+        ))
+        stage1_rows.append(FixtureResult(
+            fixture_id=t["fixture_id"],
+            query=t["query"],
+            difficulty=t["difficulty"],
+            retrieved=tuple(stage1_candidates),
+            precision_at_k=stage1_metric_values["precision_at_k"],
+            recall_at_k=stage1_metric_values["recall_at_k"],
+            mrr=stage1_metric_values["mrr"],
+            ndcg_at_k=stage1_metric_values["ndcg_at_k"],
+            anti_precision=stage1_metric_values["anti_precision"],
+            noise_ratio=stage1_metric_values["noise_ratio"],
+            context_waste_ratio=stage1_metric_values["context_waste_ratio"],
+            retrieved_count=len(stage1_candidates),
+            latency_ms=next(
+                (
+                    s["latency_ms"]
+                    for s in t["pipeline"]["stages"]
+                    if s["stage"] == "retrieval"
+                ),
+                0.0,
+            ),
+            quality_score=stage1_metric_values["quality_score_f2"],
+        ))
+        stage3_rows.append(FixtureResult(
+            fixture_id=t["fixture_id"],
+            query=t["query"],
+            difficulty=t["difficulty"],
+            retrieved=tuple(final_retrieved),
+            precision_at_k=stage3_metric_values["precision_at_k"],
+            recall_at_k=stage3_metric_values["recall_at_k"],
+            mrr=stage3_metric_values["mrr"],
+            ndcg_at_k=stage3_metric_values["ndcg_at_k"],
+            anti_precision=stage3_metric_values["anti_precision"],
+            noise_ratio=stage3_metric_values["noise_ratio"],
+            context_waste_ratio=stage3_metric_values["context_waste_ratio"],
+            retrieved_count=len(final_retrieved),
+            latency_ms=t["metrics"]["latency_ms"],
+            quality_score=stage3_metric_values["quality_score_f2"],
+        ))
+
+        if is_negative:
+            if not stage1_candidates:
+                stage1_neg_silent += 1
+            continue
+
+        expected_rule_count = t["pipeline"].get("expected_rules")
+        visible_expected = t["pipeline"].get("expected_rules_visible")
+        if expected_rule_count is None:
+            expected_rule_count = len(relevant)
+        if visible_expected is None:
+            visible_expected = expected_rule_count
+
+        stage0_expected_rules += expected_rule_count
+        stage0_masked_here = expected_rule_count - visible_expected
+        stage0_masked_expected_rules += stage0_masked_here
+        if visible_expected == expected_rule_count:
+            stage0_full += 1
+        elif visible_expected == 0:
+            stage0_zero += 1
+        else:
+            stage0_partial += 1
+
+        stage1_hits = set(stage1_candidates) & relevant
+        final_hits = set(final_retrieved) & relevant
+        if stage1_hits:
+            stage1_any_hit += 1
+        if len(stage1_hits) == len(relevant):
+            stage1_full_recall += 1
+
+        llm_relevant_seen += len(stage1_hits)
+        llm_relevant_kept += len(final_hits & stage1_hits)
+
+        stage1_irrelevant = [text for text in stage1_candidates if text not in relevant]
+        llm_irrelevant_seen += len(stage1_irrelevant)
+        llm_irrelevant_pruned += sum(
+            1 for text in stage1_irrelevant if text not in final_retrieved
+        )
+
+        if stage1_candidates and not final_retrieved:
+            llm_empty_from_nonempty += 1
+
+    stage0_mask = {
+        "mean_total_rules": (
+            sum(total_rules) / len(total_rules) if total_rules else 0.0
+        ),
+        "mean_rules_included": (
+            sum(rules_included) / len(rules_included) if rules_included else 0.0
+        ),
+        "mean_rules_masked": (
+            sum(rules_masked) / len(rules_masked) if rules_masked else 0.0
+        ),
+        "rule_visibility_rate": (
+            (sum(rules_included) / sum(total_rules)) if total_rules else 0.0
+        ),
+        "positive_full_recall_ceiling_rate": (
+            stage0_full / len(positives) if positives else 0.0
+        ),
+        "positive_partial_recall_ceiling_rate": (
+            stage0_partial / len(positives) if positives else 0.0
+        ),
+        "positive_zero_recall_ceiling_rate": (
+            stage0_zero / len(positives) if positives else 0.0
+        ),
+        "expected_rule_mask_rate": (
+            stage0_masked_expected_rules / stage0_expected_rules
+            if stage0_expected_rules
+            else 0.0
+        ),
+    }
+
+    transitions = {
+        "stage1_positive_any_hit_rate": (
+            stage1_any_hit / len(positives) if positives else 0.0
+        ),
+        "stage1_positive_full_recall_rate": (
+            stage1_full_recall / len(positives) if positives else 0.0
+        ),
+        "stage1_negative_silence_rate": (
+            stage1_neg_silent / len(negatives) if negatives else 1.0
+        ),
+        "sparse_ran_rate": sparse_ran_count / n,
+        "query_expansion_fixture_rate": (
+            query_expansion_fixture_count / n
+        ),
+        "query_expansion_help_rate": (
+            query_expansion_helped / query_expansion_fixture_count
+            if query_expansion_fixture_count
+            else 0.0
+        ),
+        "query_expansion_hurt_rate": (
+            query_expansion_hurt / query_expansion_fixture_count
+            if query_expansion_fixture_count
+            else 0.0
+        ),
+        "query_expansion_avg_new_hits": (
+            query_expansion_net_new_hits / query_expansion_fixture_count
+            if query_expansion_fixture_count
+            else 0.0
+        ),
+        "query_expansion_avg_new_noise": (
+            query_expansion_net_new_noise / query_expansion_fixture_count
+            if query_expansion_fixture_count
+            else 0.0
+        ),
+        "llm_relevant_keep_rate": (
+            llm_relevant_kept / llm_relevant_seen if llm_relevant_seen else 1.0
+        ),
+        "llm_irrelevant_prune_rate": (
+            llm_irrelevant_pruned / llm_irrelevant_seen
+            if llm_irrelevant_seen
+            else 1.0
+        ),
+        "llm_abstain_from_nonempty_rate": (
+            llm_empty_from_nonempty / len(positives) if positives else 0.0
+        ),
+        "llm_error_rate": llm_fallback_errors / n,
+    }
+
+    return {
+        "stage0_mask": _round_metric_dict(stage0_mask),
+        "stage1_dense": _summary_to_dict(_build_summary(stage1_dense_rows)),
+        "stage1_sparse": _summary_to_dict(_build_summary(stage1_sparse_rows)),
+        "stage1_raw_query": _summary_to_dict(_build_summary(stage1_raw_query_rows)),
+        "stage1_fused": _summary_to_dict(_build_summary(stage1_fused_rows)),
+        "stage1_retrieval": _summary_to_dict(_build_summary(stage1_rows)),
+        "stage3_final": _summary_to_dict(_build_summary(stage3_rows)),
+        "transitions": _round_metric_dict(transitions),
+    }
+
+
 def _build_fixture_trace(
+    tier: str,
+    tool_name: str,
     fx: Fixture,
     pr: PipelineResult,
     fr: FixtureResult,
-    llm_capture: dict[str, Any] | None,
+    llm_capture: dict[str, Any] | None = None,
     *,
     mask_stats: tuple[int, int, int] | None = None,
+    expected_mask_stats: tuple[int, int] | None = None,
 ) -> dict[str, Any]:
     """Assemble the per-fixture trace record."""
     relevant = set(fx.should_match)
@@ -527,9 +1168,15 @@ def _build_fixture_trace(
             "error": llm_capture.get("error"),
         }
 
+    retrieval_block = None
+    if llm_capture is not None:
+        retrieval_block = llm_capture.get("retrieval_sets")
+
     return {
+        "tier": tier,
         "fixture_id": fx.id,
         "event": fx.event,
+        "tool_name": tool_name,
         "difficulty": fx.difficulty,
         "query": fx.query,
         "should_match": list(fx.should_match),
@@ -547,21 +1194,32 @@ def _build_fixture_trace(
             "total_rules": mask_stats[0] if mask_stats else None,
             "rules_included": mask_stats[1] if mask_stats else None,
             "rules_masked": mask_stats[2] if mask_stats else None,
+            "expected_rules": (
+                expected_mask_stats[0] if expected_mask_stats else None
+            ),
+            "expected_rules_visible": (
+                expected_mask_stats[1] if expected_mask_stats else None
+            ),
+            "expected_rules_masked": (
+                expected_mask_stats[0] - expected_mask_stats[1]
+                if expected_mask_stats
+                else None
+            ),
             "stages": [_stage_trace_to_dict(s) for s in pr.stages],
         },
+        "retrieval": retrieval_block,
         "llm": llm_block,
         "final_retrieved": retrieved_texts,
         "hits": hits,
         "misses": misses,
         "extras": extras,
         "metrics": {
-            "precision_at_k": round(fr.precision_at_k, 4),
-            "recall_at_k": round(fr.recall_at_k, 4),
-            "mrr": round(fr.mrr, 4),
-            "ndcg_at_k": round(fr.ndcg_at_k, 4),
-            "noise_ratio": round(fr.noise_ratio, 4),
-            "anti_precision": round(fr.anti_precision, 4),
-            "quality_score_f2": round(fr.quality_score, 4),
+            **_round_metric_dict(_compute_fixture_metrics(
+                retrieved_texts,
+                relevant=relevant,
+                anti_relevant=set(fx.should_not_match),
+                is_negative=fx.difficulty == "negative",
+            )),
             "latency_ms": round(fr.latency_ms, 2),
         },
     }
@@ -712,7 +1370,6 @@ def run_benchmark_traced(
                 query_expansion_enabled=query_expansion_enabled,
                 tier=tier,
                 tier_trace_dir=tier_trace_dir,
-                mask_stats=mask_stats,
             )
 
             all_fixture_traces.extend(tier_traces)
@@ -731,8 +1388,10 @@ def run_benchmark_traced(
             if per_event:
                 print(format_per_event_report(per_event))
 
+            stage_metrics = _build_stage_metrics(tier_traces)
             results_by_tier[tier] = {
                 "summary": _summary_to_dict(summary),
+                "stage_metrics": stage_metrics,
                 "per_event": [asdict(em) for em in per_event],
                 "n_fixtures_sampled": len(fixtures),
             }
@@ -800,7 +1459,6 @@ def _eval_tier(
     query_expansion_enabled: bool,
     tier: str,
     tier_trace_dir: Path,
-    mask_stats: tuple[int, int, int],
 ) -> tuple[
     list[FixtureResult],
     list[dict[str, Any]],
@@ -825,6 +1483,10 @@ def _eval_tier(
         _TRACE.set_fixture(fx.id)
         try:
             start = time.perf_counter()
+            tool_name = _extract_tool_name(fx.event or "", fx.query)
+            fixture_mask_stats = _count_rules_masked(
+                index, affinity, fx.event or "", tool_name or None,
+            )
             pr = run_pipeline(
                 fx.query,
                 index,
@@ -832,6 +1494,7 @@ def _eval_tier(
                 embedding_model=embedding_model,
                 mode="llm-local",
                 event=fx.event or "",
+                tool_name=tool_name,
                 affinity=affinity,  # type: ignore[arg-type]
                 query_expansion_enabled=query_expansion_enabled,
                 query_expansion_endpoint=ENDPOINT,
@@ -865,8 +1528,18 @@ def _eval_tier(
             )
 
             llm_capture = _TRACE.pop(fx.id)
+            expected_mask_stats = _count_expected_rules_visible(
+                fx, index, affinity, fx.event or "", tool_name or None,
+            )
             trace_obj = _build_fixture_trace(
-                fx, pr, fr, llm_capture, mask_stats=mask_stats,
+                tier,
+                tool_name,
+                fx,
+                pr,
+                fr,
+                llm_capture,
+                mask_stats=fixture_mask_stats,
+                expected_mask_stats=expected_mask_stats,
             )
 
             out_file = tier_trace_dir / f"{_safe_filename(fx.id)}.json"
@@ -887,6 +1560,7 @@ def _eval_tier(
                     "tier": tier,
                     "fixture_id": fr.fixture_id,
                     "event": trace_obj["event"],
+                    "tool_name": trace_obj["tool_name"],
                     "difficulty": trace_obj["difficulty"],
                     "query": fr.query,
                     "n_candidates": len(
@@ -977,6 +1651,99 @@ def _build_report_md(
             )
     lines.append("")
 
+    lines.append("## Stage Quality")
+    lines.append("")
+    lines.append(
+        "| Tier | Stage | F2 | PosRecall | Noise | NegSil | "
+        "Precision | Recall | MRR | mean k |",
+    )
+    lines.append(
+        "|------|-------|---:|----------:|------:|-------:|----------:|"
+        "-------:|----:|------:|",
+    )
+    for tier, tdata in results_by_tier.items():
+        stage_metrics = tdata.get("stage_metrics", {})
+        for stage_key, stage_label in (
+            ("stage1_dense", "dense"),
+            ("stage1_sparse", "sparse"),
+            ("stage1_raw_query", "raw-query"),
+            ("stage1_fused", "fused"),
+            ("stage3_final", "final"),
+        ):
+            s = stage_metrics.get(stage_key, {})
+            if not s:
+                continue
+            lines.append(
+                f"| {tier} | {stage_label} | "
+                f"{s['mean_quality']:.3f} | "
+                f"{s['positive_recall']:.3f} | "
+                f"{s['mean_noise_ratio']:.3f} | "
+                f"{s['negative_silence_rate']:.3f} | "
+                f"{s['mean_precision']:.3f} | "
+                f"{s['mean_recall']:.3f} | "
+                f"{s['mean_mrr']:.3f} | "
+                f"{s['mean_retrieved_count']:.2f} |",
+            )
+    lines.append("")
+
+    lines.append("## Query Expansion Attribution")
+    lines.append("")
+    lines.append(
+        "| Tier | QX fixtures | Help rate | Hurt rate | Avg new hits | "
+        "Avg new noise |",
+    )
+    lines.append(
+        "|------|-----------:|----------:|----------:|-------------:|"
+        "--------------:|",
+    )
+    for tier, tdata in results_by_tier.items():
+        trans = tdata.get("stage_metrics", {}).get("transitions", {})
+        if not trans:
+            continue
+        lines.append(
+            f"| {tier} | "
+            f"{trans['query_expansion_fixture_rate']:.3f} | "
+            f"{trans['query_expansion_help_rate']:.3f} | "
+            f"{trans['query_expansion_hurt_rate']:.3f} | "
+            f"{trans['query_expansion_avg_new_hits']:.3f} | "
+            f"{trans['query_expansion_avg_new_noise']:.3f} |",
+        )
+    lines.append("")
+
+    lines.append("## Failure Attribution")
+    lines.append("")
+    lines.append(
+        "| Tier | Stage0 visible | ExpMasked | "
+        "Stage1 any-hit | Stage1 full-hit | Stage1 neg-sil | Sparse ran | "
+        "LLM keep rel | LLM prune irr | LLM empty-from-nonempty | "
+        "LLM error |",
+    )
+    lines.append(
+        "|------|---------------:|----------:|------------:|---------------:|"
+        "---------------:|-----------:|-------------:|--------------:|----------------------:|"
+        "---------:|",
+    )
+    for tier, tdata in results_by_tier.items():
+        stage_metrics = tdata.get("stage_metrics", {})
+        stage0 = stage_metrics.get("stage0_mask", {})
+        trans = stage_metrics.get("transitions", {})
+        if not stage0 or not trans:
+            continue
+        lines.append(
+            f"| {tier} | "
+            f"{stage0['rule_visibility_rate']:.3f} | "
+            f"{stage0['expected_rule_mask_rate']:.3f} | "
+            f"{trans['stage1_positive_any_hit_rate']:.3f} | "
+            f"{trans['stage1_positive_full_recall_rate']:.3f} | "
+            f"{trans['stage1_negative_silence_rate']:.3f} | "
+            f"{trans['sparse_ran_rate']:.3f} | "
+            f"{trans['llm_relevant_keep_rate']:.3f} | "
+            f"{trans['llm_irrelevant_prune_rate']:.3f} | "
+            f"{trans['llm_abstain_from_nonempty_rate']:.3f} | "
+            f"{trans['llm_error_rate']:.3f} |",
+        )
+    lines.append("")
+
     # Per-tier stage latency breakdown (from traces)
     lines.append("## Stage Latency (median per fixture)")
     lines.append("")
@@ -984,8 +1751,7 @@ def _build_report_md(
     lines.append("|------|-------|----------:|")
     by_tier_traces: dict[str, list[dict[str, Any]]] = {}
     for t in all_fixture_traces:
-        # trace has no explicit "tier" key; re-derive via event heuristic
-        tier_guess = _infer_tier(t["event"])
+        tier_guess = t.get("tier") or _infer_tier(t["event"])
         by_tier_traces.setdefault(tier_guess, []).append(t)
 
     for tier, tlist in by_tier_traces.items():
@@ -1154,6 +1920,13 @@ def main() -> None:
         help="Label for corpus+results (e.g. gemma-e4b-s32)",
     )
     parser.add_argument(
+        "--suffix", default=None,
+        help=(
+            "Optional suffix appended to corpus+result names "
+            "(e.g. promptv2 -> {label}-promptv2)."
+        ),
+    )
+    parser.add_argument(
         "--ngl", type=int, default=99, help="GPU layers (0 for CPU-only)",
     )
     parser.add_argument(
@@ -1176,7 +1949,7 @@ def main() -> None:
         "--artifacts-dir", type=str, default=None,
         help=(
             "Directory for traces, report, summary. "
-            "Default: eval/results/{label}-traced-seed{seed}/"
+            "Default: eval/results/{label-with-suffix}-traced-seed{seed}/"
         ),
     )
     parser.add_argument(
@@ -1206,6 +1979,14 @@ def main() -> None:
             "dash, underscore",
         )
         sys.exit(1)
+    if args.suffix and not re.match(r"^[a-zA-Z0-9_\-]+$", args.suffix):
+        print(
+            f"Invalid suffix: {args.suffix!r} — only alphanumeric, "
+            "dash, underscore",
+        )
+        sys.exit(1)
+
+    run_label = _apply_suffix(args.label, args.suffix)
 
     tiers: tuple[str, ...] | None = None
     if args.tiers:
@@ -1225,7 +2006,7 @@ def main() -> None:
         artifacts_dir = Path(args.artifacts_dir)
     else:
         RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-        artifacts_dir = RESULTS_DIR / f"{args.label}-traced-seed{args.seed}"
+        artifacts_dir = RESULTS_DIR / f"{run_label}-traced-seed{args.seed}"
 
     proc = None
     if not args.no_server:
@@ -1242,14 +2023,14 @@ def main() -> None:
         print("\n=== Phase 0: Infer affinity (once for all events) ===")
         _rules, affinity = _infer_affinity_once()
 
-        print(f"\n=== Phase 1: Generate expansions for {args.label} ===")
+        print(f"\n=== Phase 1: Generate expansions for {run_label} ===")
         generate_expansions_for_label(
-            args.label, affinity, force=args.force_expand,
+            run_label, affinity, force=args.force_expand,
         )
 
-        print(f"\n=== Phase 2: Traced benchmark {args.label} ===")
+        print(f"\n=== Phase 2: Traced benchmark {run_label} ===")
         run_benchmark_traced(
-            args.label,
+            run_label,
             affinity,
             sample_ratio=args.sample_ratio,
             seed=args.seed,

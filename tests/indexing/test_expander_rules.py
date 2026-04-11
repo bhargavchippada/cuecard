@@ -13,6 +13,7 @@ from cuecard.indexing.expander import (
     _VALID_EVENT_TYPES,
     _WORKFLOW_STYLE,
     _build_expansion_prompt,
+    _expand_single_rule,
     _expansion_styles_for_rule,
     expand_rules,
 )
@@ -146,6 +147,52 @@ class TestExpandRules:
 
         assert len(result) == 1
         assert result[0].expansions == ()
+
+    def test_single_rule_retries_once_on_json_parse_failure(self) -> None:
+        rule = _make_rule()
+
+        with patch(
+            "cuecard.indexing.expander.call_local",
+            side_effect=[
+                "not json at all",
+                '{"expansions": ["retry worked"]}',
+            ],
+        ) as mock_call:
+            expanded, count = _expand_single_rule(
+                rule,
+                "local",
+                "http://localhost:8081/v1",
+                "claude-haiku-4-5",
+                "PreToolUse",
+                0.80,
+            )
+
+        assert mock_call.call_count == 2
+        assert expanded.expansions == ("retry worked",)
+        assert count == 1
+
+    def test_haiku_backend_retries_once_on_json_parse_failure(self) -> None:
+        rule = _make_rule()
+
+        with patch(
+            "cuecard.indexing.expander.call_haiku",
+            side_effect=[
+                "not json at all",
+                '{"expansions": ["haiku retry worked"]}',
+            ],
+        ) as mock_call:
+            expanded, count = _expand_single_rule(
+                rule,
+                "haiku",
+                "http://localhost:8081/v1",
+                "claude-haiku-4-5",
+                "PreToolUse",
+                0.80,
+            )
+
+        assert mock_call.call_count == 2
+        assert expanded.expansions == ("haiku retry worked",)
+        assert count == 1
 
     def test_nonce_unique_per_rule(self) -> None:
         rules = [_make_rule(text="Rule A"), _make_rule(text="Rule B")]

@@ -127,6 +127,7 @@ class TestBuildExpansionPrompt:
         system, _ = _build_expansion_prompt("test", "nonce1")
         assert '"reasoning"' in system
         assert "vocabulary gap" in system
+        assert "tool names" in system
 
     def test_examples_contain_reasoning_field(self) -> None:
         system, _ = _build_expansion_prompt("test", "nonce1")

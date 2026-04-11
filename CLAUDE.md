@@ -534,29 +534,45 @@ Note: `mean_recall` still includes negatives as 0.0 for backwards compatibility.
 
 ## Quality Benchmarks
 
-### Current Baseline (session 33 — Gemma-4-E4B, all 4 tiers traced, 20% sample, seed=42)
+### Current Baseline (session 34 — Gemma-4-E4B, pre_tool_use, promptv4, 20% sample, seed=42)
 
 **Corpus:** `eval/corpora/rules_global.txt` (107 rules) · **Cache:** `enriched_gemma-e4b-s32/`
-**Pipeline:** dense (jina-code-v2) → event mask → LLM reranker (Gemma-4-E4B, 13 few-shot, "when in doubt, exclude")
+**Pipeline:** dense (jina-code-v2) → event mask → LLM reranker (Gemma-4-E4B, promptv4 prompt, `seed=42` pinned)
 
 | Tier | N | F2 | PosRecall | Noise | NegSil | p50ms |
 |------|--:|----:|---------:|------:|-------:|------:|
-| **pre_tool_use** (PreToolUse) | 87 | **0.662** | 0.764 | 0.391 | 0.634 | 3025 |
-| **workflow** (UserPromptSubmit) | 41 | **0.689** | 0.449 | 0.317 | 0.913 | 2756 |
-| **stop** (Stop) | 33 | **0.556** | 0.474 | 0.460 | 0.714 | 2833 |
-| **subagent_start** (SubagentStart) | 33 | **0.398** | 0.857 | 0.704 | 0.211 | 2892 |
+| **pre_tool_use** (PreToolUse) | 86 | **0.757** | 0.659 | 0.239 | **0.829** | 3070 |
+| workflow (UserPromptSubmit) | 41 | 0.689 (s33) | 0.449 | 0.317 | 0.913 | 2756 |
+| stop (Stop) | 33 | 0.556 (s33) | 0.474 | 0.460 | 0.714 | 2833 |
+| subagent_start (SubagentStart) | 33 | 0.398 (s33) | 0.857 | 0.704 | 0.211 | 2892 |
 
-**Event mask (rules visible after inferred affinity):**
-- PreToolUse: 64/107 (43 masked)
-- UserPromptSubmit, Stop, SubagentStart: 45/107 each (62 masked) — binary affinity lumps all three workflow events together, so they see an identical rule set.
+Only `pre_tool_use` was re-baselined in session 34 (focused prompt engineering). The other 3 tiers are still on the session 33 numbers and will shift when re-run with promptv4 + seed pin.
 
-**Stage latency (median):** retrieval ~40ms · LLM reranker ~2800ms. LLM dominates end-to-end.
+**pre_tool_use progression (n=86):**
 
-**Known gaps (from traces at `eval/results/gemma-e4b-s32-traced-seed42/`):**
-- SubagentStart is the worst tier — Noise 0.704, NegSil 0.211. Planner/architect/tdd-guide rules fire on every subagent, including pure-observation ones.
-- Stop has embedding recall failures — rules phrased imperatively don't retrieve on past-tense queries (`stop-sensitive-file-created` missed rotate-secrets rule at stage 1).
-- Reranker drops correct rules it saw in stage 1 (`mined-git-add-commit-no-verify` dropped 2 of 4 matches) — "when in doubt, exclude" slightly over-tuned for multi-rule scenarios.
-- Rule-keyword drift on test runners: `vitest`, `jest`, `npx jest --coverage` all trigger the pytest-specific "5s suite" rule.
+| Run | F2 | PosRecall | Noise | NegSil |
+|---|---:|---:|---:|---:|
+| s33 promptv3 | 0.662 | 0.764 | 0.391 | 0.634 |
+| s34 promptv3 + 11 fixture fixes | 0.691 | 0.893 | 0.386 | 0.561 |
+| s34 promptv4 (new prompt) | 0.780 | 0.785 | 0.230 | 0.829 |
+| s34 promptv4 + 10 more fixture fixes | **0.757** | 0.659 | 0.239 | **0.829** |
+
+**Event mask (unchanged):** PreToolUse 65/107 · workflow events 45/107 each.
+
+**Stage latency (median):** retrieval ~40ms · LLM reranker ~3000ms.
+
+**Session 34 wins:**
+- **NegSil +19.5 pts** (0.634 → 0.829) — reranker now silences the patterns that plagued sessions 31-33: congratulatory fires, literal-grep misrouting, read-is-diagnostic, trivial-edit reflex, .md-is-not-a-module.
+- **Noise −15.2 pts** (0.391 → 0.239) — same prompt rewrite.
+- **21 fixtures hand-audited and corrected across two rounds** (10% of pre_tool_use). Classes: over-broad SM labels, bad SNM inclusions, fixture-expects-LLM-to-infer-from-filename-alone.
+
+**Remaining gaps (to attack next):**
+- `hardcoded config → use env vars` rule has a fuzzy trigger — fires on YAML secrets files (correct) but also on timeout constants and `.env.example` templates (incorrect). Rule text needs sharpening, not prompt tuning.
+- `read_similar` on new code modules is LLM-inconsistent — it fired in promptv4 but not in promptv4-fixfict2 on the same fixtures. Prompt rule 6 ("trivial edit") may be over-applied to test-file writes.
+- `multi-tool-*` fixtures (e.g. `pip install && pytest`) miss "review deps for vulnerabilities" — the LLM chains rules poorly across `&&`-joined commands.
+- SubagentStart/Stop/workflow tiers still on session 33 numbers — they need a promptv4 re-run.
+
+**LLM determinism caveat:** Even with `temperature=0.0` and `seed=42` pinned (`src/cuecard/retrieval/llm_utils.py:67,69`), llama-server with `-np 5` parallel slots is not fully reproducible — the KV-cache state in each slot depends on request ordering. For bit-exact reruns, either use `-np 1` or `MAX_WORKERS=1` in the eval harness. The seed pin reduces but does not eliminate run-to-run drift (~1-2 fixtures per run at 20% sample).
 
 ### Traced Benchmark Artifacts
 

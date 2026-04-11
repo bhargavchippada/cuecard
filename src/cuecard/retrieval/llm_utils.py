@@ -66,8 +66,14 @@ def call_local(
     timeout: float = _TIMEOUT,
     temperature: float = 0.0,
     stop: tuple[str, ...] | None = ("\n\n",),
+    seed: int = 42,
 ) -> str:
-    """Call a local OpenAI-compatible LLM endpoint."""
+    """Call a local OpenAI-compatible LLM endpoint.
+
+    ``seed`` is passed through to llama-server for reproducibility. At
+    temperature 0 the sampling is greedy, but llama-server still uses a
+    random seed by default which can affect rare tie-breaks. Pin it.
+    """
     validate_endpoint(endpoint)
     body: dict[str, object] = {
         "model": "default",
@@ -77,6 +83,7 @@ def call_local(
         ],
         "max_tokens": max_tokens,
         "temperature": temperature,
+        "seed": seed,
     }
     if stop is not None:
         body["stop"] = list(stop)

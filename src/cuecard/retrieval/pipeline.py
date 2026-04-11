@@ -287,7 +287,8 @@ def _run_retrieval_stage(
     t_fusion_start = time.monotonic()
     fused = (
         fuse(all_results, k=config.fusion_k, top_k=top_k)
-        if len(all_results) > 1 else dense_results
+        if len(all_results) > 1
+        else (all_results[0] if all_results else [])
     )
     t_fusion_ms = (time.monotonic() - t_fusion_start) * 1000.0
 

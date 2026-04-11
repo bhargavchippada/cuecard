@@ -36,16 +36,19 @@ class TestBuildPrompt:
         assert "Example 3" in system
         assert "Example 4" in system
         assert "Example 5" in system
+        assert "Example 7" in system
+        assert "Example 12" in system
         assert "rule_data_EXAMPLE" in system
 
     def test_system_prompt_contains_reasoning_guidelines(self) -> None:
         candidates = _make_candidates(1)
         system, _ = _build_prompt(candidates, "test", "nonce1")
         assert "HOW TO DECIDE:" in system
-        assert "When in doubt, exclude" in system
-        assert "Think one step ahead" in system
-        assert "Don't fire rules the agent is already following" in system
-        assert "Trigger conditions are strict" in system
+        assert "When evidence is ambiguous, exclude" in system
+        assert "Include only triggered rules" in system
+        assert "Use only direct evidence" in system
+        assert "Already compliant actions need no reminder" in system
+        assert "Return all clearly triggered rules" in system
 
     def test_system_prompt_has_empty_rules_example(self) -> None:
         """Prompt shows the model how to return empty rules array."""
