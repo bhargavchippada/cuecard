@@ -84,6 +84,10 @@ def call_local(
         "max_tokens": max_tokens,
         "temperature": temperature,
         "seed": seed,
+        # Tell llama-server to reuse KV cache for matching prefixes
+        # (the system prompt is stable across reranker calls). Default
+        # is true in recent llama-server builds, but pin it explicitly.
+        "cache_prompt": True,
     }
     if stop is not None:
         body["stop"] = list(stop)

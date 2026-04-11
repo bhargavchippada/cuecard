@@ -312,6 +312,15 @@ class TestCallLocalRequestBody:
             body = mock_post.call_args.kwargs["json"]
             assert body["temperature"] == 0.0
 
+    def test_cache_prompt_pinned_true(self) -> None:
+        """cache_prompt must be sent as True to enable KV reuse across calls."""
+        with patch.object(
+            httpx, "post", return_value=self._make_mock_response(),
+        ) as mock_post:
+            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            body = mock_post.call_args.kwargs["json"]
+            assert body["cache_prompt"] is True
+
 
 class TestCallHaikuRequestStructure:
     """Verify call_haiku passes correct options to claude-agent-sdk."""

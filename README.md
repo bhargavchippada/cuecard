@@ -139,16 +139,21 @@ For best quality, run a local LLM via llama-server (requires llama.cpp build ≥
 ```bash
 # Recommended: Gemma 4 E4B Q8 (best recall + workflow, 8.2GB)
 llama-server -m ~/models/gemma-4-E4B-it-Q8_0.gguf \
-  --port 8081 -ngl 99 -c 16384 --jinja
+  --port 8081 -ngl 99 -c 98304 --jinja -np 5 --reasoning off \
+  --cache-reuse 256 --ctx-checkpoints 64
 
 # Alternative: Qwen3.5-9B (best basic F2 + NegSil, 5.3GB)
 llama-server -m ~/models/Qwen3.5-9B-Q4_K_M.gguf \
-  --port 8081 -ngl 99 -c 16384 --jinja --reasoning-budget 0
+  --port 8081 -ngl 99 -c 16384 --jinja --reasoning-budget 0 \
+  --cache-reuse 256 --ctx-checkpoints 64
 
 # CPU/laptop: Qwen3.5-4B (2.6GB, ~900ms per query)
 llama-server -m ~/models/Qwen3.5-4B-Q4_K_M.gguf \
-  --port 8081 -ngl 0 -c 16384 --jinja --reasoning-budget 0
+  --port 8081 -ngl 0 -c 16384 --jinja --reasoning-budget 0 \
+  --cache-reuse 256 --ctx-checkpoints 64
 ```
+
+**Why `--cache-reuse 256 --ctx-checkpoints 64`:** cuecard sends the same long system prompt (~3K tokens) to the reranker on every hook call. Without these flags, llama-server re-processes the full prompt every time. With them, the server reuses the cached KV prefix across requests (~4x faster prompt eval on warm calls). `cache_prompt: true` is already pinned in cuecard's client. See [llama.cpp discussion #20574](https://github.com/ggml-org/llama.cpp/discussions/20574).
 
 Download models from HuggingFace:
 - Gemma 4 E4B: `unsloth/gemma-4-E4B-it-GGUF` (Q8_0)

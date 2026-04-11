@@ -350,7 +350,8 @@ Historical multi-model comparisons (sessions 19–29) are captured in `artifacts
 ```bash
 # Recommended: Gemma 4 E4B Q8_0 (default, best all-rounder)
 llama-server -m /home/turiya/models/gemma-4-E4B-it-Q8_0.gguf \
-  --port 8081 -ngl 99 -c 98304 --jinja -np 5 --reasoning off
+  --port 8081 -ngl 99 -c 98304 --jinja -np 5 --reasoning off \
+  --cache-reuse 256 --ctx-checkpoints 64
 ```
 
 Requires llama.cpp build ≥8672 (gemma4 architecture support added after b8235).
@@ -360,6 +361,13 @@ Requires llama.cpp build ≥8672 (gemma4 architecture support added after b8235)
 - `-np 5` — 5 parallel slots (context split: 98304/5 = 19660 tokens per slot)
 - `-c 98304` — total context (~20GB VRAM with model, fits on 32GB GPU)
 - `--jinja` — required for Gemma's chat template
+- `--cache-reuse 256` — enables KV-shifting cross-slot prefix reuse for any cached prefix ≥256 tokens. **Critical** for our ~3K-token reranker system prompt. Default is 0 (disabled) which means slots never share cached prefixes and every call re-processes the full system prompt.
+- `--ctx-checkpoints 64` — max cached prefix states per slot (default 32). Doubled for headroom so the stable reranker system prompt survives across long runs.
+- `-cram 8192` (default) — host-memory prompt cache in MiB, shared across slots. Already plenty for our workload.
+
+**Client-side requirement:** `call_local()` in `src/cuecard/retrieval/llm_utils.py` pins `"cache_prompt": true` in the request body. Belt-and-suspenders — recent llama-server builds default it to true, but we pin it explicitly so behavior does not silently change across versions.
+
+**Measuring cache hit rate:** the llama-server response contains a `timings` block with `prompt_ms` (wall time for prompt eval) and `prompt_n` (tokens processed). On a warm slot, `prompt_ms` drops ~4x for the same prompt length because the cached prefix skips recomputation. **Trust `prompt_ms` as the ground-truth signal, NOT `timings.cache_n`** — the latter is often reported as 0 even when caching is working (quirk of how llama-server reports KV-shifted reuse). See [llama.cpp discussions #8947](https://github.com/ggml-org/llama.cpp/discussions/8947) and [#20574](https://github.com/ggml-org/llama.cpp/discussions/20574) for the underlying mechanism.
 
 The same model must handle both expansion generation and reranking — rules out cross-encoder-only models.
 
@@ -534,19 +542,19 @@ Note: `mean_recall` still includes negatives as 0.0 for backwards compatibility.
 
 ## Quality Benchmarks
 
-### Current Baseline (session 34 — Gemma-4-E4B, pre_tool_use, promptv4, 20% sample, seed=42)
+### Current Baseline (session 35 — Gemma-4-E4B, pre_tool_use, promptv5d, 20% sample, seed=42)
 
 **Corpus:** `eval/corpora/rules_global.txt` (107 rules) · **Cache:** `enriched_gemma-e4b-s32/`
-**Pipeline:** dense (jina-code-v2) → event mask → LLM reranker (Gemma-4-E4B, promptv4 prompt, `seed=42` pinned)
+**Pipeline:** dense (jina-code-v2) → event mask → LLM reranker (Gemma-4-E4B, promptv5d prompt, `seed=42` pinned, `cache_prompt=true` pinned, server: `--cache-reuse 256 --ctx-checkpoints 64`)
 
 | Tier | N | F2 | PosRecall | Noise | NegSil | p50ms |
 |------|--:|----:|---------:|------:|-------:|------:|
-| **pre_tool_use** (PreToolUse) | 86 | **0.757** | 0.659 | 0.239 | **0.829** | 3070 |
+| **pre_tool_use** (PreToolUse) | 86 | **0.794** | 0.685 | 0.200 | **0.902** | 2991 |
 | workflow (UserPromptSubmit) | 41 | 0.689 (s33) | 0.449 | 0.317 | 0.913 | 2756 |
 | stop (Stop) | 33 | 0.556 (s33) | 0.474 | 0.460 | 0.714 | 2833 |
 | subagent_start (SubagentStart) | 33 | 0.398 (s33) | 0.857 | 0.704 | 0.211 | 2892 |
 
-Only `pre_tool_use` was re-baselined in session 34 (focused prompt engineering). The other 3 tiers are still on the session 33 numbers and will shift when re-run with promptv4 + seed pin.
+Only `pre_tool_use` was re-baselined in session 35 (prompt iteration + cache flags). The other 3 tiers are still on the session 33 numbers and will shift when re-run with promptv5d.
 
 **pre_tool_use progression (n=86):**
 
@@ -555,7 +563,11 @@ Only `pre_tool_use` was re-baselined in session 34 (focused prompt engineering).
 | s33 promptv3 | 0.662 | 0.764 | 0.391 | 0.634 |
 | s34 promptv3 + 11 fixture fixes | 0.691 | 0.893 | 0.386 | 0.561 |
 | s34 promptv4 (new prompt) | 0.780 | 0.785 | 0.230 | 0.829 |
-| s34 promptv4 + 10 more fixture fixes | **0.757** | 0.659 | 0.239 | **0.829** |
+| s34 promptv4 + 10 more fixture fixes | 0.757 | 0.659 | 0.239 | 0.829 |
+| s35 promptv5 (tight persona, 7 ex) | 0.663 | 0.567 | 0.277 | 0.732 |
+| s35 promptv5b (tight + 11 ex) | 0.707 | 0.651 | 0.266 | 0.732 |
+| s35 promptv5d (v4 HOW TO DECIDE + persona + 13 ex) | 0.780 | 0.662 | 0.179 | 0.878 |
+| s35 promptv5d + cache flags | **0.794** | 0.685 | 0.200 | **0.902** |
 
 **Event mask (unchanged):** PreToolUse 65/107 · workflow events 45/107 each.
 
@@ -565,6 +577,14 @@ Only `pre_tool_use` was re-baselined in session 34 (focused prompt engineering).
 - **NegSil +19.5 pts** (0.634 → 0.829) — reranker now silences the patterns that plagued sessions 31-33: congratulatory fires, literal-grep misrouting, read-is-diagnostic, trivial-edit reflex, .md-is-not-a-module.
 - **Noise −15.2 pts** (0.391 → 0.239) — same prompt rewrite.
 - **21 fixtures hand-audited and corrected across two rounds** (10% of pre_tool_use). Classes: over-broad SM labels, bad SNM inclusions, fixture-expects-LLM-to-infer-from-filename-alone.
+
+**Session 35 wins (promptv5d + server cache flags):**
+- **F2 +0.037** (0.757 → 0.794) — new "Core philosophy" persona paragraph added on top of v4's full HOW TO DECIDE + 13 examples. The persona gives the LLM a concrete principle overview upfront; combined with the detailed principles and anchored examples, precision and recall both lift.
+- **NegSil +7.3 pts** (0.829 → 0.902) — the persona specifically calls out "preventive, not congratulatory", "reads are diagnostic", "trivial edits are not new APIs", "docs ≠ code modules", "localhost ≠ production" as first-class principles, reinforcing the examples.
+- **Noise −3.9 pts** (0.239 → 0.200) — tighter selection.
+- **PosRecall +2.6 pts** (0.659 → 0.685).
+- **Prompt caching on llama-server** (`--cache-reuse 256 --ctx-checkpoints 64` + client `cache_prompt: true`) — empirically verified: `prompt_ms` drops 137→35ms (~4x) on warm prefix. Latency didn't drop at the benchmark level because decode time dominates in this workload, but every hook call in production re-enters the system prompt cold otherwise.
+- **Failed experiment (v5/v5b):** tight persona + short HOW TO DECIDE + fewer examples = -0.094 F2. At this model scale, the long-form principles in HOW TO DECIDE and the anchored examples are not redundant — they reinforce each other. Dropped ~6 examples caused NegSil to collapse.
 
 **Remaining gaps (to attack next):**
 - `hardcoded config → use env vars` rule has a fuzzy trigger — fires on YAML secrets files (correct) but also on timeout constants and `.env.example` templates (incorrect). Rule text needs sharpening, not prompt tuning.

@@ -36,8 +36,8 @@ class TestBuildPrompt:
         assert "Example 3" in system
         assert "Example 4" in system
         assert "Example 5" in system
+        assert "Example 6" in system
         assert "Example 7" in system
-        assert "Example 12" in system
         assert "rule_data_EXAMPLE" in system
 
     def test_system_prompt_contains_reasoning_guidelines(self) -> None:
