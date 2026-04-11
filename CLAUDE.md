@@ -423,7 +423,7 @@ timeout = 60.0              # HTTP timeout for LLM calls (seconds)
 - E2E benchmarking (`tools/bench_e2e.py`) — each model generates its own affinities + expansions + reranks. Corpora cached at `eval/corpora/enriched_{label}/`.
 - Expansion prompt v5: reasoning-field prompt for expansions (structured CoT before generating)
 - Prompt engineering: few-shot examples with strict trigger semantics, "when in doubt, exclude"
-- Eval corpus: 107 rules in `eval/corpora/rules_global.txt`, one fixture file per event (`pre_tool_use.json`, `workflow.json`, `stop.json`, `subagent_start.json`)
+- Eval corpus: 107 rules in `eval/corpora/rules_global.txt`, one fixture file per event (`pre_tool_use.json`, `user_prompt_submit.json`, `stop.json`, `subagent_start.json`)
 - Tagged corpus: `eval/corpora/rules_global_tagged.json` — 60 tool_use, 44 workflow, 3 both (ground truth for affinity accuracy measurement)
 - CLI UX: `cuecard configure`, `cuecard serve` daemon, expand progress bar
 - Hook format: correct `hookEventName` + `permissionDecision`, `hook_event_name` input field detection
@@ -542,19 +542,19 @@ Note: `mean_recall` still includes negatives as 0.0 for backwards compatibility.
 
 ## Quality Benchmarks
 
-### Current Baseline (session 35 — Gemma-4-E4B, pre_tool_use, promptv5d, 20% sample, seed=42)
+### Current Baseline (session 35 — Gemma-4-E4B, promptv5wf, 20% sample, seed=42)
 
 **Corpus:** `eval/corpora/rules_global.txt` (107 rules) · **Cache:** `enriched_gemma-e4b-s32/`
-**Pipeline:** dense (jina-code-v2) → event mask → LLM reranker (Gemma-4-E4B, promptv5d prompt, `seed=42` pinned, `cache_prompt=true` pinned, server: `--cache-reuse 256 --ctx-checkpoints 64`)
+**Pipeline:** dense (jina-code-v2) → event mask → LLM reranker (Gemma-4-E4B, promptv5wf prompt with workflow principles #10-11 + Examples 14-17, `seed=42` pinned, `cache_prompt=true` pinned, server: `--cache-reuse 256 --ctx-checkpoints 64`)
 
 | Tier | N | F2 | PosRecall | Noise | NegSil | p50ms |
 |------|--:|----:|---------:|------:|-------:|------:|
-| **pre_tool_use** (PreToolUse) | 86 | **0.794** | 0.685 | 0.200 | **0.902** | 2991 |
-| workflow (UserPromptSubmit) | 41 | 0.689 (s33) | 0.449 | 0.317 | 0.913 | 2756 |
+| **pre_tool_use** (PreToolUse) | 86 | **0.795** | 0.696 | 0.221 | 0.854 | 3429 |
+| **user_prompt_submit** (UserPromptSubmit) | 41 | **0.701** | 0.611 | 0.291 | 0.826 | 2954 |
 | stop (Stop) | 33 | 0.556 (s33) | 0.474 | 0.460 | 0.714 | 2833 |
 | subagent_start (SubagentStart) | 33 | 0.398 (s33) | 0.857 | 0.704 | 0.211 | 2892 |
 
-Only `pre_tool_use` was re-baselined in session 35 (prompt iteration + cache flags). The other 3 tiers are still on the session 33 numbers and will shift when re-run with promptv5d.
+`pre_tool_use` and `user_prompt_submit` were re-baselined in session 35 after adding workflow principles and few-shot examples to promptv5d (becoming promptv5wf). The `stop` and `subagent_start` tiers still use session 33 numbers and will shift when re-run.
 
 **pre_tool_use progression (n=86):**
 
@@ -567,7 +567,8 @@ Only `pre_tool_use` was re-baselined in session 35 (prompt iteration + cache fla
 | s35 promptv5 (tight persona, 7 ex) | 0.663 | 0.567 | 0.277 | 0.732 |
 | s35 promptv5b (tight + 11 ex) | 0.707 | 0.651 | 0.266 | 0.732 |
 | s35 promptv5d (v4 HOW TO DECIDE + persona + 13 ex) | 0.780 | 0.662 | 0.179 | 0.878 |
-| s35 promptv5d + cache flags | **0.794** | 0.685 | 0.200 | **0.902** |
+| s35 promptv5d + cache flags | 0.794 | 0.685 | 0.200 | 0.902 |
+| s35 promptv5wf (+ workflow principles + 4 ex) | **0.795** | 0.696 | 0.221 | 0.854 |
 
 **Event mask (unchanged):** PreToolUse 65/107 · workflow events 45/107 each.
 
@@ -590,7 +591,7 @@ Only `pre_tool_use` was re-baselined in session 35 (prompt iteration + cache fla
 - `hardcoded config → use env vars` rule has a fuzzy trigger — fires on YAML secrets files (correct) but also on timeout constants and `.env.example` templates (incorrect). Rule text needs sharpening, not prompt tuning.
 - `read_similar` on new code modules is LLM-inconsistent — it fired in promptv4 but not in promptv4-fixfict2 on the same fixtures. Prompt rule 6 ("trivial edit") may be over-applied to test-file writes.
 - `multi-tool-*` fixtures (e.g. `pip install && pytest`) miss "review deps for vulnerabilities" — the LLM chains rules poorly across `&&`-joined commands.
-- SubagentStart/Stop/workflow tiers still on session 33 numbers — they need a promptv4 re-run.
+- SubagentStart/Stop/user_prompt_submit tiers still on session 33 numbers — they need a promptv5d re-run.
 
 **LLM determinism caveat:** Even with `temperature=0.0` and `seed=42` pinned (`src/cuecard/retrieval/llm_utils.py:67,69`), llama-server with `-np 5` parallel slots is not fully reproducible — the KV-cache state in each slot depends on request ordering. For bit-exact reruns, either use `-np 1` or `MAX_WORKERS=1` in the eval harness. The seed pin reduces but does not eliminate run-to-run drift (~1-2 fixtures per run at 20% sample).
 
@@ -647,7 +648,7 @@ uv run python tools/bench_e2e.py \
   --label gemma-e4b-fresh --no-server --force-expand --sample-ratio 0.20 --seed 42
 ```
 
-Tiers: `pre_tool_use`, `workflow`, `stop`, `subagent_start`
+Tiers: `pre_tool_use`, `user_prompt_submit`, `stop`, `subagent_start`
 
 ### Rules for Valid Benchmarks
 1. **Each model generates its own expansions + affinity.** Never share corpora between models — shared-corpus comparisons unfairly bias toward the expansion-generator. Use `--force-expand` with a unique `--label` per model.

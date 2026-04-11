@@ -91,10 +91,10 @@ SOURCE_FILES: dict[str, dict[str, Any]] = {
         "event_type": "PreToolUse",
         "fixtures": EVAL_DIR / "fixtures" / "pre_tool_use.json",
     },
-    "workflow": {
+    "user_prompt_submit": {
         "rules_txt": CORPORA_DIR / "rules_global.txt",
         "event_type": "UserPromptSubmit",
-        "fixtures": EVAL_DIR / "fixtures" / "workflow.json",
+        "fixtures": EVAL_DIR / "fixtures" / "user_prompt_submit.json",
     },
     "stop": {
         "rules_txt": CORPORA_DIR / "rules_global.txt",
@@ -1894,7 +1894,7 @@ def _infer_tier(event: str) -> str:
     """Map event name back to tier key for grouping in the report."""
     return {
         "PreToolUse": "pre_tool_use",
-        "UserPromptSubmit": "workflow",
+        "UserPromptSubmit": "user_prompt_submit",
         "Stop": "stop",
         "SubagentStart": "subagent_start",
     }.get(event, event or "unknown")
