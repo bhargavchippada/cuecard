@@ -104,10 +104,32 @@ def _build_expansion_prompt(
             "tool commands — they are conversational prompts."
         )
         specific_guidance = (
-            "Write phrases that sound like what a user actually types. "
-            'Include natural requests ("add auth to the API"), questions '
-            '("should we document that?"), or status updates ("I\'m done, '
-            "let's ship it\")."
+            "Write phrases that sound like what a user ACTUALLY types. Real "
+            "user messages are often TERSE, DIRECT, and IMPERATIVE — not "
+            "always polite questions. Cover AT LEAST 4 of these 6 framings "
+            "where the rule plausibly triggers:\n"
+            "  1. Direct imperative — 'integrate the OpenBB SDK', "
+            "'add caching to the fetcher', 'refactor the payment module'.\n"
+            "  2. Assessment question — 'is this a simple or complex task?', "
+            "'how hard is this?', 'is this worth doing?'.\n"
+            "  3. Problem report — 'retrieval is bad, lets add more stages', "
+            "'tests are slow, speed them up', 'the pipeline is broken'.\n"
+            "  4. Help request — 'help me plan this feature', "
+            "'walk me through the design', 'what should I do first?'.\n"
+            "  5. Opinion / proposal — 'lets use LangGraph for this', "
+            "'we should probably add a test', 'I think we need a PRD'.\n"
+            "  6. Status update / transition — 'phase 1 is done, moving on', "
+            "'the pilot scored 95%, ship it', 'finished the refactor'.\n"
+            "Do NOT generate only polite questions ('should I...?'). The "
+            "embedding model must see both 'integrate X' AND 'should I "
+            "integrate X?' to bridge both user styles.\n"
+            "DOMAIN DISAMBIGUATION: If the rule uses ambiguous terms "
+            "(`pipeline`, `stage`, `model`, `agent`, `build`), ground them in "
+            "the SPECIFIC domain mentioned in the rule text. A rule about ML "
+            "or retrieval pipelines must NOT be expanded toward CI/CD. A "
+            "rule about 'agents' as in AI agents must NOT be expanded toward "
+            "HTTP user agents. Read the rule's wider context before picking "
+            "expansion vocabulary."
         )
         cross_domain_dont = (
             "DOMAIN BOUNDARY: This rule applies to USER MESSAGES (workflow). "
@@ -137,47 +159,76 @@ def _build_expansion_prompt(
     # Choose golden examples based on event type
     if is_workflow:
         examples_block = """\
-EXAMPLES — note how abstract tags use consistent vocabulary:
+EXAMPLES — note framing diversity across direct imperatives, assessment \
+questions, problem reports, help requests, opinions, and status updates:
 
 Rule: "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting"
-{{"reasoning": "This rule triggers on ANY new task. Abstract tags should \
-capture task planning concepts grounded in workflow actions. Specific \
-examples should sound like real user messages.", \
+{{"reasoning": "Triggers on ANY new task. Users announce new tasks in \
+MANY framings: direct imperatives, assessment questions, help requests, \
+opinions. Abstract tags should capture scope classification; specific \
+examples must cover at least 4 framings to bridge embedding styles.", \
 "abstract": [\
-"task assessment: classifying scope before implementation", \
-"planning workflow: estimate complexity before coding"], \
+"task scope assessment: SIMPLE MEDIUM COMPLEX classification", \
+"planning gate: classify before coding any new task"], \
 "specific": [\
 "add authentication to the API", \
-"fix the typo on line 42", \
-"refactor the payment processing module", \
-"build a new microservice for notifications"]}}
-Bad abstract tags:
-- "task management" (no grounding, too broad)
-Bad specific:
-- "classifying task as SIMPLE" (paraphrase, not a trigger)
+"is this a simple or complex task?", \
+"help me plan this feature", \
+"this looks complex, where do we start?", \
+"refactor the payment processing module"]}}
+↑ Framings present: direct imperative, assessment question, help \
+request, opinion, direct imperative. Good diversity — embeddings will \
+match users who announce tasks in any form.
+Bad specific: "classifying task as SIMPLE" (paraphrase, not a trigger).
 
-Rule: "Save task state to artifacts/ before context compaction"
-{{"reasoning": "This rule fires when a session is ending. Users describe \
-symptoms or intentions, not the abstract concept of compaction.", \
+Rule: "Before building on an unvalidated dependency: spike-test for \
+2 hours — discovering a library fails later wastes days"
+{{"reasoning": "Triggers when a user is about to integrate a new SDK, \
+library, or API. Real framings include direct imperatives ('integrate \
+X'), opinions ('lets try X'), and cautious questions ('should I test \
+first?'). Expansions MUST cover direct imperatives — not just polite \
+questions.", \
 "abstract": [\
-"session management: saving state before context limit", \
-"context compaction: preserving progress across sessions"], \
+"unvalidated dependency: spike-test new library before building", \
+"library integration risk: probe before committing"], \
 "specific": [\
-"this session is getting really long", \
-"I need to continue this tomorrow", \
-"we're running out of context window", \
-"let's wrap up and pick this back up later"]}}
+"integrate the new OpenBB SDK for data access", \
+"lets use LangGraph for the agent loop", \
+"build the pipeline on top of the new fastembed library", \
+"should I test this library before committing to it?", \
+"Im about to add this new dependency, can we spike-test it?"]}}
+
+Rule: "When building multi-stage ML pipelines: ensure each stage is \
+independently high quality — downstream stages cannot rescue upstream \
+failures"
+{{"reasoning": "DOMAIN: ML/data pipelines, not CI/CD. Query framings \
+include problem reports ('retrieval is bad'), proposals ('lets add \
+more stages'), status updates ('stage 1 done'), and help requests. \
+Abstract tags MUST say 'ML pipeline' or 'retrieval pipeline', never \
+'CI pipeline' or 'build pipeline'.", \
+"abstract": [\
+"ML pipeline stage quality: retrieval reranking classification", \
+"multi-stage data pipeline: independent stage quality"], \
+"specific": [\
+"retrieval is bad, lets add three more reranking stages", \
+"the classifier stage is dropping too many items", \
+"should we add a rerank stage to fix this?", \
+"stage 1 passes but the final output is still noisy", \
+"the pipeline is taking way too long, each call is 30 seconds"]}}
 
 Rule: "Update README when user-facing behavior changes"
-{{"reasoning": "This rule triggers when visible behavior changed. Tags \
-should bridge between 'documentation update' and concrete changes.", \
+{{"reasoning": "Triggers when CLI/API/setup/deps change. Framings \
+include direct imperatives ('added a new flag, update docs'), \
+questions ('should we document this?'), and status updates ('finished \
+the env var refactor').", \
 "abstract": [\
 "documentation update: README, changelog, setup guide", \
 "user-facing change: CLI flags, env vars, setup steps"], \
 "specific": [\
 "we changed the CLI flags, should we document that?", \
 "the setup steps are different now after this refactor", \
-"users need to know about the new environment variable"]}}"""
+"users need to know about the new environment variable", \
+"added a new --verbose flag, update the README"]}}"""
     else:
         examples_block = """\
 EXAMPLES — note how abstract tags use consistent vocabulary with tool names:

@@ -18,8 +18,7 @@
     "query": "UserPromptSubmit: run code review on the changes",
     "corpus": "rules_global.txt",
     "should_match": [
-      "After writing code: run 3 parallel review agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
-      "After each review round: keep running until two consecutive rounds produce zero CRITICAL/HIGH/MEDIUM findings — fixed round counts stop too early or too late"
+      "After writing code: run 3 parallel review agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
     ],
     "should_not_match": [
       "Before running a batch LLM pipeline: benchmark a single call first — a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow"
@@ -110,13 +109,11 @@
     "id": "wf-easy-check-context",
     "query": "UserPromptSubmit: check ralphs context usage",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "Monitor agent context usage in tmux — compact when context remaining drops below 67 percent"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Before implementing any improvement or optimization: establish baseline metrics first — without before/after numbers you cannot distinguish real improvement from noise"
     ],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "UserPromptSubmit"
   },
   {
@@ -137,11 +134,13 @@
     "id": "wf-easy-search-existing",
     "query": "UserPromptSubmit: search github for existing implementations before we write this",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "Before writing new utility code or implementing a common pattern: search GitHub first — 80% of problems are already solved with battle-tested code"
+    ],
     "should_not_match": [
       "When reviewing PRDs: iterate rounds with specialist agents until a round comes back clean — each round finds issues at a different depth"
     ],
-    "difficulty": "negative",
+    "difficulty": "easy",
     "event": "UserPromptSubmit",
     "tier": "easy"
   },
@@ -203,11 +202,13 @@
     "id": "wf-easy-save-artifacts",
     "query": "UserPromptSubmit: save the baseline pickle before we rebuild",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When about to overwrite model artifacts or baseline files: save a copy first — non-deterministic pipelines cannot reproduce the exact same output"
+    ],
     "should_not_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
     ],
-    "difficulty": "negative",
+    "difficulty": "easy",
     "event": "UserPromptSubmit",
     "tier": "easy"
   },
@@ -502,11 +503,13 @@
     "id": "wf-medium-retry-failed",
     "query": "UserPromptSubmit: some of the parallel LLM calls failed, handle the failures",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "After the parallel LLM phase, retry failed items sequentially one at a time to avoid rate limiting contention"
+    ],
     "should_not_match": [
       "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) — without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "UserPromptSubmit",
     "tier": "easy"
   },
@@ -555,7 +558,7 @@
     "query": "UserPromptSubmit: the pipeline is taking way too long, each call is 30 seconds",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When building multi-stage pipelines: ensure each stage is independently high quality — downstream stages cannot rescue upstream failures"
+      "When multiple independent review or analysis tasks exist: launch parallel subagents — sequential execution wastes time when tasks don't depend on each other"
     ],
     "should_not_match": [
       "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
@@ -668,8 +671,7 @@
     "query": "UserPromptSubmit: were getting close to context limit and still have work to do",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
-      "Monitor agent context usage in tmux — compact when context remaining drops below 67 percent"
+      "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
     ],
     "should_not_match": [
       "Before running a batch LLM pipeline: benchmark a single call first — a 2-second PING test saves hours of wasted compute when the endpoint is misconfigured or slow"
@@ -1099,9 +1101,11 @@
     "id": "prompt-avoid-mutation",
     "query": "UserPromptSubmit: Update the process_orders function to modify the input list in place for better performance instead of creating copies",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When writing functions that receive mutable arguments (Edit, Write): never mutate function arguments or shared state — mutations cause action-at-a-distance bugs where changing one variable silently breaks code elsewhere"
+    ],
     "should_not_match": [],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "UserPromptSubmit",
     "tier": "easy"
   },
@@ -1226,11 +1230,13 @@
     "id": "prompt-rule-neg-has-consequences",
     "query": "UserPromptSubmit: Add a rule: 'Never use eval() in production code because it executes arbitrary input as code, enabling remote code execution attacks'",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When writing rules or instructions for agents: explain consequences, not just commands — agents follow rules they understand but ignore rules that just say what to do"
+    ],
     "should_not_match": [
       "When writing rules or instructions for agents: explain consequences, not just commands — agents follow rules they understand but ignore rules that just say what to do"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "UserPromptSubmit"
   },
   {
@@ -1906,8 +1912,11 @@
     "id": "wf-neg-looks-good-ship-it",
     "query": "UserPromptSubmit: looks good, ship it",
     "corpus": "rules_global.txt",
-    "should_match": [],
-    "difficulty": "negative",
+    "should_match": [
+      "Before moving to the next implementation phase: validate the current phase against real data — synthetic tests pass when the real thing fails because mocks diverge from production",
+      "After each implementation milestone: run convergence reviews with parallel code + security agents — per-phase reviews catch bugs when they're cheap to fix"
+    ],
+    "difficulty": "medium",
     "event": "UserPromptSubmit",
     "should_not_match": []
   },

@@ -424,7 +424,7 @@ timeout = 60.0              # HTTP timeout for LLM calls (seconds)
 - Expansion prompt v5: reasoning-field prompt for expansions (structured CoT before generating)
 - Prompt engineering: few-shot examples with strict trigger semantics, "when in doubt, exclude"
 - Eval corpus: 107 rules in `eval/corpora/rules_global.txt`, one fixture file per event (`pre_tool_use.json`, `user_prompt_submit.json`, `stop.json`, `subagent_start.json`)
-- Tagged corpus: `eval/corpora/rules_global_tagged.json` — 60 tool_use, 44 workflow, 3 both (ground truth for affinity accuracy measurement)
+- Tagged corpus: `eval/corpora/rules_global_tagged.json` — 60 tool_use, 44 workflow, 3 both (ground truth for affinity accuracy measurement). **Session 35 affinity accuracy: 93.5% (100/107)** with promptv5wf affinity prompt — up from 89.7% in session 34. `both` recall: 0/3 → 3/3 after adding the "When running X: require Y" principle to the affinity prompt.
 - CLI UX: `cuecard configure`, `cuecard serve` daemon, expand progress bar
 - Hook format: correct `hookEventName` + `permissionDecision`, `hook_event_name` input field detection
 - Global install (`uv tool install`) + `cuecard hook` CLI entry point

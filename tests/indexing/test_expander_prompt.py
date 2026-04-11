@@ -41,7 +41,8 @@ class TestBuildExpansionPrompt:
             "test rule", "nonce1", event_type="UserPromptSubmit",
         )
         assert "Classify every task as SIMPLE" in system
-        assert "Save task state to artifacts/" in system
+        assert "Before building on an unvalidated dependency" in system
+        assert "When building multi-stage ML pipelines" in system
         assert "Update README when user-facing behavior changes" in system
 
     def test_workflow_prompt_has_user_message_language(self) -> None:
@@ -91,12 +92,21 @@ class TestBuildExpansionPrompt:
         assert "DOMAIN BOUNDARY" in system
         assert "TOOL CALLS" in system
 
-    def test_workflow_bad_examples_show_false_positives(self) -> None:
+    def test_workflow_framings_principle_documented(self) -> None:
+        """Workflow expansions must cover multiple user message framings."""
         system, _ = _build_expansion_prompt(
             "test rule", "nonce1", event_type="UserPromptSubmit",
         )
-        assert "Bad abstract tags" in system
-        assert "too broad" in system or "paraphrase" in system
+        # Framing coverage principle
+        assert "framings" in system.lower()
+        assert "Direct imperative" in system
+        assert "Assessment question" in system
+        assert "Problem report" in system
+        assert "Help request" in system
+        # Domain disambiguation principle
+        assert "DOMAIN DISAMBIGUATION" in system
+        # Bad expansion counter-example still present
+        assert "paraphrase, not a trigger" in system
 
     def test_scrubs_secrets_from_rule(self) -> None:
         system, user = _build_expansion_prompt(
