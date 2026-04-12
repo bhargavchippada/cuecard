@@ -31,8 +31,7 @@
     "query": "UserPromptSubmit: write the tests first then implement",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code — uncovered code is untested code, and untested code breaks silently in production"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [
       "When debugging poor output quality: fix the upstream pipeline stage, not downstream patches — downstream fixes accumulate into unmaintainable complexity"
@@ -586,8 +585,7 @@
     "query": "UserPromptSubmit: I need to stop here, save progress for next time",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
-      "After changing project structure, architecture, or conventions: update CLAUDE.md — without this, the next session starts with stale context and makes wrong assumptions"
+      "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
     ],
     "should_not_match": [
       "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
@@ -1230,13 +1228,11 @@
     "id": "prompt-rule-neg-has-consequences",
     "query": "UserPromptSubmit: Add a rule: 'Never use eval() in production code because it executes arbitrary input as code, enabling remote code execution attacks'",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When writing rules or instructions for agents: explain consequences, not just commands — agents follow rules they understand but ignore rules that just say what to do"
-    ],
+    "should_match": [],
     "should_not_match": [
       "When writing rules or instructions for agents: explain consequences, not just commands — agents follow rules they understand but ignore rules that just say what to do"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "UserPromptSubmit"
   },
   {
@@ -1349,7 +1345,8 @@
     "query": "UserPromptSubmit: we have the PRD done, let's skip straight to implementation and write tests at the end",
     "corpus": "rules_global.txt",
     "should_match": [
-      "For any significant feature: follow the three-layer gate — PRD + reviews, then implementation + reviews, then test plan + reviews — skipping any layer compounds risk"
+      "For any significant feature: follow the three-layer gate — PRD + reviews, then implementation + reviews, then test plan + reviews — skipping any layer compounds risk",
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -1415,7 +1412,9 @@
     "query": "UserPromptSubmit: Okay good job, can you bring up web interface, a command for easy web serving would be useful, and after I want you to write a test plan and do meticulous testing and code reviews to understand the current state",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit or git push after writing new code: require 100% test coverage on all new code — uncovered code is untested code, and untested code breaks silently in production"
+      "After writing code: run 3 parallel review agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean",
+      "Before testing a completed milestone: create a comprehensive test plan reviewed by subagents — an incomplete test plan produces false confidence",
+      "For any significant feature: follow the three-layer gate — PRD + reviews, then implementation + reviews, then test plan + reviews — skipping any layer compounds risk"
     ],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",

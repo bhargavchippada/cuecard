@@ -77,13 +77,11 @@
     "id": "edit-python-file",
     "query": "Edit: {\"file_path\": \"src/auth.py\", \"old_string\": \"def login\", \"new_string\": \"def login_user\"}",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures — untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
-    ],
+    "should_match": [],
     "should_not_match": [
       "Never force-push to main or master branch — force-push overwrites other developers' commits with no recovery path"
     ],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
@@ -317,17 +315,6 @@
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data — mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
     "difficulty": "easy",
-    "event": "PreToolUse"
-  },
-  {
-    "id": "edit-env-example",
-    "query": "Edit: {\"file_path\": \".env.example\", \"old_string\": \"DB_URL=\", \"new_string\": \"DB_URL=postgres://localhost:5432/mydb\"}",
-    "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [
-      "When writing concurrent I/O code with threads (Edit, Write): use asyncio instead — threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
-    ],
-    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -2401,17 +2388,6 @@
     "event": "PreToolUse"
   },
   {
-    "id": "mined-edit-test-file-python",
-    "query": "Edit: tests/test_notifier.py — fixing backslash escaping assertions",
-    "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [
-      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
-    ],
-    "difficulty": "medium",
-    "event": "PreToolUse"
-  },
-  {
     "id": "mined-edit-coding-style-rules",
     "query": "Edit: ~/.claude/rules/common/coding-style.md — adding surgical changes section",
     "corpus": "rules_global.txt",
@@ -2464,17 +2440,6 @@
       "When writing code with literal numbers: extract magic numbers into named constants — unnamed numbers scattered through code are impossible to find, update consistently, or understand"
     ],
     "should_not_match": [],
-    "difficulty": "medium",
-    "event": "PreToolUse"
-  },
-  {
-    "id": "mined-edit-store-test-version",
-    "query": "Edit: gravity-claw/tests/agents/store.test.ts — adding orphaned tmp cleanup tests",
-    "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [
-      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) — writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
-    ],
     "difficulty": "medium",
     "event": "PreToolUse"
   },
@@ -2533,17 +2498,6 @@
       "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings — undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
     ],
     "difficulty": "negative",
-    "event": "PreToolUse"
-  },
-  {
-    "id": "mined-edit-cuecard-test-indexer",
-    "query": "Edit: cuecard/tests/test_indexer.py — extracting RNG into variable",
-    "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [
-      "When writing code with literal numbers: extract magic numbers into named constants — unnamed numbers scattered through code are impossible to find, update consistently, or understand"
-    ],
-    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -2655,17 +2609,6 @@
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data — mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
     "difficulty": "hard",
-    "event": "PreToolUse"
-  },
-  {
-    "id": "mined-write-cuecard-prd",
-    "query": "Write: cuecard/artifacts/prd-v1.md — creating product requirements doc",
-    "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [
-      "When writing or editing public functions, classes, or methods (Edit, Write): document all public API functions with docstrings — undocumented functions force every caller to read the implementation, multiplying onboarding time and causing misuse"
-    ],
-    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -3019,18 +2962,6 @@
       "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures — untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
     ],
     "difficulty": "hard",
-    "event": "PreToolUse"
-  },
-  {
-    "id": "go-write-main",
-    "query": "Write: cmd/server/main.go -- content='package main; import (\"fmt\"; \"net/http\"; \"os\"); func main() { port := os.Getenv(\"PORT\"); if port == \"\" { port = \"8080\" }; fmt.Printf(\"Starting on :%s\", port); http.ListenAndServe(\":\"+port, nil) }'",
-    "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [
-      "When running Python package commands (Bash): use uv instead — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution",
-      "When running git commit or git add on Python files: run ruff check and mypy first — type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug"
-    ],
-    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -3566,13 +3497,11 @@
     "id": "docker-run-env-file",
     "query": "Bash: docker run --env-file .env -p 8080:80 myapp:latest",
     "corpus": "rules_global.txt",
-    "should_match": [
-      "When writing code with hardcoded configuration values (Edit, Write): use environment variables instead — hardcoded config prevents deployment to different environments and leaks secrets into source control"
-    ],
+    "should_match": [],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
-    "difficulty": "medium",
+    "difficulty": "negative",
     "event": "PreToolUse"
   },
   {
@@ -3711,17 +3640,6 @@
       "When adding new dependencies: review all dependencies for known vulnerabilities first — a vulnerable dependency in your supply chain is an open door that attackers actively scan for",
       "When writing code that executes strings as commands: never use eval(), exec(), or shell=True — these execute arbitrary input as code, enabling remote code execution attacks"
     ],
-    "should_not_match": [
-      "When running Python package commands (Bash): use uv instead — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
-    ],
-    "difficulty": "hard",
-    "event": "PreToolUse"
-  },
-  {
-    "id": "edit-password-comparison",
-    "query": "Edit: src/auth.py -- old_string='if password == stored_password:' new_string='if bcrypt.checkpw(password.encode(), stored_hash):'",
-    "corpus": "rules_global.txt",
-    "should_match": [],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead — pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
@@ -4166,7 +4084,9 @@
     "id": "mined-whisper-edit-test",
     "query": "Edit: tests/test_cli.py -- old_string='def test_transcribe_file(self, tmp_path):\n        import wave' new_string='def test_transcribe_file_not_found(self, tmp_path):\n        args = MagicMock'",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When writing unit tests that involve LLM calls, HTTP requests, or subprocesses (Edit, Write test files): always mock external calls — real calls make tests slow, flaky, and non-deterministic; 18-minute test suites get skipped"
+    ],
     "should_not_match": [
       "When running git add or git commit, or writing config/.env files: never include secrets — once pushed, secrets are in the history forever and require rotation across all environments"
     ],
@@ -4849,10 +4769,10 @@
     "query": "Edit: tests/test_indexer.py adding @pytest.mark.slow decorator to test_real_model_embedding",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds — if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests"
+      "Mark tests that require real services with @pytest.mark.slow or @pytest.mark.e2e and exclude them from the default test run — the default `pytest` invocation must always be fast, deterministic, and offline"
     ],
     "should_not_match": [
-      "Mark tests that require real services with @pytest.mark.slow or @pytest.mark.e2e and exclude them from the default test run — the default `pytest` invocation must always be fast, deterministic, and offline"
+      "When running pytest or the test suite (Bash: pytest, uv run pytest): the full unit test suite must complete in under 5 seconds — if it takes longer, something is unmocked; investigate immediately, don't normalize slow tests"
     ],
     "difficulty": "easy",
     "event": "PreToolUse"
@@ -5091,17 +5011,6 @@
     ],
     "should_not_match": [],
     "difficulty": "hard",
-    "event": "PreToolUse"
-  },
-  {
-    "id": "v3-bash-export-api-token-secrets",
-    "query": "Bash: export ALPHALOOM_API_TOKEN=$(python3 -c \"import secrets; print(secrets.token_urlsafe(48))\") && echo \"Token set: ${ALPHALOOM_API_TOKEN:0:8}...\"",
-    "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [
-      "When running git add or git commit, or writing config/.env files: never include secrets — once pushed, secrets are in the history forever and require rotation across all environments"
-    ],
-    "difficulty": "medium",
     "event": "PreToolUse"
   },
   {
@@ -5439,17 +5348,6 @@
     ],
     "should_not_match": [],
     "difficulty": "medium",
-    "event": "PreToolUse"
-  },
-  {
-    "id": "v3-edit-cli-rules-remove-write-back",
-    "query": "Edit: /home/turiya/projects/cuecard/src/cuecard/cli_rules.py old: # Read file, remove the line, write back\n    file_path = Path(target.provenance.file)\n    lines = file_path.read_text().splitlines()",
-    "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [
-      "When writing database queries with string interpolation or concatenation (Edit, Write): use parameterized queries instead — string-interpolated queries let attackers modify the query structure, read arbitrary data, or delete tables"
-    ],
-    "difficulty": "hard",
     "event": "PreToolUse"
   },
   {

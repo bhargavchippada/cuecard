@@ -26,7 +26,8 @@
     "query": "SubagentStart:tdd-guide: Write tests for the new user authentication module following TDD methodology",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
+      "When starting complex features: use the planner agent; for system design: use architect; for new features/bugs: use tdd-guide \u2014 match the agent to the task type"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -124,7 +125,8 @@
     "query": "SubagentStart:general-purpose: Prepare the commit: run linters, format code, check for secrets, and create a conventional commit",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit \u2014 catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team",
+      "When running git commit (Bash): use conventional commit format (feat:, fix:, refactor:, docs:, test:) \u2014 without structured messages, changelogs are impossible to generate and git blame is useless"
     ],
     "should_not_match": [
       "When writing concurrent I/O code with threads (Edit, Write): use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
@@ -444,7 +446,8 @@
     "query": "SubagentStart:planner: Plan the migration from txt rule format to TOML format including phases, risks, and rollback strategy",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
+      "When starting complex features: use the planner agent; for system design: use architect; for new features/bugs: use tdd-guide \u2014 match the agent to the task type"
     ],
     "should_not_match": [
       "When writing or editing function definitions (Edit, Write, def, async def): use type hints on all function signatures \u2014 untyped functions force callers to read the implementation and prevent static analysis from catching type errors before runtime"
@@ -490,7 +493,8 @@
     "query": "SubagentStart:planner: Plan the webhook notification system that sends HTTP POST callbacks on rule match events",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning",
+      "When starting complex features: use the planner agent; for system design: use architect; for new features/bugs: use tdd-guide \u2014 match the agent to the task type"
     ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
@@ -594,11 +598,14 @@
     "id": "sub-credential-manager",
     "query": "SubagentStart:general-purpose: Implement the credential manager that stores and retrieves API keys for third-party integrations",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
+      "When starting complex features: use the planner agent; for system design: use architect; for new features/bugs: use tdd-guide \u2014 match the agent to the task type"
+    ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
-    "difficulty": "negative",
+    "difficulty": "medium",
     "event": "SubagentStart"
   },
   {
@@ -1186,7 +1193,9 @@
     "query": "SubagentStart:planner: Design the architecture for the new payment processing system with Stripe integration, covering 12+ files across backend and frontend",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When receiving a task touching 10+ files or requiring new architecture: write a full PRD first \u2014 complex tasks without specs produce rework and missed requirements"
+      "When receiving a task touching 10+ files or requiring new architecture: write a full PRD first \u2014 complex tasks without specs produce rework and missed requirements",
+      "When starting complex features: use the planner agent; for system design: use architect; for new features/bugs: use tdd-guide \u2014 match the agent to the task type",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -1208,7 +1217,8 @@
     "query": "SubagentStart:general-purpose: Integrate the new redis-om library for caching with connection pooling and TTL management",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Before building on an unvalidated dependency: spike-test it for 2 hours \u2014 discovering a library fails after building 3 layers on top wastes days"
+      "Before building on an unvalidated dependency: spike-test it for 2 hours \u2014 discovering a library fails after building 3 layers on top wastes days",
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting \u2014 unvetted dependencies become permanent tech debt"
     ],
     "should_not_match": [],
     "difficulty": "medium",
@@ -1384,7 +1394,9 @@
     "query": "SubagentStart:general-purpose: Implement the real-time collaboration feature with WebSocket support, conflict resolution, and presence indicators across 15+ files",
     "corpus": "rules_global.txt",
     "should_match": [
-      "For any significant feature: follow the three-layer gate \u2014 PRD + reviews, then implementation + reviews, then test plan + reviews \u2014 skipping any layer compounds risk"
+      "For any significant feature: follow the three-layer gate \u2014 PRD + reviews, then implementation + reviews, then test plan + reviews \u2014 skipping any layer compounds risk",
+      "When receiving a task touching 10+ files or requiring new architecture: write a full PRD first \u2014 complex tasks without specs produce rework and missed requirements",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -1395,7 +1407,8 @@
     "query": "SubagentStart:planner: Plan the implementation of dark mode theme switching across 5 components",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When receiving a task touching 3-10 files: create an inline plan with research, write tests alongside code, and run agent review after \u2014 medium tasks need structure"
+      "When receiving a task touching 3-10 files: create an inline plan with research, write tests alongside code, and run agent review after \u2014 medium tasks need structure",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -1417,7 +1430,8 @@
     "query": "SubagentStart:general-purpose: Run convergence review round 2 on the Phase 3 implementation focusing on issues found in round 1",
     "corpus": "rules_global.txt",
     "should_match": [
-      "After each review round: keep running until two consecutive rounds produce zero CRITICAL/HIGH/MEDIUM findings \u2014 fixed round counts stop too early or too late"
+      "After each review round: keep running until two consecutive rounds produce zero CRITICAL/HIGH/MEDIUM findings \u2014 fixed round counts stop too early or too late",
+      "After each implementation milestone: run convergence reviews with parallel code + security agents \u2014 per-phase reviews catch bugs when they're cheap to fix"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -1582,7 +1596,9 @@
     "query": "SubagentStart:general-purpose: This feature requires a new database schema, 3 API endpoints, and a React dashboard, figure out the approach",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When starting complex features: use the planner agent; for system design: use architect; for new features/bugs: use tdd-guide \u2014 match the agent to the task type"
+      "When starting complex features: use the planner agent; for system design: use architect; for new features/bugs: use tdd-guide \u2014 match the agent to the task type",
+      "When receiving a task touching 10+ files or requiring new architecture: write a full PRD first \u2014 complex tasks without specs produce rework and missed requirements",
+      "Classify every task as SIMPLE, MEDIUM, or COMPLEX before starting \u2014 state the assessment explicitly with reasoning"
     ],
     "should_not_match": [],
     "difficulty": "medium",
@@ -1604,7 +1620,8 @@
     "query": "SubagentStart:general-purpose: All unit tests pass with mocks, now run the pipeline against the live OpenBB API to verify real data handling",
     "corpus": "rules_global.txt",
     "should_match": [
-      "After mocked tests pass: test with real external data \u2014 NaN values, missing columns, and API format differences only surface with live data"
+      "After mocked tests pass: test with real external data \u2014 NaN values, missing columns, and API format differences only surface with live data",
+      "Before moving to the next implementation phase: validate the current phase against real data \u2014 synthetic tests pass when the real thing fails because mocks diverge from production"
     ],
     "should_not_match": [],
     "difficulty": "easy",
@@ -1783,7 +1800,8 @@
     "query": "SubagentStart:general-purpose: The retrieval pipeline returns too many irrelevant rules. Add a second filtering stage with configurable thresholds.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When building retrieval pipelines: filter noise at multiple independent stages with configurable thresholds \u2014 no single filter point can handle all query types"
+      "When building retrieval pipelines: filter noise at multiple independent stages with configurable thresholds \u2014 no single filter point can handle all query types",
+      "When building multi-stage pipelines: ensure each stage is independently high quality \u2014 downstream stages cannot rescue upstream failures"
     ],
     "should_not_match": [],
     "difficulty": "hard",

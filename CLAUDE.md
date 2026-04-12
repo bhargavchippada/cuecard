@@ -2,7 +2,7 @@
 
 > The right rule, at the right moment.
 
-Contextual rule enforcement for AI coding agents. Retrieves relevant user-defined rules via semantic similarity and injects them at the stages that matter — before actions (PreToolUse), on user messages (UserPromptSubmit), when spawning subagents (SubagentStart), and at turn end (Stop). PostToolUse was removed to avoid over-triggering; it may return later with tighter post-action matching.
+Contextual rule enforcement for AI coding agents. Retrieves relevant user-defined rules via semantic similarity and injects them at the stages that matter — before actions (PreToolUse), on user messages (UserPromptSubmit), when spawning subagents (SubagentStart), and at turn end (Stop). PostToolUse was removed to avoid over-triggering; it may return later with tighter post-action matching. Default Claude Code hook installation enables only PreToolUse and UserPromptSubmit; SubagentStart and Stop remain supported but are opt-in.
 
 ## Project Structure
 
@@ -56,7 +56,7 @@ cuecard/
 │   │   └── eval_cmd.py     # Eval command
 │   └── adapters/           # Agent-specific wrappers
 │       ├── __init__.py
-│       └── claude_code.py  # Claude Code hook adapter (4 active events)
+│       └── claude_code.py  # Claude Code hook adapter (supports 4 events; install defaults to 2)
 ├── tools/
 │   ├── bench_e2e.py        # E2E benchmark (default — model generates own expansions + reranks)
 │   └── notebook.ipynb      # 35-cell debugging tool (per-stage viz, loss analysis, prompts, batch eval)
@@ -147,7 +147,7 @@ mutmut verifies that tests actually detect code changes (mutations). 100% line c
 - Multi-stage pipeline: multi-retriever (dense + sparse) → cross-encoder (opt-in) → LLM (opt-in)
 - pipeline.py orchestrates all stages; ALL retrieval paths (CLI, adapter, eval) route through `run_pipeline()` — even `embedding` mode uses the full dense+sparse+RRF stage
 - Retriever adapter pattern: `Retriever` protocol in `retrieval/fusion.py`, pluggable dense/sparse/future
-- RRF (Reciprocal Rank Fusion) merges results from multiple retrievers
+- Weighted RRF-style fusion merges results from multiple retrievers
 - Parent-child collapse: rules have expansions (paraphrases), each embedded separately, max-score collapse via `rule_map`
 - JSON intermediate: `rules.json` is the canonical format. Parser→JSON→Indexer. Expansions survive rebuilds via merge. Both `cuecard index` and `load_or_build()` use the same merge lifecycle.
 - Scoped caches: global index in `~/.cuecard/index/`, project index in `.cuecard/index/`. Both loaded and composed at retrieval time via `loader.py`. No cross-project rule leakage.
@@ -203,12 +203,12 @@ mutmut verifies that tests actually detect code changes (mutations). 100% line c
           │ ║   ┌──────────────┐      ┌──────────────┐        ║   │  │
           │ ║   │ Dense        │      │ Sparse BM25  │        ║   │  │
           │ ║   │ jina-code-v2 │      │ (opt-in;     │        ║   │  │
-          │ ║   │ 768d cosine  │      │  OFF default)│        ║   │  │
+          │ ║   │ 768d cosine  │      │  ON by default)│      ║   │  │
           │ ║   │ parent-max   │      │ parent-max   │        ║   │  │
           │ ║   └──────┬───────┘      └──────┬───────┘        ║   │  │
           │ ║          │                     │                ║   │  │
-          │ ║          └──────── RRF ────────┘                ║   │  │
-          │ ║                fusion_k=10                      ║   │  │
+          │ ║          └──── weighted RRF ────┘               ║   │  │
+          │ ║      fusion_k=10, dense=0.7, sparse=0.3        ║   │  │
           │ ║        top_k=12 (llm_candidates)                ║   │  │
           │ ║        threshold=0.25 (llm_recall_threshold)    ║   │  │
           │ ╚══════════════════════╤══════════════════════════╝   │  │
@@ -258,7 +258,16 @@ Key knobs (defaults from `ResolvedConfig`):
 | Index size | 107 rules | `rules_global.txt` |
 | Embedding model | jina-code-v2 (768d) | `config.model_name` |
 | Event mask | ON | always when affinity present |
-| BM25 sparse | **OFF** | session 31 — no net benefit with code-specific dense |
+| Sparse retrieval | true | BM25 enabled by default when corpus available |
+| Dense weight | 0.7 | weighted fusion contribution |
+| Sparse weight | 0.3 | weighted fusion contribution |
+
+### Current Benchmark Snapshot
+
+- Best recent `UserPromptSubmit` result: `eval/results/gemma-e4b-s32-ups-sparse7030-traced-seed42/`
+- Metrics: `F2=0.771`, `PosRecall=0.675`, `Noise=0.175`, `NegSil=0.864`
+- Practical takeaway: sparse retrieval materially improved `UserPromptSubmit`; later workflow prompt over-tuning regressed and was reverted.
+| BM25 sparse | **ON** | enabled by default when `bm25_corpus` is available; benchmark impact is tier-dependent |
 | Query expansion | **OFF** | session 31 — net F2 regression |
 | Stage-1 `top_k` | 12 (`llm_candidates`) | candidates fed to LLM |
 | Stage-1 `threshold` | 0.25 (`llm_recall_threshold`) | wider recall for LLM |
@@ -266,6 +275,142 @@ Key knobs (defaults from `ResolvedConfig`):
 | Final `top_k` | 7 | after LLM |
 | LLM reranker | Gemma-4-E4B (local) | llama-server :8081 |
 | Daemon | localhost:8452 | fast-path, 500ms timeout |
+
+### 2026-04-11 Full-Set Fixture Audit
+
+Executed sequential 100% runs with traced artifacts:
+
+- Initial baseline: `eval/results/gemma-e4b-s32-full100-initial-traced-seed42/`
+- Post-audit rerun: `eval/results/gemma-e4b-s32-full100-fixed-traced-seed42/`
+
+Fixture audit methodology:
+
+- Run all 4 tiers on 100% with traced artifacts first.
+- Audit disagreements from `traces/{tier}/{fixture_id}.json`, prioritizing `unknown`, contradictory goldens, and positives with empty `should_match`.
+- Remove fixtures that were intrinsically bad baselines rather than real model checks.
+- Add missing expectations only when the user prompt or stop/subagent summary plainly implied the rule.
+- Keep the baseline artifact intact; rerun with a distinct `--suffix` (`full100-fixed`) so before/after remain comparable.
+
+Key fixture changes applied:
+
+- `pre_tool_use`: removed 9 bad positive fixtures that had no defensible rule trigger; converted `mined-whisper-edit-test` into an explicit mocking expectation.
+- `user_prompt_submit`: fixed one contradictory fixture (`prompt-rule-neg-has-consequences` had the same rule in both `should_match` and `should_not_match`), and replaced one bad coverage expectation with test-plan/review-gate expectations.
+- `stop`: removed purely observational/bad-stop fixtures and filled missing expectations for commit/push, compact/save-state, docs updates, dependency adoption, PRD review, hook-debugging, mutmut convergence, and CLAUDE.md updates.
+- `subagent_start`: widened several under-specified goldens to include task classification, agent-selection, PRD-first, conventional-commit, and dependency-audit expectations where the task text clearly implied them; converted `sub-credential-manager` from bad negative to positive.
+
+Full 100% before/after:
+
+| Tier | N initial | F2 initial | N fixed | F2 fixed | PosRecall fixed | Noise fixed | NegSil fixed |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| pre_tool_use | 441 | 0.696 | 432 | 0.705 | 0.638 | 0.233 | 0.817 |
+| user_prompt_submit | 219 | 0.658 | 219 | 0.615 | 0.456 | 0.329 | 0.772 |
+| stop | 176 | 0.490 | 164 | 0.603 | 0.656 | 0.438 | 0.627 |
+| subagent_start | 170 | 0.406 | 170 | 0.485 | 0.686 | 0.561 | 0.394 |
+
+Interpretation:
+
+- `pre_tool_use` improved slightly after removing bad positives; most remaining loss is still LLM reranker pruning stage-1 hits.
+- `stop` improved materially once empty/underspecified goldens were cleaned up; the prior baseline was heavily polluted by bad fixtures.
+- `subagent_start` improved materially, but still has substantial overfire; fixture fixes alone did not solve the planner/general-purpose confusion.
+- `user_prompt_submit` got stricter and dropped. This means the new goldens exposed real retrieval/reranker weakness rather than gifting a higher score. Treat `0.615` as the more honest current baseline unless those newly-added expectations are further pruned by another audit pass.
+
+### 2026-04-11 Workflow Prompt Tuning Follow-Up
+
+Targeted 100% traced runs on the workflow tiers after the full-set fixture audit:
+
+- Baseline for comparison: `eval/results/gemma-e4b-s32-full100-fixed-traced-seed42/`
+- Broad workflow hints on `UserPromptSubmit` + `Stop`, broader expansion prompt, stricter workflow reranker rules:
+  `eval/results/gemma-e4b-s32-workflowfix1-traced-seed42/`
+- Removed `Stop` query hint inflation, kept broader expansion prompt + reranker rules:
+  `eval/results/gemma-e4b-s32-workflowfix2-traced-seed42/`
+- Current state: keep only `UserPromptSubmit` query hinting plus the reranker guardrails, revert the broad workflow expansion examples:
+  `eval/results/gemma-e4b-s32-workflowfix3-traced-seed42/`
+
+Prompt changes tested:
+
+- Adapter-side `UserPromptSubmit` hinting for terse workflow prompts like compaction, delegation, full-dataset benchmarking, schema-change, and quality-debugging requests.
+- Reranker principles:
+  - keep complementary safeguards together on workflow events
+  - if the user is trying to skip a safeguard, return the safeguard rule
+- Broad workflow-oriented expansion examples were tested, then partially reverted after they widened retrieval neighborhoods too much.
+
+Workflow prompt-tuning comparison:
+
+| Tier | Baseline F2 | wf1 F2 | wf2 F2 | wf3 F2 | Baseline PosRecall | wf3 PosRecall | Baseline Noise | wf3 Noise |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| user_prompt_submit | 0.615 | 0.649 | 0.657 | 0.640 | 0.456 | 0.532 | 0.329 | 0.323 |
+| stop | 0.603 | 0.577 | 0.592 | 0.565 | 0.656 | 0.643 | 0.438 | 0.478 |
+| subagent_start | 0.485 | 0.446 | 0.363 | 0.430 | 0.686 | 0.680 | 0.561 | 0.623 |
+
+What the experiments showed:
+
+- `UserPromptSubmit` does benefit from query-side help. The current state (`workflowfix3`) improved `F2` from `0.615 -> 0.640` and `PosRecall` from `0.456 -> 0.532` on the audited 100% set.
+- Broad workflow expansion prompt changes are not safe globally. They improved `UserPromptSubmit` retrieval but caused major cross-tier overfire, especially on `SubagentStart`.
+- `Stop` is sensitive to retrospective/summary broadening. Adapter-side `Stop` hint inflation raised recall but also increased noise enough to lower final quality.
+- The reranker guardrails may still be directionally correct, but they are not sufficient to offset retrieval broadening on `Stop` and `SubagentStart`.
+
+Working conclusion:
+
+- Good direction: narrow `UserPromptSubmit`-only retrieval help for terse workflow prompts.
+- Bad direction: globally teaching the shared expansion index to associate generic workflow phrases with delegation/compaction/schema/debugging rules.
+- `SubagentStart` remains the main blocker. It still needs either finer event affinity or a dedicated prompt/query strategy that distinguishes exploratory subagents from implementation/delegation subagents.
+
+### 2026-04-11 Fixture Audit Round 2
+
+After keeping the winning prompt changes on `master`, ran another 100% traced benchmark and re-audited only the remaining disagreements that looked like genuine golden-quality issues:
+
+- Current prompt-state benchmark before fixture corrections:
+  `eval/results/gemma-e4b-s32-full100-postprompt-traced-seed42/`
+- Post-audit rerun with corrected goldens:
+  `eval/results/gemma-e4b-s32-full100-postprompt-fixed2-traced-seed42/`
+
+What was fixed in the goldens:
+
+- `pre_tool_use`
+  - Removed bad positives where the prompt was already compliant rather than requiring a reminder:
+    - `docker-run-env-file`
+    - `edit-python-file`
+  - Corrected `mark-slow-neg-already-marked` to expect the slow/e2e-marking rule instead of the generic test-speed rule.
+- `user_prompt_submit`
+  - Removed over-strong expectations that were not actually implied by the user prompt:
+    - `wf-medium-save-state` no longer expects a `CLAUDE.md` update
+    - `wf-easy-write-tests-first` no longer expects 100% coverage from the prompt alone
+  - Added a missing TDD expectation to `three-layer-quality-gate-user` because the prompt explicitly says to write tests at the end.
+- `subagent_start`
+  - Removed bad positives where the subagent was already doing the compliant thing:
+    - `sub-neg-search-agent`
+    - `sub-neg-architect-caching-strategy`
+  - Added missing, clearly implied expectations:
+    - `sub-builder-mocked-tests-done` now includes the broader real-data validation rule
+    - `sub-ralph-convergence-review-phase3` now includes the per-milestone convergence-review rule
+
+100% benchmark comparison after round-2 fixture cleanup:
+
+| Tier | Postprompt F2 | Postprompt+FixtureFix F2 | PosRecall | Noise | NegSil |
+|---|---:|---:|---:|---:|---:|
+| pre_tool_use | 0.717 | 0.719 | 0.626 | 0.203 | 0.852 |
+| user_prompt_submit | 0.632 | 0.686 | 0.579 | 0.306 | 0.816 |
+| stop | 0.601 | 0.577 | 0.728 | 0.485 | 0.533 |
+| subagent_start | 0.412 | 0.405 | 0.640 | 0.649 | 0.298 |
+
+Interpretation:
+
+- `pre_tool_use` improved slightly once a few overstated positives were removed.
+- `user_prompt_submit` improved materially; the current prompt changes are a real win on that tier once the remaining over-strong goldens are corrected.
+- `stop` still regressed under the current prompt state; this is not a fixture-quality win and remains a model/retrieval problem.
+- `subagent_start` remains poor; fixture cleanup found a few mislabeled cases, but the dominant issue is still overfire and agent-selection confusion rather than bad goldens.
+
+Net result versus the earlier audited baseline (`full100-fixed`):
+
+- `pre_tool_use`: `0.705 -> 0.719`
+- `user_prompt_submit`: `0.615 -> 0.686`
+- `stop`: `0.603 -> 0.577`
+- `subagent_start`: `0.485 -> 0.405`
+
+Operational takeaway:
+
+- Current `master` is a net win for `PreToolUse` and especially `UserPromptSubmit`.
+- `Stop` and `SubagentStart` still need separate event-specific work; more shared workflow prompt broadening is unlikely to solve them cleanly.
 
 Graceful degradation: every stage catches its own exceptions and falls back to the previous stage's results, logging the error in `StageTrace.error`. The pipeline never hard-fails — worst case, you get dense-only results.
 
