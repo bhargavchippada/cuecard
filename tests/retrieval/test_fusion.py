@@ -288,3 +288,144 @@ class TestFuseRRFSignAndRank:
         assert result[2].score == pytest.approx(1.0 / 5, rel=1e-9)
         # Strictly decreasing
         assert result[0].score > result[1].score > result[2].score
+
+
+class TestFuseBranchesNormalization:
+    """Two-level fusion: _fuse_branches groups by family and balances weights.
+
+    Guards against the class of bug where query expansion amplifies one
+    retriever family's effective weight with the number of branches.
+    """
+
+    def test_single_branch_per_family_matches_flat_fuse(self) -> None:
+        """No expansions → exactly the same result as one-level fuse."""
+        from cuecard.retrieval.pipeline import _fuse_branches
+
+        r1, r2 = _rule("shared"), _rule("dense_only")
+        dense = [
+            ScoredCandidate(rule=r1, score=0.9, retriever="dense"),
+            ScoredCandidate(rule=r2, score=0.8, retriever="dense"),
+        ]
+        sparse = [
+            ScoredCandidate(rule=r1, score=5.0, retriever="sparse"),
+        ]
+        weights = {"dense": 0.7, "sparse": 0.3}
+
+        branched = _fuse_branches(
+            [dense, sparse], k=60, top_k=None, retriever_weights=weights,
+        )
+        flat = fuse([dense, sparse], k=60, retriever_weights=weights)
+
+        # Same order, same scores
+        assert [c.rule.text for c in branched] == [c.rule.text for c in flat]
+        for b, f in zip(branched, flat, strict=True):
+            assert b.score == pytest.approx(f.score, rel=1e-9)
+
+    def test_expansion_branches_do_not_dominate_family_weight(self) -> None:
+        """N dense branches must not multiply 'dense_weight' by N.
+
+        Scenario: 3 dense branches (raw + 2 expansions) all rank the same
+        rule at position 0; 1 sparse branch ranks a DIFFERENT rule at
+        position 0.  With flat fuse + retriever_weights, the dense rule
+        gets 3 * 0.7 * (1/61) and the sparse rule gets 0.3 * (1/61) —
+        3x amplification from branches alone.
+
+        With _fuse_branches, each family contributes exactly once to the
+        outer weighting.
+        """
+        from cuecard.retrieval.pipeline import _fuse_branches
+
+        r_dense = _rule("dense_rule")
+        r_sparse = _rule("sparse_rule")
+
+        dense_raw = [ScoredCandidate(rule=r_dense, score=0.9, retriever="dense")]
+        dense_exp1 = [ScoredCandidate(rule=r_dense, score=0.8, retriever="dense")]
+        dense_exp2 = [ScoredCandidate(rule=r_dense, score=0.7, retriever="dense")]
+        sparse_raw = [
+            ScoredCandidate(rule=r_sparse, score=5.0, retriever="sparse"),
+        ]
+
+        weights = {"dense": 0.7, "sparse": 0.3}
+        out = _fuse_branches(
+            [dense_raw, dense_exp1, dense_exp2, sparse_raw],
+            k=60, top_k=None, retriever_weights=weights,
+        )
+
+        scores = {c.rule.text: c.score for c in out}
+        # After inner fuse: each family has one ranking with its best rule
+        # at position 0. Outer fuse applies weight * 1/(k+1) per family.
+        expected_dense = 0.7 * (1.0 / 61)
+        expected_sparse = 0.3 * (1.0 / 61)
+        assert scores["dense_rule"] == pytest.approx(expected_dense, rel=1e-9)
+        assert scores["sparse_rule"] == pytest.approx(expected_sparse, rel=1e-9)
+        # Ratio is exactly the configured weight ratio
+        assert (
+            scores["dense_rule"] / scores["sparse_rule"]
+            == pytest.approx(0.7 / 0.3, rel=1e-9)
+        )
+
+    def test_intra_family_branches_equal_weighted(self) -> None:
+        """Within a family, each branch contributes equally (no weighting)."""
+        from cuecard.retrieval.pipeline import _fuse_branches
+
+        r_raw = _rule("only_in_raw")
+        r_exp = _rule("only_in_expansion")
+
+        dense_raw = [
+            ScoredCandidate(rule=r_raw, score=0.9, retriever="dense"),
+        ]
+        dense_exp = [
+            ScoredCandidate(rule=r_exp, score=0.9, retriever="dense"),
+        ]
+
+        out = _fuse_branches(
+            [dense_raw, dense_exp], k=60, top_k=None, retriever_weights=None,
+        )
+        scores = {c.rule.text: c.score for c in out}
+        # Both rules sit at rank 0 inside their own branch, equal RRF
+        assert scores["only_in_raw"] == pytest.approx(
+            scores["only_in_expansion"], rel=1e-9,
+        )
+
+    def test_empty_branches(self) -> None:
+        from cuecard.retrieval.pipeline import _fuse_branches
+
+        assert _fuse_branches(
+            [], k=60, top_k=None, retriever_weights=None,
+        ) == []
+        assert _fuse_branches(
+            [[], []], k=60, top_k=None, retriever_weights=None,
+        ) == []
+
+    def test_top_k_truncation_outer(self) -> None:
+        from cuecard.retrieval.pipeline import _fuse_branches
+
+        rules = [_rule(f"r{i}") for i in range(5)]
+        dense = [
+            ScoredCandidate(rule=r, score=1.0 - i * 0.1, retriever="dense")
+            for i, r in enumerate(rules)
+        ]
+        sparse = [
+            ScoredCandidate(rule=r, score=0.5, retriever="sparse")
+            for r in rules[2:]
+        ]
+        out = _fuse_branches(
+            [dense, sparse], k=60, top_k=3,
+            retriever_weights={"dense": 0.7, "sparse": 0.3},
+        )
+        assert len(out) == 3
+
+    def test_single_family_single_branch_truncates(self) -> None:
+        """Single branch, single family: still honors top_k."""
+        from cuecard.retrieval.pipeline import _fuse_branches
+
+        rules = [_rule(f"r{i}") for i in range(5)]
+        dense = [
+            ScoredCandidate(rule=r, score=1.0 - i * 0.1, retriever="dense")
+            for i, r in enumerate(rules)
+        ]
+        out = _fuse_branches(
+            [dense], k=60, top_k=2, retriever_weights={"dense": 0.7},
+        )
+        assert len(out) == 2
+        assert [c.rule.text for c in out] == ["r0", "r1"]

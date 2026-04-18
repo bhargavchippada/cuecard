@@ -221,6 +221,73 @@ def _build_retriever_traces(
     return tuple(traces)
 
 
+def _fuse_branches(
+    branches: list[list[ScoredCandidate]],
+    *,
+    k: int,
+    top_k: int | None,
+    retriever_weights: dict[str, float] | None,
+) -> list[ScoredCandidate]:
+    """Two-level RRF to prevent expansion branches from dominating fusion.
+
+    When query expansion is enabled, each expansion produces its own dense
+    and sparse candidate lists.  Passing every list directly to ``fuse``
+    with per-candidate ``retriever_weights`` makes a single retriever's
+    effective weight scale with the number of expansion branches — the
+    documented "dense=0.7, sparse=0.3" ratio becomes "0.7 * N_dense
+    branches vs 0.3 * N_sparse branches".
+
+    Instead:
+      1. Partition branches by retriever family (``candidate.retriever``).
+      2. Inner-fuse each family's branches with equal weights.
+      3. Outer-fuse the per-family rankings with ``retriever_weights``
+         applied exactly once per family.
+
+    Degenerate case: one branch per family (no expansions). The inner
+    fuse is a no-op and the outer fuse matches the previous behavior
+    exactly, so benchmarks on default config do not move.
+    """
+    from cuecard.retrieval.fusion import ScoredCandidate, fuse
+
+    # Partition non-empty branches by retriever family.  All candidates
+    # within a single retrieval branch share the same ``retriever`` name.
+    by_retriever: dict[str, list[list[ScoredCandidate]]] = {}
+    for branch in branches:
+        if not branch:
+            continue
+        name = branch[0].retriever
+        by_retriever.setdefault(name, []).append(branch)
+
+    if not by_retriever:
+        return []
+
+    # Inner fuse: collapse branches within each family.  Re-tag the merged
+    # candidates with the family name so the outer fuse can apply
+    # ``retriever_weights`` correctly.
+    family_rankings: list[list[ScoredCandidate]] = []
+    for name, family_branches in by_retriever.items():
+        if len(family_branches) == 1:
+            merged = family_branches[0]
+        else:
+            merged = fuse(family_branches, k=k)
+        family_rankings.append([
+            ScoredCandidate(rule=c.rule, score=c.score, retriever=name)
+            for c in merged
+        ])
+
+    # Single family: no cross-family weighting needed, just truncate.
+    if len(family_rankings) == 1:
+        result = family_rankings[0]
+        return result[:top_k] if top_k is not None else result
+
+    return fuse(
+        family_rankings,
+        k=k,
+        top_k=top_k,
+        retriever_weights=retriever_weights,
+    )
+
+
 def _run_retrieval_stage(
     query: str,
     index: Index,
@@ -240,7 +307,6 @@ def _run_retrieval_stage(
     """
     from cuecard.models import RankedResult
     from cuecard.retrieval.dense import DenseRetriever
-    from cuecard.retrieval.fusion import fuse
 
     top_k, threshold = _retrieval_params(effective_mode, config)
     input_count = index.size
@@ -282,13 +348,13 @@ def _run_retrieval_stage(
         if sparse_sets:
             sparse_results = sparse_sets[0]  # raw-query set for trace
 
-    # Fusion: all dense sets + all sparse sets
+    # Fusion: per-family normalization (see _fuse_branches).
     all_results: list[list[ScoredCandidate]] = [
         s for s in dense_sets if s
     ] + sparse_sets
     t_fusion_start = time.monotonic()
-    fused = (
-        fuse(
+    if len(all_results) > 1:
+        fused = _fuse_branches(
             all_results,
             k=config.fusion_k,
             top_k=top_k,
@@ -297,9 +363,11 @@ def _run_retrieval_stage(
                 "sparse": config.sparse_weight,
             },
         )
-        if len(all_results) > 1
-        else (all_results[0] if all_results else [])
-    )
+    elif all_results:
+        single = all_results[0]
+        fused = single[:top_k] if top_k is not None else list(single)
+    else:
+        fused = []
     t_fusion_ms = (time.monotonic() - t_fusion_start) * 1000.0
 
     results: list[RankedResult] = [
