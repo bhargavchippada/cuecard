@@ -2,6 +2,10 @@
 
 > The right rule, at the right moment.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bhargavchippada/cuecard/master/docs/cuecard-demo.gif" alt="cuecard retrieval pipeline demo">
+</p>
+
 Contextual rule enforcement for AI coding agents. cuecard retrieves your most relevant guidelines and injects them before every tool call and user message — so the agent always follows your rules.
 
 ## How It Works
