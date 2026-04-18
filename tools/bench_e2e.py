@@ -39,7 +39,7 @@ import subprocess
 import sys
 import threading
 import time
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -108,11 +108,96 @@ SOURCE_FILES: dict[str, dict[str, Any]] = {
     },
 }
 
-EMBEDDING_MODEL = "jinaai/jina-embeddings-v2-base-code"
-PORT = 8081
-ENDPOINT = f"http://localhost:{PORT}/v1"
+# Default values — used only as CLI argparse defaults.  Every function
+# that needs an endpoint, worker count, or model name takes it as an
+# explicit argument (usually via ``BenchConfig``) so the benchmark
+# cannot drift away from the values the run is configured with.
+DEFAULT_EMBEDDING_MODEL = "jinaai/jina-embeddings-v2-base-code"
+DEFAULT_PORT = 8081
+DEFAULT_MAX_WORKERS = 5  # match llama-server -np 5
+DEFAULT_LLM_MAX_TOKENS = 1024
+DEFAULT_LLM_TIMEOUT = 60.0
+DEFAULT_TOP_K = 7
+DEFAULT_THRESHOLD = 0.30
+DEFAULT_DEDUP_THRESHOLD = 0.95
+DEFAULT_QUERY_MAX_LENGTH = 500
+DEFAULT_FUSION_K = 10
+DEFAULT_EXPANSION_MAX_PER_RULE = 8
+DEFAULT_EXPANSION_MAX_LENGTH = 500
+DEFAULT_EXPANSION_DEDUP_THRESHOLD = 0.80
 
-MAX_WORKERS = 5  # match llama-server -np 5
+
+@dataclass(frozen=True)
+class BenchConfig:
+    """Fully resolved configuration for one bench_e2e run.
+
+    Mirrors the subset of ``ResolvedConfig`` knobs that the benchmark
+    actually exercises, plus a few bench-only flags (max_workers,
+    sample_ratio, seed, label).  Constructed once in ``main()`` from
+    CLI args; passed explicitly to every helper that needs a knob so
+    nothing reads from mutable module state.
+    """
+
+    # Identity
+    label: str  # includes suffix if provided
+    seed: int
+    sample_ratio: float
+
+    # LLM endpoint / workers
+    endpoint: str
+    max_workers: int
+
+    # Embedding model
+    embedding_model: str
+
+    # LLM knobs (mirrored from PipelineConfig)
+    llm_max_tokens: int
+    llm_timeout: float
+
+    # Retrieval knobs (mirrored from ResolvedConfig)
+    top_k: int
+    threshold: float
+    dedup_threshold: float
+    query_max_length: int
+    fusion_k: int
+    llm_candidates: int | None
+    sparse_enabled: bool
+    dense_weight: float
+    sparse_weight: float
+
+    # Expansion knobs
+    expansion_max_per_rule: int
+    expansion_max_length: int
+    expansion_dedup_threshold: float
+
+    # Experimental
+    query_expansion_enabled: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serializable representation for config.json."""
+        return {
+            "label": self.label,
+            "seed": self.seed,
+            "sample_ratio": self.sample_ratio,
+            "endpoint": self.endpoint,
+            "max_workers": self.max_workers,
+            "embedding_model": self.embedding_model,
+            "llm_max_tokens": self.llm_max_tokens,
+            "llm_timeout": self.llm_timeout,
+            "top_k": self.top_k,
+            "threshold": self.threshold,
+            "dedup_threshold": self.dedup_threshold,
+            "query_max_length": self.query_max_length,
+            "fusion_k": self.fusion_k,
+            "llm_candidates": self.llm_candidates,
+            "sparse_enabled": self.sparse_enabled,
+            "dense_weight": self.dense_weight,
+            "sparse_weight": self.sparse_weight,
+            "expansion_max_per_rule": self.expansion_max_per_rule,
+            "expansion_max_length": self.expansion_max_length,
+            "expansion_dedup_threshold": self.expansion_dedup_threshold,
+            "query_expansion_enabled": self.query_expansion_enabled,
+        }
 
 # Filename sanitizer for fixture IDs
 _UNSAFE_FILENAME_CHARS = re.compile(r"[^a-zA-Z0-9._-]+")
@@ -139,16 +224,18 @@ def _extract_tool_name(event: str, query: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def start_server(model_path: str, *, ngl: int = 99) -> subprocess.Popen[bytes]:
+def start_server(
+    model_path: str, *, port: int, ngl: int = 99, max_workers: int = 5,
+) -> subprocess.Popen[bytes]:
     """Start llama-server and wait for health."""
     cmd = [
         "llama-server",
         "-m", model_path,
-        "--port", str(PORT),
+        "--port", str(port),
         "-ngl", str(ngl),
         "-c", "98304",
         "--jinja",
-        "-np", "5",
+        "-np", str(max_workers),
         "--reasoning", "off",
     ]
     print(f"Starting llama-server: {' '.join(cmd)}")
@@ -160,7 +247,7 @@ def start_server(model_path: str, *, ngl: int = 99) -> subprocess.Popen[bytes]:
 
     for i in range(180):
         try:
-            r = requests.get(f"http://localhost:{PORT}/health", timeout=2)
+            r = requests.get(f"http://localhost:{port}/health", timeout=2)
             if r.status_code == 200:
                 print(f"Server ready after {i + 1}s")
                 return proc
@@ -183,11 +270,11 @@ def kill_server(proc: subprocess.Popen[bytes]) -> None:
     print("Server stopped")
 
 
-def ping_server() -> float:
+def ping_server(endpoint: str) -> float:
     """PING test — trivial completion. Returns round-trip in seconds."""
     t0 = time.monotonic()
     r = requests.post(
-        f"{ENDPOINT}/chat/completions",
+        f"{endpoint}/chat/completions",
         json={
             "model": "local",
             "messages": [{"role": "user", "content": "Reply with OK"}],
@@ -208,7 +295,7 @@ def ping_server() -> float:
 # ---------------------------------------------------------------------------
 
 
-def _infer_affinity_once() -> tuple[list[Any], object]:
+def _infer_affinity_once(cfg: BenchConfig) -> tuple[list[Any], object]:
     """Infer affinity once for all tiers. Returns (rules, AffinityIndex)."""
     from cuecard.retrieval.affinity import infer_affinities
 
@@ -218,10 +305,15 @@ def _infer_affinity_once() -> tuple[list[Any], object]:
     aff_config = ResolvedConfig(
         source_paths=(), global_source_paths=(),
         project_source_paths=(), global_cache_dir="",
-        pipeline=PipelineConfig(mode="llm-local"),
+        pipeline=PipelineConfig(
+            mode="llm-local",
+            local_endpoint=cfg.endpoint,
+            llm_max_tokens=cfg.llm_max_tokens,
+            llm_timeout=cfg.llm_timeout,
+        ),
     )
     t0 = time.monotonic()
-    affinity = infer_affinities(rules, aff_config, max_workers=MAX_WORKERS)
+    affinity = infer_affinities(rules, aff_config, max_workers=cfg.max_workers)
     elapsed = time.monotonic() - t0
     n = len(affinity.items)
     print(f"  Inferred affinity: {affinity.mode}, {n} entries in {elapsed:.1f}s")
@@ -229,7 +321,11 @@ def _infer_affinity_once() -> tuple[list[Any], object]:
 
 
 def generate_expansions_for_label(
-    label: str, affinity: object, *, force: bool = False,
+    label: str,
+    affinity: object,
+    cfg: BenchConfig,
+    *,
+    force: bool = False,
 ) -> None:
     """Generate (or reuse) per-model corpus with affinity-aware expansions."""
     out_dir = CORPORA_DIR / f"enriched_{label}"
@@ -248,13 +344,15 @@ def generate_expansions_for_label(
     expanded = expand_rules(
         rules,
         backend="local",
-        endpoint=ENDPOINT,
+        endpoint=cfg.endpoint,
         haiku_model="claude-haiku-4-5",
+        max_tokens=cfg.llm_max_tokens,
+        timeout=cfg.llm_timeout,
         event_type="PreToolUse",
-        dedup_threshold=0.80,
+        dedup_threshold=cfg.expansion_dedup_threshold,
         affinity=affinity,
-        max_workers=MAX_WORKERS,
-        max_per_rule=8,
+        max_workers=cfg.max_workers,
+        max_per_rule=cfg.expansion_max_per_rule,
     )
     elapsed = time.monotonic() - t0
     total = sum(len(r.expansions) for r in expanded)
@@ -328,6 +426,8 @@ def _traced_rerank_llm(
     haiku_model: str,
     thinking: bool = False,
     top_k: int,
+    max_tokens: int,
+    timeout: float,
 ) -> list[RankedResult]:
     """Instrumented replacement for ``llm_reranker.rerank_llm``.
 
@@ -384,6 +484,8 @@ def _traced_rerank_llm(
                 raw = call_local(
                     system_prompt, user_prompt, endpoint, thinking,
                     stop=None,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
                 )
             else:
                 raw = call_haiku(system_prompt, user_prompt, haiku_model)
@@ -1246,29 +1348,34 @@ def _stratified_sample(
     return sampled
 
 
-def _make_eval_config(
-    llm_candidates: int | None,
-    *,
-    sparse_enabled: bool,
-    dense_weight: float,
-    sparse_weight: float,
-) -> ResolvedConfig:
-    """ResolvedConfig tailored for benchmark eval."""
+def _make_eval_config(cfg: BenchConfig) -> ResolvedConfig:
+    """ResolvedConfig tailored for benchmark eval.
+
+    All knobs come from ``BenchConfig`` so a run's resolved behavior
+    exactly matches what the CLI/config specified.
+    """
     kwargs: dict[str, Any] = {
         "source_paths": (),
         "global_source_paths": (),
         "project_source_paths": (),
         "global_cache_dir": "",
-        "top_k": 7,
-        "threshold": 0.30,
-        "dedup_threshold": 0.95,
-        "query_max_length": 500,
-        "sparse_enabled": sparse_enabled,
-        "dense_weight": dense_weight,
-        "sparse_weight": sparse_weight,
+        "top_k": cfg.top_k,
+        "threshold": cfg.threshold,
+        "dedup_threshold": cfg.dedup_threshold,
+        "query_max_length": cfg.query_max_length,
+        "fusion_k": cfg.fusion_k,
+        "sparse_enabled": cfg.sparse_enabled,
+        "dense_weight": cfg.dense_weight,
+        "sparse_weight": cfg.sparse_weight,
+        "pipeline": PipelineConfig(
+            mode="llm-local",
+            local_endpoint=cfg.endpoint,
+            llm_max_tokens=cfg.llm_max_tokens,
+            llm_timeout=cfg.llm_timeout,
+        ),
     }
-    if llm_candidates is not None:
-        kwargs["llm_candidates"] = llm_candidates
+    if cfg.llm_candidates is not None:
+        kwargs["llm_candidates"] = cfg.llm_candidates
     return ResolvedConfig(**kwargs)
 
 
@@ -1292,17 +1399,10 @@ def _summary_to_dict(summary: EvalSummary) -> dict[str, Any]:
 
 
 def run_benchmark_traced(
-    label: str,
     affinity: object,
+    cfg: BenchConfig,
     *,
-    sample_ratio: float,
-    seed: int,
     tiers: tuple[str, ...] | None,
-    llm_candidates: int | None,
-    query_expansion_enabled: bool,
-    sparse_enabled: bool,
-    dense_weight: float,
-    sparse_weight: float,
     artifacts_dir: Path,
 ) -> dict[str, Any]:
     """Run traced benchmark: replaces legacy run_benchmark.
@@ -1313,24 +1413,19 @@ def run_benchmark_traced(
     from fastembed import TextEmbedding
 
     n_affinity = len(affinity.items)  # type: ignore[attr-defined]
-    print(f"\nLoading embedding model: {EMBEDDING_MODEL}")
+    print(f"\nLoading embedding model: {cfg.embedding_model}")
     print(
         f"Using pre-inferred affinity: "
         f"{affinity.mode}, {n_affinity} entries",  # type: ignore[attr-defined]
     )
-    embedding_model = TextEmbedding(model_name=EMBEDDING_MODEL)
+    embedding_model = TextEmbedding(model_name=cfg.embedding_model)
 
-    corpus_path = str(CORPORA_DIR / f"enriched_{label}" / "rules.json")
+    corpus_path = str(CORPORA_DIR / f"enriched_{cfg.label}" / "rules.json")
     if not Path(corpus_path).exists():
         msg = f"Corpus not found: {corpus_path}"
         raise FileNotFoundError(msg)
 
-    eval_config = _make_eval_config(
-        llm_candidates,
-        sparse_enabled=sparse_enabled,
-        dense_weight=dense_weight,
-        sparse_weight=sparse_weight,
-    )
+    eval_config = _make_eval_config(cfg)
 
     artifacts_dir.mkdir(parents=True, exist_ok=True)
     traces_root = artifacts_dir / "traces"
@@ -1340,7 +1435,7 @@ def run_benchmark_traced(
 
     # Shared corpus: build index once
     rules = tuple(parse_rules((corpus_path,)))
-    index = build_index(rules, {}, EMBEDDING_MODEL, model=embedding_model)
+    index = build_index(rules, {}, cfg.embedding_model, model=embedding_model)
     print(
         f"  Built shared index: {len(rules)} rules, "
         f"{index.embeddings.shape[0]} embeddings "
@@ -1352,24 +1447,26 @@ def run_benchmark_traced(
     all_fixture_traces: list[dict[str, Any]] = []
 
     try:
-        for tier, cfg in SOURCE_FILES.items():
+        for tier, tier_cfg in SOURCE_FILES.items():
             if tiers is not None and tier not in tiers:
                 continue
-            fixture_path = cfg["fixtures"]
+            fixture_path = tier_cfg["fixtures"]
             if not fixture_path.exists():
                 print(f"  Skipping {tier}: fixture file not found")
                 continue
 
             print(f"\n--- {tier} ---")
             fixtures = load_fixtures(str(fixture_path))
-            if sample_ratio < 1.0:
-                fixtures = _stratified_sample(fixtures, sample_ratio, seed)
+            if cfg.sample_ratio < 1.0:
+                fixtures = _stratified_sample(
+                    fixtures, cfg.sample_ratio, cfg.seed,
+                )
             print(f"  Evaluating {len(fixtures)} fixtures")
 
             tier_trace_dir = traces_root / tier
             tier_trace_dir.mkdir(exist_ok=True)
 
-            tier_event = cfg["event_type"]
+            tier_event = tier_cfg["event_type"]
             mask_stats = _count_rules_masked(index, affinity, tier_event)
             print(
                 f"  Event mask: {mask_stats[1]}/{mask_stats[0]} rules "
@@ -1383,9 +1480,10 @@ def run_benchmark_traced(
                 embedding_model=embedding_model,
                 eval_config=eval_config,
                 affinity=affinity,
-                query_expansion_enabled=query_expansion_enabled,
+                query_expansion_enabled=cfg.query_expansion_enabled,
                 tier=tier,
                 tier_trace_dir=tier_trace_dir,
+                cfg=cfg,
             )
 
             all_fixture_traces.extend(tier_traces)
@@ -1421,16 +1519,10 @@ def run_benchmark_traced(
         _uninstall_tracing(orig_rerank)
 
     # Write top-level artifacts
-    config_payload = {
-        "label": label,
-        "seed": seed,
-        "sample_ratio": sample_ratio,
+    config_payload: dict[str, Any] = {
+        **cfg.to_dict(),
         "tiers": list(results_by_tier.keys()),
-        "llm_candidates": llm_candidates,
-        "query_expansion_enabled": query_expansion_enabled,
         "corpus_path": corpus_path,
-        "embedding_model": EMBEDDING_MODEL,
-        "llm_endpoint": ENDPOINT,
         "generated_at": datetime.now(UTC).isoformat(),
     }
     (artifacts_dir / "config.json").write_text(
@@ -1438,9 +1530,9 @@ def run_benchmark_traced(
     )
 
     summary_payload = {
-        "label": label,
-        "seed": seed,
-        "sample_ratio": sample_ratio,
+        "label": cfg.label,
+        "seed": cfg.seed,
+        "sample_ratio": cfg.sample_ratio,
         "results": results_by_tier,
     }
     (artifacts_dir / "summary.json").write_text(
@@ -1448,7 +1540,7 @@ def run_benchmark_traced(
     )
 
     report_md = _build_report_md(
-        label=label,
+        label=cfg.label,
         config=config_payload,
         results_by_tier=results_by_tier,
         all_fixture_traces=all_fixture_traces,
@@ -1475,6 +1567,7 @@ def _eval_tier(
     query_expansion_enabled: bool,
     tier: str,
     tier_trace_dir: Path,
+    cfg: BenchConfig,
 ) -> tuple[
     list[FixtureResult],
     list[dict[str, Any]],
@@ -1513,7 +1606,7 @@ def _eval_tier(
                 tool_name=tool_name,
                 affinity=affinity,  # type: ignore[arg-type]
                 query_expansion_enabled=query_expansion_enabled,
-                query_expansion_endpoint=ENDPOINT,
+                query_expansion_endpoint=cfg.endpoint,
             )
             elapsed_ms = (time.perf_counter() - start) * 1000.0
 
@@ -1565,7 +1658,7 @@ def _eval_tier(
         finally:
             _TRACE.clear_fixture()
 
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+    with ThreadPoolExecutor(max_workers=cfg.max_workers) as pool:
         futures = {pool.submit(_eval_one, fx): fx for fx in fixtures}
         for fut in as_completed(futures):
             fr, trace_obj, llm_capture = fut.result()
@@ -1622,7 +1715,7 @@ def _build_report_md(
     lines.append(f"- **Sample ratio:** {config['sample_ratio']}")
     lines.append(f"- **Corpus:** `{config['corpus_path']}`")
     lines.append(f"- **Embedding model:** `{config['embedding_model']}`")
-    lines.append(f"- **LLM endpoint:** `{config['llm_endpoint']}`")
+    lines.append(f"- **LLM endpoint:** `{config['endpoint']}`")
     lines.append(f"- **llm_candidates override:** {config['llm_candidates']}")
     lines.append(
         f"- **Query expansion:** {config['query_expansion_enabled']}",
@@ -1995,6 +2088,68 @@ def main() -> None:
         "--sparse-weight", type=float, default=0.3,
         help="Fusion weight for sparse retriever contributions.",
     )
+    parser.add_argument(
+        "--port", type=int, default=DEFAULT_PORT,
+        help="llama-server port.",
+    )
+    parser.add_argument(
+        "--endpoint", type=str, default=None,
+        help=(
+            "LLM endpoint URL. Default: http://localhost:{port}/v1. "
+            "Must resolve to loopback."
+        ),
+    )
+    parser.add_argument(
+        "--max-workers", type=int, default=DEFAULT_MAX_WORKERS,
+        help="Parallel LLM workers (match llama-server -np).",
+    )
+    parser.add_argument(
+        "--embedding-model", type=str, default=DEFAULT_EMBEDDING_MODEL,
+        help="Embedding model name (must be in fastembed allowlist).",
+    )
+    parser.add_argument(
+        "--llm-max-tokens", type=int, default=DEFAULT_LLM_MAX_TOKENS,
+        help="Max tokens for LLM responses (expansions + reranker).",
+    )
+    parser.add_argument(
+        "--llm-timeout", type=float, default=DEFAULT_LLM_TIMEOUT,
+        help="HTTP timeout for LLM calls (seconds).",
+    )
+    parser.add_argument(
+        "--top-k", type=int, default=DEFAULT_TOP_K,
+        help="Final top-k rules returned after reranking.",
+    )
+    parser.add_argument(
+        "--threshold", type=float, default=DEFAULT_THRESHOLD,
+        help="Stage-1 similarity threshold for embedding mode.",
+    )
+    parser.add_argument(
+        "--dedup-threshold", type=float, default=DEFAULT_DEDUP_THRESHOLD,
+        help="Cosine similarity threshold for dense dedup.",
+    )
+    parser.add_argument(
+        "--query-max-length", type=int, default=DEFAULT_QUERY_MAX_LENGTH,
+        help="Max query string length before truncation.",
+    )
+    parser.add_argument(
+        "--fusion-k", type=int, default=DEFAULT_FUSION_K,
+        help="RRF smoothing parameter.",
+    )
+    parser.add_argument(
+        "--expansion-max-per-rule", type=int,
+        default=DEFAULT_EXPANSION_MAX_PER_RULE,
+        help="Max expansions generated per rule.",
+    )
+    parser.add_argument(
+        "--expansion-max-length", type=int,
+        default=DEFAULT_EXPANSION_MAX_LENGTH,
+        help="Max characters per expansion.",
+    )
+    parser.add_argument(
+        "--expansion-dedup-threshold", type=float,
+        default=DEFAULT_EXPANSION_DEDUP_THRESHOLD,
+        help="Cosine similarity threshold for expansion dedup.",
+    )
     args = parser.parse_args()
 
     if not Path(args.model_path).exists():
@@ -2028,7 +2183,32 @@ def main() -> None:
             sys.exit(1)
         print(f"Benchmarking tiers: {', '.join(tiers)}")
 
-    os.environ.setdefault("CUECARD_LLM_ENDPOINT", ENDPOINT)
+    endpoint = args.endpoint or f"http://localhost:{args.port}/v1"
+    os.environ["CUECARD_LLM_ENDPOINT"] = endpoint
+
+    cfg = BenchConfig(
+        label=run_label,
+        seed=args.seed,
+        sample_ratio=args.sample_ratio,
+        endpoint=endpoint,
+        max_workers=args.max_workers,
+        embedding_model=args.embedding_model,
+        llm_max_tokens=args.llm_max_tokens,
+        llm_timeout=args.llm_timeout,
+        top_k=args.top_k,
+        threshold=args.threshold,
+        dedup_threshold=args.dedup_threshold,
+        query_max_length=args.query_max_length,
+        fusion_k=args.fusion_k,
+        llm_candidates=args.llm_candidates,
+        sparse_enabled=args.sparse_enabled,
+        dense_weight=args.dense_weight,
+        sparse_weight=args.sparse_weight,
+        expansion_max_per_rule=args.expansion_max_per_rule,
+        expansion_max_length=args.expansion_max_length,
+        expansion_dedup_threshold=args.expansion_dedup_threshold,
+        query_expansion_enabled=args.query_expansion,
+    )
 
     if args.artifacts_dir:
         artifacts_dir = Path(args.artifacts_dir)
@@ -2038,10 +2218,15 @@ def main() -> None:
 
     proc = None
     if not args.no_server:
-        proc = start_server(args.model_path, ngl=args.ngl)
+        proc = start_server(
+            args.model_path,
+            port=args.port,
+            ngl=args.ngl,
+            max_workers=cfg.max_workers,
+        )
 
     try:
-        ping_seconds = ping_server()
+        ping_seconds = ping_server(cfg.endpoint)
         if ping_seconds > 10:
             print(
                 f"WARNING: PING took {ping_seconds:.1f}s — endpoint may "
@@ -2049,25 +2234,18 @@ def main() -> None:
             )
 
         print("\n=== Phase 0: Infer affinity (once for all events) ===")
-        _rules, affinity = _infer_affinity_once()
+        _rules, affinity = _infer_affinity_once(cfg)
 
         print(f"\n=== Phase 1: Generate expansions for {run_label} ===")
         generate_expansions_for_label(
-            run_label, affinity, force=args.force_expand,
+            run_label, affinity, cfg, force=args.force_expand,
         )
 
         print(f"\n=== Phase 2: Traced benchmark {run_label} ===")
         run_benchmark_traced(
-            run_label,
             affinity,
-            sample_ratio=args.sample_ratio,
-            seed=args.seed,
+            cfg,
             tiers=tiers,
-            llm_candidates=args.llm_candidates,
-            query_expansion_enabled=args.query_expansion,
-            sparse_enabled=args.sparse_enabled,
-            dense_weight=args.dense_weight,
-            sparse_weight=args.sparse_weight,
             artifacts_dir=artifacts_dir,
         )
 
