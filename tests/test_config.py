@@ -701,3 +701,146 @@ class TestEnrichedRetrievalConfig:
         raw = {"retrieval": {"affinity_mode": "strict"}}
         flat = _extract_flat(raw)
         assert flat["affinity_mode"] == "strict"
+
+
+class TestResolvedConfigRoundTrip:
+    """Assert every TOML-backed ResolvedConfig field survives load_config.
+
+    Protects against the class of bugs where a field is extracted from TOML
+    and validated, but then silently dropped before the ResolvedConfig
+    constructor — making the knob a placebo.
+    """
+
+    def test_every_field_round_trips(self, tmp_path: Path) -> None:
+        home = tmp_path / "home"
+        cuecard_dir = home / ".cuecard"
+        cuecard_dir.mkdir(parents=True)
+
+        # Non-default value per TOML-backed field.
+        # mode stays "embedding" to skip endpoint/haiku validation side-effects.
+        (cuecard_dir / "config.toml").write_text(
+            '[embedding]\n'
+            'model = "BAAI/bge-base-en-v1.5"\n'
+            '\n'
+            '[retrieval]\n'
+            'top_k = 5\n'
+            'threshold = 0.5\n'
+            'dedup_threshold = 0.8\n'
+            'fusion_k = 20\n'
+            'llm_candidates = 15\n'
+            'sparse_enabled = false\n'
+            'dense_weight = 0.6\n'
+            'sparse_weight = 0.4\n'
+            'reranker_model = "jinaai/jina-reranker-v1-tiny-en"\n'
+            'llm_recall_threshold = 0.4\n'
+            'affinity_mode = "strict"\n'
+            '\n'
+            '[hooks]\n'
+            'query_max_length = 1000\n'
+            'events = ["PreToolUse", "Stop"]\n'
+            '\n'
+            '[logging]\n'
+            'max_log_size_mb = 25\n'
+            'verbose = true\n'
+            'redact = false\n'
+            '\n'
+            '[serve]\n'
+            'port = 9000\n'
+            '\n'
+            '[expansion]\n'
+            'max_per_rule = 3\n'
+            'max_length = 300\n'
+            'dedup_threshold = 0.7\n'
+            '\n'
+            '[pipeline]\n'
+            'mode = "embedding"\n'
+            '\n'
+            '[pipeline.llm]\n'
+            'local_endpoint = "http://127.0.0.1:9999/v1"\n'
+            'haiku_model = "claude-haiku-4-5-20251001"\n'
+            'thinking = true\n'
+            'max_tokens = 2048\n'
+            'timeout = 30.0\n'
+        )
+
+        cfg = load_config(home_dir=home)
+
+        # Top-level ResolvedConfig fields
+        assert cfg.model_name == "BAAI/bge-base-en-v1.5"
+        assert cfg.top_k == 5
+        assert cfg.threshold == 0.5
+        assert cfg.dedup_threshold == 0.8
+        assert cfg.query_max_length == 1000
+        assert cfg.hook_events == ("PreToolUse", "Stop")
+        assert cfg.verbose is True
+        assert cfg.redact is False
+        assert cfg.max_log_size_mb == 25
+        assert cfg.fusion_k == 20
+        assert cfg.llm_candidates == 15
+        assert cfg.sparse_enabled is False
+        assert cfg.dense_weight == 0.6
+        assert cfg.sparse_weight == 0.4
+        assert cfg.reranker_model == "jinaai/jina-reranker-v1-tiny-en"
+        assert cfg.serve_port == 9000
+        assert cfg.expansion_max_per_rule == 3
+        assert cfg.expansion_max_length == 300
+        assert cfg.expansion_dedup_threshold == 0.7
+        assert cfg.llm_recall_threshold == 0.4
+        assert cfg.affinity_mode == "strict"
+
+        # Nested PipelineConfig fields
+        assert cfg.pipeline.mode == "embedding"
+        assert cfg.pipeline.local_endpoint == "http://127.0.0.1:9999/v1"
+        assert cfg.pipeline.haiku_model == "claude-haiku-4-5-20251001"
+        assert cfg.pipeline.thinking is True
+        assert cfg.pipeline.llm_max_tokens == 2048
+        assert cfg.pipeline.llm_timeout == 30.0
+
+    def test_defaults_match_dataclass(self, tmp_path: Path) -> None:
+        """With no TOML, every field equals its dataclass default.
+
+        Guards against a subtle bug class: if load_config passes a computed
+        fallback (e.g. a module constant) instead of letting the dataclass
+        default apply, that duplicate becomes a second source of truth.
+        """
+        import dataclasses
+
+        home = tmp_path / "home"
+        home.mkdir()
+        cfg = load_config(home_dir=home)
+
+        for f in dataclasses.fields(ResolvedConfig):
+            # Skip computed fields (no default — provided by load_config).
+            if (
+                f.default is dataclasses.MISSING
+                and f.default_factory is dataclasses.MISSING
+            ):
+                continue
+            # Skip fields that are computed/special-cased, not TOML-backed.
+            if f.name in {
+                "project_cache_dir",
+                "allowed_dirs",
+                "pipeline",  # verified per-subfield below
+            }:
+                continue
+            expected = (
+                f.default
+                if f.default is not dataclasses.MISSING
+                else f.default_factory()
+            )
+            actual = getattr(cfg, f.name)
+            assert actual == expected, (
+                f"Field {f.name!r}: expected default {expected!r},"
+                f" got {actual!r}"
+            )
+
+        # PipelineConfig sub-fields — same invariant.
+        from cuecard.models import PipelineConfig
+
+        defaults = PipelineConfig()
+        for f in dataclasses.fields(PipelineConfig):
+            expected = getattr(defaults, f.name)
+            actual = getattr(cfg.pipeline, f.name)
+            assert actual == expected, (
+                f"pipeline.{f.name}: expected {expected!r}, got {actual!r}"
+            )

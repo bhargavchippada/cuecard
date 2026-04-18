@@ -474,7 +474,11 @@ def load_config(
         sparse_enabled=merged["sparse_enabled"],
         dense_weight=float(merged["dense_weight"]),
         sparse_weight=float(merged["sparse_weight"]),
+        reranker_model=merged["reranker_model"],
+        serve_port=merged["serve_port"],
         expansion_max_per_rule=merged["expansion_max_per_rule"],
         expansion_max_length=merged["expansion_max_length"],
+        expansion_dedup_threshold=float(merged["expansion_dedup_threshold"]),
+        llm_recall_threshold=float(merged["llm_recall_threshold"]),
         affinity_mode=merged["affinity_mode"],
     )
