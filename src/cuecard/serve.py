@@ -20,7 +20,6 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from cuecard.models import DEFAULT_SERVE_PORT as DEFAULT_PORT
 from cuecard.models import MAX_REQUEST_BYTES
 
 if TYPE_CHECKING:
@@ -283,7 +282,7 @@ def _process_request(
 
 
 def start_server(
-    port: int = DEFAULT_PORT,
+    port: int,
     home: Path | None = None,
     *,
     config: ResolvedConfig | None = None,
@@ -359,7 +358,7 @@ def stop_server(home: Path | None = None) -> bool:
 
 
 def run_server(
-    port: int = DEFAULT_PORT,
+    port: int,
     home: Path | None = None,
 ) -> None:
     """Start and run the server until interrupted.
@@ -405,21 +404,25 @@ def run_server(
 
 def query_daemon(
     payload: dict[str, object],
-    port: int = DEFAULT_PORT,
+    port: int | None = None,
     timeout: float | None = None,
 ) -> dict[str, object] | None:
     """Send a hook payload to the running daemon.
 
     Returns the response dict on success, or None if the daemon is
-    unreachable or times out.  Timeout defaults to 5s for LLM modes
-    (llm-local/llm-haiku) and 0.5s for embedding mode.
+    unreachable or times out. When ``port`` or ``timeout`` is None, the
+    daemon port and a mode-appropriate timeout are sourced from the
+    resolved config (5s for LLM modes, 0.5s for embedding mode).
     """
-    if timeout is None:
+    if port is None or timeout is None:
         from cuecard.config import load_config
 
         cfg = load_config(project_dir=Path.cwd())
-        mode = cfg.pipeline.mode
-        timeout = 5.0 if mode in {"llm-local", "llm-haiku"} else 0.5
+        if port is None:
+            port = cfg.serve_port
+        if timeout is None:
+            mode = cfg.pipeline.mode
+            timeout = 5.0 if mode in {"llm-local", "llm-haiku"} else 0.5
 
     body = json.dumps(payload).encode()
     conn: http.client.HTTPConnection | None = None

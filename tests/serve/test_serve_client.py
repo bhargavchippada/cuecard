@@ -63,6 +63,27 @@ class TestQueryDaemon:
             result = query_daemon({"tool_name": "Bash"})
         assert result is None
 
+    def test_port_from_config_when_none(
+        self, tmp_path, monkeypatch,
+    ) -> None:
+        """query_daemon with port=None reads port from cfg.serve_port."""
+        cuecard_dir = tmp_path / ".cuecard"
+        cuecard_dir.mkdir()
+        (cuecard_dir / "config.toml").write_text("[serve]\nport = 9200\n")
+        monkeypatch.setenv("HOME", str(tmp_path))
+        monkeypatch.chdir(tmp_path)
+
+        with patch("http.client.HTTPConnection") as mock_conn_cls:
+            mock_conn = MagicMock()
+            mock_resp = MagicMock()
+            mock_resp.status = 200
+            mock_resp.read.return_value = b'{"ok": true}'
+            mock_conn.getresponse.return_value = mock_resp
+            mock_conn_cls.return_value = mock_conn
+            query_daemon({"tool_name": "Bash"})
+        # First positional arg is host, second is port
+        assert mock_conn_cls.call_args.args[1] == 9200
+
 
 # ---------------------------------------------------------------------------
 # Adapter fast path

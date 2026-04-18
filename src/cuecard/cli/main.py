@@ -360,8 +360,9 @@ def hook() -> None:
 @app.command()
 def serve(
     port: Annotated[
-        int, typer.Option(help="Port to listen on")
-    ] = 8452,
+        int | None,
+        typer.Option(help="Port to listen on (default: from config)"),
+    ] = None,
     stop: Annotated[
         bool, typer.Option("--stop", help="Stop running daemon")
     ] = False,
@@ -393,6 +394,10 @@ def serve(
             " Use 'cuecard serve --stop' to stop it.",
         )
         raise typer.Exit(1)
+
+    if port is None:
+        cfg = _load_config_or_exit(project_dir=Path.cwd(), home_dir=home)
+        port = cfg.serve_port
 
     if daemon:
         _fork_daemon(port, home)

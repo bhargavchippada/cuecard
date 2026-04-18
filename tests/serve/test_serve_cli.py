@@ -221,6 +221,26 @@ class TestForkDaemon:
         assert "Starting cuecard daemon" in result.output
         mock_run.assert_called_once_with(port=9999, home=tmp_path)
 
+    def test_serve_port_from_toml(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """`[serve] port` in TOML must reach run_server when no --port flag."""
+        from typer.testing import CliRunner
+
+        from cuecard.cli.main import app
+
+        cuecard_dir = tmp_path / ".cuecard"
+        cuecard_dir.mkdir()
+        (cuecard_dir / "config.toml").write_text("[serve]\nport = 9100\n")
+        monkeypatch.setattr("cuecard.cli.main._home_dir", lambda: tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        cli_runner = CliRunner()
+        with patch("cuecard.serve.run_server") as mock_run:
+            result = cli_runner.invoke(app, ["serve"])
+        assert result.exit_code == 0
+        mock_run.assert_called_once_with(port=9100, home=tmp_path)
+
 
 # ---------------------------------------------------------------------------
 # Status shows daemon
