@@ -234,12 +234,31 @@ def index(
 @app.command()
 def retrieve(
     query: Annotated[str, typer.Argument(help="Tool context query string")],
-    top_k: Annotated[int, typer.Option(help="Max results")] = 0,
-    threshold: Annotated[float, typer.Option(help="Min similarity")] = 0.0,
+    top_k: Annotated[
+        int | None,
+        typer.Option(help="Max results (default: from config)"),
+    ] = None,
+    threshold: Annotated[
+        float | None,
+        typer.Option(help="Min similarity (default: from config)"),
+    ] = None,
     mode: Annotated[str, typer.Option(help="Pipeline mode")] = "",
 ) -> None:
     """Retrieve top-k rules matching a query."""
+    import dataclasses
+
     cfg = _load_config_or_exit(project_dir=Path.cwd(), home_dir=_home_dir())
+
+    # Apply CLI overrides (precedence: CLI flag > TOML > dataclass default)
+    # Validate overrides against the same rules load_config uses.
+    from cuecard.config import _validate_field
+
+    if top_k is not None:
+        _validate_field("top_k", top_k)
+        cfg = dataclasses.replace(cfg, top_k=top_k)
+    if threshold is not None:
+        _validate_field("threshold", threshold)
+        cfg = dataclasses.replace(cfg, threshold=float(threshold))
 
     from fastembed import TextEmbedding
 

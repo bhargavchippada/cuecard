@@ -193,6 +193,78 @@ class TestRetrieve:
 
         assert result.exit_code == 0
         mock_pipe.assert_called_once()
+        # Third positional is config; verify CLI flags applied.
+        called_cfg = mock_pipe.call_args.args[2]
+        assert called_cfg.top_k == 3
+        assert called_cfg.threshold == 0.5
+
+    def test_retrieve_uses_config_when_flags_omitted(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Without --top-k/--threshold, run_pipeline sees the config values."""
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        idx = _make_sample_index()
+        mock_model = MagicMock()
+
+        from cuecard.models import PipelineResult, StageTrace
+
+        fake_pipeline = PipelineResult(
+            results=(),
+            stages=(StageTrace(
+                stage="retrieval", input_count=1,
+                output_count=0, latency_ms=1.0,
+            ),),
+            mode="embedding",
+        )
+
+        with (
+            patch(
+                "cuecard.indexing.loader.load_or_build",
+                return_value=LoadedIndex(index=idx),
+            ),
+            patch("fastembed.TextEmbedding", return_value=mock_model),
+            patch(
+                "cuecard.retrieval.pipeline.run_pipeline",
+                return_value=fake_pipeline,
+            ) as mock_pipe,
+        ):
+            result = runner.invoke(app, ["retrieve", "test"])
+
+        assert result.exit_code == 0
+        called_cfg = mock_pipe.call_args.args[2]
+        # Defaults from ResolvedConfig (unchanged by CLI).
+        assert called_cfg.top_k == 5  # value written by _setup_home
+        assert called_cfg.threshold == 0.30
+
+    def test_retrieve_top_k_out_of_range_exits(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """--top-k above max=50 fails before the pipeline runs."""
+        _patch_home(monkeypatch, tmp_path)
+        _setup_home(tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        idx = _make_sample_index()
+        mock_model = MagicMock()
+
+        with (
+            patch(
+                "cuecard.indexing.loader.load_or_build",
+                return_value=LoadedIndex(index=idx),
+            ),
+            patch("fastembed.TextEmbedding", return_value=mock_model),
+            patch(
+                "cuecard.retrieval.pipeline.run_pipeline",
+            ) as mock_pipe,
+        ):
+            result = runner.invoke(
+                app, ["retrieve", "test", "--top-k", "999"],
+            )
+        assert result.exit_code != 0
+        mock_pipe.assert_not_called()
 
     def test_retrieve_no_index(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
