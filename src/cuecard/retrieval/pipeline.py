@@ -286,7 +286,15 @@ def _run_retrieval_stage(
     ] + sparse_sets
     t_fusion_start = time.monotonic()
     fused = (
-        fuse(all_results, k=config.fusion_k, top_k=top_k)
+        fuse(
+            all_results,
+            k=config.fusion_k,
+            top_k=top_k,
+            retriever_weights={
+                "dense": config.dense_weight,
+                "sparse": config.sparse_weight,
+            },
+        )
         if len(all_results) > 1
         else (all_results[0] if all_results else [])
     )

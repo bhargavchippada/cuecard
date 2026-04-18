@@ -20,6 +20,10 @@ from cuecard.models import KNOWN_HOOK_EVENTS
 _HOOK_COMMAND = "cuecard hook 2>/dev/null"
 _HOOK_MARKER = "cuecard"
 _HOOK_EVENTS: tuple[str, ...] = tuple(sorted(KNOWN_HOOK_EVENTS))
+_DEFAULT_INSTALL_EVENTS: tuple[str, ...] = (
+    "PreToolUse",
+    "UserPromptSubmit",
+)
 
 
 def _claude_settings_path() -> Path:
@@ -118,7 +122,7 @@ def install(
         "hooks": [{"type": "command", "command": _HOOK_COMMAND}],
     }
 
-    for event in _HOOK_EVENTS:
+    for event in _DEFAULT_INSTALL_EVENTS:
         event_hooks = hooks.get(event)
         if not isinstance(event_hooks, list):
             event_hooks = []
@@ -127,7 +131,7 @@ def install(
 
     _save_claude_settings(settings_path, settings)
 
-    event_list = " + ".join(_HOOK_EVENTS)
+    event_list = " + ".join(_DEFAULT_INSTALL_EVENTS)
     console.print(
         "[green]Installed[/green] cuecard hooks"
         f" ({event_list})"

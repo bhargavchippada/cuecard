@@ -830,11 +830,20 @@ class TestMainGuard:
 
         hook_input = {"tool_name": "Bash", "tool_input": "ls"}
 
+        # NOTE: runpy.run_module with run_name="__main__" re-executes the
+        # module in a fresh globals dict — patches on
+        # `cuecard.adapters.claude_code.*` do NOT affect the fresh namespace
+        # because `from cuecard.config import load_config` rebinds from the
+        # *source* module.  Patch the defining modules instead so the fresh
+        # import picks up the mocks and never reaches the real LLM.
         with (
-            patch(f"{_MOD}._try_daemon", return_value=None),
+            patch(
+                "cuecard.serve.query_daemon",
+                return_value=None,
+            ),
             patch("sys.stdin") as mock_stdin,
             patch(
-                f"{_MOD}.load_config",
+                "cuecard.config.load_config",
                 side_effect=RuntimeError("skip"),
             ),
         ):

@@ -121,7 +121,6 @@ mutmut verifies that tests actually detect code changes (mutations). 100% line c
 - The `results` command only shows surviving mutants (killed ones are omitted)
 - Use `mutmut show <name>` to see what mutation survived and decide if a test is needed
 - Config is in `[tool.mutmut]` in `pyproject.toml`
-- Note: `tests/cli/test_cli_hooks.py::TestAdapterMainGuard::test_main_guard` is deselected from mutmut runs due to subprocess JSON parsing flakiness under fork
 
 ## Conventions
 

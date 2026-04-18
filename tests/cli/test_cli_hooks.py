@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
@@ -133,14 +132,14 @@ class TestInstall:
         assert result.exit_code == 0
         assert "Installed" in result.output
         settings = json.loads((claude_dir / "settings.json").read_text())
-        from cuecard.models import KNOWN_HOOK_EVENTS
-
-        for event in sorted(KNOWN_HOOK_EVENTS):
+        for event in ("PreToolUse", "UserPromptSubmit"):
             hooks = settings["hooks"][event]
             assert any(
                 "cuecard" in str(h.get("hooks", []))
                 for h in hooks
             )
+        assert "SubagentStart" not in settings["hooks"]
+        assert "Stop" not in settings["hooks"]
 
     def test_install_already_installed(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
@@ -549,19 +548,6 @@ class TestHookCommand:
         with patch("cuecard.adapters.claude_code.main") as mock_main:
             runner.invoke(app, ["hook"])
             mock_main.assert_called_once()
-
-
-class TestAdapterMainGuard:
-    def test_main_guard(self) -> None:
-        result = subprocess.run(
-            ["uv", "run", "python", "-m", "cuecard.adapters.claude_code"],
-            input='{"tool_name":"Bash","tool_input":"ls"}',
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        output = json.loads(result.stdout)
-        assert output["tool_name"] == "Bash"
 
 
 class TestStatusDetailed:

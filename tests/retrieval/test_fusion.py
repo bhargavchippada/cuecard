@@ -172,6 +172,22 @@ class TestFuseBasic:
         # Smaller k gives higher score: 1/11 > 1/101
         assert result_k10[0].score > result_k100[0].score
 
+    def test_weighted_retrievers_apply_custom_multipliers(self) -> None:
+        """Retriever weights scale each retriever's RRF contribution."""
+        r1 = _rule("shared")
+        dense = [ScoredCandidate(rule=r1, score=0.9, retriever="dense")]
+        sparse = [ScoredCandidate(rule=r1, score=5.0, retriever="sparse")]
+
+        result = fuse(
+            [dense, sparse],
+            k=60,
+            retriever_weights={"dense": 0.7, "sparse": 0.3},
+        )
+
+        expected_score = 0.7 * (1.0 / 61) + 0.3 * (1.0 / 61)
+        assert len(result) == 1
+        assert result[0].score == pytest.approx(expected_score, rel=1e-9)
+
 
 class TestFuseRRFSignAndRank:
     """Kill RRF sign-flip and rank-offset mutants.

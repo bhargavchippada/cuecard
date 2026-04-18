@@ -42,6 +42,7 @@ def fuse(
     *,
     k: int,
     top_k: int | None = None,
+    retriever_weights: dict[str, float] | None = None,
 ) -> list[ScoredCandidate]:
     """Reciprocal Rank Fusion across multiple retriever result lists.
 
@@ -52,6 +53,8 @@ def fuse(
         results: One list of ScoredCandidates per retriever.
         k: RRF smoothing parameter (default 10).
         top_k: If set, truncate output to this many results.
+        retriever_weights: Optional per-retriever multipliers applied to
+            each list's RRF contribution. Unknown retrievers default to 1.0.
 
     Returns:
         Merged list sorted by RRF score descending.  The
@@ -68,7 +71,10 @@ def fuse(
     for ranked_list in results:
         for rank_zero, candidate in enumerate(ranked_list):
             key = candidate.rule.text
-            rrf_scores[key] += 1.0 / (k + rank_zero + 1)
+            weight = 1.0
+            if retriever_weights is not None:
+                weight = retriever_weights.get(candidate.retriever, 1.0)
+            rrf_scores[key] += weight * (1.0 / (k + rank_zero + 1))
             # First occurrence wins for the Rule reference
             if key not in rule_lookup:
                 rule_lookup[key] = candidate.rule

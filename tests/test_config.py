@@ -557,6 +557,8 @@ class TestEnrichedRetrievalConfig:
         assert config.fusion_k == 10
         assert config.llm_candidates == 12
         assert config.sparse_enabled is True
+        assert config.dense_weight == 0.7
+        assert config.sparse_weight == 0.3
         assert config.expansion_max_per_rule == 5
         assert config.expansion_max_length == 500
 
@@ -569,6 +571,8 @@ class TestEnrichedRetrievalConfig:
             "[retrieval]\n"
             "fusion_k = 100\n"
             "sparse_enabled = false\n"
+            "dense_weight = 0.6\n"
+            "sparse_weight = 0.4\n"
             "\n"
             "[expansion]\n"
             "max_per_rule = 20\n"
@@ -577,6 +581,8 @@ class TestEnrichedRetrievalConfig:
         config = load_config(home_dir=home)
         assert config.fusion_k == 100
         assert config.sparse_enabled is False
+        assert config.dense_weight == 0.6
+        assert config.sparse_weight == 0.4
         assert config.expansion_max_per_rule == 20
         assert config.expansion_max_length == 150
 
@@ -597,13 +603,20 @@ class TestEnrichedRetrievalConfig:
         assert config.fusion_k == 42
 
     def test_extract_flat_retrieval_fields(self) -> None:
-        """_extract_flat reads fusion_k and sparse_enabled from [retrieval]."""
+        """_extract_flat reads retrieval fields from [retrieval]."""
         raw = {
-            "retrieval": {"fusion_k": 80, "sparse_enabled": False},
+            "retrieval": {
+                "fusion_k": 80,
+                "sparse_enabled": False,
+                "dense_weight": 0.65,
+                "sparse_weight": 0.35,
+            },
         }
         flat = _extract_flat(raw)
         assert flat["fusion_k"] == 80
         assert flat["sparse_enabled"] is False
+        assert flat["dense_weight"] == 0.65
+        assert flat["sparse_weight"] == 0.35
 
     def test_extract_flat_expansion_fields(self) -> None:
         """_extract_flat reads max_per_rule and max_length from [expansion]."""
@@ -632,6 +645,26 @@ class TestEnrichedRetrievalConfig:
             "[retrieval]\nsparse_enabled = 42\n"
         )
         with pytest.raises(ConfigError, match="sparse_enabled"):
+            load_config(home_dir=home)
+
+    def test_dense_weight_validation(self, tmp_path: Path) -> None:
+        """dense_weight must be within [0, 1]."""
+        home = tmp_path / "home"
+        (home / ".cuecard").mkdir(parents=True)
+        (home / ".cuecard" / "config.toml").write_text(
+            "[retrieval]\ndense_weight = 1.2\n"
+        )
+        with pytest.raises(ConfigError, match="dense_weight"):
+            load_config(home_dir=home)
+
+    def test_sparse_weight_validation(self, tmp_path: Path) -> None:
+        """sparse_weight must be within [0, 1]."""
+        home = tmp_path / "home"
+        (home / ".cuecard").mkdir(parents=True)
+        (home / ".cuecard" / "config.toml").write_text(
+            "[retrieval]\nsparse_weight = -0.1\n"
+        )
+        with pytest.raises(ConfigError, match="sparse_weight"):
             load_config(home_dir=home)
 
     def test_affinity_mode_default(self, tmp_path: Path) -> None:

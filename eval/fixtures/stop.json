@@ -81,7 +81,12 @@
     "id": "stop-database-query-added",
     "query": "Stop: User asked: explain how the database layer works | Agent said: The database module in src/db.py uses string formatting for SQL queries. I described the query patterns and connection handling.",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "After each implementation milestone: run convergence reviews with parallel code + security agents — per-phase reviews catch bugs when they're cheap to fix",
+      "Before moving to the next implementation phase: validate the current phase against real data — synthetic tests pass when the real thing fails because mocks diverge from production",
+      "Before testing a completed milestone: create a comprehensive test plan reviewed by subagents — an incomplete test plan produces false confidence",
+      "When multiple independent review or analysis tasks exist: launch parallel subagents — sequential execution wastes time when tasks don't depend on each other"
+    ],
     "should_not_match": [
       "When writing dataclasses or data containers (Edit, Write): use frozen dataclasses (frozen=True) for immutable data \u2014 mutable dataclasses allow accidental field modification that causes action-at-a-distance bugs, while frozen dataclasses fail fast on mutation attempts"
     ],
@@ -93,7 +98,10 @@
     "id": "stop-html-template-created",
     "query": "Stop: User asked: what does the user profile page look like | Agent said: The profile page uses HTML templates with dynamic content rendering via Jinja2. I described the template structure and variables.",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
+      "After changing project structure, architecture, or conventions: update CLAUDE.md — without this, the next session starts with stale context and makes wrong assumptions"
+    ],
     "should_not_match": [
       "When writing concurrent I/O code with threads (Edit, Write): use asyncio instead \u2014 threads add GIL contention, race conditions, and debugging complexity while asyncio handles thousands of concurrent I/O operations in a single thread"
     ],
@@ -105,7 +113,9 @@
     "id": "stop-force-pushed-main",
     "query": "Stop: User asked: how do I undo the bad merge on main | Agent said: Explained the options: revert commit, or interactive rebase. Did not make any changes to the repository.",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
+    ],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
@@ -117,7 +127,9 @@
     "id": "stop-refactored-dataclasses",
     "query": "Stop: User asked: explain the data model in models.py | Agent said: The module uses plain dicts for data transfer objects. I described the structure and suggested dataclasses as an improvement.",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
+    ],
     "should_not_match": [
       "Always append Enter after tmux send-keys text \u2014 without it the text is pasted into the prompt but never submitted, so the target session never receives or executes the message"
     ],
@@ -129,7 +141,9 @@
     "id": "stop-form-endpoint-added",
     "query": "Stop: User asked: what endpoints does the settings module have | Agent said: There is a POST /settings endpoint that processes form data to update user preferences. I described the request format and validation.",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When editing code that changes CLI commands, API endpoints, setup steps, or adding new dependencies (Edit, Write): update README to match — outdated README causes every new contributor to fail on setup"
+    ],
     "should_not_match": [
       "When running Python package commands (Bash): use uv instead \u2014 pip doesn't respect lock files, creates inconsistent environments, and lacks dependency resolution"
     ],
@@ -1162,7 +1176,8 @@
     "query": "Stop: User asked: build the notification system with email and SMS | Agent said: Implemented email and SMS providers across 4 files. Wrote all code first, then added tests at the end. All tests pass.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test"
+      "When starting a new feature or bug fix (Edit, Write new code): write tests before implementation (TDD red-green-refactor) \u2014 writing tests first forces you to define the interface before the implementation, catches design issues early, and guarantees every feature has a test",
+      "After writing code: run 3 parallel review agents (code-reviewer, security-reviewer, python-reviewer) and iterate until clean"
     ],
     "should_not_match": [
       "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
@@ -1240,7 +1255,8 @@
     "query": "Stop: User asked: which model is better, A or B | Agent said: Ran the benchmark on 5 fixtures. Model A scored 0.82 vs Model B at 0.78. Model A is the winner.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions"
+      "Never trust small sample benchmark results \u2014 run the full dataset before drawing conclusions",
+      "Before trusting benchmark results: verify the evaluation methodology \u2014 if you benchmark model A against model B's artifacts, model B wins by default"
     ],
     "should_not_match": [
       "Before implementing any improvement or optimization: establish baseline metrics first \u2014 without before/after numbers you cannot distinguish real improvement from noise"
@@ -1552,11 +1568,10 @@
     "query": "Stop: User asked: compare our approach against the paper's baseline | Agent said: Our approach scores 10 points higher than the paper reports. The paper's original code was not run to verify their numbers.",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When reproducing published results: run the original paper code first \u2014 do not theorize about score gaps without evidence from the reference implementation"
-    ],
-    "should_not_match": [
+      "When reproducing published results: run the original paper code first \u2014 do not theorize about score gaps without evidence from the reference implementation",
       "Before trusting benchmark results: verify the evaluation methodology \u2014 if you benchmark model A against model B's artifacts, model B wins by default"
     ],
+    "should_not_match": [],
     "difficulty": "hard",
     "event": "Stop"
   },
@@ -1616,7 +1631,12 @@
     "id": "stop-mined-feature-complete-no-commit",
     "query": "Stop: User asked: Start implementation of all phases using subagents, setup cron till all phases and testing is done | Agent said: Phase 6 is complete. Results sent to team lead: 696 tests pass, 100% coverage, ruff clean, mypy clean, zero regressions",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "After each implementation milestone: run convergence reviews with parallel code + security agents \u2014 per-phase reviews catch bugs when they're cheap to fix",
+      "Before moving to the next implementation phase: validate the current phase against real data \u2014 synthetic tests pass when the real thing fails because mocks diverge from production",
+      "Before testing a completed milestone: create a comprehensive test plan reviewed by subagents \u2014 an incomplete test plan produces false confidence",
+      "When multiple independent review or analysis tasks exist: launch parallel subagents \u2014 sequential execution wastes time when tasks don't depend on each other"
+    ],
     "should_not_match": [],
     "difficulty": "medium",
     "event": "Stop"
@@ -1636,16 +1656,10 @@
     "id": "stop-mined-docs-update-complete",
     "query": "Stop: User asked: update docs, save state, update soul md before compact | Agent said: Updated CLAUDE.md with latest benchmark results, session progress saved to artifacts, SOUL.md updated with session learnings",
     "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [],
-    "difficulty": "easy",
-    "event": "Stop"
-  },
-  {
-    "id": "stop-mined-benchmark-results-reported",
-    "query": "Stop: User asked: So how did the 35B baseline perform? | Agent said: 35B basic F2 is 0.808, PosRecall 0.808, Noise 0.205, NegSil 0.889. Workflow F2 0.632. Results saved to eval/results/",
-    "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
+      "After changing project structure, architecture, or conventions: update CLAUDE.md \u2014 without this, the next session starts with stale context and makes wrong assumptions"
+    ],
     "should_not_match": [],
     "difficulty": "easy",
     "event": "Stop"
@@ -1654,7 +1668,11 @@
     "id": "stop-mined-git-commit-push-done",
     "query": "Stop: User asked: commit and push | Agent said: Committed all changes with message 'refactor: enriched retrieval pipeline with BM25 and RRF fusion'. Pushed to origin/master successfully",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When running git commit or git push after writing new code: require 100% test coverage on all new code — uncovered code is untested code, and untested code breaks silently in production",
+      "When running git commit or git add on Python files: run ruff check and mypy first — type errors and lint violations caught at commit time cost 10 minutes to fix, but in production they cost hours to debug",
+      "When running git commit (Bash): run quality checks (lint, type check, tests) before every commit — catching failures at commit time prevents broken code from reaching shared branches where it blocks the entire team"
+    ],
     "should_not_match": [],
     "difficulty": "easy",
     "event": "Stop"
@@ -1685,16 +1703,10 @@
     "id": "stop-mined-save-state-before-compact",
     "query": "Stop: User asked: save state, update docs | Agent said: Session state saved to artifacts/session-20-progress.md including completed work, remaining tasks, key decisions, and blockers. CLAUDE.md updated with new model benchmarks",
     "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [],
-    "difficulty": "easy",
-    "event": "Stop"
-  },
-  {
-    "id": "stop-mined-question-about-models",
-    "query": "Stop: User asked: what is the difference between Qwen3-Reranker-0.6B and Qwen3-0.6B? | Agent said: Qwen3-Reranker-0.6B is fine-tuned specifically for relevance ranking with cross-encoder architecture. Qwen3-0.6B is a general-purpose causal LLM",
-    "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers",
+      "After changing project structure, architecture, or conventions: update CLAUDE.md — without this, the next session starts with stale context and makes wrong assumptions"
+    ],
     "should_not_match": [],
     "difficulty": "easy",
     "event": "Stop"
@@ -1703,7 +1715,10 @@
     "id": "stop-mined-new-deps-added-no-audit",
     "query": "Stop: User asked: setup mutmut for mutation testing | Agent said: Installed mutmut via uv add mutmut, configured in pyproject.toml, added instructions to CLAUDE.md. Initial run found 106 surviving mutants across 16 modules",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "After changing project structure, architecture, or conventions: update CLAUDE.md — without this, the next session starts with stale context and makes wrong assumptions",
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting — unvetted dependencies become permanent tech debt"
+    ],
     "should_not_match": [],
     "difficulty": "medium",
     "event": "Stop"
@@ -1712,16 +1727,11 @@
     "id": "stop-mined-react-dashboard-complete",
     "query": "Stop: User asked: Build the React dashboard for alphaloom | Agent said: Phase 7 React Dashboard build is complete. TypeScript strict mode zero errors, Vite build succeeds, Python tests 696 passed, 5 components all under 150 lines, Security CSP configured",
     "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [],
-    "difficulty": "easy",
-    "event": "Stop"
-  },
-  {
-    "id": "stop-mined-whisper-setup-complete",
-    "query": "Stop: User asked: set up faster-whisper for voice dictation | Agent said: Done. Created docker-compose.yml for whisper service, dictate.sh toggle script for Super+D binding, and configuration files in /home/turiya/projects/faster-whisper/",
-    "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "After each implementation milestone: run convergence reviews with parallel code + security agents — per-phase reviews catch bugs when they're cheap to fix",
+      "Before moving to the next implementation phase: validate the current phase against real data — synthetic tests pass when the real thing fails because mocks diverge from production",
+      "Before testing a completed milestone: create a comprehensive test plan reviewed by subagents — an incomplete test plan produces false confidence"
+    ],
     "should_not_match": [],
     "difficulty": "easy",
     "event": "Stop"
@@ -1741,7 +1751,9 @@
     "id": "stop-mined-security-review-complete",
     "query": "Stop: User asked: run security review on the PRD | Agent said: Security review complete and sent to team-lead. 15 findings across 1 CRITICAL, 3 HIGH, 8 MEDIUM, 3 LOW. Covers OWASP Top 10",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When reviewing a PRD or design document: use multiple specialist subagents (architect, security, code quality) in parallel — a single reviewer misses entire categories of issues"
+    ],
     "should_not_match": [],
     "difficulty": "easy",
     "event": "Stop"
@@ -1750,7 +1762,11 @@
     "id": "stop-mined-prd-review-convergence",
     "query": "Stop: User asked: Run one subagent for overall review of the PRD | Agent said: Report sent to team-lead. All 8 Round 1 findings confirmed fixed. Only 2 LOW cosmetic issues remain. PRD is approved for implementation",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When reviewing PRDs: iterate rounds with specialist agents until a round comes back clean — each round finds issues at a different depth",
+      "When reviewing a PRD or design document: use multiple specialist subagents (architect, security, code quality) in parallel — a single reviewer misses entire categories of issues",
+      "After revising a PRD or design document: run convergence reviews — design gaps that survive review become implementation bugs that survive testing"
+    ],
     "should_not_match": [],
     "difficulty": "easy",
     "event": "Stop"
@@ -1767,19 +1783,12 @@
     "event": "Stop"
   },
   {
-    "id": "stop-mined-expansion-prompt-iteration",
-    "query": "Stop: User asked: iterate on the expansion prompt with clear instructions and golden examples | Agent said: Updated v3 expansion prompt with cross-domain boundary enforcement, variable 3-10 expansions, semantic dedup. V3 expansions generated for both corpora",
-    "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [],
-    "difficulty": "easy",
-    "event": "Stop"
-  },
-  {
     "id": "stop-mined-agents-deployed-no-monitoring",
     "query": "Stop: User asked: setup a cron to monitor and complete all benchmarks | Agent said: Autonomous benchmark loop configured. Agents bench-models, prompt-iterate, and regen-expansions launched. Cron checking every 5 minutes",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "Delegate implementation to worker agents via tmux sessions and monitor progress with cron-based polling"
+    ],
     "should_not_match": [],
     "difficulty": "easy",
     "event": "Stop"
@@ -1799,7 +1808,9 @@
     "id": "stop-mined-compact-requested",
     "query": "Stop: User asked: let compact and proceed | Agent said: Compacting context. Session state saved to artifacts/session-19-progress.md with current task, completed work, and next steps",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "Before compaction, save task state to artifacts/ including what was done, what remains, key decisions, and blockers"
+    ],
     "should_not_match": [],
     "difficulty": "easy",
     "event": "Stop"
@@ -1808,54 +1819,11 @@
     "id": "stop-mined-cli-setup-no-readme",
     "query": "Stop: User asked: review all the setup CLI commands and hook installation script for Claude Code, install cuecard and see if it works | Agent said: Hooks installed for PreToolUse, PostToolUse, UserPromptSubmit, SubagentStart, Stop. Verified cuecard serve daemon starts. Setup complete",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When editing code that changes CLI commands, API endpoints, setup steps, or adding new dependencies (Edit, Write): update README to match \u2014 outdated README causes every new contributor to fail on setup"
+    ],
     "should_not_match": [],
     "difficulty": "medium",
-    "event": "Stop"
-  },
-  {
-    "id": "stop-mined-skill-extraction",
-    "query": "Stop: User asked: extract learned skills from this session | Agent said: Saved 4 learned skills: mkdocstrings-cython-so-strips-docstrings, setup-py-graceful-c-compiler-fallback, ci-green-before-release, and feedback_ci_before_release",
-    "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [],
-    "difficulty": "easy",
-    "event": "Stop"
-  },
-  {
-    "id": "stop-mined-multifile-refactor-no-lint",
-    "query": "Stop: User asked: refactor: split 7 oversized test files into 27 focused modules | Agent said: Split complete. 27 new test files created from 7 original files. All tests pass. No functionality changes",
-    "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [],
-    "difficulty": "medium",
-    "event": "Stop"
-  },
-  {
-    "id": "stop-mined-daemon-fix-complete",
-    "query": "Stop: User asked: fix daemon reliability with config-aware timeout and security hardening | Agent said: Fixed 500ms timeout to config-aware, fast hook dispatch, security hardening applied. 3 files changed, tests pass",
-    "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [],
-    "difficulty": "hard",
-    "event": "Stop"
-  },
-  {
-    "id": "stop-mined-voice-mode-working",
-    "query": "Stop: User asked: test if the USB audio device mic works | Agent said: Nice! The USB Audio device must have a mic after all. Enjoy voice mode!",
-    "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [],
-    "difficulty": "easy",
-    "event": "Stop"
-  },
-  {
-    "id": "stop-mined-all-services-green",
-    "query": "Stop: User asked: verify all services are healthy | Agent said: Both projects fully green. Gravity Claw 3022/3022 tests pass, Mission Control 1008/1008 tests pass, CGR Watcher heartbeat OK, all infra up",
-    "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [],
-    "difficulty": "easy",
     "event": "Stop"
   },
   {
@@ -1874,35 +1842,20 @@
     "query": "Stop: User asked: integrate OpenBB for market data | Agent said: OpenBB integration complete. Added data fetchers for price history, fundamentals, and news. All unit tests pass with mocked responses",
     "corpus": "rules_global.txt",
     "should_match": [
-      "After mocked tests pass: test with real external data \u2014 NaN values, missing columns, and API format differences only surface with live data"
+      "After mocked tests pass: test with real external data \u2014 NaN values, missing columns, and API format differences only surface with live data",
+      "When adding a new library or API dependency: research alternatives, verify documentation, audit maintenance status, and benchmark before adopting \u2014 unvetted dependencies become permanent tech debt"
     ],
     "should_not_match": [],
     "difficulty": "medium",
     "event": "Stop"
   },
   {
-    "id": "stop-mined-model-download-benchmark",
-    "query": "Stop: User asked: download and benchmark the Qwen3.5 models starting from 9B | Agent said: Downloaded Qwen3.5-9B-Q4_K_M.gguf. Benchmark complete: basic F2 0.797, PosRecall 0.560, NegSil 0.962. Results saved to eval/results/",
-    "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [],
-    "difficulty": "easy",
-    "event": "Stop"
-  },
-  {
-    "id": "stop-mined-read-soul-md",
-    "query": "Stop: User asked: read soul md | Agent said: I've read SOUL.md. It contains your identity, values, working style with Bhargav, core lessons from 22 sessions, and consolidated principles",
-    "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [],
-    "difficulty": "easy",
-    "event": "Stop"
-  },
-  {
     "id": "stop-mined-phase8-all-docs-updated",
     "query": "Stop: User asked: complete Phase 8 deliverables | Agent said: All Phase 8 deliverables complete. CLAUDE.md updated, README updated, examples/config.toml created, error handling reviewed clean, pyproject.toml verified, 696 tests 100% coverage",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "After changing project structure, architecture, or conventions: update CLAUDE.md — without this, the next session starts with stale context and makes wrong assumptions"
+    ],
     "should_not_match": [],
     "difficulty": "easy",
     "event": "Stop"
@@ -1933,16 +1886,9 @@
     "id": "stop-mined-hook-format-debugging",
     "query": "Stop: User asked: figure out why hooks show error in Claude Code | Agent said: Found the issue. Hook output was missing hookEventName and permissionDecision fields. Fixed format, stderr suppressed with 2>/dev/null. Hooks now work correctly",
     "corpus": "rules_global.txt",
-    "should_match": [],
-    "should_not_match": [],
-    "difficulty": "easy",
-    "event": "Stop"
-  },
-  {
-    "id": "stop-mined-multiple-agents-running",
-    "query": "Stop: User asked: check status of running agents | Agent said: All 3 agents are active right now: orchid 61% auditing MC stale MCP tools, cody 42% doing MC LOW fixes, bluey 32% doing GC LOW fixes via subagent",
-    "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When debugging poor output quality: fix the upstream pipeline stage, not downstream patches — downstream fixes accumulate into unmaintainable complexity"
+    ],
     "should_not_match": [],
     "difficulty": "easy",
     "event": "Stop"
@@ -1951,7 +1897,9 @@
     "id": "stop-mined-llama-server-config",
     "query": "Stop: User asked: Use llama-server with gemma-4-E4B-it-Q8_0 on port 8081 with 98304 context, document in CLAUDE.md | Agent said: llama-server started with updated config. CLAUDE.md updated with new server start command and context calculation",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "After changing project structure, architecture, or conventions: update CLAUDE.md — without this, the next session starts with stale context and makes wrong assumptions"
+    ],
     "should_not_match": [],
     "difficulty": "easy",
     "event": "Stop"
@@ -1972,7 +1920,8 @@
     "query": "Stop: User asked: launch agents to mine more eval fixtures from user sessions | Agent said: 3 mining agents launched targeting cuecard, canopy-ai, and forceatlas2 projects. Agents are processing session transcripts",
     "corpus": "rules_global.txt",
     "should_match": [
-      "When launching subagents: set explicit scope boundaries and kill stale ones \u2014 unbounded reviewers find infinite speculative findings"
+      "When launching subagents: set explicit scope boundaries and kill stale ones \u2014 unbounded reviewers find infinite speculative findings",
+      "When multiple independent review or analysis tasks exist: launch parallel subagents \u2014 sequential execution wastes time when tasks don't depend on each other"
     ],
     "should_not_match": [],
     "difficulty": "hard",
@@ -1982,7 +1931,9 @@
     "id": "stop-mined-update-soul-md-complete",
     "query": "Stop: User asked: good job, update soul md | Agent said: Updated SOUL.md with learnings from this session including model benchmarking insights, expansion prompt engineering, and fixture audit methodology",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "When model predictions look wrong: audit the ground truth first — wrong fixture expectations are indistinguishable from model failures, and removing them is a free quality improvement"
+    ],
     "should_not_match": [],
     "difficulty": "easy",
     "event": "Stop"
@@ -1991,7 +1942,9 @@
     "id": "stop-mined-mutmut-convergence",
     "query": "Stop: User asked: keep running mutmut after fixes till convergence to catch everything before benchmark | Agent said: Mutation testing converged. Kill rate improved from 77% to 94%. Remaining 6% are equivalent mutants. All dangerous mutants killed",
     "corpus": "rules_global.txt",
-    "should_match": [],
+    "should_match": [
+      "After each review round: keep running until two consecutive rounds produce zero CRITICAL/HIGH/MEDIUM findings — fixed round counts stop too early or too late"
+    ],
     "should_not_match": [],
     "difficulty": "easy",
     "event": "Stop"
@@ -2002,7 +1955,7 @@
     "corpus": "rules_global.txt",
     "should_match": [],
     "should_not_match": [],
-    "difficulty": "easy",
+    "difficulty": "negative",
     "event": "Stop"
   }
 ]

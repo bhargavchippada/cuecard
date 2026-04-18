@@ -1246,7 +1246,13 @@ def _stratified_sample(
     return sampled
 
 
-def _make_eval_config(llm_candidates: int | None) -> ResolvedConfig:
+def _make_eval_config(
+    llm_candidates: int | None,
+    *,
+    sparse_enabled: bool,
+    dense_weight: float,
+    sparse_weight: float,
+) -> ResolvedConfig:
     """ResolvedConfig tailored for benchmark eval."""
     kwargs: dict[str, Any] = {
         "source_paths": (),
@@ -1257,7 +1263,9 @@ def _make_eval_config(llm_candidates: int | None) -> ResolvedConfig:
         "threshold": 0.30,
         "dedup_threshold": 0.95,
         "query_max_length": 500,
-        "sparse_enabled": False,
+        "sparse_enabled": sparse_enabled,
+        "dense_weight": dense_weight,
+        "sparse_weight": sparse_weight,
     }
     if llm_candidates is not None:
         kwargs["llm_candidates"] = llm_candidates
@@ -1292,6 +1300,9 @@ def run_benchmark_traced(
     tiers: tuple[str, ...] | None,
     llm_candidates: int | None,
     query_expansion_enabled: bool,
+    sparse_enabled: bool,
+    dense_weight: float,
+    sparse_weight: float,
     artifacts_dir: Path,
 ) -> dict[str, Any]:
     """Run traced benchmark: replaces legacy run_benchmark.
@@ -1314,7 +1325,12 @@ def run_benchmark_traced(
         msg = f"Corpus not found: {corpus_path}"
         raise FileNotFoundError(msg)
 
-    eval_config = _make_eval_config(llm_candidates)
+    eval_config = _make_eval_config(
+        llm_candidates,
+        sparse_enabled=sparse_enabled,
+        dense_weight=dense_weight,
+        sparse_weight=sparse_weight,
+    )
 
     artifacts_dir.mkdir(parents=True, exist_ok=True)
     traces_root = artifacts_dir / "traces"
@@ -1967,6 +1983,18 @@ def main() -> None:
         "--query-expansion", action="store_true",
         help="Enable query-side expansion (experimental).",
     )
+    parser.add_argument(
+        "--sparse-enabled", action="store_true",
+        help="Enable sparse retrieval during benchmark eval.",
+    )
+    parser.add_argument(
+        "--dense-weight", type=float, default=0.7,
+        help="Fusion weight for dense retriever contributions.",
+    )
+    parser.add_argument(
+        "--sparse-weight", type=float, default=0.3,
+        help="Fusion weight for sparse retriever contributions.",
+    )
     args = parser.parse_args()
 
     if not Path(args.model_path).exists():
@@ -2037,6 +2065,9 @@ def main() -> None:
             tiers=tiers,
             llm_candidates=args.llm_candidates,
             query_expansion_enabled=args.query_expansion,
+            sparse_enabled=args.sparse_enabled,
+            dense_weight=args.dense_weight,
+            sparse_weight=args.sparse_weight,
             artifacts_dir=artifacts_dir,
         )
 

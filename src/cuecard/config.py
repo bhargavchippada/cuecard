@@ -142,6 +142,7 @@ def _extract_flat(raw: dict[str, Any]) -> dict[str, Any]:
     for key in (
         "top_k", "threshold", "dedup_threshold",
         "fusion_k", "llm_candidates", "sparse_enabled",
+        "dense_weight", "sparse_weight",
         "affinity_mode", "llm_recall_threshold",
         "reranker_model",
     ):
@@ -471,6 +472,8 @@ def load_config(
         fusion_k=merged["fusion_k"],
         llm_candidates=merged["llm_candidates"],
         sparse_enabled=merged["sparse_enabled"],
+        dense_weight=float(merged["dense_weight"]),
+        sparse_weight=float(merged["sparse_weight"]),
         expansion_max_per_rule=merged["expansion_max_per_rule"],
         expansion_max_length=merged["expansion_max_length"],
         affinity_mode=merged["affinity_mode"],

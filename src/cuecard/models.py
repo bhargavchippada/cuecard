@@ -209,6 +209,8 @@ class ResolvedConfig:
     fusion_k: int = field(default=10, metadata={"min": 1, "max": 1000})
     llm_candidates: int = field(default=12, metadata={"min": 1, "max": 100})
     sparse_enabled: bool = True
+    dense_weight: float = field(default=0.7, metadata={"min": 0.0, "max": 1.0})
+    sparse_weight: float = field(default=0.3, metadata={"min": 0.0, "max": 1.0})
     reranker_model: str = DEFAULT_RERANKER_MODEL
     serve_port: int = field(
         default=DEFAULT_SERVE_PORT, metadata={"min": 1, "max": 65535},
