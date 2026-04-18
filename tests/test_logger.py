@@ -140,6 +140,44 @@ class TestBuildEntry:
         assert item["file"] == "/tmp/rules.txt"
         assert item["line"] == 1
 
+    def test_path_default_is_cold(self) -> None:
+        entry = _build_entry(
+            "PreToolUse", "Bash", "q", [],
+            total_rules=1, index_rebuilt=False,
+            latency_ms=1.0, model="test",
+            redact=False, max_query_length=500,
+        )
+        assert entry["path"] == "cold"
+
+    def test_path_daemon(self) -> None:
+        entry = _build_entry(
+            "PreToolUse", "Bash", "q", [],
+            total_rules=1, index_rebuilt=False,
+            latency_ms=1.0, model="test",
+            redact=False, max_query_length=500,
+            path="daemon",
+        )
+        assert entry["path"] == "daemon"
+
+    def test_error_field_present(self) -> None:
+        entry = _build_entry(
+            "PreToolUse", "Bash", "q", [],
+            total_rules=1, index_rebuilt=False,
+            latency_ms=1.0, model="test",
+            redact=False, max_query_length=500,
+            path="daemon", error="RuntimeError: boom",
+        )
+        assert entry["error"] == "RuntimeError: boom"
+
+    def test_error_field_absent_by_default(self) -> None:
+        entry = _build_entry(
+            "PreToolUse", "Bash", "q", [],
+            total_rules=1, index_rebuilt=False,
+            latency_ms=1.0, model="test",
+            redact=False, max_query_length=500,
+        )
+        assert "error" not in entry
+
 
 class TestLogRetrieval:
     def test_writes_jsonl(self, tmp_path: Path) -> None:

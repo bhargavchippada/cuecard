@@ -328,6 +328,7 @@ def _run_pipeline_path(
             max_query_length=config.query_max_length,
             max_log_size_mb=config.max_log_size_mb,
             verbose=config.verbose,
+            path="cold",
         )
 
     return {**data, "hookSpecificOutput": hook_output}

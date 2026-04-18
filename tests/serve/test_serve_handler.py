@@ -196,6 +196,67 @@ class TestProcessRequest:
         assert hook_out["existing"] == "value"
         assert "additionalContext" in hook_out
 
+    def test_daemon_emits_structured_log(self) -> None:
+        """Daemon path writes a log_retrieval entry tagged path=daemon."""
+        index = _make_index()
+        config = _make_config()
+        model = MagicMock()
+
+        fake_pipeline = PipelineResult(
+            results=(RankedResult(rule=_make_rule(), score=0.88),),
+            stages=(StageTrace(
+                stage="retrieval", input_count=1,
+                output_count=1, latency_ms=1.0,
+            ),),
+            mode="embedding",
+        )
+
+        with (
+            patch(
+                "cuecard.retrieval.pipeline.run_pipeline",
+                return_value=fake_pipeline,
+            ),
+            patch("cuecard.logger.log_retrieval") as mock_log,
+        ):
+            _process_request(
+                {"tool_name": "Bash", "tool_input": "git status"},
+                index, config, model,
+            )
+
+        mock_log.assert_called_once()
+        kwargs = mock_log.call_args.kwargs
+        assert kwargs["path"] == "daemon"
+        assert kwargs["event"] == "PreToolUse"
+        assert kwargs["tool_name"] == "Bash"
+        assert kwargs["error"] is None
+        assert len(kwargs["results"]) == 1
+
+    def test_daemon_logs_pipeline_error(self) -> None:
+        """If pipeline raises, the daemon logs the error entry."""
+        index = _make_index()
+        config = _make_config()
+        model = MagicMock()
+
+        with (
+            patch(
+                "cuecard.retrieval.pipeline.run_pipeline",
+                side_effect=RuntimeError("boom"),
+            ),
+            patch("cuecard.logger.log_retrieval") as mock_log,
+        ):
+            result = _process_request(
+                {"tool_name": "Bash", "tool_input": "ls"},
+                index, config, model,
+            )
+
+        # Response still returns; error is only logged
+        assert "hookSpecificOutput" in result
+        mock_log.assert_called_once()
+        kwargs = mock_log.call_args.kwargs
+        assert kwargs["path"] == "daemon"
+        assert "RuntimeError" in kwargs["error"]
+        assert kwargs["results"] == []
+
 
 # ---------------------------------------------------------------------------
 # Handler

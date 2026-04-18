@@ -227,6 +227,7 @@ def _process_request(
         _detect_event,
         _handle_pre_tool_use,
     )
+    from cuecard.logger import log_retrieval
     from cuecard.retrieval.formatter import format_rules
     from cuecard.retrieval.pipeline import run_pipeline
 
@@ -239,15 +240,25 @@ def _process_request(
     )
 
     start = time.monotonic()
-    pipeline_result = run_pipeline(
-        query, index, config,
-        embedding_model=embedding_model,  # type: ignore[arg-type]
-        mode=pipeline_mode,
-        event=event,
-        tool_name=tool_name,
-        affinity=affinity,
-    )
-    results = pipeline_result.results
+    try:
+        pipeline_result = run_pipeline(
+            query, index, config,
+            embedding_model=embedding_model,  # type: ignore[arg-type]
+            mode=pipeline_mode,
+            event=event,
+            tool_name=tool_name,
+            affinity=affinity,
+        )
+        results = pipeline_result.results
+        request_error: str | None = None
+    except Exception as exc:  # noqa: BLE001
+        # Pipeline normally degrades gracefully; if it raises here
+        # log the error so mining catches unexpected failures, but
+        # still return a benign response to the client.
+        logger.exception("Daemon request failed")
+        pipeline_result = None
+        results = ()
+        request_error = f"{type(exc).__name__}: {exc}"
     latency_ms = (time.monotonic() - start) * 1000
 
     # Build a fresh output dict (don't mutate the input)
@@ -273,6 +284,25 @@ def _process_request(
         latency_ms,
         len(results),
         event,
+    )
+
+    # Structured retrieval log — same schema as the cold path so
+    # both paths produce mineable traffic.
+    log_retrieval(
+        event=event,
+        tool_name=tool_name,
+        query=query,
+        results=list(results),
+        total_rules=index.size,
+        index_rebuilt=False,
+        latency_ms=latency_ms,
+        model=config.model_name,
+        redact=config.redact,
+        max_query_length=config.query_max_length,
+        max_log_size_mb=config.max_log_size_mb,
+        verbose=config.verbose,
+        path="daemon",
+        error=request_error,
     )
 
     return output

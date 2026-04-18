@@ -40,8 +40,15 @@ def _build_entry(
     model: str,
     redact: bool,
     max_query_length: int,
+    path: str = "cold",
+    error: str | None = None,
 ) -> dict[str, object]:
-    """Build a structured log entry dict."""
+    """Build a structured log entry dict.
+
+    ``path`` distinguishes the adapter cold path ("cold") from the
+    persistent daemon fast path ("daemon"). ``error`` records a
+    scrubbed error message when a request failed end-to-end.
+    """
     query_truncated = len(query) > max_query_length
     if query_truncated:
         query = query[:max_query_length]
@@ -61,7 +68,7 @@ def _build_entry(
             "line": r.rule.provenance.line_start,
         })
 
-    return {
+    entry: dict[str, object] = {
         "timestamp": datetime.now(tz=UTC).isoformat(),
         "event": event,
         "tool_name": tool_name,
@@ -73,7 +80,11 @@ def _build_entry(
         "index_rebuilt": index_rebuilt,
         "latency_ms": round(latency_ms, 2),
         "model": model,
+        "path": path,
     }
+    if error is not None:
+        entry["error"] = scrub_secrets(error) if redact else error
+    return entry
 
 
 def log_retrieval(
@@ -91,6 +102,8 @@ def log_retrieval(
     log_dir: Path | None = None,
     max_log_size_mb: int = 10,
     verbose: bool = False,
+    path: str = "cold",
+    error: str | None = None,
 ) -> None:
     """Append a structured log entry to log.jsonl.
 
@@ -99,6 +112,10 @@ def log_retrieval(
     - Appends JSON line to log_dir/log.jsonl
     - Checks rotation after writing
     - If verbose, prints to stderr
+
+    ``path`` tags the hook execution path — "cold" for the adapter
+    direct path, "daemon" for the persistent server fast path.
+    ``error`` records a (scrubbed) error message for failed requests.
     """
     log_dir = log_dir if log_dir is not None else _default_log_dir()
     ensure_directory(log_dir)
@@ -114,6 +131,8 @@ def log_retrieval(
         model=model,
         redact=redact,
         max_query_length=max_query_length,
+        path=path,
+        error=error,
     )
 
     log_path = log_dir / _LOG_FILENAME
