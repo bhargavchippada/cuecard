@@ -402,6 +402,8 @@ def rerank_llm(
     haiku_model: str,
     thinking: bool = False,
     top_k: int,
+    max_tokens: int,
+    timeout: float,
 ) -> list[RankedResult]:
     """Re-rank candidates using an LLM to select truly relevant rules.
 
@@ -437,6 +439,8 @@ def rerank_llm(
                 system_prompt, user_prompt,
                 backend, endpoint, haiku_model, thinking,
                 len(candidates),
+                max_tokens=max_tokens,
+                timeout=timeout,
             )
             if result.indices is not None:
                 return _compute_ordinal_scores(
@@ -466,12 +470,17 @@ def _call_and_parse(
     haiku_model: str,
     thinking: bool,
     num_candidates: int,
+    *,
+    max_tokens: int,
+    timeout: float,
 ) -> LLMParseResult:
     """Call LLM and parse the response into rule indices."""
     if backend == "local":
         raw = call_local(
             system_prompt, user_prompt, endpoint, thinking,
             stop=None,
+            max_tokens=max_tokens,
+            timeout=timeout,
         )
     else:
         raw = call_haiku(system_prompt, user_prompt, haiku_model)

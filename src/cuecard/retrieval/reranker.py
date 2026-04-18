@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
     from cuecard.models import ResolvedConfig
 
-from cuecard.models import DEFAULT_RERANKER_MODEL, RankedResult
+from cuecard.models import RankedResult
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +29,8 @@ def rerank(
     candidates: list[RankedResult],
     query: str,
     *,
-    model_name: str = DEFAULT_RERANKER_MODEL,
     top_k: int,
+    model_name: str | None = None,
     model: TextCrossEncoder | None = None,
     config: ResolvedConfig | None = None,
 ) -> list[RankedResult]:
@@ -39,10 +39,14 @@ def rerank(
     Args:
         candidates: Results from Stage 1 embedding retrieval.
         query: The tool context query string.
-        model_name: fastembed cross-encoder model (must be in allowlist).
         top_k: Number of results to return after re-ranking.
+        model_name: fastembed cross-encoder model (must be in allowlist).
+            Required unless ``config`` is provided.
         model: Pre-loaded TextCrossEncoder (for reuse across calls).
-        config: Pipeline config (reserved for future per-config overrides).
+        config: Pipeline config; if set, ``config.reranker_model`` is used
+            instead of the dataclass default. Takes precedence over
+            ``model_name`` when both are provided (avoids drift between
+            caller and config).
 
     Returns:
         Top-k results re-ranked by cross-encoder score.
@@ -53,6 +57,9 @@ def rerank(
 
     if config is not None:
         model_name = config.reranker_model
+    if model_name is None:
+        msg = "rerank() requires model_name or config to resolve the model"
+        raise ValueError(msg)
 
     if model_name not in ALLOWED_RERANKER_MODELS:
         msg = (

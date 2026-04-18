@@ -521,6 +521,9 @@ def _expand_single_rule(
     event_type: str,
     dedup_threshold: float,
     max_per_rule: int = 5,
+    *,
+    max_tokens: int,
+    timeout: float,
 ) -> tuple[Rule, int]:
     """Generate expansions for a single rule. Returns (rule, expansion_count)."""
     nonce = secrets.token_hex(6)
@@ -532,6 +535,8 @@ def _expand_single_rule(
         if backend == "local":
             raw = call_local(
                 system_prompt, user_prompt, endpoint, False,
+                max_tokens=max_tokens,
+                timeout=timeout,
                 temperature=0.7,
             )
         else:
@@ -548,6 +553,8 @@ def _expand_single_rule(
             if backend == "local":
                 raw = call_local(
                     system_prompt, user_prompt, endpoint, False,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
                     temperature=0.7,
                 )
             else:
@@ -577,13 +584,16 @@ def _expand_single_rule_multi_style(
     styles: tuple[str, ...],
     dedup_threshold: float,
     max_per_rule: int = 5,
+    *,
+    max_tokens: int,
+    timeout: float,
 ) -> tuple[Rule, int]:
     """Expand a rule with one or more styles, merging and deduping results."""
     all_expansions: list[str] = []
     for style in styles:
         expanded, _count = _expand_single_rule(
             rule, backend, endpoint, haiku_model, style, dedup_threshold,
-            max_per_rule,
+            max_per_rule, max_tokens=max_tokens, timeout=timeout,
         )
         all_expansions.extend(expanded.expansions)
 
@@ -601,6 +611,8 @@ def expand_rules(
     endpoint: str,
     haiku_model: str,
     *,
+    max_tokens: int,
+    timeout: float,
     missing_only: bool = False,
     dry_run: bool = False,
     event_type: str = "PreToolUse",
@@ -671,6 +683,7 @@ def expand_rules(
             rules, backend, endpoint, haiku_model,
             event_type, dedup_threshold, missing_only,
             max_workers, affinity, max_per_rule,
+            max_tokens=max_tokens, timeout=timeout,
         )
 
     result: list[Rule] = []
@@ -702,11 +715,13 @@ def expand_rules(
             expanded, count = _expand_single_rule(
                 rule, backend, endpoint, haiku_model,
                 styles[0], dedup_threshold, max_per_rule,
+                max_tokens=max_tokens, timeout=timeout,
             )
         else:
             expanded, count = _expand_single_rule_multi_style(
                 rule, backend, endpoint, haiku_model,
                 styles, dedup_threshold, max_per_rule,
+                max_tokens=max_tokens, timeout=timeout,
             )
         total_expansions += count
         result.append(expanded)
@@ -733,7 +748,10 @@ def _expand_rules_parallel(
     missing_only: bool,
     max_workers: int,
     affinity: AffinityIndex | None,
-    max_per_rule: int = 5,
+    max_per_rule: int,
+    *,
+    max_tokens: int,
+    timeout: float,
 ) -> list[Rule]:
     """Expand rules in parallel using ThreadPoolExecutor."""
     from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -760,12 +778,14 @@ def _expand_rules_parallel(
                         _expand_single_rule,
                         rule, backend, endpoint, haiku_model,
                         styles[0], dedup_threshold, max_per_rule,
+                        max_tokens=max_tokens, timeout=timeout,
                     )
                 else:
                     fut = pool.submit(
                         _expand_single_rule_multi_style,
                         rule, backend, endpoint, haiku_model,
                         styles, dedup_threshold, max_per_rule,
+                        max_tokens=max_tokens, timeout=timeout,
                     )
                 futures[fut] = idx
             for future in as_completed(futures):

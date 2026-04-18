@@ -71,7 +71,8 @@ class TestCallLocal:
         with patch.object(httpx, "post", return_value=mock_response):
             result = call_local(
                 "system", "user", "http://localhost:8081/v1", False,
-            )
+                    max_tokens=1024, timeout=60.0,
+                )
             assert result == "hello"
 
     def test_custom_temperature_and_max_tokens(self) -> None:
@@ -84,7 +85,7 @@ class TestCallLocal:
         with patch.object(httpx, "post", return_value=mock_response) as mock_post:
             call_local(
                 "sys", "usr", "http://localhost:8081/v1", False,
-                max_tokens=512, temperature=0.7,
+                max_tokens=512, timeout=60.0, temperature=0.7,
             )
             body = mock_post.call_args.kwargs["json"]
             assert body["max_tokens"] == 512
@@ -100,7 +101,8 @@ class TestCallLocal:
         with patch.object(httpx, "post", return_value=mock_response) as mock_post:
             call_local(
                 "sys", "usr", "http://localhost:8081/v1", True,
-            )
+                    max_tokens=1024, timeout=60.0,
+                )
             body = mock_post.call_args.kwargs["json"]
             assert "chat_template_kwargs" not in body
 
@@ -114,7 +116,8 @@ class TestCallLocal:
         with patch.object(httpx, "post", return_value=mock_response) as mock_post:
             call_local(
                 "sys", "usr", "http://localhost:8081/v1", False,
-            )
+                    max_tokens=1024, timeout=60.0,
+                )
             body = mock_post.call_args.kwargs["json"]
             assert body["chat_template_kwargs"] == {"enable_thinking": False}
 
@@ -125,7 +128,9 @@ class TestCallLocal:
             ),
             pytest.raises(httpx.TimeoutException),
         ):
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
 
     def test_connect_error_raises(self) -> None:
         with (
@@ -134,7 +139,9 @@ class TestCallLocal:
             ),
             pytest.raises(httpx.ConnectError),
         ):
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
 
     def test_no_choices_raises(self) -> None:
         mock_response = MagicMock()
@@ -144,7 +151,9 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(ValueError, match="No choices"),
         ):
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
 
     def test_invalid_choice_format_raises(self) -> None:
         mock_response = MagicMock()
@@ -154,7 +163,9 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(ValueError, match="Invalid choice"),
         ):
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
 
     def test_invalid_message_format_raises(self) -> None:
         mock_response = MagicMock()
@@ -166,7 +177,9 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(ValueError, match="Invalid message"),
         ):
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
 
     def test_invalid_content_format_raises(self) -> None:
         mock_response = MagicMock()
@@ -178,7 +191,9 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(ValueError, match="Invalid content"),
         ):
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
 
     def test_http_error_raises(self) -> None:
         mock_response = MagicMock()
@@ -189,7 +204,9 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(httpx.HTTPStatusError),
         ):
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
 
 
 class TestCallHaiku:
@@ -248,7 +265,9 @@ class TestCallLocalRequestBody:
         with patch.object(
             httpx, "post", return_value=self._make_mock_response(),
         ) as mock_post:
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
             body = mock_post.call_args.kwargs["json"]
             assert "model" in body
             assert body["model"] == "default"
@@ -257,7 +276,9 @@ class TestCallLocalRequestBody:
         with patch.object(
             httpx, "post", return_value=self._make_mock_response(),
         ) as mock_post:
-            call_local("my_system", "my_user", "http://localhost:8081/v1", False)
+            call_local("my_system", "my_user", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
             body = mock_post.call_args.kwargs["json"]
             messages = body["messages"]
             assert len(messages) == 2
@@ -268,7 +289,9 @@ class TestCallLocalRequestBody:
         with patch.object(
             httpx, "post", return_value=self._make_mock_response(),
         ) as mock_post:
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
             body = mock_post.call_args.kwargs["json"]
             assert "stop" in body
             assert body["stop"] == ["\n\n"]
@@ -277,7 +300,9 @@ class TestCallLocalRequestBody:
         with patch.object(
             httpx, "post", return_value=self._make_mock_response(),
         ) as mock_post:
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
             url = mock_post.call_args.args[0]
             assert url == "http://localhost:8081/v1/chat/completions"
 
@@ -285,7 +310,9 @@ class TestCallLocalRequestBody:
         with patch.object(
             httpx, "post", return_value=self._make_mock_response(),
         ) as mock_post:
-            call_local("sys", "usr", "http://localhost:8081/v1/", False)
+            call_local("sys", "usr", "http://localhost:8081/v1/", False,
+                max_tokens=1024, timeout=60.0,
+            )
             url = mock_post.call_args.args[0]
             assert url == "http://localhost:8081/v1/chat/completions"
 
@@ -293,14 +320,18 @@ class TestCallLocalRequestBody:
         with patch.object(
             httpx, "post", return_value=self._make_mock_response(),
         ) as mock_post:
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
             assert mock_post.call_args.kwargs["timeout"] == 60.0
 
     def test_default_max_tokens(self) -> None:
         with patch.object(
             httpx, "post", return_value=self._make_mock_response(),
         ) as mock_post:
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
             body = mock_post.call_args.kwargs["json"]
             assert body["max_tokens"] == 1024
 
@@ -308,7 +339,9 @@ class TestCallLocalRequestBody:
         with patch.object(
             httpx, "post", return_value=self._make_mock_response(),
         ) as mock_post:
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
             body = mock_post.call_args.kwargs["json"]
             assert body["temperature"] == 0.0
 
@@ -317,7 +350,9 @@ class TestCallLocalRequestBody:
         with patch.object(
             httpx, "post", return_value=self._make_mock_response(),
         ) as mock_post:
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
             body = mock_post.call_args.kwargs["json"]
             assert body["cache_prompt"] is True
 

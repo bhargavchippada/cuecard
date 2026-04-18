@@ -9,8 +9,6 @@ from urllib.parse import urlparse
 
 import httpx
 
-from cuecard.models import LLM_MAX_TOKENS
-from cuecard.models import LLM_TIMEOUT as _TIMEOUT
 from cuecard.security import ConfigError
 
 logger = logging.getLogger(__name__)
@@ -62,8 +60,8 @@ def call_local(
     endpoint: str,
     thinking: bool,
     *,
-    max_tokens: int = LLM_MAX_TOKENS,
-    timeout: float = _TIMEOUT,
+    max_tokens: int,
+    timeout: float,
     temperature: float = 0.0,
     stop: tuple[str, ...] | None = ("\n\n",),
     seed: int = 42,

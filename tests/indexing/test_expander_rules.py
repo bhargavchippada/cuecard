@@ -42,15 +42,13 @@ class TestExpandRules:
         with pytest.raises(ValueError, match="Invalid backend"):
             expand_rules(
                 [_make_rule()], "openai", "http://localhost:8081/v1",
-                "claude-haiku-4-5", dedup_threshold=0.80,
-            )
+                "claude-haiku-4-5", dedup_threshold=0.80, max_tokens=1024, timeout=60.0)
 
     def test_haiku_model_not_in_allowlist_raises(self) -> None:
         with pytest.raises(ValueError, match="not in allowlist"):
             expand_rules(
                 [_make_rule()], "haiku", "http://localhost:8081/v1",
-                "gpt-4o", dedup_threshold=0.80,
-            )
+                "gpt-4o", dedup_threshold=0.80, max_tokens=1024, timeout=60.0)
 
     def test_local_validates_endpoint(self) -> None:
         fake = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0))]
@@ -60,8 +58,7 @@ class TestExpandRules:
         ):
             expand_rules(
                 [_make_rule()], "local", "http://evil.com:8081/v1",
-                "claude-haiku-4-5", dedup_threshold=0.80,
-            )
+                "claude-haiku-4-5", dedup_threshold=0.80, max_tokens=1024, timeout=60.0)
 
     def test_dry_run_does_not_call_llm(self) -> None:
         rules = [_make_rule()]
@@ -69,7 +66,8 @@ class TestExpandRules:
             result = expand_rules(
                 rules, "local", "http://localhost:8081/v1",
                 "claude-haiku-4-5", dry_run=True, dedup_threshold=0.80,
-            )
+                    max_tokens=1024, timeout=60.0,
+                )
             mock_call.assert_not_called()
         assert len(result) == 1
         assert result[0].expansions == ()
@@ -95,8 +93,7 @@ class TestExpandRules:
             result = expand_rules(
                 rules, "local", "http://localhost:8081/v1",
                 "claude-haiku-4-5", missing_only=True,
-                dedup_threshold=0.80,
-            )
+                dedup_threshold=0.80, max_tokens=1024, timeout=60.0)
 
         assert result[0].expansions == ("existing",)
         assert result[1].expansions == ("new one",)
@@ -112,8 +109,7 @@ class TestExpandRules:
         ):
             result = expand_rules(
                 rules, "local", "http://localhost:8081/v1",
-                "claude-haiku-4-5", dedup_threshold=0.80,
-            )
+                "claude-haiku-4-5", dedup_threshold=0.80, max_tokens=1024, timeout=60.0)
 
         assert len(result) == 1
         assert result[0].expansions == ("docker build image", "run pytest coverage")
@@ -127,8 +123,7 @@ class TestExpandRules:
         ):
             result = expand_rules(
                 rules, "haiku", "http://localhost:8081/v1",
-                "claude-haiku-4-5", dedup_threshold=0.80,
-            )
+                "claude-haiku-4-5", dedup_threshold=0.80, max_tokens=1024, timeout=60.0)
 
         assert len(result) == 1
         assert result[0].expansions == ("haiku phrase",)
@@ -142,8 +137,7 @@ class TestExpandRules:
         ):
             result = expand_rules(
                 rules, "local", "http://localhost:8081/v1",
-                "claude-haiku-4-5", dedup_threshold=0.80,
-            )
+                "claude-haiku-4-5", dedup_threshold=0.80, max_tokens=1024, timeout=60.0)
 
         assert len(result) == 1
         assert result[0].expansions == ()
@@ -164,8 +158,7 @@ class TestExpandRules:
                 "http://localhost:8081/v1",
                 "claude-haiku-4-5",
                 "PreToolUse",
-                0.80,
-            )
+                0.80, max_tokens=1024, timeout=60.0)
 
         assert mock_call.call_count == 2
         assert expanded.expansions == ("retry worked",)
@@ -187,8 +180,7 @@ class TestExpandRules:
                 "http://localhost:8081/v1",
                 "claude-haiku-4-5",
                 "PreToolUse",
-                0.80,
-            )
+                0.80, max_tokens=1024, timeout=60.0)
 
         assert mock_call.call_count == 2
         assert expanded.expansions == ("haiku retry worked",)
@@ -217,8 +209,7 @@ class TestExpandRules:
         ):
             expand_rules(
                 rules, "local", "http://localhost:8081/v1",
-                "claude-haiku-4-5", dedup_threshold=0.80,
-            )
+                "claude-haiku-4-5", dedup_threshold=0.80, max_tokens=1024, timeout=60.0)
 
         assert len(nonces) == 2
         assert nonces[0] != nonces[1]
@@ -226,8 +217,7 @@ class TestExpandRules:
     def test_empty_rules_list(self) -> None:
         result = expand_rules(
             [], "local", "http://localhost:8081/v1",
-            "claude-haiku-4-5", dedup_threshold=0.80,
-        )
+            "claude-haiku-4-5", dedup_threshold=0.80, max_tokens=1024, timeout=60.0)
         assert result == []
 
     def test_config_error_propagates(self) -> None:
@@ -239,16 +229,14 @@ class TestExpandRules:
         ):
             expand_rules(
                 [_make_rule()], "local", "http://evil.com/v1",
-                "claude-haiku-4-5", dedup_threshold=0.80,
-            )
+                "claude-haiku-4-5", dedup_threshold=0.80, max_tokens=1024, timeout=60.0)
 
     def test_value_error_propagates(self) -> None:
         """ValueError for invalid backend should propagate."""
         with pytest.raises(ValueError):
             expand_rules(
                 [_make_rule()], "invalid", "http://localhost:8081/v1",
-                "claude-haiku-4-5", dedup_threshold=0.80,
-            )
+                "claude-haiku-4-5", dedup_threshold=0.80, max_tokens=1024, timeout=60.0)
 
     def test_replaces_existing_expansions(self) -> None:
         """Without missing_only, existing expansions are overwritten."""
@@ -260,8 +248,7 @@ class TestExpandRules:
         ):
             result = expand_rules(
                 rules, "local", "http://localhost:8081/v1",
-                "claude-haiku-4-5", dedup_threshold=0.80,
-            )
+                "claude-haiku-4-5", dedup_threshold=0.80, max_tokens=1024, timeout=60.0)
 
         assert result[0].expansions == ("new",)
 
@@ -279,7 +266,8 @@ class TestExpandRules:
             expand_rules(
                     rules, "local", "http://localhost:8081/v1",
                     "claude-haiku-4-5", dedup_threshold=0.80,
-                )
+                        max_tokens=1024, timeout=60.0,
+                    )
 
     def test_returns_new_rule_objects(self) -> None:
         """expand_rules returns new Rule objects, not mutated originals."""
@@ -291,8 +279,7 @@ class TestExpandRules:
         ):
             result = expand_rules(
                 [original], "local", "http://localhost:8081/v1",
-                "claude-haiku-4-5", dedup_threshold=0.80,
-            )
+                "claude-haiku-4-5", dedup_threshold=0.80, max_tokens=1024, timeout=60.0)
 
         assert result[0] is not original
         assert original.expansions == ()
@@ -304,7 +291,8 @@ class TestExpandRules:
                 [_make_rule()], "local", "http://localhost:8081/v1",
                 "claude-haiku-4-5",
                 event_type="InvalidEvent", dedup_threshold=0.80,
-            )
+                    max_tokens=1024, timeout=60.0,
+                )
 
     def test_event_type_passed_to_prompt(self) -> None:
         """event_type is forwarded to _build_expansion_prompt."""
@@ -326,7 +314,8 @@ class TestExpandRules:
                 [_make_rule()], "local", "http://localhost:8081/v1",
                 "claude-haiku-4-5",
                 event_type="UserPromptSubmit", dedup_threshold=0.80,
-            )
+                    max_tokens=1024, timeout=60.0,
+                )
             _, kwargs = mock_build.call_args
             assert kwargs.get("event_type") == "UserPromptSubmit"
 
@@ -344,8 +333,7 @@ class TestExpandRules:
         ):
             result = expand_rules(
                 [_make_rule()], "local", "http://localhost:8081/v1",
-                "claude-haiku-4-5", dedup_threshold=0.80,
-            )
+                "claude-haiku-4-5", dedup_threshold=0.80, max_tokens=1024, timeout=60.0)
             mock_dedup.assert_called_once_with(["a", "b", "c"], threshold=0.8)
             assert result[0].expansions == ("a", "c")
 
@@ -365,8 +353,7 @@ class TestExpandRules:
             expand_rules(
                 rules, "local", "http://localhost:8081/v1",
                 "claude-haiku-4-5", dedup_threshold=0.80,
-                on_progress=updates.append,
-            )
+                on_progress=updates.append, max_tokens=1024, timeout=60.0)
 
         assert len(updates) == 2
         assert updates[0].rule_index == 0  # type: ignore[union-attr]
@@ -391,8 +378,7 @@ class TestExpandRules:
                 rules, "local", "http://localhost:8081/v1",
                 "claude-haiku-4-5", missing_only=True,
                 dedup_threshold=0.80,
-                on_progress=updates.append,
-            )
+                on_progress=updates.append, max_tokens=1024, timeout=60.0)
 
         assert len(updates) == 2
         assert updates[0].skipped is True  # type: ignore[union-attr]
@@ -408,8 +394,7 @@ class TestExpandRules:
         ):
             result = expand_rules(
                 [_make_rule()], "local", "http://localhost:8081/v1",
-                "claude-haiku-4-5", dedup_threshold=0.80,
-            )
+                "claude-haiku-4-5", dedup_threshold=0.80, max_tokens=1024, timeout=60.0)
         assert len(result) == 1
 
     def test_affinity_tool_use_gets_tool_style(self) -> None:
@@ -434,8 +419,7 @@ class TestExpandRules:
             expand_rules(
                 [rule], "local", "http://localhost:8081/v1",
                 "claude-haiku-4-5", dedup_threshold=0.80,
-                affinity=aff,
-            )
+                affinity=aff, max_tokens=1024, timeout=60.0)
             _, kwargs = mock_prompt.call_args
             assert kwargs["event_type"] == "PreToolUse"
 
@@ -463,8 +447,7 @@ class TestExpandRules:
             expand_rules(
                 [rule], "local", "http://localhost:8081/v1",
                 "claude-haiku-4-5", dedup_threshold=0.80,
-                affinity=aff,
-            )
+                affinity=aff, max_tokens=1024, timeout=60.0)
             _, kwargs = mock_prompt.call_args
             assert kwargs["event_type"] == "UserPromptSubmit"
 
@@ -492,8 +475,7 @@ class TestExpandRules:
             result = expand_rules(
                 [rule], "local", "http://localhost:8081/v1",
                 "claude-haiku-4-5", dedup_threshold=0.80,
-                affinity=aff,
-            )
+                affinity=aff, max_tokens=1024, timeout=60.0)
         assert call_count == 2
         assert len(result[0].expansions) == 2
 
@@ -519,8 +501,7 @@ class TestExpandRules:
                 [rule], "local", "http://localhost:8081/v1",
                 "claude-haiku-4-5", dedup_threshold=0.80,
                 event_type="UserPromptSubmit",
-                affinity=None,
-            )
+                affinity=None, max_tokens=1024, timeout=60.0)
             _, kwargs = mock_prompt.call_args
             assert kwargs["event_type"] == "UserPromptSubmit"
 
@@ -548,8 +529,7 @@ class TestExpandRules:
                 [rule], "local", "http://localhost:8081/v1",
                 "claude-haiku-4-5", dedup_threshold=0.80,
                 event_type="UserPromptSubmit",
-                affinity=aff,
-            )
+                affinity=aff, max_tokens=1024, timeout=60.0)
             _, kwargs = mock_prompt.call_args
             assert kwargs["event_type"] == "UserPromptSubmit"
 
@@ -568,15 +548,13 @@ class TestExpandRules:
             sequential = expand_rules(
                 rules, "local", "http://localhost:8081/v1",
                 "claude-haiku-4-5", dedup_threshold=0.80,
-                max_workers=1,
-            )
+                max_workers=1, max_tokens=1024, timeout=60.0)
 
         with patch("cuecard.indexing.expander.call_local", side_effect=_fake_call):
             parallel = expand_rules(
                 rules, "local", "http://localhost:8081/v1",
                 "claude-haiku-4-5", dedup_threshold=0.80,
-                max_workers=3,
-            )
+                max_workers=3, max_tokens=1024, timeout=60.0)
 
         assert len(sequential) == len(parallel)
         for s, p in zip(sequential, parallel, strict=True):
@@ -597,8 +575,7 @@ class TestExpandRules:
             result = expand_rules(
                 rules, "local", "http://localhost:8081/v1",
                 "claude-haiku-4-5", dedup_threshold=0.80,
-                missing_only=True, max_workers=2,
-            )
+                missing_only=True, max_workers=2, max_tokens=1024, timeout=60.0)
 
         assert result[0].expansions == ("existing",)
         assert result[1].expansions == ("new",)
@@ -649,8 +626,7 @@ class TestExpandRules:
             expand_rules(
                 rules, "local", "http://localhost:8081/v1",
                 "claude-haiku-4-5", dedup_threshold=0.80,
-                affinity=aff, max_workers=2,
-            )
+                affinity=aff, max_workers=2, max_tokens=1024, timeout=60.0)
 
         assert "PreToolUse" in prompt_styles
         assert "UserPromptSubmit" in prompt_styles
@@ -668,7 +644,8 @@ class TestExpandRules:
                 rules, "local", "http://localhost:8081/v1",
                 "claude-haiku-4-5", dedup_threshold=0.80,
                 max_workers=5, on_progress=updates.append,
-            )
+                    max_tokens=1024, timeout=60.0,
+                )
 
         # on_progress was called (sequential mode) — parallel would skip it
         assert len(updates) == 2
@@ -773,8 +750,7 @@ class TestExpandRulesParallelCoverage:
                 "claude-haiku-4-5",
                 dedup_threshold=0.80,
                 affinity=aff,
-                max_workers=2,
-            )
+                max_workers=2, max_tokens=1024, timeout=60.0)
 
         assert result[0].expansions == ("x",)
         mock_multi.assert_called_once()

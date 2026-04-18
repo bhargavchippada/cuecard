@@ -24,9 +24,10 @@ def expand_query(
     query: str,
     *,
     endpoint: str,
+    max_tokens: int,
+    timeout: float,
     event: str = "PreToolUse",
     max_per_query: int = 5,
-    timeout: float = 2.0,
 ) -> tuple[str, ...]:
     """Generate expansion phrases for a query via LLM.
 
@@ -36,9 +37,10 @@ def expand_query(
     Args:
         query: Raw query string (e.g., "Bash: cargo add serde").
         endpoint: Local LLM endpoint URL (llama-server).
+        max_tokens: Max tokens for the LLM response (from pipeline.llm).
+        timeout: Max seconds to wait for LLM response (from pipeline.llm).
         event: Hook event for prompt targeting (tool-style vs workflow-style).
         max_per_query: Max expansions to return after balanced selection.
-        timeout: Max seconds to wait for LLM response.
 
     Returns:
         Tuple of expansion strings. Empty on failure, timeout, or parse error.
@@ -53,6 +55,7 @@ def expand_query(
         )
         raw = call_local(
             system, user, endpoint, False,
+            max_tokens=max_tokens,
             timeout=timeout,
             temperature=0.7,
         )

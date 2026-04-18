@@ -65,7 +65,8 @@ class TestCallLocal:
 
         with patch.object(httpx, "post", return_value=mock_response) as mock_post:
             result = call_local(
-                "system", "user", "http://localhost:8081/v1", False
+                "system", "user", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
             )
             assert result == '{"rules": [1, 3]}'
             mock_post.assert_called_once()
@@ -78,7 +79,8 @@ class TestCallLocal:
             pytest.raises(httpx.TimeoutException),
         ):
             call_local(
-                "system", "user", "http://localhost:8081/v1", False
+                "system", "user", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
             )
 
     def test_connect_error_raises(self) -> None:
@@ -89,7 +91,8 @@ class TestCallLocal:
             pytest.raises(httpx.ConnectError),
         ):
             call_local(
-                "system", "user", "http://localhost:8081/v1", False
+                "system", "user", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
             )
 
     def test_http_error_raises(self) -> None:
@@ -102,7 +105,8 @@ class TestCallLocal:
             pytest.raises(httpx.HTTPStatusError),
         ):
             call_local(
-                "system", "user", "http://localhost:8081/v1", False
+                "system", "user", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
             )
 
     def test_no_choices_raises(self) -> None:
@@ -113,7 +117,9 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(ValueError, match="No choices"),
         ):
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
 
     def test_invalid_choice_format_raises(self) -> None:
         mock_response = MagicMock()
@@ -123,7 +129,9 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(ValueError, match="Invalid choice"),
         ):
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
 
     def test_invalid_message_format_raises(self) -> None:
         mock_response = MagicMock()
@@ -133,7 +141,9 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(ValueError, match="Invalid message"),
         ):
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
 
     def test_invalid_content_format_raises(self) -> None:
         mock_response = MagicMock()
@@ -145,7 +155,9 @@ class TestCallLocal:
             patch.object(httpx, "post", return_value=mock_response),
             pytest.raises(ValueError, match="Invalid content"),
         ):
-            call_local("sys", "usr", "http://localhost:8081/v1", False)
+            call_local("sys", "usr", "http://localhost:8081/v1", False,
+                max_tokens=1024, timeout=60.0,
+            )
 
 
 class TestCallHaiku:

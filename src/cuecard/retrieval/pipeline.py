@@ -46,7 +46,7 @@ def run_pipeline(
     tool_name: str = "",
     affinity: AffinityIndex | None = None,
     query_expansion_enabled: bool = False,
-    query_expansion_endpoint: str = "http://localhost:8081/v1",
+    query_expansion_endpoint: str | None = None,
 ) -> PipelineResult:
     """Execute the multi-stage retrieval pipeline.
 
@@ -105,8 +105,10 @@ def run_pipeline(
         try:
             query_expansions = expand_query(
                 query,
-                endpoint=query_expansion_endpoint,
+                endpoint=query_expansion_endpoint or config.pipeline.local_endpoint,
                 event=event or "PreToolUse",
+                max_tokens=config.pipeline.llm_max_tokens,
+                timeout=config.pipeline.llm_timeout,
             )
         except Exception as exc:
             logger.warning(
@@ -382,6 +384,8 @@ def _run_llm_stage(
             haiku_model=config.pipeline.haiku_model,
             thinking=config.pipeline.thinking,
             top_k=config.top_k,
+            max_tokens=config.pipeline.llm_max_tokens,
+            timeout=config.pipeline.llm_timeout,
         )
         latency_ms = (time.monotonic() - t0) * 1000.0
         return results, StageTrace(

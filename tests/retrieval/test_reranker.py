@@ -7,10 +7,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cuecard.models import Provenance, RankedResult, Rule
+from cuecard.models import DEFAULT_RERANKER_MODEL, Provenance, RankedResult, Rule
 from cuecard.retrieval.reranker import (
     ALLOWED_RERANKER_MODELS,
-    DEFAULT_RERANKER_MODEL,
     _load_model,
     rerank,
 )
@@ -66,7 +65,9 @@ class TestRerankBasic:
         scores = [0.1, 0.9, 0.3, 0.7, 0.5]
         mock_model = _make_mock_model(scores)
 
-        result = rerank(candidates, "test query", top_k=3, model=mock_model)
+        result = rerank(candidates, "test query", top_k=3, model=mock_model,
+            model_name=DEFAULT_RERANKER_MODEL,
+        )
 
         assert len(result) == 3
         assert result[0].score == 0.9
@@ -75,7 +76,7 @@ class TestRerankBasic:
 
     def test_rerank_empty_candidates(self) -> None:
         """Empty list returns empty list without touching the model."""
-        result = rerank([], "test query", top_k=5)
+        result = rerank([], "test query", top_k=5, model_name=DEFAULT_RERANKER_MODEL)
         assert result == []
 
     def test_rerank_single_candidate(self) -> None:
@@ -83,7 +84,9 @@ class TestRerankBasic:
         candidates = _make_candidates(1)
         mock_model = _make_mock_model([0.85])
 
-        result = rerank(candidates, "test query", top_k=5, model=mock_model)
+        result = rerank(candidates, "test query", top_k=5, model=mock_model,
+            model_name=DEFAULT_RERANKER_MODEL,
+        )
 
         assert len(result) == 1
         assert result[0].score == 0.85
@@ -99,7 +102,9 @@ class TestRerankProvenance:
         scores = [0.3, 0.9, 0.1]
         mock_model = _make_mock_model(scores)
 
-        result = rerank(candidates, "test query", top_k=3, model=mock_model)
+        result = rerank(candidates, "test query", top_k=3, model=mock_model,
+            model_name=DEFAULT_RERANKER_MODEL,
+        )
 
         # Best score was index 1
         assert result[0].rule.text == "Rule number 1"
@@ -113,7 +118,9 @@ class TestRerankProvenance:
         ce_scores = [0.99, 0.01]
         mock_model = _make_mock_model(ce_scores)
 
-        result = rerank(candidates, "test query", top_k=2, model=mock_model)
+        result = rerank(candidates, "test query", top_k=2, model=mock_model,
+            model_name=DEFAULT_RERANKER_MODEL,
+        )
 
         result_scores = [r.score for r in result]
         assert result_scores != original_scores
@@ -129,7 +136,9 @@ class TestRerankSorting:
         scores = [0.2, 0.8, 0.4, 0.6]
         mock_model = _make_mock_model(scores)
 
-        result = rerank(candidates, "test query", top_k=4, model=mock_model)
+        result = rerank(candidates, "test query", top_k=4, model=mock_model,
+            model_name=DEFAULT_RERANKER_MODEL,
+        )
 
         result_scores = [r.score for r in result]
         assert result_scores == sorted(result_scores, reverse=True)
@@ -141,7 +150,9 @@ class TestRerankSorting:
         scores = [0.5, 0.3, 0.8]
         mock_model = _make_mock_model(scores)
 
-        result = rerank(candidates, "test query", top_k=10, model=mock_model)
+        result = rerank(candidates, "test query", top_k=10, model=mock_model,
+            model_name=DEFAULT_RERANKER_MODEL,
+        )
 
         assert len(result) == 3
         assert result[0].score == 0.8
@@ -192,7 +203,9 @@ class TestRerankModelLoading:
         mock_model = _make_mock_model([0.5, 0.3])
 
         with patch("cuecard.retrieval.reranker._load_model") as load_mock:
-            rerank(candidates, "test query", model=mock_model, top_k=5)
+            rerank(candidates, "test query", model=mock_model, top_k=5,
+                model_name=DEFAULT_RERANKER_MODEL,
+            )
             load_mock.assert_not_called()
 
     def test_rerank_creates_model_when_none(self) -> None:
@@ -203,9 +216,18 @@ class TestRerankModelLoading:
         with patch(
             "cuecard.retrieval.reranker._load_model", return_value=mock_model,
         ) as load_mock:
-            result = rerank(candidates, "test query", top_k=5)
+            result = rerank(
+                candidates, "test query", top_k=5,
+                model_name=DEFAULT_RERANKER_MODEL,
+            )
             load_mock.assert_called_once_with(DEFAULT_RERANKER_MODEL)
             assert len(result) == 2
+
+    def test_rerank_raises_when_no_model_name_and_no_config(self) -> None:
+        """rerank requires model_name or config (no silent default)."""
+        candidates = _make_candidates(1)
+        with pytest.raises(ValueError, match="requires model_name or config"):
+            rerank(candidates, "test query", top_k=5)
 
 
 class TestRerankConfig:
@@ -261,7 +283,9 @@ class TestRerankRawFloatScores:
         # Real fastembed returns list of floats in document order
         model.rerank.return_value = [-5.0, -2.0, -8.0]
 
-        result = rerank(candidates, "test query", model=model, top_k=2)
+        result = rerank(candidates, "test query", model=model, top_k=2,
+            model_name=DEFAULT_RERANKER_MODEL,
+        )
 
         assert len(result) == 2
         # Sorted by score desc: index 1 (-2.0) > index 0 (-5.0)
@@ -277,7 +301,9 @@ class TestRerankRawFloatScores:
 
         model.rerank.return_value = [np.float32(-1.0), np.float32(-3.0)]
 
-        result = rerank(candidates, "test query", model=model, top_k=2)
+        result = rerank(candidates, "test query", model=model, top_k=2,
+            model_name=DEFAULT_RERANKER_MODEL,
+        )
 
         assert len(result) == 2
         assert result[0].rule.text == "Rule number 0"

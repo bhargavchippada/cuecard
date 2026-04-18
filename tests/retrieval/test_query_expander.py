@@ -12,7 +12,9 @@ from cuecard.retrieval.query_expander import expand_query
 class TestExpandQuery:
     def test_empty_query_short_circuits(self) -> None:
         with patch("cuecard.retrieval.query_expander.call_local") as mock_call:
-            result = expand_query("   ", endpoint="http://localhost:8081/v1")
+            result = expand_query("   ", endpoint="http://localhost:8081/v1",
+                max_tokens=1024, timeout=60.0,
+            )
         assert result == ()
         mock_call.assert_not_called()
 
@@ -36,8 +38,7 @@ class TestExpandQuery:
                 endpoint="http://localhost:8081/v1",
                 event="Stop",
                 max_per_query=3,
-                timeout=1.25,
-            )
+                timeout=1.25, max_tokens=1024)
 
         assert result == ("a", "b")
         mock_prompt.assert_called_once()
@@ -53,7 +54,6 @@ class TestExpandQuery:
         ):
             result = expand_query(
                 "Bash: git commit",
-                endpoint="http://localhost:8081/v1",
-            )
+                endpoint="http://localhost:8081/v1", max_tokens=1024, timeout=60.0)
 
         assert result == ()

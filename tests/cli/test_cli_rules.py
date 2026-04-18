@@ -536,6 +536,8 @@ class TestRulesExpand:
                 backend="local",
                 endpoint="http://localhost:8081/v1",
                 haiku_model="claude-haiku-4-5",
+                max_tokens=1024,
+                timeout=60.0,
                 missing_only=True,
                 dedup_threshold=0.80,
             )

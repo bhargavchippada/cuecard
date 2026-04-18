@@ -357,6 +357,8 @@ def _infer_single_rule(
     backend: str,
     endpoint: str,
     haiku_model: str,
+    max_tokens: int,
+    timeout: float,
 ) -> tuple[str, RuleAffinity]:
     """Infer affinity for a single rule via LLM."""
     text_hash = _hash_rule_text(rule.text)
@@ -371,6 +373,8 @@ def _infer_single_rule(
     if backend == "local":
         raw = call_local(
             system_prompt, user_prompt, endpoint, False,
+            max_tokens=max_tokens,
+            timeout=timeout,
             temperature=0.0, stop=None,
         )
     else:
@@ -414,6 +418,8 @@ def infer_affinities(
     backend = "local" if "local" in config.pipeline.mode else "haiku"
     endpoint = config.pipeline.local_endpoint
     haiku_model = config.pipeline.haiku_model
+    max_tokens = config.pipeline.llm_max_tokens
+    timeout = config.pipeline.llm_timeout
     model_name = "local" if backend == "local" else haiku_model
 
     if backend == "local":
@@ -430,7 +436,10 @@ def infer_affinities(
 
     def _infer_or_fallback(rule: Rule) -> tuple[str, RuleAffinity]:
         try:
-            return _infer_single_rule(rule, backend, endpoint, haiku_model)
+            return _infer_single_rule(
+                rule, backend, endpoint, haiku_model,
+                max_tokens, timeout,
+            )
         except (ConfigError, ValueError):
             raise
         except Exception as exc:
